@@ -109,6 +109,11 @@ export default function Calendar() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Add Dialog state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [editingScheduledFor, setEditingScheduledFor] = useState("");
+
   // Fetch scheduled posts
   useEffect(() => {
     fetchScheduledPosts();
@@ -236,7 +241,25 @@ export default function Calendar() {
     );
   };
 
-  // Update the rendering of posts to use the new color system
+  const handleSaveEdit = async () => {
+    if (editingPost) {
+      const updatedPost = {
+        ...editingPost,
+        title: editingTitle,
+        scheduled_for: editingScheduledFor,
+      };
+      await handleEditPost(updatedPost);
+      setIsEditDialogOpen(false);
+    }
+  };
+
+  const openEditDialog = (post: ScheduledPost) => {
+    setEditingPost(post);
+    setEditingTitle(post.title);
+    setEditingScheduledFor(post.scheduled_for);
+    setIsEditDialogOpen(true);
+  };
+
   const renderPost = (post: ScheduledPost) => {
     const colorClasses = getColorClasses(post.color);
     const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
@@ -260,7 +283,7 @@ export default function Calendar() {
             className="hover:bg-white/20"
             onClick={(e) => {
               e.stopPropagation();
-              setEditingPost(post);
+              openEditDialog(post);
             }}
           >
             <PenSquare className="h-4 w-4 text-white" />
@@ -401,6 +424,36 @@ export default function Calendar() {
             </div>
           </div>
         </div>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Post</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="title">Title</label>
+                <Input
+                  id="title"
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="scheduled_for">Scheduled For</label>
+                <Input
+                  id="scheduled_for"
+                  type="datetime-local"
+                  value={editingScheduledFor.split('.')[0]} // Remove milliseconds
+                  onChange={(e) => setEditingScheduledFor(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleSaveEdit}>Save changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
