@@ -347,47 +347,102 @@ export default function Calendar() {
     <>
       <Navbar />
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="container mx-auto py-20 flex gap-6">
-          {/* Mobile: Daily View First */}
-          <div className="md:hidden bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>
-              <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
+        <div className="container mx-auto py-20 flex flex-col md:flex-row gap-6">
+          {/* Mobile Calendar View */}
+          <div className="md:hidden w-full bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
+              <div className="flex space-x-2">
+                <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleNextMonth}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div className="space-y-3">
-              {getPostsForDate(selectedDate).map(post => (
-                <div
-                  key={post.id}
-                  className={cn(
-                    "p-3 rounded-lg transition-all cursor-pointer",
-                    getColorClasses(post.color, 'gradient')
-                  )}
-                  onClick={() => openEditDialog(post)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className={cn(
-                        "w-6 h-6 rounded-lg flex items-center justify-center",
-                        getColorClasses(post.color)
-                      )}>
-                        {(() => {
-                          const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-                          return <IconComponent className="h-3 w-3 text-white" />;
-                        })()}
-                      </div>
-                      <span className="font-medium text-sm text-gray-800">{post.title}</span>
-                    </div>
-                    <span className="text-xs font-medium text-gray-600">
-                      {format(new Date(post.scheduled_for), "h:mm a")}
-                    </span>
+
+            {/* Mobile Calendar Grid */}
+            <div>
+              <div className="grid grid-cols-7 text-xs mb-2">
+                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                  <div key={day} className="text-center font-medium text-gray-600 py-2">
+                    {day}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {daysInMonth.map((date) => {
+                  const hasEvents = getPostsForDate(date).length > 0;
+                  return (
+                    <div
+                      key={date.toString()}
+                      className={cn(
+                        "aspect-square flex items-center justify-center relative",
+                        !isSameMonth(date, currentDate) && "text-gray-400",
+                        isToday(date) && "font-bold"
+                      )}
+                      onClick={() => setSelectedDate(date)}
+                    >
+                      <span className={cn(
+                        "w-8 h-8 flex items-center justify-center rounded-full text-sm",
+                        isSelectedDate(date) && "bg-primary text-white",
+                        hasEvents && !isSelectedDate(date) && "border-2 border-primary"
+                      )}>
+                        {format(date, "d")}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Mobile Selected Date Events */}
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>
+                <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
+              </div>
+              <div className="space-y-3">
+                {getPostsForDate(selectedDate).map((post) => (
+                  <div
+                    key={post.id}
+                    className={cn(
+                      "p-3 rounded-lg transition-all cursor-pointer",
+                      getColorClasses(post.color, 'gradient')
+                    )}
+                    onClick={() => openEditDialog(post)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={cn(
+                          "w-6 h-6 rounded-lg flex items-center justify-center",
+                          getColorClasses(post.color)
+                        )}>
+                          {(() => {
+                            const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
+                            return <IconComponent className="h-3 w-3 text-white" />;
+                          })()}
+                        </div>
+                        <span className="font-medium text-sm text-gray-800">{post.title}</span>
+                      </div>
+                      <span className="text-xs font-medium text-gray-600">
+                        {format(new Date(post.scheduled_for), "h:mm a")}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {getPostsForDate(selectedDate).length === 0 && (
+                  <div className="text-center text-gray-500 py-4">
+                    No events scheduled for this day
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Calendar Grid */}
-          <div className="flex-grow bg-white rounded-xl shadow-sm border border-gray-100">
+          {/* Desktop Calendar View - Unchanged */}
+          <div className="hidden md:block flex-grow bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
               <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
               <div className="flex space-x-2">
@@ -447,7 +502,7 @@ export default function Calendar() {
             </div>
           </div>
 
-          {/* Desktop: Daily View Sidebar */}
+          {/* Desktop Sidebar - Unchanged */}
           <div className="hidden md:block w-1/3">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center justify-between mb-6">
@@ -455,14 +510,14 @@ export default function Calendar() {
                 <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
               </div>
               <div className="space-y-4">
-                {getPostsForDate(selectedDate).map(renderDailyViewPost)}
+                {renderDailyViewPost(selectedDate)}
               </div>
             </div>
           </div>
         </div>
       </DragDropContext>
 
-      {/* EditIdea Dialog */}
+      {/* EditIdea Dialog - Unchanged */}
       {editingIdeaId && (
         <EditIdea
           ideaId={editingIdeaId}
@@ -475,8 +530,10 @@ export default function Calendar() {
     </>
   );
 
-  function renderDailyViewPost(post: ScheduledPost) {
-    return (
+  function renderDailyViewPost(selectedDate: Date) {
+    const posts = getPostsForDate(selectedDate);
+
+    return posts.map(post => (
       <div
         key={post.id}
         className={cn(
@@ -513,6 +570,6 @@ export default function Calendar() {
           {format(new Date(post.scheduled_for), "h:mm a")}
         </div>
       </div>
-    );
+    ));
   }
 }
