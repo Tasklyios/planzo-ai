@@ -6,7 +6,6 @@ import {
   ChevronRight, 
   Plus, 
   PenSquare, 
-  Clock, 
   Video, 
   Check,
   Heart,
@@ -255,73 +254,62 @@ export default function Calendar() {
             <IconComponent className="h-4 w-4 text-white" />
             <span className="text-xs text-white font-medium">{post.title}</span>
           </div>
-          <div className="flex space-x-2">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="hover:bg-white/20"
-              onClick={() => setEditingPost(post)}
-            >
-              <PenSquare className="h-4 w-4 text-white" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="hover:bg-white/20"
-            >
-              <Clock className="h-4 w-4 text-white" />
-            </Button>
-          </div>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="hover:bg-white/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingPost(post);
+            }}
+          >
+            <PenSquare className="h-4 w-4 text-white" />
+          </Button>
         </div>
-      </div>
-    );
-  };
-
-  // Update the daily view post rendering
-  const renderDailyViewPost = (post: ScheduledPost) => (
-    <div
-      key={post.id}
-      className={cn(
-        "p-4 rounded-xl border transition-all shadow-sm",
-        getColorClasses(post.color, 'gradient')
-      )}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-3">
-          <div className={cn(
-            "w-8 h-8 rounded-lg flex items-center justify-center",
-            getColorClasses(post.color)
-          )}>
-            {(() => {
-              const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-              return <IconComponent className="h-4 w-4 text-white" />;
-            })()}
-          </div>
-          <span className="font-medium text-gray-800">{post.title}</span>
-        </div>
-        <span className="text-sm font-medium text-gray-600">
-          {format(new Date(post.scheduled_for), "h:mm a")}
-        </span>
-      </div>
-      <div className="flex justify-end space-x-2">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => setEditingPost(post)}
-          className="hover:bg-white/20"
-        >
-          <PenSquare className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className="hover:bg-white/20"
-        >
-          <Clock className="h-4 w-4" />
-        </Button>
       </div>
     </div>
   );
+};
+
+// Update the daily view post rendering
+const renderDailyViewPost = (post: ScheduledPost) => (
+  <div
+    key={post.id}
+    className={cn(
+      "p-4 rounded-xl border transition-all shadow-sm",
+      getColorClasses(post.color, 'gradient')
+    )}
+  >
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center space-x-3">
+        <div className={cn(
+          "w-8 h-8 rounded-lg flex items-center justify-center",
+          getColorClasses(post.color)
+        )}>
+          {(() => {
+            const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
+            return <IconComponent className="h-4 w-4 text-white" />;
+          })()}
+        </div>
+        <span className="font-medium text-gray-800">{post.title}</span>
+      </div>
+      <span className="text-sm font-medium text-gray-600">
+        {format(new Date(post.scheduled_for), "h:mm a")}
+      </span>
+    </div>
+    <Button 
+      variant="ghost" 
+      size="icon"
+      onClick={(e) => {
+        e.stopPropagation();
+        setEditingPost(post);
+      }}
+      className="hover:bg-white/20"
+    >
+      <PenSquare className="h-4 w-4" />
+    </Button>
+  </div>
+);
 
   return (
     <>

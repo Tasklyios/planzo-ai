@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, Bell, User } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Navbar = () => {
@@ -10,12 +10,11 @@ const Navbar = () => {
     <nav className="fixed w-full glass shadow-sm z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Link to="/" className="text-2xl font-bold text-primary">
-              TrendAI
-            </Link>
-          </div>
-          <div className="hidden md:flex items-center space-x-8">
+          <Link to="/" className="text-2xl font-bold text-primary">
+            TrendAI
+          </Link>
+          
+          <div className="hidden md:flex items-center justify-center flex-1 space-x-8">
             <Link to="/dashboard" className="text-dark hover:text-primary transition-colors">
               Dashboard
             </Link>
@@ -26,6 +25,16 @@ const Navbar = () => {
               Ideas
             </Link>
           </div>
+
+          <div className="hidden md:flex items-center space-x-4">
+            <button className="text-dark hover:text-primary transition-colors">
+              <Bell className="h-5 w-5" />
+            </button>
+            <button className="text-dark hover:text-primary transition-colors">
+              <User className="h-5 w-5" />
+            </button>
+          </div>
+
           <div className="md:hidden">
             <button onClick={() => setIsOpen(!isOpen)} className="text-dark">
               <Menu size={24} />
@@ -53,3 +62,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
