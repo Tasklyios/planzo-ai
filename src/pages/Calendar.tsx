@@ -106,15 +106,14 @@ export default function Calendar() {
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
   const [editingPost, setEditingPost] = useState<ScheduledPost | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  // Add Dialog state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingScheduledFor, setEditingScheduledFor] = useState("");
+  const [selectedSymbol, setSelectedSymbol] = useState<string>("calendar");
+  const [selectedColor, setSelectedColor] = useState<string>("blue");
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Fetch scheduled posts
   useEffect(() => {
     fetchScheduledPosts();
   }, []);
@@ -185,14 +184,6 @@ export default function Calendar() {
     }
   };
 
-  const handlePreviousMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
-
-  const daysInMonth = eachDayOfInterval({
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate),
-  });
-
   const handleEditPost = async (post: ScheduledPost) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -208,8 +199,8 @@ export default function Calendar() {
         .update({
           title: post.title,
           scheduled_for: post.scheduled_for,
-          symbol: post.symbol || 'Calendar',
-          color: post.color || 'blue',
+          symbol: post.symbol,
+          color: post.color,
         })
         .eq("id", post.id)
         .eq("user_id", userId);
@@ -225,6 +216,7 @@ export default function Calendar() {
         description: "Post updated successfully",
       });
 
+      setIsEditDialogOpen(false);
       setEditingPost(null);
     } catch (error: any) {
       toast({
@@ -235,21 +227,16 @@ export default function Calendar() {
     }
   };
 
-  const getPostsForDate = (date: Date) => {
-    return scheduledPosts.filter(
-      (post) => format(new Date(post.scheduled_for), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
-    );
-  };
-
   const handleSaveEdit = async () => {
     if (editingPost) {
       const updatedPost = {
         ...editingPost,
         title: editingTitle,
         scheduled_for: editingScheduledFor,
+        symbol: selectedSymbol,
+        color: selectedColor,
       };
       await handleEditPost(updatedPost);
-      setIsEditDialogOpen(false);
     }
   };
 
@@ -257,7 +244,23 @@ export default function Calendar() {
     setEditingPost(post);
     setEditingTitle(post.title);
     setEditingScheduledFor(post.scheduled_for);
+    setSelectedSymbol(post.symbol || "calendar");
+    setSelectedColor(post.color || "blue");
     setIsEditDialogOpen(true);
+  };
+
+  const handlePreviousMonth = () => setCurrentDate(subMonths(currentDate, 1));
+  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+
+  const daysInMonth = eachDayOfInterval({
+    start: startOfMonth(currentDate),
+    end: endOfMonth(currentDate),
+  });
+
+  const getPostsForDate = (date: Date) => {
+    return scheduledPosts.filter(
+      (post) => format(new Date(post.scheduled_for), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
+    );
   };
 
   const renderPost = (post: ScheduledPost) => {
@@ -444,9 +447,42 @@ export default function Calendar() {
                 <Input
                   id="scheduled_for"
                   type="datetime-local"
-                  value={editingScheduledFor.split('.')[0]} // Remove milliseconds
+                  value={editingScheduledFor.split('.')[0]}
                   onChange={(e) => setEditingScheduledFor(e.target.value)}
                 />
+              </div>
+              <div className="grid gap-2">
+                <label>Icon</label>
+                <div className="flex flex-wrap gap-2">
+                  {availableSymbols.map(({ name, icon: Icon }) => (
+                    <Button
+                      key={name}
+                      variant={selectedSymbol === name ? "default" : "outline"}
+                      size="icon"
+                      onClick={() => setSelectedSymbol(name)}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <label>Color</label>
+                <div className="flex flex-wrap gap-2">
+                  {availableColors.map(({ name, class: colorClass }) => (
+                    <Button
+                      key={name}
+                      variant="outline"
+                      size="icon"
+                      className={cn(
+                        "w-8 h-8 rounded-full",
+                        selectedColor === name && "ring-2 ring-offset-2",
+                        colorClass.split(' ')[0]
+                      )}
+                      onClick={() => setSelectedColor(name)}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
             <DialogFooter>
