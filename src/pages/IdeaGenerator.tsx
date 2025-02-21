@@ -68,12 +68,19 @@ const IdeaGenerator = () => {
         throw new Error(data.error);
       }
 
+      const session = await supabase.auth.getSession();
+      const userId = session.data.session?.user.id;
+
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
       // Save ideas to Supabase
       const { error } = await supabase.from("video_ideas").insert(
         data.ideas.map((idea: any) => ({
           title: idea.title,
           description: idea.description,
-          user_id: (supabase.auth.getUser()).data.user?.id,
+          user_id: userId,
         }))
       );
 
