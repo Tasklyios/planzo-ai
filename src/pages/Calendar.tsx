@@ -43,11 +43,11 @@ interface VideoIdea {
   is_saved?: boolean;
   script?: string;
   user_id?: string;
+  scheduled_for?: string;
 }
 
 // Define our ScheduledPost type that includes scheduled_for
-interface ScheduledPost extends Omit<VideoIdea, 'description'> {
-  description?: string;
+interface ScheduledPost extends VideoIdea {
   scheduled_for: string;
 }
 
@@ -157,16 +157,17 @@ export default function Calendar() {
           tags,
           is_saved,
           script,
-          user_id
+          user_id,
+          scheduled_for
         `)
-        .eq("user_id", sessionData.session.user.id);
+        .eq("user_id", sessionData.session.user.id)
+        .not("scheduled_for", "is", null);
 
       if (scheduledError) throw scheduledError;
 
       const formattedPosts: ScheduledPost[] = scheduledData?.map(post => ({
         ...post,
-        scheduled_for: new Date().toISOString(),
-        description: post.description || "",
+        scheduled_for: post.scheduled_for || new Date().toISOString(),
       })) || [];
 
       setScheduledPosts(formattedPosts);

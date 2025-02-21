@@ -83,6 +83,7 @@ export type Database = {
           id: string
           is_saved: boolean | null
           platform: string | null
+          scheduled_for: string | null
           script: string | null
           symbol: string | null
           tags: string[] | null
@@ -97,6 +98,7 @@ export type Database = {
           id?: string
           is_saved?: boolean | null
           platform?: string | null
+          scheduled_for?: string | null
           script?: string | null
           symbol?: string | null
           tags?: string[] | null
@@ -111,6 +113,7 @@ export type Database = {
           id?: string
           is_saved?: boolean | null
           platform?: string | null
+          scheduled_for?: string | null
           script?: string | null
           symbol?: string | null
           tags?: string[] | null
