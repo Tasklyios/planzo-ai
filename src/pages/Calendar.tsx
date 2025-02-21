@@ -344,7 +344,7 @@ export default function Calendar() {
     <>
       <Navbar />
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="container mx-auto py-20">
+        <div className="container mx-auto py-20 flex gap-6">
           {/* Mobile: Daily View First */}
           <div className="md:hidden bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div className="flex items-center justify-between mb-4">
