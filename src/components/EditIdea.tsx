@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -8,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Wand2 } from "lucide-react";
 import * as icons from 'lucide-react';
 import { Check } from "lucide-react";
+import { format } from "date-fns";
 
 interface EditIdeaProps {
   ideaId: string | null;
@@ -24,6 +26,7 @@ interface IdeaData {
   symbol?: string;
   color?: string;
   script?: string;
+  scheduled_for?: string | null;
 }
 
 const availableIcons = [
@@ -79,7 +82,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           platform: idea.platform,
           symbol: idea.symbol || 'Lightbulb',
           color: idea.color || 'blue',
-          script: idea.script
+          script: idea.script,
+          scheduled_for: idea.scheduled_for
         })
         .eq("id", idea.id);
 
@@ -145,7 +149,26 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     return null;
   }
 
-  const IconComponent = icons[idea.symbol as keyof typeof icons] || icons.Lightbulb;
+  const scheduledDate = idea.scheduled_for ? new Date(idea.scheduled_for) : new Date();
+  const dateValue = format(scheduledDate, "yyyy-MM-dd");
+  const timeValue = format(scheduledDate, "HH:mm");
+
+  const handleDateTimeChange = (type: 'date' | 'time', value: string) => {
+    if (!idea) return;
+    
+    const currentDate = idea.scheduled_for ? new Date(idea.scheduled_for) : new Date();
+    let newDate = new Date(currentDate);
+
+    if (type === 'date') {
+      const [year, month, day] = value.split('-').map(Number);
+      newDate.setFullYear(year, month - 1, day);
+    } else {
+      const [hours, minutes] = value.split(':').map(Number);
+      newDate.setHours(hours, minutes);
+    }
+
+    setIdea({ ...idea, scheduled_for: newDate.toISOString() });
+  };
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
@@ -191,6 +214,26 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                   </div>
                 </Button>
               ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <label>Schedule</label>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Input
+                  type="date"
+                  value={dateValue}
+                  onChange={(e) => handleDateTimeChange('date', e.target.value)}
+                />
+              </div>
+              <div className="flex-1">
+                <Input
+                  type="time"
+                  value={timeValue}
+                  onChange={(e) => handleDateTimeChange('time', e.target.value)}
+                />
+              </div>
             </div>
           </div>
 
