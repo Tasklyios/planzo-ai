@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import IdeaGenerator from "./pages/IdeaGenerator";
 import Calendar from "./pages/Calendar";
+import Scripts from "./pages/Scripts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/ideas" element={<IdeaGenerator />} />
           <Route path="/calendar" element={<Calendar />} />
+          <Route path="/scripts" element={<Scripts />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

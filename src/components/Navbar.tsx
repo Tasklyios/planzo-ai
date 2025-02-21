@@ -25,6 +25,9 @@ const Navbar = () => {
             <Link to="/ideas" className="text-dark hover:text-primary transition-colors">
               Ideas
             </Link>
+            <Link to="/scripts" className="text-dark hover:text-primary transition-colors">
+              Scripts
+            </Link>
           </div>
           <div className="md:hidden">
             <button onClick={() => setIsOpen(!isOpen)} className="text-dark">
@@ -43,6 +46,9 @@ const Navbar = () => {
               </Link>
               <Link to="/ideas" className="text-dark hover:text-primary transition-colors">
                 Ideas
+              </Link>
+              <Link to="/scripts" className="text-dark hover:text-primary transition-colors">
+                Scripts
               </Link>
             </div>
           </div>
