@@ -452,7 +452,18 @@ const IdeaGenerator = () => {
             </div>
           </div>
 
-          {/* Ideas Grid - Mobile Responsive */}
+          {/* Generate Button */}
+          <div className="flex justify-center mb-8">
+            <Button
+              onClick={generateIdeas}
+              disabled={loading}
+              className="bg-[#4F92FF] hover:bg-[#4F92FF]/90 text-white px-8 py-2 rounded-lg font-medium"
+            >
+              {loading ? "Generating..." : "Generate Viral Ideas"}
+            </Button>
+          </div>
+
+          {/* Ideas Grid */}
           {ideas.length > 0 && (
             <section className="bg-white rounded-xl shadow-sm p-4 md:p-8">
               <div className="flex items-center justify-between mb-6">
@@ -521,6 +532,47 @@ const IdeaGenerator = () => {
           )}
         </section>
       </main>
+
+      {/* Add to Calendar Dialog */}
+      <Dialog open={!!addingToCalendar} onOpenChange={() => setAddingToCalendar(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add to Calendar</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="title" className="text-sm font-medium">Title</label>
+              <input
+                id="title"
+                type="text"
+                value={addingToCalendar?.title || ""}
+                onChange={(e) => setAddingToCalendar(prev => prev ? { ...prev, title: e.target.value } : null)}
+                className="w-full p-2 border rounded-md"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="date" className="text-sm font-medium">Date</label>
+              <input
+                id="date"
+                type="date"
+                value={addingToCalendar?.scheduledFor || ""}
+                onChange={(e) => setAddingToCalendar(prev => prev ? { ...prev, scheduledFor: e.target.value } : null)}
+                className="w-full p-2 border rounded-md"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleAddToCalendar}>Add to Calendar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {editingIdeaId && (
+        <EditIdea
+          ideaId={editingIdeaId}
+          onClose={() => setEditingIdeaId(null)}
+        />
+      )}
     </div>
   );
 };
