@@ -1,6 +1,23 @@
 import { useState, useEffect } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, PenSquare, Clock, Video, Check } from "lucide-react";
+import { 
+  Calendar as CalendarIcon, 
+  ChevronLeft, 
+  ChevronRight, 
+  Plus, 
+  PenSquare, 
+  Clock, 
+  Video, 
+  Check,
+  Heart,
+  Star,
+  Music,
+  Image,
+  Film,
+  BookOpen,
+  Camera,
+  Palette
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -8,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
+import { cn } from "@/lib/utils";
 
 interface ScheduledPost {
   id: string;
@@ -19,8 +37,37 @@ interface ScheduledPost {
   color?: string;
 }
 
-const availableSymbols = ['calendar', 'video', 'check'] as const;
-const availableColors = ['red', 'blue', 'green', 'purple', 'yellow', 'pink'] as const;
+const availableSymbols = [
+  { name: 'calendar', icon: CalendarIcon },
+  { name: 'video', icon: Video },
+  { name: 'check', icon: Check },
+  { name: 'heart', icon: Heart },
+  { name: 'star', icon: Star },
+  { name: 'music', icon: Music },
+  { name: 'image', icon: Image },
+  { name: 'film', icon: Film },
+  { name: 'book', icon: BookOpen },
+  { name: 'camera', icon: Camera },
+  { name: 'palette', icon: Palette }
+] as const;
+
+const availableColors = [
+  { name: 'red', class: 'bg-red-500 hover:bg-red-600 border-red-400' },
+  { name: 'orange', class: 'bg-orange-500 hover:bg-orange-600 border-orange-400' },
+  { name: 'yellow', class: 'bg-yellow-500 hover:bg-yellow-600 border-yellow-400' },
+  { name: 'green', class: 'bg-green-500 hover:bg-green-600 border-green-400' },
+  { name: 'blue', class: 'bg-blue-500 hover:bg-blue-600 border-blue-400' },
+  { name: 'purple', class: 'bg-purple-500 hover:bg-purple-600 border-purple-400' },
+  { name: 'pink', class: 'bg-pink-500 hover:bg-pink-600 border-pink-400' },
+  { name: 'indigo', class: 'bg-indigo-500 hover:bg-indigo-600 border-indigo-400' }
+] as const;
+
+// Helper function to get color classes
+const getColorClasses = (color: string | undefined) => {
+  const colorConfig = availableColors.find(c => c.name === color);
+  if (!color || !colorConfig) return 'bg-gray-100 border-gray-200 hover:bg-gray-200';
+  return colorConfig.class;
+};
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -158,6 +205,46 @@ export default function Calendar() {
     );
   };
 
+  // Update the rendering of posts to use the new color system
+  const renderPost = (post: ScheduledPost) => {
+    const colorClasses = getColorClasses(post.color);
+    const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
+
+    return (
+      <div
+        key={post.id}
+        className={cn(
+          "mt-2 p-2 rounded-lg border cursor-pointer transition-colors",
+          colorClasses
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <IconComponent className="h-4 w-4 text-white" />
+            <span className="text-xs text-white font-medium">{post.title}</span>
+          </div>
+          <div className="flex space-x-2">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="hover:bg-white/20"
+              onClick={() => setEditingPost(post)}
+            >
+              <PenSquare className="h-4 w-4 text-white" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="hover:bg-white/20"
+            >
+              <Clock className="h-4 w-4 text-white" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <Navbar />
@@ -231,31 +318,7 @@ export default function Calendar() {
                     onClick={() => setSelectedDate(date)}
                   >
                     <span className={isToday(date) ? "font-medium" : ""}>{format(date, "d")}</span>
-                    {posts.map((post) => (
-                      <div
-                        key={post.id}
-                        className={`mt-2 p-2 rounded-lg border cursor-pointer transition-colors ${
-                          post.platform === "Instagram"
-                            ? "bg-purple-50 border-purple-100 hover:bg-purple-100"
-                            : "bg-blue-50 border-blue-100 hover:bg-blue-100"
-                        }`}
-                      >
-                        <div className="flex items-center">
-                          {post.symbol && (
-                            <i className={`fa-brands fa-${post.platform.toLowerCase()} text-xs mr-2`}></i>
-                          )}
-                          <span className="text-xs">{post.title}</span>
-                        </div>
-                        <div className="flex justify-end space-x-2">
-                          <Button variant="ghost" size="icon" onClick={() => setEditingPost(post)}>
-                            <PenSquare className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Clock className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                    {posts.map((post) => renderPost(post))}
                   </div>
                 );
               })}
@@ -315,35 +378,41 @@ export default function Calendar() {
                         <div className="grid gap-2">
                           <label>Symbol</label>
                           <div className="flex flex-wrap gap-2">
-                            {availableSymbols.map((symbol) => {
-                              const Icon = symbol === 'calendar' ? CalendarIcon : 
-                                        symbol === 'video' ? Video : Check;
-                              return (
-                                <Button 
-                                  key={symbol}
-                                  variant={editingPost.symbol === symbol ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => setEditingPost({ ...editingPost, symbol })}
-                                >
-                                  <Icon className="h-4 w-4" />
-                                </Button>
-                              );
-                            })}
+                            {availableSymbols.map(({ name, icon: Icon }) => (
+                              <Button 
+                                key={name}
+                                variant={editingPost.symbol === name ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setEditingPost({ ...editingPost, symbol: name })}
+                                className={cn(
+                                  editingPost.symbol === name && editingPost.color ? 
+                                  getColorClasses(editingPost.color) : ''
+                                )}
+                              >
+                                <Icon className={cn(
+                                  "h-4 w-4",
+                                  editingPost.symbol === name && editingPost.color ? "text-white" : "text-gray-700"
+                                )} />
+                              </Button>
+                            ))}
                           </div>
                         </div>
 
                         <div className="grid gap-2">
-                          <label>Color</label>
+                          <label>Color Theme</label>
                           <div className="flex flex-wrap gap-2">
-                            {availableColors.map((color) => (
+                            {availableColors.map(({ name, class: colorClass }) => (
                               <Button
-                                key={color}
-                                variant={editingPost.color === color ? "default" : "outline"}
+                                key={name}
+                                variant={editingPost.color === name ? "default" : "outline"}
                                 size="sm"
-                                className={`bg-${color}-500 hover:bg-${color}-600`}
-                                onClick={() => setEditingPost({ ...editingPost, color })}
+                                className={cn(
+                                  "transition-colors",
+                                  editingPost.color === name ? colorClass : ''
+                                )}
+                                onClick={() => setEditingPost({ ...editingPost, color: name })}
                               >
-                                <div className={`h-4 w-4 bg-${color}-500`} />
+                                <div className={cn("h-4 w-4 rounded-full", colorClass)} />
                               </Button>
                             ))}
                           </div>
@@ -376,7 +445,12 @@ export default function Calendar() {
                       <Button variant="outline" onClick={() => setEditingPost(null)}>
                         Cancel
                       </Button>
-                      <Button onClick={() => editingPost && handleEditPost(editingPost)}>
+                      <Button 
+                        onClick={() => editingPost && handleEditPost(editingPost)}
+                        className={cn(
+                          editingPost?.color ? getColorClasses(editingPost.color) : ''
+                        )}
+                      >
                         Save Changes
                       </Button>
                     </DialogFooter>
