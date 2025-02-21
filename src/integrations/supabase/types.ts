@@ -38,26 +38,35 @@ export type Database = {
       }
       video_ideas: {
         Row: {
+          category: string | null
           created_at: string | null
-          description: string | null
+          description: string
           id: string
           is_saved: boolean | null
+          platform: string | null
+          tags: string[] | null
           title: string
           user_id: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
-          description?: string | null
+          description: string
           id?: string
           is_saved?: boolean | null
+          platform?: string | null
+          tags?: string[] | null
           title: string
           user_id?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string | null
-          description?: string | null
+          description?: string
           id?: string
           is_saved?: boolean | null
+          platform?: string | null
+          tags?: string[] | null
           title?: string
           user_id?: string | null
         }

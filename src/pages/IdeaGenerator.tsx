@@ -48,6 +48,13 @@ const IdeaGenerator = () => {
     setLoading(true);
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: {
           niche,
@@ -63,21 +70,15 @@ const IdeaGenerator = () => {
         throw new Error('Invalid response format from AI');
       }
 
-      const session = await supabase.auth.getSession();
-      const userId = session.data.session?.user.id;
-
-      if (!userId) {
-        throw new Error("User not authenticated");
-      }
-
-      // Save ideas to Supabase
+      // Save ideas to Supabase with all fields
       const { error: saveError } = await supabase.from("video_ideas").insert(
         data.ideas.map((idea: any) => ({
           title: idea.title,
           description: idea.description,
-          user_id: userId,
           category: idea.category,
           tags: idea.tags,
+          platform: platform,
+          user_id: userId,
         }))
       );
 
@@ -86,7 +87,7 @@ const IdeaGenerator = () => {
       setIdeas(data.ideas);
       toast({
         title: "Success!",
-        description: "Your video ideas have been generated.",
+        description: "Your video ideas have been generated and saved.",
       });
     } catch (error: any) {
       console.error('Error generating ideas:', error);
