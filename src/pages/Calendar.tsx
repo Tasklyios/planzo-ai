@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, PenSquare, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, PenSquare, Clock, Video, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -18,6 +18,9 @@ interface ScheduledPost {
   symbol?: string;
   color?: string;
 }
+
+const availableSymbols = ['calendar', 'video', 'check'] as const;
+const availableColors = ['red', 'blue', 'green', 'purple', 'yellow', 'pink'] as const;
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -310,6 +313,43 @@ export default function Calendar() {
                     {editingPost && (
                       <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
+                          <label>Symbol</label>
+                          <div className="flex flex-wrap gap-2">
+                            {availableSymbols.map((symbol) => {
+                              const Icon = symbol === 'calendar' ? CalendarIcon : 
+                                        symbol === 'video' ? Video : Check;
+                              return (
+                                <Button 
+                                  key={symbol}
+                                  variant={editingPost.symbol === symbol ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => setEditingPost({ ...editingPost, symbol })}
+                                >
+                                  <Icon className="h-4 w-4" />
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="grid gap-2">
+                          <label>Color</label>
+                          <div className="flex flex-wrap gap-2">
+                            {availableColors.map((color) => (
+                              <Button
+                                key={color}
+                                variant={editingPost.color === color ? "default" : "outline"}
+                                size="sm"
+                                className={`bg-${color}-500 hover:bg-${color}-600`}
+                                onClick={() => setEditingPost({ ...editingPost, color })}
+                              >
+                                <div className={`h-4 w-4 bg-${color}-500`} />
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid gap-2">
                           <label htmlFor="title">Title</label>
                           <Input
                             id="title"
@@ -317,13 +357,17 @@ export default function Calendar() {
                             onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
                           />
                         </div>
+
                         <div className="grid gap-2">
                           <label htmlFor="scheduled_for">Scheduled For</label>
                           <Input
                             id="scheduled_for"
                             type="datetime-local"
                             value={format(new Date(editingPost.scheduled_for), "yyyy-MM-dd'T'HH:mm")}
-                            onChange={(e) => setEditingPost({ ...editingPost, scheduled_for: new Date(e.target.value).toISOString() })}
+                            onChange={(e) => setEditingPost({ 
+                              ...editingPost, 
+                              scheduled_for: new Date(e.target.value).toISOString() 
+                            })}
                           />
                         </div>
                       </div>

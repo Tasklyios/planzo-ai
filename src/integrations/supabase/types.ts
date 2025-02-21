@@ -11,26 +11,32 @@ export type Database = {
     Tables: {
       scheduled_content: {
         Row: {
+          color: string | null
           created_at: string | null
           id: string
           platform: string
           scheduled_for: string
+          symbol: string | null
           title: string
           user_id: string | null
         }
         Insert: {
+          color?: string | null
           created_at?: string | null
           id?: string
           platform: string
           scheduled_for: string
+          symbol?: string | null
           title: string
           user_id?: string | null
         }
         Update: {
+          color?: string | null
           created_at?: string | null
           id?: string
           platform?: string
           scheduled_for?: string
+          symbol?: string | null
           title?: string
           user_id?: string | null
         }
