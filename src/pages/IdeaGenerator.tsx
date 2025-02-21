@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -384,22 +385,23 @@ const IdeaGenerator = () => {
                       >
                         <PenSquare className="h-4 w-4 mr-2" />
                         Edit
-                    </Button>
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-gray-600">{idea.description}</p>
+                  <div className="flex gap-3 mt-4">
+                    {idea.tags.map((tag, tagIndex) => (
+                      <span key={tagIndex} className="px-3 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-sm rounded-full">
+                        #{tag}
+                      </span>
+                    ))}
                   </div>
                 </div>
-                <p className="text-gray-600">{idea.description}</p>
-                <div className="flex gap-3 mt-4">
-                  {idea.tags.map((tag, tagIndex) => (
-                    <span key={tagIndex} className="px-3 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-sm rounded-full">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
 
       <Dialog open={editingIdea !== null} onOpenChange={(open) => !open && setEditingIdea(null)}>
         <DialogContent className="sm:max-w-[425px]">
