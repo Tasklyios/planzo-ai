@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, PenSquare, Clock } from "lucide-react";
@@ -54,6 +55,46 @@ export default function Calendar() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleNewPost = async (platform: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+
+      if (!userId) {
+        navigate("/auth");
+        return;
+      }
+
+      const newPost = {
+        title: `New ${platform} Post`,
+        platform,
+        scheduled_for: new Date().toISOString(),
+        user_id: userId,
+      };
+
+      const { data, error } = await supabase
+        .from("scheduled_content")
+        .insert(newPost)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setScheduledPosts([...scheduledPosts, data]);
+      
+      toast({
+        title: "Success",
+        description: "New post created successfully",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
     }
   };
 
