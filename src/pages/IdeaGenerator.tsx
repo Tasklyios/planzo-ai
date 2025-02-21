@@ -303,7 +303,7 @@ const IdeaGenerator = () => {
             <Button
               onClick={generateIdeas}
               disabled={loading}
-              className="bg-gradient-to-r from-[#4F92FF] to-[#4F92FF]/90 hover:from-[#4F92FF]/90 hover:to-[#4F92FF]/80 text-white px-8 py-6 rounded-lg font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
+              className="bg-gradient-to-r from-[#33C3F0] to-[#0EA5E9] hover:from-[#33C3F0]/90 hover:to-[#0EA5E9]/90 text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
             >
               {loading ? (
                 <>
