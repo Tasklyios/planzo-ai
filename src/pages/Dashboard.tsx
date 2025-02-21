@@ -106,9 +106,9 @@ const Dashboard = () => {
               <div className="text-2xl font-bold text-[#4F92FF]">TrendAI</div>
             </div>
             <nav className="hidden md:flex space-x-8">
-              <span className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Ideation</span>
-              <span className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Content Calendar</span>
-              <span className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Saved Ideas</span>
+              <span className="text-[#4F92FF] font-medium">Dashboard</span>
+              <span onClick={() => navigate('/calendar')} className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Calendar</span>
+              <span onClick={() => navigate('/ideas')} className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Content Ideas</span>
               <span className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Settings</span>
             </nav>
             <div className="flex items-center space-x-4">
