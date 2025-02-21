@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate, Link } from "react-router-dom";
-import Navbar from "@/components/Navbar";
 import {
   LayersIcon,
   Users,
@@ -18,11 +17,20 @@ import {
   CreditCard,
   LogOut,
   Menu,
+  type Icon as LucideIconType,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import EditIdea from "@/components/EditIdea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { LucideIcon } from 'lucide-react';
 
 interface GeneratedIdea {
@@ -32,9 +40,27 @@ interface GeneratedIdea {
   description: string;
   tags: string[];
   platform?: string;
-  symbol?: string;
+  symbol?: keyof typeof IconMap;
   color?: string;
 }
+
+// Define available icons map
+const IconMap = {
+  Lightbulb,
+  LayersIcon,
+  Users,
+  Video,
+  Smartphone,
+  Wand2,
+  Filter,
+  ArrowDownWideNarrow,
+  CalendarPlus,
+  PenSquare,
+  User,
+  CreditCard,
+  LogOut,
+  Menu,
+} as const;
 
 interface AddToCalendarIdea {
   idea: GeneratedIdea;
@@ -70,11 +96,11 @@ const IdeaGenerator = () => {
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const validateIconKey = (key: string | undefined): keyof typeof icons => {
-    if (!key || !(key in icons)) {
+  const validateIconKey = (key: string | undefined): keyof typeof IconMap => {
+    if (!key || !(key in IconMap)) {
       return 'Lightbulb';
     }
-    return key as keyof typeof icons;
+    return key as keyof typeof IconMap;
   };
 
   const transformSupabaseIdea = (idea: SupabaseIdea): GeneratedIdea => {
@@ -214,7 +240,7 @@ const IdeaGenerator = () => {
         tags: idea.tags,
         platform: platform,
         user_id: userId,
-        symbol: 'Lightbulb' as keyof typeof icons, // Set default icon
+        symbol: 'Lightbulb' as keyof typeof IconMap, // Set default icon
         color: 'blue', // Set default color
       }));
 
@@ -247,6 +273,13 @@ const IdeaGenerator = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
+  };
+
+  const getIconComponent = (symbolName?: keyof typeof IconMap): LucideIconType => {
+    if (!symbolName || !(symbolName in IconMap)) {
+      return Lightbulb;
+    }
+    return IconMap[symbolName];
   };
 
   return (
@@ -438,7 +471,7 @@ const IdeaGenerator = () => {
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 {ideas.map((idea) => {
-                  const IconComponent = idea.symbol ? (icons[idea.symbol as keyof typeof icons] as LucideIcon) : Lightbulb;
+                  const IconComponent = getIconComponent(idea.symbol);
                   return (
                     <div
                       key={idea.id}
