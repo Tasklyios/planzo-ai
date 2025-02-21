@@ -351,7 +351,7 @@ export default function Calendar() {
     if (isSelected) return null;
 
     return (
-      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+      <div className="absolute -top-0.5 left-1/2 transform -translate-x-1/2 flex gap-0.5">
         {posts.map((post, index) => (
           <div
             key={`${post.id}-${index}`}
@@ -398,7 +398,7 @@ export default function Calendar() {
                   <div
                     key={date.toString()}
                     className={cn(
-                      "aspect-square flex items-center justify-center relative pt-2", // Added padding top
+                      "aspect-square flex items-center justify-center relative pt-1", // Reduced padding top
                       !isSameMonth(date, currentDate) && "text-gray-400",
                       isToday(date) && "font-bold"
                     )}
