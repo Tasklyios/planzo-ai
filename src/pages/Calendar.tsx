@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { cn } from "@/lib/utils";
+import EditIdea from "@/components/EditIdea";
 
 interface ScheduledPost {
   id: string;
@@ -113,6 +114,7 @@ export default function Calendar() {
   const [selectedColor, setSelectedColor] = useState<string>("blue");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchScheduledPosts();
@@ -396,6 +398,16 @@ export default function Calendar() {
               </div>
               <span className="font-medium text-gray-800">{post.title}</span>
             </div>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingIdeaId(post.id);
+              }}
+            >
+              <PenSquare className="h-4 w-4" />
+            </Button>
           </div>
           <div className="mt-2 text-sm font-medium text-gray-600 pl-11">
             {format(new Date(post.scheduled_for), "h:mm a")}
@@ -586,6 +598,17 @@ export default function Calendar() {
           </div>
         </div>
       </div>
+
+      {/* Edit Idea Dialog */}
+      {editingIdeaId && (
+        <EditIdea
+          ideaId={editingIdeaId}
+          onClose={() => {
+            setEditingIdeaId(null);
+            fetchScheduledPosts();
+          }}
+        />
+      )}
     </>
   );
 }

@@ -121,6 +121,11 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       }
 
       setIdea({ ...idea, script: data.script });
+      
+      toast({
+        title: "Success",
+        description: "Script generated successfully",
+      });
     } catch (error: any) {
       toast({
         variant: "destructive",
