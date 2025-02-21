@@ -4,9 +4,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import {
-  Brain,
-  Bell,
-  Menu,
   LayersIcon,
   Users,
   Video,
@@ -261,12 +258,10 @@ const IdeaGenerator = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
-      <Navbar />
       <header className="fixed w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
         <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Brain className="text-[#4F92FF] w-6 h-6" />
-            <span className="text-xl font-bold">TrendAI</span>
+          <div className="flex items-center">
+            <div className="text-2xl font-bold text-[#4F92FF]">TrendAI</div>
           </div>
           <div className="hidden md:flex items-center gap-8">
             <Link to="/dashboard" className="text-gray-600 hover:text-[#4F92FF] cursor-pointer">
@@ -279,22 +274,12 @@ const IdeaGenerator = () => {
               Calendar
             </Link>
           </div>
-          <div className="flex items-center gap-4">
-            <button className="hidden md:block px-4 py-2 text-[#4F92FF] hover:bg-[#4F92FF]/10 rounded-lg relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
-                3
-              </span>
-            </button>
+          <div className="flex items-center space-x-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="w-8 h-8 rounded-full ring-2 ring-[#4F92FF]/20 overflow-hidden cursor-pointer">
-                  <img
-                    src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
-                    className="w-full h-full object-cover"
-                    alt="Profile"
-                  />
-                </button>
+                <Button variant="ghost" size="icon" className="cursor-pointer">
+                  <User className="h-5 w-5" />
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 bg-white" align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -314,9 +299,6 @@ const IdeaGenerator = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <button className="md:hidden text-gray-600">
-              <Menu className="w-6 h-6" />
-            </button>
           </div>
         </nav>
       </header>
@@ -425,7 +407,7 @@ const IdeaGenerator = () => {
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               {ideas.map((idea) => {
-                const IconComponent: LucideIcon = (icons[idea.symbol as keyof typeof icons] as LucideIcon) || Lightbulb;
+                const IconComponent: LucideIcon = (icons[idea.symbol as keyof icons] as LucideIcon) || Lightbulb;
                 return (
                   <div
                     key={idea.id}

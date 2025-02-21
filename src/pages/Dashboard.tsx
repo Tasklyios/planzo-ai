@@ -9,7 +9,19 @@ import {
   TrendingUpIcon,
   BookmarkIcon,
   MoreVerticalIcon,
+  User,
+  CreditCard,
+  LogOut,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 interface IdeaType {
   title: string;
@@ -110,15 +122,33 @@ const Dashboard = () => {
               <span onClick={() => navigate('/ideas')} className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Ideas</span>
             </nav>
             <div className="flex items-center space-x-4">
-              <button 
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  navigate("/auth");
-                }}
-                className="text-[#222831] hover:text-[#4F92FF]"
-              >
-                Sign Out
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="cursor-pointer">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-white" align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    <span>Billing</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={async () => {
+                    await supabase.auth.signOut();
+                    navigate("/auth");
+                  }}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
