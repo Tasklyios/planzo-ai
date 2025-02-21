@@ -126,15 +126,14 @@ const IdeaGenerator = () => {
         return;
       }
 
-      const scheduledDate = new Date(addingToCalendar.scheduledFor);
-      scheduledDate.setHours(12, 0, 0, 0);
-
-      const { error } = await supabase.from("scheduled_content").insert({
-        title: addingToCalendar.title,
-        platform: addingToCalendar.idea.platform || platform,
-        scheduled_for: scheduledDate.toISOString(),
-        user_id: userId,
-      });
+      // Update video_ideas table directly with scheduled_for
+      const { error } = await supabase
+        .from("video_ideas")
+        .update({
+          scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
+          platform: addingToCalendar.idea.platform || platform,
+        })
+        .eq("id", addingToCalendar.idea.id);
 
       if (error) throw error;
 

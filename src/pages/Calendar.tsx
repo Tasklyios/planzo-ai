@@ -160,8 +160,7 @@ export default function Calendar() {
           user_id,
           scheduled_for
         `)
-        .eq("user_id", sessionData.session.user.id)
-        .not("scheduled_for", "is", null);
+        .eq("user_id", sessionData.session.user.id);
 
       if (scheduledError) throw scheduledError;
 
