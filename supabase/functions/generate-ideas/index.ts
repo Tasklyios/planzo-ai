@@ -15,40 +15,24 @@ serve(async (req) => {
 
   try {
     const { niche, audience, videoType, platform } = await req.json();
+    console.log('Received request with:', { niche, audience, videoType, platform });
 
-    const systemPrompt = `You are an expert social media strategist specializing in viral content creation. 
-    You understand current trends, audience psychology, and what makes content go viral on different platforms. 
-    Your suggestions should be data-driven, engaging, and tailored to platform-specific best practices.`;
+    const systemPrompt = `You are an expert social media content creator specializing in viral content for ${platform}.
+    Your task is to generate engaging, platform-optimized video ideas that have high potential for virality.`;
 
-    const userPrompt = `Create 5 viral-worthy video ideas for ${platform} that will genuinely engage and provide value to the audience.
-
-    Content Parameters:
+    const userPrompt = `Generate 5 viral video ideas based on:
     - Niche: ${niche}
     - Target Audience: ${audience}
-    - Video Type: ${videoType}
-    
-    For each idea, provide:
-    1. A highly clickable, emotionally engaging title (but not clickbait)
-    2. A strategic description explaining why this will work
-    3. The specific content category
-    4. 3 trending, relevant hashtags
-    
-    Consider:
-    - Current trends and viral patterns on ${platform}
-    - Audience pain points and desires
-    - Platform-specific best practices
-    - Hooks that grab attention in first 3 seconds
-    - Storytelling elements that keep viewers engaged
-    - Call-to-actions that drive engagement
-    
-    Format as JSON:
+    - Content Type: ${videoType}
+
+    Each idea must follow this exact JSON format without any additional text or formatting:
     {
       "ideas": [
         {
-          "title": "string",
-          "description": "string",
-          "category": "string",
-          "tags": ["string"]
+          "title": "The exact video title",
+          "description": "A compelling description of the video content",
+          "category": "The content category",
+          "tags": ["tag1", "tag2", "tag3"]
         }
       ]
     }`;
@@ -65,29 +49,48 @@ serve(async (req) => {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.7,
-        max_tokens: 2000,
+        temperature: 0.8,
+        max_tokens: 1000,
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
+      console.error('OpenAI API error:', error);
       throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
-    
+    console.log('OpenAI response:', data);
+
     if (!data.choices?.[0]?.message?.content) {
+      console.error('Invalid OpenAI response format:', data);
       throw new Error('Invalid response from OpenAI');
     }
 
-    const ideas = JSON.parse(data.choices[0].message.content);
-
-    // Validate the response format
-    if (!ideas.ideas || !Array.isArray(ideas.ideas)) {
-      throw new Error('Invalid response format from AI');
+    let ideas;
+    try {
+      ideas = JSON.parse(data.choices[0].message.content);
+    } catch (error) {
+      console.error('Error parsing OpenAI response:', error);
+      console.error('Raw content:', data.choices[0].message.content);
+      throw new Error('Failed to parse AI response');
     }
 
+    if (!ideas.ideas || !Array.isArray(ideas.ideas)) {
+      console.error('Invalid ideas format:', ideas);
+      throw new Error('Invalid ideas format from AI');
+    }
+
+    // Validate each idea has the required fields
+    ideas.ideas = ideas.ideas.map(idea => ({
+      title: String(idea.title || ''),
+      description: String(idea.description || ''),
+      category: String(idea.category || 'General'),
+      tags: Array.isArray(idea.tags) ? idea.tags.map(String) : []
+    }));
+
+    console.log('Sending response:', ideas);
     return new Response(JSON.stringify(ideas), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
