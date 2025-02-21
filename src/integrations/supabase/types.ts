@@ -36,6 +36,38 @@ export type Database = {
         }
         Relationships: []
       }
+      scripts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          idea_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          idea_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          idea_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scripts_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "video_ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_ideas: {
         Row: {
           category: string | null

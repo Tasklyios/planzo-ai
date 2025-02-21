@@ -24,13 +24,6 @@ interface GeneratedIdea {
   platform?: string;
 }
 
-interface Script {
-  id: string;
-  idea_id: string;
-  content: string;
-  created_at: string;
-}
-
 const Scripts = () => {
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
   const [selectedIdea, setSelectedIdea] = useState<GeneratedIdea | null>(null);
@@ -86,11 +79,18 @@ const Scripts = () => {
 
       // Save the script to the database
       const { data: sessionData } = await supabase.auth.getSession();
-      const { error: saveError } = await supabase.from("scripts").insert({
-        idea_id: idea.id,
+      
+      // Type the insert data explicitly
+      const scriptData = {
         content: data.script,
+        idea_id: idea.id,
         user_id: sessionData.session?.user.id,
-      });
+      };
+
+      // Using type assertion to handle the new scripts table
+      const { error: saveError } = await supabase
+        .from('scripts')
+        .insert(scriptData as any); // Using type assertion as a temporary solution
 
       if (saveError) throw saveError;
 
