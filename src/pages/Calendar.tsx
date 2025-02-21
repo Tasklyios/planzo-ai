@@ -141,7 +141,6 @@ export default function Calendar() {
         return;
       }
 
-      // First, get all video ideas that have schedules
       const { data: scheduledData, error: scheduledError } = await supabase
         .from("video_ideas")
         .select(`
@@ -162,10 +161,9 @@ export default function Calendar() {
 
       if (scheduledError) throw scheduledError;
 
-      // Map the data to include scheduled_for
       const formattedPosts: ScheduledPost[] = scheduledData?.map(post => ({
         ...post,
-        scheduled_for: new Date().toISOString(), // Default value
+        scheduled_for: new Date().toISOString(),
         description: post.description || "",
       })) || [];
 
@@ -191,7 +189,6 @@ export default function Calendar() {
         return;
       }
 
-      // Create the new video idea first
       const { data: videoIdea, error: videoError } = await supabase
         .from("video_ideas")
         .insert({
@@ -209,7 +206,6 @@ export default function Calendar() {
 
       if (videoError) throw videoError;
 
-      // Create a scheduled post entry
       const scheduledPost: ScheduledPost = {
         ...videoIdea,
         scheduled_for: new Date().toISOString(),
@@ -232,7 +228,6 @@ export default function Calendar() {
   };
 
   const openEditDialog = (post: ScheduledPost) => {
-    // Important: This now correctly sets the editingIdeaId using the video_ideas id
     setEditingIdeaId(post.id);
   };
 
@@ -435,7 +430,7 @@ export default function Calendar() {
           ideaId={editingIdeaId}
           onClose={() => {
             setEditingIdeaId(null);
-            fetchScheduledPosts(); // Refresh the posts after editing
+            fetchScheduledPosts();
           }}
         />
       )}
