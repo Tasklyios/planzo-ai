@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -23,6 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { format } from "date-fns";
 
 interface GeneratedIdea {
   id: string;
@@ -31,6 +31,12 @@ interface GeneratedIdea {
   description: string;
   tags: string[];
   platform?: string;
+}
+
+interface AddToCalendarIdea {
+  idea: GeneratedIdea;
+  title: string;
+  scheduledFor: string;
 }
 
 const IdeaGenerator = () => {
@@ -43,6 +49,7 @@ const IdeaGenerator = () => {
   const [editingIdea, setEditingIdea] = useState<GeneratedIdea | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
 
   // Load saved ideas on mount
   useEffect(() => {
@@ -75,6 +82,17 @@ const IdeaGenerator = () => {
   };
 
   const addToCalendar = async (idea: GeneratedIdea) => {
+    // Initialize the dialog with the idea's title and current date
+    setAddingToCalendar({
+      idea,
+      title: idea.title,
+      scheduledFor: new Date().toISOString().split('T')[0],
+    });
+  };
+
+  const handleAddToCalendar = async () => {
+    if (!addingToCalendar) return;
+
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user.id;
@@ -84,12 +102,12 @@ const IdeaGenerator = () => {
         return;
       }
 
-      const scheduledDate = new Date();
+      const scheduledDate = new Date(addingToCalendar.scheduledFor);
       scheduledDate.setHours(12, 0, 0, 0);
 
       const { error } = await supabase.from("scheduled_content").insert({
-        title: idea.title,
-        platform: idea.platform || platform,
+        title: addingToCalendar.title,
+        platform: addingToCalendar.idea.platform || platform,
         scheduled_for: scheduledDate.toISOString(),
         user_id: userId,
       });
@@ -101,6 +119,7 @@ const IdeaGenerator = () => {
         description: "Idea added to calendar",
       });
 
+      setAddingToCalendar(null);
       navigate("/calendar");
     } catch (error: any) {
       toast({
@@ -403,6 +422,45 @@ const IdeaGenerator = () => {
         )}
       </main>
 
+      {/* Add to Calendar Dialog */}
+      <Dialog open={addingToCalendar !== null} onOpenChange={(open) => !open && setAddingToCalendar(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add to Calendar</DialogTitle>
+          </DialogHeader>
+          {addingToCalendar && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="title">Title</label>
+                <Input
+                  id="title"
+                  value={addingToCalendar.title}
+                  onChange={(e) => setAddingToCalendar({ ...addingToCalendar, title: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="scheduled_for">Date</label>
+                <Input
+                  id="scheduled_for"
+                  type="date"
+                  value={addingToCalendar.scheduledFor}
+                  onChange={(e) => setAddingToCalendar({ ...addingToCalendar, scheduledFor: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddingToCalendar(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddToCalendar}>
+              Add to Calendar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Idea Dialog */}
       <Dialog open={editingIdea !== null} onOpenChange={(open) => !open && setEditingIdea(null)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
