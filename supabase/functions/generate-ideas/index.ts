@@ -1,38 +1,89 @@
-
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { niche, audience, videoType, platform } = await req.json();
-    console.log('Received request with:', { niche, audience, videoType, platform });
+    const { type, title, description, platform, tags } = await req.json();
 
-    const systemPrompt = `You are an expert social media content creator specializing in viral content for ${platform}.
-    Your task is to generate engaging, platform-optimized video ideas that have high potential for virality.`;
+    // If type is script, generate a video script
+    if (type === 'script') {
+      const prompt = `Create an engaging script for a ${platform} video with the following details:
+      Title: ${title}
+      Description: ${description}
+      Tags: ${tags.join(', ')}
+      
+      Write a compelling script that:
+      1. Starts with a strong hook to grab attention in the first 3 seconds
+      2. Follows a clear structure (hook, introduction, main points, call to action)
+      3. Uses conversational language appropriate for ${platform}
+      4. Includes timestamps or section breaks
+      5. Ends with a strong call to action
+      
+      Format the response as a well-structured script with sections clearly marked.`;
 
-    const userPrompt = `Generate 5 viral video ideas based on:
-    - Niche: ${niche}
-    - Target Audience: ${audience}
-    - Content Type: ${videoType}
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert video script writer who specializes in creating viral social media content.',
+            },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 1000,
+        }),
+      });
 
-    Each idea must follow this exact JSON format without any additional text or formatting:
+      const data = await response.json();
+      
+      if (!data.choices?.[0]?.message?.content) {
+        throw new Error('Failed to generate script');
+      }
+
+      // Return the script in the expected format
+      return new Response(
+        JSON.stringify({
+          script: data.choices[0].message.content,
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Handle regular idea generation (keeping existing functionality)
+    const prompt = `Generate 5 viral video ideas for ${platform} with the following criteria:
+    - Niche: ${title}
+    - Target Audience: ${description}
+    
+    For each idea, provide:
+    - A catchy title
+    - A brief description
+    - Category
+    - 3 relevant hashtags (without the # symbol)
+    
+    Format the response as JSON with this structure:
     {
       "ideas": [
         {
-          "title": "The exact video title",
-          "description": "A compelling description of the video content",
-          "category": "The content category",
-          "tags": ["tag1", "tag2", "tag3"]
+          "title": "string",
+          "description": "string",
+          "category": "string",
+          "tags": ["string"]
         }
       ]
     }`;
@@ -44,64 +95,28 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
+          {
+            role: 'system',
+            content: 'You are a social media content strategist who helps creators make viral content.',
+          },
+          { role: 'user', content: prompt },
         ],
-        temperature: 0.8,
-        max_tokens: 1000,
+        temperature: 0.7,
       }),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('OpenAI API error:', error);
-      throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
-    }
-
     const data = await response.json();
-    console.log('OpenAI response:', data);
+    const ideas = JSON.parse(data.choices[0].message.content);
 
-    if (!data.choices?.[0]?.message?.content) {
-      console.error('Invalid OpenAI response format:', data);
-      throw new Error('Invalid response from OpenAI');
-    }
-
-    let ideas;
-    try {
-      ideas = JSON.parse(data.choices[0].message.content);
-    } catch (error) {
-      console.error('Error parsing OpenAI response:', error);
-      console.error('Raw content:', data.choices[0].message.content);
-      throw new Error('Failed to parse AI response');
-    }
-
-    if (!ideas.ideas || !Array.isArray(ideas.ideas)) {
-      console.error('Invalid ideas format:', ideas);
-      throw new Error('Invalid ideas format from AI');
-    }
-
-    // Validate each idea has the required fields
-    ideas.ideas = ideas.ideas.map(idea => ({
-      title: String(idea.title || ''),
-      description: String(idea.description || ''),
-      category: String(idea.category || 'General'),
-      tags: Array.isArray(idea.tags) ? idea.tags.map(String) : []
-    }));
-
-    console.log('Sending response:', ideas);
     return new Response(JSON.stringify(ideas), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-
   } catch (error) {
-    console.error('Error in generate-ideas function:', error);
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({
-        error: 'Failed to generate ideas. Please try again.',
-        details: error.message
-      }),
+      JSON.stringify({ error: error.message }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
