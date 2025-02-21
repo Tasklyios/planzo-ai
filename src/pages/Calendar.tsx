@@ -343,6 +343,23 @@ export default function Calendar() {
     return format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
   };
 
+  const renderEventDots = (date: Date) => {
+    const posts = getPostsForDate(date);
+    return (
+      <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+        {posts.map((post, index) => (
+          <div
+            key={`${post.id}-${index}`}
+            className={cn(
+              "w-1.5 h-1.5 rounded-full",
+              getColorClasses(post.color)
+            )}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <>
       <Navbar />
@@ -372,28 +389,25 @@ export default function Calendar() {
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1">
-                {daysInMonth.map((date) => {
-                  const hasEvents = getPostsForDate(date).length > 0;
-                  return (
-                    <div
-                      key={date.toString()}
-                      className={cn(
-                        "aspect-square flex items-center justify-center relative",
-                        !isSameMonth(date, currentDate) && "text-gray-400",
-                        isToday(date) && "font-bold"
-                      )}
-                      onClick={() => setSelectedDate(date)}
-                    >
-                      <span className={cn(
-                        "w-8 h-8 flex items-center justify-center rounded-full text-sm",
-                        isSelectedDate(date) && "bg-primary text-white",
-                        hasEvents && !isSelectedDate(date) && "border-2 border-primary"
-                      )}>
-                        {format(date, "d")}
-                      </span>
-                    </div>
-                  );
-                })}
+                {daysInMonth.map((date) => (
+                  <div
+                    key={date.toString()}
+                    className={cn(
+                      "aspect-square flex items-center justify-center relative",
+                      !isSameMonth(date, currentDate) && "text-gray-400",
+                      isToday(date) && "font-bold"
+                    )}
+                    onClick={() => setSelectedDate(date)}
+                  >
+                    {renderEventDots(date)}
+                    <span className={cn(
+                      "w-8 h-8 flex items-center justify-center rounded-full text-sm",
+                      isSelectedDate(date) && "bg-primary text-white",
+                    )}>
+                      {format(date, "d")}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 
