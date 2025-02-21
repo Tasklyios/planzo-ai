@@ -38,6 +38,9 @@ interface ScheduledPost {
   description?: string;
   category?: string;
   tags?: string[];
+  is_saved?: boolean;
+  script?: string;
+  user_id?: string;
 }
 
 const availableSymbols = [
@@ -159,14 +162,16 @@ export default function Calendar() {
         return;
       }
 
-      const newPost = {
+      const newPost: Omit<ScheduledPost, 'id' | 'created_at'> = {
         title: `New ${platform} Post`,
         platform,
-        scheduled_for: new Date().toISOString(),
-        user_id: userId,
+        scheduled_for: new Date().toISOString(), // Make sure this is included
         description: "",
         category: "",
         tags: [],
+        user_id: userId,
+        symbol: "calendar",
+        color: "blue",
       };
 
       const { data, error } = await supabase
@@ -177,8 +182,14 @@ export default function Calendar() {
 
       if (error) throw error;
 
-      setScheduledPosts([...scheduledPosts, data]);
-      setEditingIdeaId(data.id); // Open edit dialog for the new post
+      // Ensure the returned data has all required ScheduledPost properties
+      const scheduledPost: ScheduledPost = {
+        ...data,
+        scheduled_for: data.scheduled_for || new Date().toISOString(),
+      };
+
+      setScheduledPosts([...scheduledPosts, scheduledPost]);
+      setEditingIdeaId(scheduledPost.id);
       
       toast({
         title: "Success",
