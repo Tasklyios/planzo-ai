@@ -200,7 +200,7 @@ export default function Calendar() {
           title: post.title,
           scheduled_for: post.scheduled_for,
           symbol: post.symbol,
-          color: post.color,
+          color: post.color
         })
         .eq("id", post.id)
         .eq("user_id", userId);
@@ -234,7 +234,7 @@ export default function Calendar() {
         title: editingTitle,
         scheduled_for: editingScheduledFor,
         symbol: selectedSymbol,
-        color: selectedColor,
+        color: selectedColor
       };
       await handleEditPost(updatedPost);
     }
