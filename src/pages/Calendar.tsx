@@ -3,7 +3,8 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, PenSquare, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -20,6 +21,7 @@ export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
+  const [editingPost, setEditingPost] = useState<ScheduledPost | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -63,7 +65,7 @@ export default function Calendar() {
     end: endOfMonth(currentDate),
   });
 
-  const handleNewPost = async (platform: string) => {
+  const handleEditPost = async (post: ScheduledPost) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user.id;
@@ -73,21 +75,27 @@ export default function Calendar() {
         return;
       }
 
-      const { error } = await supabase.from("scheduled_content").insert({
-        title: `New ${platform} Post`,
-        platform,
-        scheduled_for: selectedDate.toISOString(),
-        user_id: userId,
-      });
+      const { error } = await supabase
+        .from("scheduled_content")
+        .update({
+          title: post.title,
+          scheduled_for: post.scheduled_for,
+        })
+        .eq("id", post.id)
+        .eq("user_id", userId);
 
       if (error) throw error;
 
+      setScheduledPosts(posts =>
+        posts.map(p => p.id === post.id ? post : p)
+      );
+
       toast({
         title: "Success",
-        description: "New post scheduled successfully",
+        description: "Post updated successfully",
       });
 
-      fetchScheduledPosts();
+      setEditingPost(null);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -164,7 +172,7 @@ export default function Calendar() {
             </div>
 
             <div className="grid grid-cols-7 divide-x divide-y divide-gray-100">
-              {daysInMonth.map((date, index) => {
+              {daysInMonth.map((date) => {
                 const posts = getPostsForDate(date);
                 return (
                   <div
@@ -188,6 +196,14 @@ export default function Calendar() {
                         <div className="flex items-center">
                           <i className={`fa-brands fa-${post.platform.toLowerCase()} text-xs mr-2`}></i>
                           <span className="text-xs">{post.title}</span>
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button variant="ghost" size="icon" onClick={() => setEditingPost(post)}>
+                            <PenSquare className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon">
+                            <Clock className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -231,7 +247,7 @@ export default function Calendar() {
                       </span>
                     </div>
                     <div className="flex justify-end space-x-2">
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" onClick={() => setEditingPost(post)}>
                         <PenSquare className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon">
@@ -240,25 +256,40 @@ export default function Calendar() {
                     </div>
                   </div>
                 ))}
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add New Post
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
+                <Dialog open={editingPost !== null} onOpenChange={(open) => !open && setEditingPost(null)}>
+                  <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                      <DialogTitle>Schedule New Post</DialogTitle>
+                      <DialogTitle>Edit Scheduled Post</DialogTitle>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <Button onClick={() => handleNewPost("Instagram")} className="bg-gradient-to-r from-purple-500 to-pink-500">
-                        Instagram Post
+                    {editingPost && (
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <label htmlFor="title">Title</label>
+                          <Input
+                            id="title"
+                            value={editingPost.title}
+                            onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <label htmlFor="scheduled_for">Scheduled For</label>
+                          <Input
+                            id="scheduled_for"
+                            type="datetime-local"
+                            value={format(new Date(editingPost.scheduled_for), "yyyy-MM-dd'T'HH:mm")}
+                            onChange={(e) => setEditingPost({ ...editingPost, scheduled_for: new Date(e.target.value).toISOString() })}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setEditingPost(null)}>
+                        Cancel
                       </Button>
-                      <Button onClick={() => handleNewPost("TikTok")} className="bg-black">
-                        TikTok Video
+                      <Button onClick={() => editingPost && handleEditPost(editingPost)}>
+                        Save Changes
                       </Button>
-                    </div>
+                    </DialogFooter>
                   </DialogContent>
                 </Dialog>
               </div>

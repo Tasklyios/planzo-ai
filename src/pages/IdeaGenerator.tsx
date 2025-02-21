@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -18,8 +18,10 @@ import {
   CalendarPlus,
   PenSquare,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface GeneratedIdea {
   id: string;
@@ -27,17 +29,49 @@ interface GeneratedIdea {
   category: string;
   description: string;
   tags: string[];
+  platform?: string;
 }
 
 const IdeaGenerator = () => {
-  const [niche, setNiche] = useState("");
-  const [audience, setAudience] = useState("");
-  const [videoType, setVideoType] = useState("");
-  const [platform, setPlatform] = useState("TikTok");
+  const [niche, setNiche] = useState(() => localStorage.getItem("niche") || "");
+  const [audience, setAudience] = useState(() => localStorage.getItem("audience") || "");
+  const [videoType, setVideoType] = useState(() => localStorage.getItem("videoType") || "");
+  const [platform, setPlatform] = useState(() => localStorage.getItem("platform") || "TikTok");
   const [loading, setLoading] = useState(false);
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
+  const [editingIdea, setEditingIdea] = useState<GeneratedIdea | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Load saved ideas on mount
+  useEffect(() => {
+    fetchSavedIdeas();
+  }, []);
+
+  // Save inputs to localStorage
+  useEffect(() => {
+    localStorage.setItem("niche", niche);
+    localStorage.setItem("audience", audience);
+    localStorage.setItem("videoType", videoType);
+    localStorage.setItem("platform", platform);
+  }, [niche, audience, videoType, platform]);
+
+  const fetchSavedIdeas = async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) return;
+
+      const { data, error } = await supabase
+        .from("video_ideas")
+        .select("*")
+        .eq("user_id", sessionData.session.user.id);
+
+      if (error) throw error;
+      setIdeas(data || []);
+    } catch (error: any) {
+      console.error("Error fetching ideas:", error);
+    }
+  };
 
   const addToCalendar = async (idea: GeneratedIdea) => {
     try {
@@ -50,11 +84,11 @@ const IdeaGenerator = () => {
       }
 
       const scheduledDate = new Date();
-      scheduledDate.setHours(12, 0, 0, 0); // Set to noon by default
+      scheduledDate.setHours(12, 0, 0, 0);
 
       const { error } = await supabase.from("scheduled_content").insert({
         title: idea.title,
-        platform: platform,
+        platform: idea.platform || platform,
         scheduled_for: scheduledDate.toISOString(),
         user_id: userId,
       });
@@ -76,7 +110,7 @@ const IdeaGenerator = () => {
     }
   };
 
-  const editIdea = async (idea: GeneratedIdea) => {
+  const handleEditIdea = async (updatedIdea: GeneratedIdea) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user.id;
@@ -89,20 +123,27 @@ const IdeaGenerator = () => {
       const { error } = await supabase
         .from("video_ideas")
         .update({
-          title: idea.title,
-          description: idea.description,
-          category: idea.category,
-          tags: idea.tags,
+          title: updatedIdea.title,
+          description: updatedIdea.description,
+          category: updatedIdea.category,
+          tags: updatedIdea.tags,
+          platform: updatedIdea.platform || platform,
         })
-        .eq("id", idea.id)
+        .eq("id", updatedIdea.id)
         .eq("user_id", userId);
 
       if (error) throw error;
+
+      setIdeas(ideas.map(idea => 
+        idea.id === updatedIdea.id ? updatedIdea : idea
+      ));
 
       toast({
         title: "Success",
         description: "Idea updated successfully",
       });
+      
+      setEditingIdea(null);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -315,8 +356,8 @@ const IdeaGenerator = () => {
               </div>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
-              {ideas.map((idea, index) => (
-                <div key={index} className="group bg-[#F9FAFC] rounded-xl p-6 hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-[#4F92FF]/20">
+              {ideas.map((idea) => (
+                <div key={idea.id} className="group bg-[#F9FAFC] rounded-xl p-6 hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-[#4F92FF]/20">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-[#4F92FF]/10 flex items-center justify-center text-[#4F92FF]">
@@ -339,27 +380,78 @@ const IdeaGenerator = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => editIdea(idea)}
+                        onClick={() => setEditingIdea(idea)}
                       >
                         <PenSquare className="h-4 w-4 mr-2" />
                         Edit
-                      </Button>
-                    </div>
-                  </div>
-                  <p className="text-gray-600">{idea.description}</p>
-                  <div className="flex gap-3 mt-4">
-                    {idea.tags.map((tag, tagIndex) => (
-                      <span key={tagIndex} className="px-3 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-sm rounded-full">
-                        #{tag}
-                      </span>
-                    ))}
+                    </Button>
                   </div>
                 </div>
-              ))}
+                <p className="text-gray-600">{idea.description}</p>
+                <div className="flex gap-3 mt-4">
+                  {idea.tags.map((tag, tagIndex) => (
+                    <span key={tagIndex} className="px-3 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-sm rounded-full">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <Dialog open={editingIdea !== null} onOpenChange={(open) => !open && setEditingIdea(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Idea</DialogTitle>
+          </DialogHeader>
+          {editingIdea && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="title">Title</label>
+                <Input
+                  id="title"
+                  value={editingIdea.title}
+                  onChange={(e) => setEditingIdea({ ...editingIdea, title: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="category">Category</label>
+                <Input
+                  id="category"
+                  value={editingIdea.category}
+                  onChange={(e) => setEditingIdea({ ...editingIdea, category: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="description">Description</label>
+                <Textarea
+                  id="description"
+                  value={editingIdea.description}
+                  onChange={(e) => setEditingIdea({ ...editingIdea, description: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="tags">Tags (comma-separated)</label>
+                <Input
+                  id="tags"
+                  value={editingIdea.tags.join(", ")}
+                  onChange={(e) => setEditingIdea({ ...editingIdea, tags: e.target.value.split(",").map(tag => tag.trim()) })}
+                />
+              </div>
             </div>
-          </section>
-        )}
-      </main>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingIdea(null)}>
+              Cancel
+            </Button>
+            <Button onClick={() => editingIdea && handleEditIdea(editingIdea)}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
