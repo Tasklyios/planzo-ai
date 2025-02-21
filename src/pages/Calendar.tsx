@@ -274,6 +274,14 @@ export default function Calendar() {
           "mt-2 p-2 rounded-lg border cursor-pointer transition-colors",
           colorClasses
         )}
+        onClick={() => {
+          setEditingPost(post);
+          setEditingTitle(post.title);
+          setEditingScheduledFor(post.scheduled_for);
+          setSelectedSymbol(post.symbol || "calendar");
+          setSelectedColor(post.color || "blue");
+          setIsEditDialogOpen(true);
+        }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -286,7 +294,12 @@ export default function Calendar() {
             className="hover:bg-white/20"
             onClick={(e) => {
               e.stopPropagation();
-              openEditDialog(post);
+              setEditingPost(post);
+              setEditingTitle(post.title);
+              setEditingScheduledFor(post.scheduled_for);
+              setSelectedSymbol(post.symbol || "calendar");
+              setSelectedColor(post.color || "blue");
+              setIsEditDialogOpen(true);
             }}
           >
             <PenSquare className="h-4 w-4 text-white" />
@@ -303,6 +316,14 @@ export default function Calendar() {
         "p-4 rounded-xl border transition-all shadow-sm",
         getColorClasses(post.color, 'gradient')
       )}
+      onClick={() => {
+        setEditingPost(post);
+        setEditingTitle(post.title);
+        setEditingScheduledFor(post.scheduled_for);
+        setSelectedSymbol(post.symbol || "calendar");
+        setSelectedColor(post.color || "blue");
+        setIsEditDialogOpen(true);
+      }}
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-3">
@@ -327,6 +348,11 @@ export default function Calendar() {
         onClick={(e) => {
           e.stopPropagation();
           setEditingPost(post);
+          setEditingTitle(post.title);
+          setEditingScheduledFor(post.scheduled_for);
+          setSelectedSymbol(post.symbol || "calendar");
+          setSelectedColor(post.color || "blue");
+          setIsEditDialogOpen(true);
         }}
         className="hover:bg-white/20"
       >
