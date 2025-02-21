@@ -44,24 +44,6 @@ interface GeneratedIdea {
   color?: string;
 }
 
-// Define available icons map
-const IconMap = {
-  Lightbulb,
-  LayersIcon,
-  Users,
-  Video,
-  Smartphone,
-  Wand2,
-  Filter,
-  ArrowDownWideNarrow,
-  CalendarPlus,
-  PenSquare,
-  User,
-  CreditCard,
-  LogOut,
-  Menu,
-} as const;
-
 interface AddToCalendarIdea {
   idea: GeneratedIdea;
   title: string;
@@ -82,6 +64,24 @@ interface SupabaseIdea {
   script?: string;
   user_id?: string;
 }
+
+// Define available icons map
+const IconMap = {
+  Lightbulb,
+  LayersIcon,
+  Users,
+  Video,
+  Smartphone,
+  Wand2,
+  Filter,
+  ArrowDownWideNarrow,
+  CalendarPlus,
+  PenSquare,
+  User,
+  CreditCard,
+  LogOut,
+  Menu,
+} as const;
 
 const IdeaGenerator = () => {
   const [niche, setNiche] = useState(() => localStorage.getItem("niche") || "");
