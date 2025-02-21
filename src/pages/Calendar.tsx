@@ -15,12 +15,12 @@ import {
   Film,
   BookOpen,
   Camera,
-  Palette
+  Palette,
+  Menu,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -127,6 +127,7 @@ export default function Calendar() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetchScheduledPosts();
@@ -313,44 +314,47 @@ export default function Calendar() {
     <>
       <Navbar />
       <div className="container mx-auto py-20">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl font-bold text-[#222831] hover:text-primary cursor-pointer" onClick={() => navigate("/calendar")}>
-              Content Calendar
-            </h2>
-            <p className="text-gray-600">Plan and schedule your content across platforms</p>
-          </div>
-          <div className="flex space-x-3">
-            <Button variant="outline">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              Month
-            </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Post
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Schedule New Post</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <Button onClick={() => handleNewPost("Instagram")} className="bg-gradient-to-r from-purple-500 to-pink-500">
-                    Instagram Post
-                  </Button>
-                  <Button onClick={() => handleNewPost("TikTok")} className="bg-black">
-                    TikTok Video
-                  </Button>
+        <div className="flex flex-col space-y-6">
+          {/* Mobile: Daily View First */}
+          <div className="md:hidden bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>
+              <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
+            </div>
+            <div className="space-y-3">
+              {getPostsForDate(selectedDate).map(post => (
+                <div
+                  key={post.id}
+                  className={cn(
+                    "p-3 rounded-lg transition-all cursor-pointer",
+                    getColorClasses(post.color, 'gradient')
+                  )}
+                  onClick={() => openEditDialog(post)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className={cn(
+                        "w-6 h-6 rounded-lg flex items-center justify-center",
+                        getColorClasses(post.color)
+                      )}>
+                        {(() => {
+                          const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
+                          return <IconComponent className="h-3 w-3 text-white" />;
+                        })()}
+                      </div>
+                      <span className="font-medium text-sm text-gray-800">{post.title}</span>
+                    </div>
+                    <span className="text-xs font-medium text-gray-600">
+                      {format(new Date(post.scheduled_for), "h:mm a")}
+                    </span>
+                  </div>
                 </div>
-              </DialogContent>
-            </Dialog>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="flex gap-6">
-          <div className="w-2/3 bg-white rounded-xl shadow-sm border border-gray-100">
+          {/* Calendar Grid */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
               <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
               <div className="flex space-x-2">
@@ -365,7 +369,7 @@ export default function Calendar() {
 
             <div className="grid grid-cols-7 text-sm">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div key={day} className="p-4 text-center font-medium text-gray-600">
+                <div key={day} className="p-2 md:p-4 text-center font-medium text-gray-600">
                   {day}
                 </div>
               ))}
@@ -377,21 +381,32 @@ export default function Calendar() {
                 return (
                   <div
                     key={date.toString()}
-                    className={`min-h-[100px] p-3 cursor-pointer ${
+                    className={`min-h-[80px] md:min-h-[100px] p-2 md:p-3 cursor-pointer ${
                       !isSameMonth(date, currentDate) ? "text-gray-400" :
                       isToday(date) ? "bg-blue-50/30" : "hover:bg-gray-50"
                     }`}
                     onClick={() => setSelectedDate(date)}
                   >
                     <span className={isToday(date) ? "font-medium" : ""}>{format(date, "d")}</span>
-                    {posts.map((post) => renderPost(post))}
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {posts.map((post) => (
+                        <div
+                          key={post.id}
+                          className={cn(
+                            "w-2 h-2 rounded-full",
+                            getColorClasses(post.color)
+                          )}
+                        />
+                      ))}
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          <div className="w-1/3">
+          {/* Desktop: Daily View Sidebar */}
+          <div className="hidden md:block w-1/3">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>

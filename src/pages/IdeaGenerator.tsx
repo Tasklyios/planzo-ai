@@ -17,21 +17,13 @@ import {
   User,
   CreditCard,
   LogOut,
+  Menu,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import EditIdea from "@/components/EditIdea";
-import * as icons from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { LucideIcon } from 'lucide-react';
 
 interface GeneratedIdea {
   id: string;
@@ -40,7 +32,7 @@ interface GeneratedIdea {
   description: string;
   tags: string[];
   platform?: string;
-  symbol?: keyof typeof icons;
+  symbol?: string;
   color?: string;
 }
 
@@ -76,6 +68,7 @@ const IdeaGenerator = () => {
   const navigate = useNavigate();
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const validateIconKey = (key: string | undefined): keyof typeof icons => {
     if (!key || !(key in icons)) {
@@ -275,237 +268,227 @@ const IdeaGenerator = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="cursor-pointer">
-                  <User className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-white" align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  <span>Billing</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="hidden md:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="cursor-pointer">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-white" align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    <span>Billing</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <Button variant="ghost" className="md:hidden" size="icon" onClick={() => setMobileMenuOpen(true)}>
+              <Menu className="h-6 w-6" />
+            </Button>
           </div>
         </nav>
+        
+        {/* Mobile Menu Dialog */}
+        <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <DialogContent className="h-screen w-screen sm:max-w-[300px] p-0">
+            <div className="flex flex-col h-full bg-white">
+              <div className="p-4 border-b">
+                <h2 className="text-lg font-semibold">Menu</h2>
+              </div>
+              <div className="flex-1 overflow-auto py-4">
+                <div className="space-y-3 px-4">
+                  <Link 
+                    to="/dashboard" 
+                    className="block py-2 text-gray-600 hover:text-[#4F92FF]"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link 
+                    to="/ideas" 
+                    className="block py-2 text-gray-600 hover:text-[#4F92FF]"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Ideas
+                  </Link>
+                  <Link 
+                    to="/calendar" 
+                    className="block py-2 text-gray-600 hover:text-[#4F92FF]"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Calendar
+                  </Link>
+                </div>
+              </div>
+              <div className="border-t p-4">
+                <Button onClick={handleLogout} className="w-full">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </header>
 
       <main className="container mx-auto px-4 pt-28 pb-12">
         <section className="mb-12">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-[#222831] mb-4">Video Idea Generator</h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Generate trending video ideas tailored to your niche and audience. Our AI analyzes current trends to suggest viral-worthy content.
+            <h1 className="text-4xl md:text-4xl font-bold text-[#222831] mb-4">Video Idea Generator</h1>
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm md:text-base">
+              Generate trending video ideas tailored to your niche and audience.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
+            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3">
                 <LayersIcon className="text-[#4F92FF] w-5 h-5" />
-                <label className="text-sm font-medium text-gray-700">What niche is your content?</label>
+                <div className="flex-1 w-full">
+                  <label className="text-xs md:text-sm font-medium text-gray-700 block md:mb-2">Niche</label>
+                  <input
+                    type="text"
+                    value={niche}
+                    onChange={(e) => setNiche(e.target.value)}
+                    className="w-full p-2 md:p-3 border border-[#EAECEF] rounded-lg bg-[#F9FAFC] text-sm"
+                    placeholder="Your niche"
+                  />
+                </div>
               </div>
-              <input
-                type="text"
-                value={niche}
-                onChange={(e) => setNiche(e.target.value)}
-                className="w-full p-3 border border-[#EAECEF] rounded-lg bg-[#F9FAFC]"
-                placeholder="Enter your content niche"
-              />
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-3">
+            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3">
                 <Users className="text-[#4F92FF] w-5 h-5" />
-                <label className="text-sm font-medium text-gray-700">Target Audience</label>
+                <div className="flex-1 w-full">
+                  <label className="text-xs md:text-sm font-medium text-gray-700 block md:mb-2">Audience</label>
+                  <input
+                    type="text"
+                    value={audience}
+                    onChange={(e) => setAudience(e.target.value)}
+                    className="w-full p-2 md:p-3 border border-[#EAECEF] rounded-lg bg-[#F9FAFC] text-sm"
+                    placeholder="Target audience"
+                  />
+                </div>
               </div>
-              <input
-                type="text"
-                value={audience}
-                onChange={(e) => setAudience(e.target.value)}
-                className="w-full p-3 border border-[#EAECEF] rounded-lg bg-[#F9FAFC]"
-                placeholder="Enter your target audience"
-              />
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-3">
+            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3">
                 <Video className="text-[#4F92FF] w-5 h-5" />
-                <label className="text-sm font-medium text-gray-700">What type of video?</label>
+                <div className="flex-1 w-full">
+                  <label className="text-xs md:text-sm font-medium text-gray-700 block md:mb-2">Type</label>
+                  <input
+                    type="text"
+                    value={videoType}
+                    onChange={(e) => setVideoType(e.target.value)}
+                    className="w-full p-2 md:p-3 border border-[#EAECEF] rounded-lg bg-[#F9FAFC] text-sm"
+                    placeholder="Video type"
+                  />
+                </div>
               </div>
-              <input
-                type="text"
-                value={videoType}
-                onChange={(e) => setVideoType(e.target.value)}
-                className="w-full p-3 border border-[#EAECEF] rounded-lg bg-[#F9FAFC]"
-                placeholder="e.g Educational, Entertainment"
-              />
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-3">
+            <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3">
                 <Smartphone className="text-[#4F92FF] w-5 h-5" />
-                <label className="text-sm font-medium text-gray-700">Platform</label>
-              </div>
-              <select
-                value={platform}
-                onChange={(e) => setPlatform(e.target.value)}
-                className="w-full p-3 border border-[#EAECEF] rounded-lg bg-[#F9FAFC]"
-              >
-                <option>TikTok</option>
-                <option>Instagram Reels</option>
-                <option>YouTube Shorts</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex justify-center">
-            <button
-              onClick={generateIdeas}
-              disabled={loading}
-              className="px-8 py-4 bg-[#4F92FF] text-white rounded-xl hover:bg-[#4F92FF]/90 transition-colors shadow-lg shadow-[#4F92FF]/20 hover:shadow-xl hover:shadow-[#4F92FF]/30 flex items-center gap-2"
-            >
-              {loading ? (
-                <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Wand2 className="w-5 h-5" />
-                  Generate Viral Ideas
-                </>
-              )}
-            </button>
-          </div>
-        </section>
-
-        {ideas.length > 0 && (
-          <section className="bg-white rounded-xl shadow-sm p-8">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-[#222831]">Your Video Ideas</h2>
-              <div className="flex gap-3">
-                <button className="px-4 py-2 text-gray-600 hover:text-[#4F92FF] bg-gray-50 rounded-lg flex items-center gap-2">
-                  <Filter className="w-4 h-4" />
-                  Filter
-                </button>
-                <button className="px-4 py-2 text-gray-600 hover:text-[#4F92FF] bg-gray-50 rounded-lg flex items-center gap-2">
-                  <ArrowDownWideNarrow className="w-4 h-4" />
-                  Sort
-                </button>
-              </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              {ideas.map((idea) => {
-                const IconComponent: LucideIcon = (icons[idea.symbol as keyof icons] as LucideIcon) || Lightbulb;
-                return (
-                  <div
-                    key={idea.id}
-                    className="group bg-[#F9FAFC] rounded-xl p-6 hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-[#4F92FF]/20"
+                <div className="flex-1 w-full">
+                  <label className="text-xs md:text-sm font-medium text-gray-700 block md:mb-2">Platform</label>
+                  <select
+                    value={platform}
+                    onChange={(e) => setPlatform(e.target.value)}
+                    className="w-full p-2 md:p-3 border border-[#EAECEF] rounded-lg bg-[#F9FAFC] text-sm"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full bg-${idea.color || 'blue'}-500/10 flex items-center justify-center text-${idea.color || 'blue'}-500`}>
-                          <IconComponent className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <span className="text-sm text-[#4F92FF] font-medium">{idea.category}</span>
-                          <h3 className="text-lg font-medium text-[#222831]">{idea.title}</h3>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => addToCalendar(idea)}
-                        >
-                          <CalendarPlus className="h-4 w-4 mr-2" />
-                          Add to Calendar
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setEditingIdeaId(idea.id)}
-                        >
-                          <PenSquare className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-gray-600">{idea.description}</p>
-                    <div className="flex gap-3 mt-4">
-                      {idea.tags.map((tag, tagIndex) => (
-                        <span key={tagIndex} className="px-3 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-sm rounded-full">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+                    <option>TikTok</option>
+                    <option>Instagram Reels</option>
+                    <option>YouTube Shorts</option>
+                  </select>
+                </div>
+              </div>
             </div>
-          </section>
-        )}
-      </main>
+          </div>
 
-      {/* Add to Calendar Dialog */}
-      <Dialog open={addingToCalendar !== null} onOpenChange={(open) => !open && setAddingToCalendar(null)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add to Calendar</DialogTitle>
-          </DialogHeader>
-          {addingToCalendar && (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label htmlFor="title">Title</label>
-                <Input
-                  id="title"
-                  value={addingToCalendar.title}
-                  onChange={(e) => setAddingToCalendar({ ...addingToCalendar, title: e.target.value })}
-                />
+          {/* Ideas Grid - Mobile Responsive */}
+          {ideas.length > 0 && (
+            <section className="bg-white rounded-xl shadow-sm p-4 md:p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl md:text-2xl font-bold text-[#222831]">Your Video Ideas</h2>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="hidden md:flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    Filter
+                  </Button>
+                  <Button variant="outline" size="sm" className="hidden md:flex items-center gap-2">
+                    <ArrowDownWideNarrow className="w-4 h-4" />
+                    Sort
+                  </Button>
+                </div>
               </div>
-              <div className="grid gap-2">
-                <label htmlFor="scheduled_for">Date</label>
-                <Input
-                  id="scheduled_for"
-                  type="date"
-                  value={addingToCalendar.scheduledFor}
-                  onChange={(e) => setAddingToCalendar({ ...addingToCalendar, scheduledFor: e.target.value })}
-                />
+              <div className="grid md:grid-cols-2 gap-4">
+                {ideas.map((idea) => {
+                  const IconComponent = idea.symbol ? (icons[idea.symbol as keyof typeof icons] as LucideIcon) : Lightbulb;
+                  return (
+                    <div
+                      key={idea.id}
+                      className="group bg-[#F9FAFC] rounded-xl p-4 md:p-6 hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-[#4F92FF]/20"
+                    >
+                      <div className="flex items-start justify-between mb-3 md:mb-4">
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full bg-${idea.color || 'blue'}-500/10 flex items-center justify-center text-${idea.color || 'blue'}-500`}>
+                            <IconComponent className="w-4 h-4 md:w-5 md:h-5" />
+                          </div>
+                          <div>
+                            <span className="text-xs md:text-sm text-[#4F92FF] font-medium">{idea.category}</span>
+                            <h3 className="text-sm md:text-lg font-medium text-[#222831]">{idea.title}</h3>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 md:gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => addToCalendar(idea)}
+                            className="hidden md:flex items-center"
+                          >
+                            <CalendarPlus className="h-4 w-4 mr-2" />
+                            Add to Calendar
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => setEditingIdeaId(idea.id)}
+                          >
+                            <PenSquare className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-xs md:text-sm text-gray-600 line-clamp-2 md:line-clamp-none">{idea.description}</p>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {idea.tags.map((tag, tagIndex) => (
+                          <span key={tagIndex} className="px-2 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-xs rounded-full">
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            </section>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddingToCalendar(null)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddToCalendar}>
-              Add to Calendar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Idea Dialog */}
-      {editingIdeaId && (
-        <EditIdea
-          ideaId={editingIdeaId}
-          onClose={() => {
-            setEditingIdeaId(null);
-            fetchSavedIdeas();
-          }}
-        />
-      )}
+        </section>
+      </main>
     </div>
   );
 };
