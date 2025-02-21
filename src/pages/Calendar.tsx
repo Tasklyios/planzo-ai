@@ -52,21 +52,53 @@ const availableSymbols = [
 ] as const;
 
 const availableColors = [
-  { name: 'red', class: 'bg-red-500 hover:bg-red-600 border-red-400' },
-  { name: 'orange', class: 'bg-orange-500 hover:bg-orange-600 border-orange-400' },
-  { name: 'yellow', class: 'bg-yellow-500 hover:bg-yellow-600 border-yellow-400' },
-  { name: 'green', class: 'bg-green-500 hover:bg-green-600 border-green-400' },
-  { name: 'blue', class: 'bg-blue-500 hover:bg-blue-600 border-blue-400' },
-  { name: 'purple', class: 'bg-purple-500 hover:bg-purple-600 border-purple-400' },
-  { name: 'pink', class: 'bg-pink-500 hover:bg-pink-600 border-pink-400' },
-  { name: 'indigo', class: 'bg-indigo-500 hover:bg-indigo-600 border-indigo-400' }
+  { 
+    name: 'red', 
+    class: 'bg-red-500 hover:bg-red-600 border-red-400',
+    gradient: 'bg-gradient-to-br from-red-200 to-red-300 border-red-200'
+  },
+  { 
+    name: 'orange', 
+    class: 'bg-orange-500 hover:bg-orange-600 border-orange-400',
+    gradient: 'bg-gradient-to-br from-orange-200 to-orange-300 border-orange-200'
+  },
+  { 
+    name: 'yellow', 
+    class: 'bg-yellow-500 hover:bg-yellow-600 border-yellow-400',
+    gradient: 'bg-gradient-to-br from-yellow-200 to-yellow-300 border-yellow-200'
+  },
+  { 
+    name: 'green', 
+    class: 'bg-green-500 hover:bg-green-600 border-green-400',
+    gradient: 'bg-gradient-to-br from-green-200 to-green-300 border-green-200'
+  },
+  { 
+    name: 'blue', 
+    class: 'bg-blue-500 hover:bg-blue-600 border-blue-400',
+    gradient: 'bg-gradient-to-br from-blue-200 to-blue-300 border-blue-200'
+  },
+  { 
+    name: 'purple', 
+    class: 'bg-purple-500 hover:bg-purple-600 border-purple-400',
+    gradient: 'bg-gradient-to-br from-purple-200 to-purple-300 border-purple-200'
+  },
+  { 
+    name: 'pink', 
+    class: 'bg-pink-500 hover:bg-pink-600 border-pink-400',
+    gradient: 'bg-gradient-to-br from-pink-200 to-pink-300 border-pink-200'
+  },
+  { 
+    name: 'indigo', 
+    class: 'bg-indigo-500 hover:bg-indigo-600 border-indigo-400',
+    gradient: 'bg-gradient-to-br from-indigo-200 to-indigo-300 border-indigo-200'
+  }
 ] as const;
 
 // Helper function to get color classes
-const getColorClasses = (color: string | undefined) => {
+const getColorClasses = (color: string | undefined, variant: 'solid' | 'gradient' = 'solid') => {
   const colorConfig = availableColors.find(c => c.name === color);
   if (!color || !colorConfig) return 'bg-gray-100 border-gray-200 hover:bg-gray-200';
-  return colorConfig.class;
+  return variant === 'gradient' ? colorConfig.gradient : colorConfig.class;
 };
 
 export default function Calendar() {
@@ -245,6 +277,52 @@ export default function Calendar() {
     );
   };
 
+  // Update the daily view post rendering
+  const renderDailyViewPost = (post: ScheduledPost) => (
+    <div
+      key={post.id}
+      className={cn(
+        "p-4 rounded-xl border transition-all shadow-sm",
+        getColorClasses(post.color, 'gradient')
+      )}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center space-x-3">
+          <div className={cn(
+            "w-8 h-8 rounded-lg flex items-center justify-center",
+            getColorClasses(post.color)
+          )}>
+            {(() => {
+              const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
+              return <IconComponent className="h-4 w-4 text-white" />;
+            })()}
+          </div>
+          <span className="font-medium text-gray-800">{post.title}</span>
+        </div>
+        <span className="text-sm font-medium text-gray-600">
+          {format(new Date(post.scheduled_for), "h:mm a")}
+        </span>
+      </div>
+      <div className="flex justify-end space-x-2">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => setEditingPost(post)}
+          className="hover:bg-white/20"
+        >
+          <PenSquare className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="hover:bg-white/20"
+        >
+          <Clock className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <Navbar />
@@ -332,130 +410,7 @@ export default function Calendar() {
                 <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
               </div>
               <div className="space-y-4">
-                {getPostsForDate(selectedDate).map((post) => (
-                  <div
-                    key={post.id}
-                    className={`p-4 rounded-xl border ${
-                      post.platform === "Instagram"
-                        ? "bg-purple-50 border-purple-100"
-                        : "bg-blue-50 border-blue-100"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                          post.platform === "Instagram" ? "bg-purple-100" : "bg-blue-100"
-                        }`}>
-                          <i className={`fa-brands fa-${post.platform.toLowerCase()} ${
-                            post.platform === "Instagram" ? "text-purple-600" : "text-blue-600"
-                          }`}></i>
-                        </div>
-                        <span className="font-medium">{post.title}</span>
-                      </div>
-                      <span className={`text-sm font-medium ${
-                        post.platform === "Instagram" ? "text-purple-600" : "text-blue-600"
-                      }`}>
-                        {format(new Date(post.scheduled_for), "h:mm a")}
-                      </span>
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="ghost" size="icon" onClick={() => setEditingPost(post)}>
-                        <PenSquare className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Clock className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                <Dialog open={editingPost !== null} onOpenChange={(open) => !open && setEditingPost(null)}>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Edit Scheduled Post</DialogTitle>
-                    </DialogHeader>
-                    {editingPost && (
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <label>Symbol</label>
-                          <div className="flex flex-wrap gap-2">
-                            {availableSymbols.map(({ name, icon: Icon }) => (
-                              <Button 
-                                key={name}
-                                variant={editingPost.symbol === name ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setEditingPost({ ...editingPost, symbol: name })}
-                                className={cn(
-                                  editingPost.symbol === name && editingPost.color ? 
-                                  getColorClasses(editingPost.color) : ''
-                                )}
-                              >
-                                <Icon className={cn(
-                                  "h-4 w-4",
-                                  editingPost.symbol === name && editingPost.color ? "text-white" : "text-gray-700"
-                                )} />
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="grid gap-2">
-                          <label>Color Theme</label>
-                          <div className="flex flex-wrap gap-2">
-                            {availableColors.map(({ name, class: colorClass }) => (
-                              <Button
-                                key={name}
-                                variant={editingPost.color === name ? "default" : "outline"}
-                                size="sm"
-                                className={cn(
-                                  "transition-colors",
-                                  editingPost.color === name ? colorClass : ''
-                                )}
-                                onClick={() => setEditingPost({ ...editingPost, color: name })}
-                              >
-                                <div className={cn("h-4 w-4 rounded-full", colorClass)} />
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="grid gap-2">
-                          <label htmlFor="title">Title</label>
-                          <Input
-                            id="title"
-                            value={editingPost.title}
-                            onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
-                          />
-                        </div>
-
-                        <div className="grid gap-2">
-                          <label htmlFor="scheduled_for">Scheduled For</label>
-                          <Input
-                            id="scheduled_for"
-                            type="datetime-local"
-                            value={format(new Date(editingPost.scheduled_for), "yyyy-MM-dd'T'HH:mm")}
-                            onChange={(e) => setEditingPost({ 
-                              ...editingPost, 
-                              scheduled_for: new Date(e.target.value).toISOString() 
-                            })}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setEditingPost(null)}>
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={() => editingPost && handleEditPost(editingPost)}
-                        className={cn(
-                          editingPost?.color ? getColorClasses(editingPost.color) : ''
-                        )}
-                      >
-                        Save Changes
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                {getPostsForDate(selectedDate).map(renderDailyViewPost)}
               </div>
             </div>
           </div>
