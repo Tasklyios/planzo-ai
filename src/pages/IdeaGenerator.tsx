@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
-import Navbar from "@/components/Navbar";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Brain,
   Bell,
@@ -17,6 +16,9 @@ import {
   CalendarPlus,
   PenSquare,
   Lightbulb,
+  User,
+  CreditCard,
+  LogOut,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,14 @@ import { Input } from "@/components/ui/input";
 import EditIdea from "@/components/EditIdea";
 import * as icons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface GeneratedIdea {
   id: string;
@@ -243,6 +253,11 @@ const IdeaGenerator = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
       <Navbar />
@@ -253,9 +268,15 @@ const IdeaGenerator = () => {
             <span className="text-xl font-bold">TrendAI</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <span className="text-gray-600 hover:text-[#4F92FF] cursor-pointer">Dashboard</span>
-            <span className="text-[#4F92FF] font-medium cursor-pointer">Ideas</span>
-            <span className="text-gray-600 hover:text-[#4F92FF] cursor-pointer">Calendar</span>
+            <Link to="/dashboard" className="text-gray-600 hover:text-[#4F92FF] cursor-pointer">
+              Dashboard
+            </Link>
+            <Link to="/ideas" className="text-[#4F92FF] font-medium cursor-pointer">
+              Ideas
+            </Link>
+            <Link to="/calendar" className="text-gray-600 hover:text-[#4F92FF] cursor-pointer">
+              Calendar
+            </Link>
           </div>
           <div className="flex items-center gap-4">
             <button className="hidden md:block px-4 py-2 text-[#4F92FF] hover:bg-[#4F92FF]/10 rounded-lg relative">
@@ -264,11 +285,34 @@ const IdeaGenerator = () => {
                 3
               </span>
             </button>
-            <img
-              src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
-              className="w-8 h-8 rounded-full ring-2 ring-[#4F92FF]/20"
-              alt="Profile"
-            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-8 h-8 rounded-full ring-2 ring-[#4F92FF]/20 overflow-hidden cursor-pointer">
+                  <img
+                    src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
+                    className="w-full h-full object-cover"
+                    alt="Profile"
+                  />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-white" align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Billing</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <button className="md:hidden text-gray-600">
               <Menu className="w-6 h-6" />
             </button>
