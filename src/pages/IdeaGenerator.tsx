@@ -298,14 +298,23 @@ const IdeaGenerator = () => {
             setPlatform={setPlatform}
           />
 
-          {/* Generate Button */}
+          {/* Generate Button with updated styling */}
           <div className="flex justify-center mb-8">
             <Button
               onClick={generateIdeas}
               disabled={loading}
-              className="bg-[#4F92FF] hover:bg-[#4F92FF]/90 text-white px-8 py-2 rounded-lg font-medium"
+              className="bg-gradient-to-r from-[#4F92FF] to-[#4F92FF]/90 hover:from-[#4F92FF]/90 hover:to-[#4F92FF]/80 text-white px-8 py-6 rounded-lg font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
             >
-              {loading ? "Generating..." : "Generate Viral Ideas"}
+              {loading ? (
+                <>
+                  <span className="animate-spin">⚡</span>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  ⚡ Generate Viral Ideas
+                </>
+              )}
             </Button>
           </div>
 

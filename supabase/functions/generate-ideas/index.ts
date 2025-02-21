@@ -8,51 +8,39 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { type, title, description, platform, tags, niche, audience, videoType } = await req.json();
+    const { niche, audience, videoType, platform } = await req.json();
+
+    if (!niche || !audience || !videoType || !platform) {
+      throw new Error('Missing required fields');
+    }
+
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    let prompt;
-    if (type === 'script') {
-      prompt = `Write a script for a ${platform} video with these details:
-        Title: ${title}
-        Description: ${description}
-        Tags: ${tags ? tags.join(', ') : ''}
-        
-        Format the script with:
-        
-        HOOK:
-        [Attention-grabbing opening]
-        
-        MAIN CONTENT:
-        [Main points and content]
-        
-        CALL TO ACTION:
-        [Engaging call to action]
-        
-        Keep it engaging and suited for ${platform}.`;
-    } else {
-      prompt = `Generate 5 viral video ideas for ${platform} with:
-        Niche: ${niche}
-        Target Audience: ${audience}
-        Video Type: ${videoType}
-        
-        For each idea include:
-        - title
-        - description
-        - category
-        - tags (3 relevant hashtags without # symbol)
-        
-        Format as JSON: {"ideas": [{idea1}, {idea2}, etc]}`;
-    }
+    const prompt = `Generate 5 viral video ideas for ${platform} with:
+      Niche: ${niche}
+      Target Audience: ${audience}
+      Video Type: ${videoType}
+      
+      Generate ideas in this JSON format:
+      {
+        "ideas": [
+          {
+            "title": "catchy title",
+            "description": "detailed description",
+            "category": "content category",
+            "tags": ["tag1", "tag2", "tag3"]
+          }
+        ]
+      }`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -65,45 +53,33 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: type === 'script' 
-              ? 'You are a professional script writer for social media content.'
-              : 'You are a social media content strategist who creates viral content ideas.'
+            content: 'You are a social media content strategist who generates viral video ideas. Always respond with valid JSON.',
           },
           { role: 'user', content: prompt }
         ],
       }),
     });
 
-    if (!response.ok) {
-      throw new Error('Failed to generate content');
-    }
-
     const data = await response.json();
     const content = data.choices[0].message.content;
-
-    if (type === 'script') {
-      return new Response(
-        JSON.stringify({ script: content }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } else {
-      // Parse ideas JSON response
-      try {
-        const parsedContent = JSON.parse(content);
-        return new Response(
-          JSON.stringify(parsedContent),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      } catch (e) {
-        console.error('Error parsing OpenAI response:', e);
-        throw new Error('Failed to parse generated ideas');
-      }
+    
+    try {
+      const parsedContent = JSON.parse(content);
+      return new Response(JSON.stringify(parsedContent), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', content);
+      throw new Error('Failed to parse generated ideas');
     }
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error:', error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
   }
 });
