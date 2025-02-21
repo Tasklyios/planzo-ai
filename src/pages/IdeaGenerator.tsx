@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -17,12 +16,14 @@ import {
   ArrowDownWideNarrow,
   CalendarPlus,
   PenSquare,
+  Lightbulb,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import EditIdea from "@/components/EditIdea";
 import * as icons from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface GeneratedIdea {
   id: string;
@@ -31,7 +32,7 @@ interface GeneratedIdea {
   description: string;
   tags: string[];
   platform?: string;
-  symbol?: string;
+  symbol?: keyof typeof icons;
   color?: string;
 }
 
@@ -333,7 +334,7 @@ const IdeaGenerator = () => {
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               {ideas.map((idea) => {
-                const IconComponent = icons[idea.symbol as keyof typeof icons] || icons.Lightbulb;
+                const IconComponent: LucideIcon = (icons[idea.symbol as keyof typeof icons] as LucideIcon) || Lightbulb;
                 return (
                   <div
                     key={idea.id}
