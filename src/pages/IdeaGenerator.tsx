@@ -14,15 +14,14 @@ import {
   Wand2,
   Filter,
   ArrowDownWideNarrow,
-  LightbulbIcon,
   CalendarPlus,
   PenSquare,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { format } from "date-fns";
+import EditIdea from "@/components/EditIdea";
+import * as icons from 'lucide-react';
 
 interface GeneratedIdea {
   id: string;
@@ -31,6 +30,8 @@ interface GeneratedIdea {
   description: string;
   tags: string[];
   platform?: string;
+  symbol?: string;
+  color?: string;
 }
 
 interface AddToCalendarIdea {
@@ -46,10 +47,11 @@ const IdeaGenerator = () => {
   const [platform, setPlatform] = useState(() => localStorage.getItem("platform") || "TikTok");
   const [loading, setLoading] = useState(false);
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
-  const [editingIdea, setEditingIdea] = useState<GeneratedIdea | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
+
+  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
 
   // Load saved ideas on mount
   useEffect(() => {
@@ -121,49 +123,6 @@ const IdeaGenerator = () => {
 
       setAddingToCalendar(null);
       navigate("/calendar");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
-
-  const handleEditIdea = async (updatedIdea: GeneratedIdea) => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user.id;
-
-      if (!userId) {
-        navigate("/auth");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("video_ideas")
-        .update({
-          title: updatedIdea.title,
-          description: updatedIdea.description,
-          category: updatedIdea.category,
-          tags: updatedIdea.tags,
-          platform: updatedIdea.platform || platform,
-        })
-        .eq("id", updatedIdea.id)
-        .eq("user_id", userId);
-
-      if (error) throw error;
-
-      setIdeas(ideas.map(idea => 
-        idea.id === updatedIdea.id ? updatedIdea : idea
-      ));
-
-      toast({
-        title: "Success",
-        description: "Idea updated successfully",
-      });
-      
-      setEditingIdea(null);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -376,12 +335,17 @@ const IdeaGenerator = () => {
               </div>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
-              {ideas.map((idea) => (
-                <div key={idea.id} className="group bg-[#F9FAFC] rounded-xl p-6 hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-[#4F92FF]/20">
+              {ideas.map((idea) => {
+              const IconComponent = icons[idea.symbol as keyof typeof icons] || icons.Lightbulb;
+              return (
+                <div
+                  key={idea.id}
+                  className="group bg-[#F9FAFC] rounded-xl p-6 hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-[#4F92FF]/20"
+                >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#4F92FF]/10 flex items-center justify-center text-[#4F92FF]">
-                        <LightbulbIcon className="w-5 h-5" />
+                      <div className={`w-10 h-10 rounded-full bg-${idea.color || 'blue'}-500/10 flex items-center justify-center text-${idea.color || 'blue'}-500`}>
+                        <IconComponent className="w-5 h-5" />
                       </div>
                       <div>
                         <span className="text-sm text-[#4F92FF] font-medium">{idea.category}</span>
@@ -400,7 +364,7 @@ const IdeaGenerator = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => setEditingIdea(idea)}
+                        onClick={() => setEditingIdeaId(idea.id)}
                       >
                         <PenSquare className="h-4 w-4 mr-2" />
                         Edit
@@ -416,11 +380,11 @@ const IdeaGenerator = () => {
                     ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
-      </main>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Add to Calendar Dialog */}
       <Dialog open={addingToCalendar !== null} onOpenChange={(open) => !open && setAddingToCalendar(null)}>
@@ -461,57 +425,15 @@ const IdeaGenerator = () => {
       </Dialog>
 
       {/* Edit Idea Dialog */}
-      <Dialog open={editingIdea !== null} onOpenChange={(open) => !open && setEditingIdea(null)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Idea</DialogTitle>
-          </DialogHeader>
-          {editingIdea && (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label htmlFor="title">Title</label>
-                <Input
-                  id="title"
-                  value={editingIdea.title}
-                  onChange={(e) => setEditingIdea({ ...editingIdea, title: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="category">Category</label>
-                <Input
-                  id="category"
-                  value={editingIdea.category}
-                  onChange={(e) => setEditingIdea({ ...editingIdea, category: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="description">Description</label>
-                <Textarea
-                  id="description"
-                  value={editingIdea.description}
-                  onChange={(e) => setEditingIdea({ ...editingIdea, description: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="tags">Tags (comma-separated)</label>
-                <Input
-                  id="tags"
-                  value={editingIdea.tags.join(", ")}
-                  onChange={(e) => setEditingIdea({ ...editingIdea, tags: e.target.value.split(",").map(tag => tag.trim()) })}
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingIdea(null)}>
-              Cancel
-            </Button>
-            <Button onClick={() => editingIdea && handleEditIdea(editingIdea)}>
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {editingIdeaId && (
+        <EditIdea
+          ideaId={editingIdeaId}
+          onClose={() => {
+            setEditingIdeaId(null);
+            fetchSavedIdeas();
+          }}
+        />
+      )}
     </div>
   );
 };
