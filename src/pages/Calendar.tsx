@@ -251,6 +251,23 @@ export default function Calendar() {
   };
 
   const renderPost = (post: ScheduledPost) => {
+    // Different rendering for mobile and desktop
+    const isMobile = window.innerWidth < 768; // md breakpoint in Tailwind
+
+    if (isMobile) {
+      return (
+        <div
+          key={post.id}
+          className={cn(
+            "w-2 h-2 rounded-full",
+            getColorClasses(post.color)
+          )}
+          onClick={() => openEditDialog(post)}
+        />
+      );
+    }
+
+    // Desktop view remains unchanged
     const colorClasses = getColorClasses(post.color);
     const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
 
@@ -388,7 +405,7 @@ export default function Calendar() {
                     onClick={() => setSelectedDate(date)}
                   >
                     <span className={isToday(date) ? "font-medium" : ""}>{format(date, "d")}</span>
-                    <div className="space-y-1 mt-1">
+                    <div className="flex md:block flex-wrap gap-1 mt-1">
                       {posts.map((post) => renderPost(post))}
                     </div>
                   </div>
