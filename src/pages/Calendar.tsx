@@ -339,6 +339,10 @@ export default function Calendar() {
     );
   };
 
+  const isSelectedDate = (date: Date) => {
+    return format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
+  };
+
   return (
     <>
       <Navbar />
@@ -415,15 +419,22 @@ export default function Calendar() {
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`min-h-[100px] p-3 cursor-pointer ${
+                        className={cn(
+                          "min-h-[100px] p-3 cursor-pointer relative",
                           !isSameMonth(date, currentDate) ? "text-gray-400" :
                           isToday(date) ? "bg-blue-50/30" : "hover:bg-gray-50"
-                        }`}
+                        )}
                         onClick={() => setSelectedDate(date)}
                       >
-                        <span className={isToday(date) ? "font-medium" : ""}>
-                          {format(date, "d")}
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className={cn(
+                            "w-7 h-7 flex items-center justify-center rounded-full",
+                            isSelectedDate(date) && "bg-primary text-white",
+                            isToday(date) && !isSelectedDate(date) && "font-medium"
+                          )}>
+                            {format(date, "d")}
+                          </span>
+                        </div>
                         <div className="flex md:block flex-wrap gap-1 mt-1">
                           {posts.map((post, index) => renderPost(post, index))}
                         </div>
