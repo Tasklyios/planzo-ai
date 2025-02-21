@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,8 +107,7 @@ const Dashboard = () => {
             <nav className="hidden md:flex space-x-8">
               <span className="text-[#4F92FF] font-medium">Dashboard</span>
               <span onClick={() => navigate('/calendar')} className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Calendar</span>
-              <span onClick={() => navigate('/ideas')} className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Content Ideas</span>
-              <span className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Settings</span>
+              <span onClick={() => navigate('/ideas')} className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Ideas</span>
             </nav>
             <div className="flex items-center space-x-4">
               <button 
