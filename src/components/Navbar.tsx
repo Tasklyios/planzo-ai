@@ -16,17 +16,14 @@ const Navbar = () => {
             </Link>
           </div>
           <div className="hidden md:flex items-center space-x-8">
-            <span className="text-dark hover:text-primary cursor-pointer transition-colors">
-              How It Works
-            </span>
-            <span className="text-dark hover:text-primary cursor-pointer transition-colors">
-              Pricing
-            </span>
-            <span className="text-dark hover:text-primary cursor-pointer transition-colors">
-              Get Started
-            </span>
-            <Link to="/auth" className="btn-primary">
-              Sign In
+            <Link to="/dashboard" className="text-dark hover:text-primary transition-colors">
+              Dashboard
+            </Link>
+            <Link to="/calendar" className="text-dark hover:text-primary transition-colors">
+              Calendar
+            </Link>
+            <Link to="/ideas" className="text-dark hover:text-primary transition-colors">
+              Ideas
             </Link>
           </div>
           <div className="md:hidden">
@@ -38,17 +35,14 @@ const Navbar = () => {
         {isOpen && (
           <div className="md:hidden pt-4 pb-4 animate-fade-in">
             <div className="flex flex-col space-y-4">
-              <span className="text-dark hover:text-primary cursor-pointer transition-colors">
-                How It Works
-              </span>
-              <span className="text-dark hover:text-primary cursor-pointer transition-colors">
-                Pricing
-              </span>
-              <span className="text-dark hover:text-primary cursor-pointer transition-colors">
-                Get Started
-              </span>
-              <Link to="/auth" className="btn-primary text-center">
-                Sign In
+              <Link to="/dashboard" className="text-dark hover:text-primary transition-colors">
+                Dashboard
+              </Link>
+              <Link to="/calendar" className="text-dark hover:text-primary transition-colors">
+                Calendar
+              </Link>
+              <Link to="/ideas" className="text-dark hover:text-primary transition-colors">
+                Ideas
               </Link>
             </div>
           </div>

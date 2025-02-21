@@ -1,7 +1,8 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import Navbar from "@/components/Navbar";
 import {
   Brain,
   Bell,
@@ -17,6 +18,8 @@ import {
   CalendarPlus,
   PenSquare,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface GeneratedIdea {
   id: string;
@@ -34,6 +37,80 @@ const IdeaGenerator = () => {
   const [loading, setLoading] = useState(false);
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const addToCalendar = async (idea: GeneratedIdea) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+
+      if (!userId) {
+        navigate("/auth");
+        return;
+      }
+
+      const scheduledDate = new Date();
+      scheduledDate.setHours(12, 0, 0, 0); // Set to noon by default
+
+      const { error } = await supabase.from("scheduled_content").insert({
+        title: idea.title,
+        platform: platform,
+        scheduled_for: scheduledDate.toISOString(),
+        user_id: userId,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Idea added to calendar",
+      });
+
+      navigate("/calendar");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
+
+  const editIdea = async (idea: GeneratedIdea) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+
+      if (!userId) {
+        navigate("/auth");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("video_ideas")
+        .update({
+          title: idea.title,
+          description: idea.description,
+          category: idea.category,
+          tags: idea.tags,
+        })
+        .eq("id", idea.id)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Idea updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
 
   const generateIdeas = async () => {
     if (!niche || !audience || !videoType) {
@@ -103,6 +180,7 @@ const IdeaGenerator = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
+      <Navbar />
       <header className="fixed w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
         <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -250,12 +328,22 @@ const IdeaGenerator = () => {
                       </div>
                     </div>
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2 text-gray-600 hover:text-[#4F92FF] bg-white rounded-lg shadow-sm">
-                        <CalendarPlus className="w-4 h-4" />
-                      </button>
-                      <button className="p-2 text-gray-600 hover:text-[#4F92FF] bg-white rounded-lg shadow-sm">
-                        <PenSquare className="w-4 h-4" />
-                      </button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => addToCalendar(idea)}
+                      >
+                        <CalendarPlus className="h-4 w-4 mr-2" />
+                        Add to Calendar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => editIdea(idea)}
+                      >
+                        <PenSquare className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
                     </div>
                   </div>
                   <p className="text-gray-600">{idea.description}</p>
