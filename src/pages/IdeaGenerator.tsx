@@ -17,7 +17,7 @@ import {
   CreditCard,
   LogOut,
   Menu,
-  type Icon as LucideIconType,
+  LucideIcon,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LucideIcon } from 'lucide-react';
 
 interface GeneratedIdea {
   id: string;
@@ -275,7 +274,7 @@ const IdeaGenerator = () => {
     navigate("/auth");
   };
 
-  const getIconComponent = (symbolName?: keyof typeof IconMap): LucideIconType => {
+  const getIconComponent = (symbolName?: keyof typeof IconMap): LucideIcon => {
     if (!symbolName || !(symbolName in IconMap)) {
       return Lightbulb;
     }
