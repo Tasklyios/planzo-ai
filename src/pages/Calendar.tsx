@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -17,6 +18,7 @@ import {
   Camera,
   Palette,
   Menu,
+  GripHorizontal,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -245,88 +247,103 @@ export default function Calendar() {
     );
   };
 
-  const renderPost = (post: ScheduledPost) => {
-    // Different rendering for mobile and desktop
-    const isMobile = window.innerWidth < 768; // md breakpoint in Tailwind
+  const handleDragEnd = async (result: any) => {
+    if (!result.destination) return;
 
-    if (isMobile) {
-      return (
-        <div
-          key={post.id}
-          className={cn(
-            "w-2 h-2 rounded-full",
-            getColorClasses(post.color)
-          )}
-          onClick={() => openEditDialog(post)}
-        />
-      );
+    const { source, destination, draggableId } = result;
+    const sourceDate = source.droppableId;
+    const destinationDate = destination.droppableId;
+
+    if (sourceDate === destinationDate) return;
+
+    const movedPost = scheduledPosts.find(post => post.id === draggableId);
+    if (!movedPost) return;
+
+    try {
+      // Update the post's scheduled_for date
+      const { error: updateError } = await supabase
+        .from("video_ideas")
+        .update({
+          scheduled_for: destinationDate
+        })
+        .eq("id", draggableId);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      const updatedPosts = scheduledPosts.map(post => {
+        if (post.id === draggableId) {
+          return {
+            ...post,
+            scheduled_for: destinationDate
+          };
+        }
+        return post;
+      });
+
+      setScheduledPosts(updatedPosts);
+      
+      toast({
+        title: "Success",
+        description: "Post rescheduled successfully",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
     }
-
-    // Desktop view remains unchanged
-    const colorClasses = getColorClasses(post.color);
-    const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-
-    return (
-      <div
-        key={post.id}
-        className={cn(
-          "mt-2 p-2 rounded-lg border cursor-pointer transition-colors hover:opacity-90",
-          colorClasses
-        )}
-        onClick={() => openEditDialog(post)}
-      >
-        <div className="flex items-center gap-2">
-          <IconComponent className="h-4 w-4 text-white" />
-          <span className="text-xs text-white font-medium">{post.title}</span>
-        </div>
-      </div>
-    );
   };
 
-  const renderDailyViewPost = (post: ScheduledPost) => (
-    <div
-      key={post.id}
-      className={cn(
-        "p-4 rounded-xl border transition-all shadow-sm cursor-pointer hover:opacity-90",
-        getColorClasses(post.color, 'gradient')
-      )}
-      onClick={() => openEditDialog(post)}
-    >
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center space-x-3">
-          <div className={cn(
-            "w-8 h-8 rounded-lg flex items-center justify-center",
-            getColorClasses(post.color)
-          )}>
-            {(() => {
-              const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-              return <IconComponent className="h-4 w-4 text-white" />;
-            })()}
+  const renderPost = (post: ScheduledPost, index: number) => {
+    const isMobile = window.innerWidth < 768;
+
+    return (
+      <Draggable key={post.id} draggableId={post.id} index={index}>
+        {(provided) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+          >
+            {isMobile ? (
+              <div
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  getColorClasses(post.color)
+                )}
+                onClick={() => openEditDialog(post)}
+              />
+            ) : (
+              <div
+                className={cn(
+                  "mt-2 p-2 rounded-lg border cursor-pointer transition-colors hover:opacity-90 group",
+                  getColorClasses(post.color)
+                )}
+                onClick={() => openEditDialog(post)}
+              >
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
+                    return <IconComponent className="h-4 w-4 text-white" />;
+                  })()}
+                  <span className="text-xs text-white font-medium">{post.title}</span>
+                  <GripHorizontal className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 ml-auto" />
+                </div>
+              </div>
+            )}
           </div>
-          <span className="font-medium text-gray-800">{post.title}</span>
-        </div>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            openEditDialog(post);
-          }}
-        >
-          <PenSquare className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="mt-2 text-sm font-medium text-gray-600 pl-11">
-        {format(new Date(post.scheduled_for), "h:mm a")}
-      </div>
-    </div>
-  );
+        )}
+      </Draggable>
+    );
+  };
 
   return (
     <>
       <Navbar />
-      <div className="container mx-auto py-20">
-        <div className="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="container mx-auto py-20">
           {/* Mobile: Daily View First */}
           <div className="md:hidden bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div className="flex items-center justify-between mb-4">
@@ -389,21 +406,31 @@ export default function Calendar() {
 
             <div className="grid grid-cols-7 divide-x divide-y divide-gray-100">
               {daysInMonth.map((date) => {
+                const dateStr = format(date, "yyyy-MM-dd");
                 const posts = getPostsForDate(date);
+                
                 return (
-                  <div
-                    key={date.toString()}
-                    className={`min-h-[100px] p-3 cursor-pointer ${
-                      !isSameMonth(date, currentDate) ? "text-gray-400" :
-                      isToday(date) ? "bg-blue-50/30" : "hover:bg-gray-50"
-                    }`}
-                    onClick={() => setSelectedDate(date)}
-                  >
-                    <span className={isToday(date) ? "font-medium" : ""}>{format(date, "d")}</span>
-                    <div className="flex md:block flex-wrap gap-1 mt-1">
-                      {posts.map((post) => renderPost(post))}
-                    </div>
-                  </div>
+                  <Droppable key={dateStr} droppableId={dateStr}>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`min-h-[100px] p-3 cursor-pointer ${
+                          !isSameMonth(date, currentDate) ? "text-gray-400" :
+                          isToday(date) ? "bg-blue-50/30" : "hover:bg-gray-50"
+                        }`}
+                        onClick={() => setSelectedDate(date)}
+                      >
+                        <span className={isToday(date) ? "font-medium" : ""}>
+                          {format(date, "d")}
+                        </span>
+                        <div className="flex md:block flex-wrap gap-1 mt-1">
+                          {posts.map((post, index) => renderPost(post, index))}
+                        </div>
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
                 );
               })}
             </div>
@@ -422,7 +449,7 @@ export default function Calendar() {
             </div>
           </div>
         </div>
-      </div>
+      </DragDropContext>
 
       {/* EditIdea Dialog */}
       {editingIdeaId && (
@@ -436,4 +463,45 @@ export default function Calendar() {
       )}
     </>
   );
+
+  function renderDailyViewPost(post: ScheduledPost) {
+    return (
+      <div
+        key={post.id}
+        className={cn(
+          "p-4 rounded-xl border transition-all shadow-sm cursor-pointer hover:opacity-90",
+          getColorClasses(post.color, 'gradient')
+        )}
+        onClick={() => openEditDialog(post)}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center space-x-3">
+            <div className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center",
+              getColorClasses(post.color)
+            )}>
+              {(() => {
+                const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
+                return <IconComponent className="h-4 w-4 text-white" />;
+              })()}
+            </div>
+            <span className="font-medium text-gray-800">{post.title}</span>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              openEditDialog(post);
+            }}
+          >
+            <PenSquare className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="mt-2 text-sm font-medium text-gray-600 pl-11">
+          {format(new Date(post.scheduled_for), "h:mm a")}
+        </div>
+      </div>
+    );
+  }
 }
