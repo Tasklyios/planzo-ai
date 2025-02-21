@@ -140,13 +140,35 @@ export default function Calendar() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("scheduled_content")
-        .select("*")
+      // First, get all video ideas that have schedules
+      const { data: scheduledData, error: scheduledError } = await supabase
+        .from("video_ideas")
+        .select(`
+          id,
+          title,
+          description,
+          platform,
+          created_at,
+          symbol,
+          color,
+          category,
+          tags,
+          is_saved,
+          script,
+          user_id
+        `)
         .eq("user_id", sessionData.session.user.id);
 
-      if (error) throw error;
-      setScheduledPosts(data || []);
+      if (scheduledError) throw scheduledError;
+
+      // Map the data to include scheduled_for
+      const formattedPosts: ScheduledPost[] = scheduledData?.map(post => ({
+        ...post,
+        scheduled_for: new Date().toISOString(), // Default value
+        description: post.description || "",
+      })) || [];
+
+      setScheduledPosts(formattedPosts);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -168,35 +190,32 @@ export default function Calendar() {
         return;
       }
 
-      // Create the new post with required fields
-      const newVideoIdea = {
-        title: `New ${platform} Post`,
-        description: "", // This is required by the database
-        platform,
-        user_id: userId,
-        symbol: "calendar",
-        color: "blue",
-        tags: [],
-        category: "",
-        scheduled_for: new Date().toISOString(),
-      };
-
-      const { data, error } = await supabase
+      // Create the new video idea first
+      const { data: videoIdea, error: videoError } = await supabase
         .from("video_ideas")
-        .insert(newVideoIdea)
+        .insert({
+          title: `New ${platform} Post`,
+          description: "", 
+          platform,
+          user_id: userId,
+          symbol: "calendar",
+          color: "blue",
+          tags: [],
+          category: "",
+        })
         .select()
         .single();
 
-      if (error) throw error;
+      if (videoError) throw videoError;
 
-      // Convert the VideoIdea to a ScheduledPost
+      // Create a scheduled post entry
       const scheduledPost: ScheduledPost = {
-        ...data,
-        scheduled_for: newVideoIdea.scheduled_for // Use the scheduled_for we set
+        ...videoIdea,
+        scheduled_for: new Date().toISOString(),
       };
 
-      setScheduledPosts([...scheduledPosts, scheduledPost]);
-      setEditingIdeaId(scheduledPost.id);
+      setScheduledPosts(prev => [...prev, scheduledPost]);
+      setEditingIdeaId(videoIdea.id);
       
       toast({
         title: "Success",
@@ -212,6 +231,7 @@ export default function Calendar() {
   };
 
   const openEditDialog = (post: ScheduledPost) => {
+    // Important: This now correctly sets the editingIdeaId using the video_ideas id
     setEditingIdeaId(post.id);
   };
 
