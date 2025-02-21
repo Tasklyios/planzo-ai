@@ -42,6 +42,21 @@ interface AddToCalendarIdea {
   scheduledFor: string;
 }
 
+interface SupabaseIdea {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  tags: string[];
+  platform?: string;
+  symbol?: string;
+  color?: string;
+  created_at?: string;
+  is_saved?: boolean;
+  script?: string;
+  user_id?: string;
+}
+
 const IdeaGenerator = () => {
   const [niche, setNiche] = useState(() => localStorage.getItem("niche") || "");
   const [audience, setAudience] = useState(() => localStorage.getItem("audience") || "");
@@ -53,6 +68,26 @@ const IdeaGenerator = () => {
   const navigate = useNavigate();
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
+
+  const validateIconKey = (key: string | undefined): keyof typeof icons => {
+    if (!key || !(key in icons)) {
+      return 'Lightbulb';
+    }
+    return key as keyof typeof icons;
+  };
+
+  const transformSupabaseIdea = (idea: SupabaseIdea): GeneratedIdea => {
+    return {
+      id: idea.id,
+      title: idea.title,
+      category: idea.category,
+      description: idea.description,
+      tags: idea.tags,
+      platform: idea.platform,
+      symbol: validateIconKey(idea.symbol),
+      color: idea.color,
+    };
+  };
 
   // Load saved ideas on mount
   useEffect(() => {
@@ -78,7 +113,10 @@ const IdeaGenerator = () => {
         .eq("user_id", sessionData.session.user.id);
 
       if (error) throw error;
-      setIdeas(data || []);
+      
+      // Transform the data before setting it to state
+      const transformedIdeas = (data || []).map(transformSupabaseIdea);
+      setIdeas(transformedIdeas);
     } catch (error: any) {
       console.error("Error fetching ideas:", error);
     }
@@ -167,20 +205,28 @@ const IdeaGenerator = () => {
         throw new Error('Invalid response format from AI');
       }
 
-      const { error: saveError } = await supabase.from("video_ideas").insert(
-        data.ideas.map((idea: any) => ({
-          title: idea.title,
-          description: idea.description,
-          category: idea.category,
-          tags: idea.tags,
-          platform: platform,
-          user_id: userId,
-        }))
-      );
+      // Transform and validate the generated ideas before saving
+      const ideasToSave = data.ideas.map((idea: any) => ({
+        title: idea.title,
+        description: idea.description,
+        category: idea.category,
+        tags: idea.tags,
+        platform: platform,
+        user_id: userId,
+        symbol: 'Lightbulb' as keyof typeof icons, // Set default icon
+        color: 'blue', // Set default color
+      }));
+
+      const { error: saveError } = await supabase
+        .from("video_ideas")
+        .insert(ideasToSave);
 
       if (saveError) throw saveError;
 
-      setIdeas(data.ideas);
+      // Transform the ideas before setting to state
+      const transformedIdeas = ideasToSave.map(transformSupabaseIdea);
+      setIdeas(transformedIdeas);
+
       toast({
         title: "Success!",
         description: "Your video ideas have been generated and saved.",
