@@ -321,14 +321,10 @@ export default function Calendar() {
                 onClick={() => openEditDialog(post)}
               />
             ) : (
-              <div className="relative mt-2 cursor-pointer transition-colors hover:opacity-90 group">
-                <div className={cn(
-                  "absolute left-0 top-0 w-1 h-full rounded-l-lg",
-                  getColorClasses(post.color, 'accent')
-                )} />
+              <div className="mt-2 cursor-pointer transition-colors hover:opacity-90 group">
                 <div
                   className={cn(
-                    "p-2 pl-3 rounded-lg border",
+                    "p-2 rounded-lg",
                     getColorClasses(post.color, 'gradient')
                   )}
                   onClick={() => openEditDialog(post)}
@@ -336,19 +332,10 @@ export default function Calendar() {
                   <div className="flex items-center gap-2">
                     {(() => {
                       const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-                      return <IconComponent className={cn(
-                        "h-4 w-4",
-                        getColorClasses(post.color, 'accent')
-                      )} />;
+                      return <IconComponent className="h-4 w-4 text-gray-700" />;
                     })()}
-                    <span className={cn(
-                      "text-xs font-medium",
-                      getColorClasses(post.color, 'accent')
-                    )}>{post.title}</span>
-                    <GripHorizontal className={cn(
-                      "h-4 w-4 opacity-0 group-hover:opacity-100 ml-auto",
-                      getColorClasses(post.color, 'accent')
-                    )} />
+                    <span className="text-xs font-medium text-gray-700">{post.title}</span>
+                    <GripHorizontal className="h-4 w-4 opacity-0 group-hover:opacity-100 ml-auto text-gray-700" />
                   </div>
                 </div>
               </div>
