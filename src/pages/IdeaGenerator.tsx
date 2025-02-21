@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -49,23 +48,19 @@ const IdeaGenerator = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/generate-ideas", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('generate-ideas', {
+        body: {
           niche,
           audience,
           videoType,
           platform,
-        }),
+        },
       });
 
-      const data = await response.json();
+      if (error) throw error;
 
-      if (data.error) {
-        throw new Error(data.error);
+      if (!data || !data.ideas) {
+        throw new Error('Invalid response format from AI');
       }
 
       const session = await supabase.auth.getSession();
@@ -76,15 +71,17 @@ const IdeaGenerator = () => {
       }
 
       // Save ideas to Supabase
-      const { error } = await supabase.from("video_ideas").insert(
+      const { error: saveError } = await supabase.from("video_ideas").insert(
         data.ideas.map((idea: any) => ({
           title: idea.title,
           description: idea.description,
           user_id: userId,
+          category: idea.category,
+          tags: idea.tags,
         }))
       );
 
-      if (error) throw error;
+      if (saveError) throw saveError;
 
       setIdeas(data.ideas);
       toast({
@@ -92,10 +89,11 @@ const IdeaGenerator = () => {
         description: "Your video ideas have been generated.",
       });
     } catch (error: any) {
+      console.error('Error generating ideas:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || 'Failed to generate ideas. Please try again.',
       });
     } finally {
       setLoading(false);
