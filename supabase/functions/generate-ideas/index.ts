@@ -14,68 +14,39 @@ serve(async (req) => {
   }
 
   try {
-    // First validate the OpenAI API key
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
-      console.error('OpenAI API key not found');
-      return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw new Error('OpenAI API key not configured');
     }
 
-    // Parse the request body
-    let body;
-    try {
-      body = await req.json();
-      console.log('Received request body:', JSON.stringify(body));
-    } catch (e) {
-      console.error('Error parsing request body:', e);
-      return new Response(
-        JSON.stringify({ error: 'Invalid request body' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const { type, title, description, platform, tags, niche, audience, videoType } = body;
-
-    let prompt;
-    if (type === 'script') {
-      prompt = `Write a script for a ${platform} video with the following details:
-      Title: ${title}
-      Description: ${description}
-      Tags: ${tags ? tags.join(', ') : ''}
-      
-      Write the script in this format:
-      
-      HOOK:
-      [Attention-grabbing opening]
-      
-      MAIN CONTENT:
-      [Main points and content]
-      
-      CALL TO ACTION:
-      [Engaging call to action]
-      
-      Keep it concise and engaging for ${platform}.`;
-    } else {
-      prompt = `Generate 5 viral video ideas for ${platform} with these criteria:
+    const { niche, audience, videoType, platform } = await req.json();
+    
+    const prompt = `Generate 5 viral video ideas for ${platform} with these criteria:
       - Niche: ${niche}
       - Target Audience: ${audience}
       - Video Type: ${videoType}
-      
-      Format each idea as valid JSON with:
-      - title: catchy title
-      - description: brief description
-      - category: content category
-      - tags: array of 3 relevant hashtags (without # symbol)
-      
-      Structure the response as: {"ideas": [{idea1}, {idea2}, etc]}`;
-    }
+
+      For each idea, provide:
+      - A catchy title
+      - A brief clear description of the video content
+      - Content category (e.g., Tutorial, Entertainment, Educational)
+      - 3 relevant hashtags (without # symbol)
+
+      Format the response exactly as valid JSON like this:
+      {
+        "ideas": [
+          {
+            "title": "string",
+            "description": "string",
+            "category": "string",
+            "tags": ["string", "string", "string"]
+          }
+        ]
+      }`;
 
     console.log('Sending prompt to OpenAI:', prompt);
 
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
@@ -86,66 +57,44 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a professional social media content creator who specializes in creating viral content.'
+            content: 'You are a professional social media content creator who specializes in creating viral content. Always return responses in valid JSON format.'
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
+        temperature: 0.8,
       }),
     });
 
-    if (!openAIResponse.ok) {
-      const errorData = await openAIResponse.json();
-      console.error('OpenAI API error:', errorData);
-      return new Response(
-        JSON.stringify({ error: 'OpenAI API request failed', details: errorData }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('OpenAI API error:', error);
+      throw new Error('Failed to generate ideas with OpenAI');
     }
 
-    const openAIData = await openAIResponse.json();
-    console.log('OpenAI response:', openAIData);
+    const data = await response.json();
+    console.log('OpenAI response:', data);
 
-    if (!openAIData.choices?.[0]?.message?.content) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid response from OpenAI' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response format from OpenAI');
     }
 
-    const content = openAIData.choices[0].message.content;
-
-    if (type === 'script') {
-      // For scripts, return the content directly
-      return new Response(
-        JSON.stringify({ script: content }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } else {
-      // For ideas, try to parse the JSON response
-      try {
-        const parsedIdeas = JSON.parse(content);
-        return new Response(
-          JSON.stringify(parsedIdeas),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      } catch (e) {
-        console.error('Error parsing OpenAI response as JSON:', e);
-        return new Response(
-          JSON.stringify({ error: 'Failed to parse generated ideas', content }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+    try {
+      const parsedContent = JSON.parse(data.choices[0].message.content);
+      return new Response(JSON.stringify(parsedContent), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    } catch (e) {
+      console.error('Error parsing OpenAI response:', e);
+      throw new Error('Failed to parse generated ideas');
     }
   } catch (error) {
-    console.error('Unexpected error in generate-ideas function:', error);
+    console.error('Error in generate-ideas function:', error);
     return new Response(
-      JSON.stringify({
-        error: 'Internal server error',
-        message: error.message,
-        timestamp: new Date().toISOString(),
-      }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: error.message || 'An unexpected error occurred' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
   }
 });
