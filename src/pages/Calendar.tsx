@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +35,9 @@ interface ScheduledPost {
   created_at: string;
   symbol?: string;
   color?: string;
+  description?: string;
+  category?: string;
+  tags?: string[];
 }
 
 const availableSymbols = [
@@ -161,10 +164,13 @@ export default function Calendar() {
         platform,
         scheduled_for: new Date().toISOString(),
         user_id: userId,
+        description: "",
+        category: "",
+        tags: [],
       };
 
       const { data, error } = await supabase
-        .from("scheduled_content")
+        .from("video_ideas")
         .insert(newPost)
         .select()
         .single();
@@ -172,6 +178,7 @@ export default function Calendar() {
       if (error) throw error;
 
       setScheduledPosts([...scheduledPosts, data]);
+      setEditingIdeaId(data.id); // Open edit dialog for the new post
       
       toast({
         title: "Success",
@@ -186,69 +193,8 @@ export default function Calendar() {
     }
   };
 
-  const handleEditPost = async (post: ScheduledPost) => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user.id;
-
-      if (!userId) {
-        navigate("/auth");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("scheduled_content")
-        .update({
-          title: post.title,
-          scheduled_for: post.scheduled_for,
-          symbol: post.symbol,
-          color: post.color
-        })
-        .eq("id", post.id)
-        .eq("user_id", userId);
-
-      if (error) throw error;
-
-      setScheduledPosts(posts =>
-        posts.map(p => p.id === post.id ? post : p)
-      );
-
-      toast({
-        title: "Success",
-        description: "Post updated successfully",
-      });
-
-      setIsEditDialogOpen(false);
-      setEditingPost(null);
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
-
-  const handleSaveEdit = async () => {
-    if (editingPost) {
-      const updatedPost = {
-        ...editingPost,
-        title: editingTitle,
-        scheduled_for: editingScheduledFor,
-        symbol: selectedSymbol,
-        color: selectedColor
-      };
-      await handleEditPost(updatedPost);
-    }
-  };
-
   const openEditDialog = (post: ScheduledPost) => {
-    setEditingPost(post);
-    setEditingTitle(post.title);
-    setEditingScheduledFor(post.scheduled_for);
-    setSelectedSymbol(post.symbol || "calendar");
-    setSelectedColor(post.color || "blue");
-    setIsEditDialogOpen(true);
+    setEditingIdeaId(post.id);
   };
 
   const handlePreviousMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -270,237 +216,59 @@ export default function Calendar() {
     const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
 
     return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <div
-            key={post.id}
-            className={cn(
-              "mt-2 p-2 rounded-lg border cursor-pointer transition-colors hover:opacity-90",
-              colorClasses
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <IconComponent className="h-4 w-4 text-white" />
-              <span className="text-xs text-white font-medium">{post.title}</span>
-            </div>
-          </div>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Content</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label htmlFor="title">Title</label>
-              <Input
-                id="title"
-                defaultValue={post.title}
-                onChange={(e) => setEditingTitle(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="scheduled_date">Date</label>
-              <Input
-                id="scheduled_date"
-                type="date"
-                defaultValue={post.scheduled_for.split('T')[0]}
-                onChange={(e) => {
-                  const time = post.scheduled_for.split('T')[1];
-                  setEditingScheduledFor(`${e.target.value}T${time}`);
-                }}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="scheduled_time">Time</label>
-              <Input
-                id="scheduled_time"
-                type="time"
-                defaultValue={post.scheduled_for.split('T')[1].split('.')[0]}
-                onChange={(e) => {
-                  const date = post.scheduled_for.split('T')[0];
-                  setEditingScheduledFor(`${date}T${e.target.value}`);
-                }}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label>Icon</label>
-              <div className="flex flex-wrap gap-2">
-                {availableSymbols.map(({ name, icon: Icon }) => (
-                  <Button
-                    key={name}
-                    variant={selectedSymbol === name ? "default" : "outline"}
-                    size="icon"
-                    onClick={() => setSelectedSymbol(name)}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <label>Color</label>
-              <div className="flex flex-wrap gap-2">
-                {availableColors.map(({ name, class: colorClass }) => (
-                  <Button
-                    key={name}
-                    variant="outline"
-                    size="icon"
-                    className={cn(
-                      "w-8 h-8 rounded-full",
-                      selectedColor === name && "ring-2 ring-offset-2",
-                      colorClass.split(' ')[0]
-                    )}
-                    onClick={() => setSelectedColor(name)}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => {
-              const updatedPost = {
-                ...post,
-                title: editingTitle || post.title,
-                scheduled_for: editingScheduledFor || post.scheduled_for,
-                symbol: selectedSymbol,
-                color: selectedColor
-              };
-              handleEditPost(updatedPost);
-            }}>
-              Save changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <div
+        key={post.id}
+        className={cn(
+          "mt-2 p-2 rounded-lg border cursor-pointer transition-colors hover:opacity-90",
+          colorClasses
+        )}
+        onClick={() => openEditDialog(post)}
+      >
+        <div className="flex items-center gap-2">
+          <IconComponent className="h-4 w-4 text-white" />
+          <span className="text-xs text-white font-medium">{post.title}</span>
+        </div>
+      </div>
     );
   };
 
   const renderDailyViewPost = (post: ScheduledPost) => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <div
-          key={post.id}
-          className={cn(
-            "p-4 rounded-xl border transition-all shadow-sm cursor-pointer hover:opacity-90",
-            getColorClasses(post.color, 'gradient')
-          )}
+    <div
+      key={post.id}
+      className={cn(
+        "p-4 rounded-xl border transition-all shadow-sm cursor-pointer hover:opacity-90",
+        getColorClasses(post.color, 'gradient')
+      )}
+      onClick={() => openEditDialog(post)}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center space-x-3">
+          <div className={cn(
+            "w-8 h-8 rounded-lg flex items-center justify-center",
+            getColorClasses(post.color)
+          )}>
+            {(() => {
+              const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
+              return <IconComponent className="h-4 w-4 text-white" />;
+            })()}
+          </div>
+          <span className="font-medium text-gray-800">{post.title}</span>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            openEditDialog(post);
+          }}
         >
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center space-x-3">
-              <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center",
-                getColorClasses(post.color)
-              )}>
-                {(() => {
-                  const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-                  return <IconComponent className="h-4 w-4 text-white" />;
-                })()}
-              </div>
-              <span className="font-medium text-gray-800">{post.title}</span>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditingIdeaId(post.id);
-              }}
-            >
-              <PenSquare className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="mt-2 text-sm font-medium text-gray-600 pl-11">
-            {format(new Date(post.scheduled_for), "h:mm a")}
-          </div>
-        </div>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit Content</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <label htmlFor="title">Title</label>
-            <Input
-              id="title"
-              defaultValue={post.title}
-              onChange={(e) => setEditingTitle(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="scheduled_date">Date</label>
-            <Input
-              id="scheduled_date"
-              type="date"
-              defaultValue={post.scheduled_for.split('T')[0]}
-              onChange={(e) => {
-                const time = post.scheduled_for.split('T')[1];
-                setEditingScheduledFor(`${e.target.value}T${time}`);
-              }}
-            />
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="scheduled_time">Time</label>
-            <Input
-              id="scheduled_time"
-              type="time"
-              defaultValue={post.scheduled_for.split('T')[1].split('.')[0]}
-              onChange={(e) => {
-                const date = post.scheduled_for.split('T')[0];
-                setEditingScheduledFor(`${date}T${e.target.value}`);
-              }}
-            />
-          </div>
-          <div className="grid gap-2">
-            <label>Icon</label>
-            <div className="flex flex-wrap gap-2">
-              {availableSymbols.map(({ name, icon: Icon }) => (
-                <Button
-                  key={name}
-                  variant={selectedSymbol === name ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setSelectedSymbol(name)}
-                >
-                  <Icon className="h-4 w-4" />
-                </Button>
-              ))}
-            </div>
-          </div>
-          <div className="grid gap-2">
-            <label>Color</label>
-            <div className="flex flex-wrap gap-2">
-              {availableColors.map(({ name, class: colorClass }) => (
-                <Button
-                  key={name}
-                  variant="outline"
-                  size="icon"
-                  className={cn(
-                    "w-8 h-8 rounded-full",
-                    selectedColor === name && "ring-2 ring-offset-2",
-                    colorClass.split(' ')[0]
-                  )}
-                  onClick={() => setSelectedColor(name)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button onClick={() => {
-            const updatedPost = {
-              ...post,
-              title: editingTitle || post.title,
-              scheduled_for: editingScheduledFor || post.scheduled_for,
-              symbol: selectedSymbol,
-              color: selectedColor
-            };
-            handleEditPost(updatedPost);
-          }}>
-            Save changes
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <PenSquare className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="mt-2 text-sm font-medium text-gray-600 pl-11">
+        {format(new Date(post.scheduled_for), "h:mm a")}
+      </div>
+    </div>
   );
 
   return (
@@ -599,13 +367,13 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Edit Idea Dialog */}
+      {/* EditIdea Dialog */}
       {editingIdeaId && (
         <EditIdea
           ideaId={editingIdeaId}
           onClose={() => {
             setEditingIdeaId(null);
-            fetchScheduledPosts();
+            fetchScheduledPosts(); // Refresh the posts after editing
           }}
         />
       )}
