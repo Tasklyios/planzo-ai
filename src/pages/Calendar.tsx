@@ -90,7 +90,7 @@ const availableColors = [
     name: 'indigo', 
     class: 'bg-indigo-500 hover:bg-indigo-600 border-indigo-400',
     gradient: 'bg-gradient-to-br from-indigo-200 to-indigo-300 border-indigo-200'
-  }
+  },
 ] as const;
 
 // Helper function to get color classes
@@ -271,39 +271,97 @@ export default function Calendar() {
       <div
         key={post.id}
         className={cn(
-          "mt-2 p-2 rounded-lg border cursor-pointer transition-colors",
+          "mt-2 p-2 rounded-lg border cursor-pointer transition-colors relative", // Added relative
           colorClasses
         )}
-        onClick={() => {
-          setEditingPost(post);
-          setEditingTitle(post.title);
-          setEditingScheduledFor(post.scheduled_for);
-          setSelectedSymbol(post.symbol || "calendar");
-          setSelectedColor(post.color || "blue");
-          setIsEditDialogOpen(true);
-        }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <IconComponent className="h-4 w-4 text-white" />
             <span className="text-xs text-white font-medium">{post.title}</span>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="hover:bg-white/20"
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditingPost(post);
-              setEditingTitle(post.title);
-              setEditingScheduledFor(post.scheduled_for);
-              setSelectedSymbol(post.symbol || "calendar");
-              setSelectedColor(post.color || "blue");
-              setIsEditDialogOpen(true);
-            }}
-          >
-            <PenSquare className="h-4 w-4 text-white" />
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="hover:bg-white/20 absolute right-2 top-2" // Added absolute positioning
+              >
+                <PenSquare className="h-4 w-4 text-white" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Post</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <label htmlFor="title">Title</label>
+                  <Input
+                    id="title"
+                    defaultValue={post.title}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="scheduled_for">Scheduled For</label>
+                  <Input
+                    id="scheduled_for"
+                    type="datetime-local"
+                    defaultValue={post.scheduled_for.split('.')[0]}
+                    onChange={(e) => setEditingScheduledFor(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label>Icon</label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableSymbols.map(({ name, icon: Icon }) => (
+                      <Button
+                        key={name}
+                        variant={selectedSymbol === name ? "default" : "outline"}
+                        size="icon"
+                        onClick={() => setSelectedSymbol(name)}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <label>Color</label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableColors.map(({ name, class: colorClass }) => (
+                      <Button
+                        key={name}
+                        variant="outline"
+                        size="icon"
+                        className={cn(
+                          "w-8 h-8 rounded-full",
+                          selectedColor === name && "ring-2 ring-offset-2",
+                          colorClass.split(' ')[0]
+                        )}
+                        onClick={() => setSelectedColor(name)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => {
+                  const updatedPost = {
+                    ...post,
+                    title: editingTitle || post.title,
+                    scheduled_for: editingScheduledFor || post.scheduled_for,
+                    symbol: selectedSymbol,
+                    color: selectedColor
+                  };
+                  handleEditPost(updatedPost);
+                }}>
+                  Save changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     );
@@ -313,17 +371,9 @@ export default function Calendar() {
     <div
       key={post.id}
       className={cn(
-        "p-4 rounded-xl border transition-all shadow-sm",
+        "p-4 rounded-xl border transition-all shadow-sm relative", // Added relative
         getColorClasses(post.color, 'gradient')
       )}
-      onClick={() => {
-        setEditingPost(post);
-        setEditingTitle(post.title);
-        setEditingScheduledFor(post.scheduled_for);
-        setSelectedSymbol(post.symbol || "calendar");
-        setSelectedColor(post.color || "blue");
-        setIsEditDialogOpen(true);
-      }}
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-3">
@@ -342,22 +392,88 @@ export default function Calendar() {
           {format(new Date(post.scheduled_for), "h:mm a")}
         </span>
       </div>
-      <Button 
-        variant="ghost" 
-        size="icon"
-        onClick={(e) => {
-          e.stopPropagation();
-          setEditingPost(post);
-          setEditingTitle(post.title);
-          setEditingScheduledFor(post.scheduled_for);
-          setSelectedSymbol(post.symbol || "calendar");
-          setSelectedColor(post.color || "blue");
-          setIsEditDialogOpen(true);
-        }}
-        className="hover:bg-white/20"
-      >
-        <PenSquare className="h-4 w-4" />
-      </Button>
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="hover:bg-white/20 absolute right-2 top-2" // Added absolute positioning
+          >
+            <PenSquare className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Post</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="title">Title</label>
+              <Input
+                id="title"
+                defaultValue={post.title}
+                onChange={(e) => setEditingTitle(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="scheduled_for">Scheduled For</label>
+              <Input
+                id="scheduled_for"
+                type="datetime-local"
+                defaultValue={post.scheduled_for.split('.')[0]}
+                onChange={(e) => setEditingScheduledFor(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label>Icon</label>
+              <div className="flex flex-wrap gap-2">
+                {availableSymbols.map(({ name, icon: Icon }) => (
+                  <Button
+                    key={name}
+                    variant={selectedSymbol === name ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => setSelectedSymbol(name)}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <label>Color</label>
+              <div className="flex flex-wrap gap-2">
+                {availableColors.map(({ name, class: colorClass }) => (
+                  <Button
+                    key={name}
+                    variant="outline"
+                    size="icon"
+                    className={cn(
+                      "w-8 h-8 rounded-full",
+                      selectedColor === name && "ring-2 ring-offset-2",
+                      colorClass.split(' ')[0]
+                    )}
+                    onClick={() => setSelectedColor(name)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => {
+              const updatedPost = {
+                ...post,
+                title: editingTitle || post.title,
+                scheduled_for: editingScheduledFor || post.scheduled_for,
+                symbol: selectedSymbol,
+                color: selectedColor
+              };
+              handleEditPost(updatedPost);
+            }}>
+              Save changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
@@ -453,69 +569,6 @@ export default function Calendar() {
             </div>
           </div>
         </div>
-
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Post</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label htmlFor="title">Title</label>
-                <Input
-                  id="title"
-                  value={editingTitle}
-                  onChange={(e) => setEditingTitle(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label htmlFor="scheduled_for">Scheduled For</label>
-                <Input
-                  id="scheduled_for"
-                  type="datetime-local"
-                  value={editingScheduledFor.split('.')[0]}
-                  onChange={(e) => setEditingScheduledFor(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label>Icon</label>
-                <div className="flex flex-wrap gap-2">
-                  {availableSymbols.map(({ name, icon: Icon }) => (
-                    <Button
-                      key={name}
-                      variant={selectedSymbol === name ? "default" : "outline"}
-                      size="icon"
-                      onClick={() => setSelectedSymbol(name)}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <label>Color</label>
-                <div className="flex flex-wrap gap-2">
-                  {availableColors.map(({ name, class: colorClass }) => (
-                    <Button
-                      key={name}
-                      variant="outline"
-                      size="icon"
-                      className={cn(
-                        "w-8 h-8 rounded-full",
-                        selectedColor === name && "ring-2 ring-offset-2",
-                        colorClass.split(' ')[0]
-                      )}
-                      onClick={() => setSelectedColor(name)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleSaveEdit}>Save changes</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </>
   );
