@@ -49,7 +49,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',  // Updated to use the correct model name
         messages: [
           {
             role: 'system',
@@ -57,8 +57,15 @@ serve(async (req) => {
           },
           { role: 'user', content: prompt }
         ],
+        temperature: 0.7,
       }),
     });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('OpenAI API error:', error);
+      throw new Error('Failed to generate ideas');
+    }
 
     const data = await response.json();
     const content = data.choices[0].message.content;
