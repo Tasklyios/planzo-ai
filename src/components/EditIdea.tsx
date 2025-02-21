@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -8,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Wand2 } from "lucide-react";
 import * as icons from 'lucide-react';
+import { Check } from "lucide-react";
 
 interface EditIdeaProps {
   ideaId: string | null;
@@ -181,10 +181,14 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                   key={color}
                   variant={idea.color === color ? "default" : "outline"}
                   size="sm"
-                  className={`bg-${color}-500 hover:bg-${color}-600`}
+                  className={`bg-${color}-500 hover:bg-${color}-600 relative`}
                   onClick={() => setIdea({ ...idea, color })}
                 >
-                  <div className="h-4 w-4" />
+                  <div className="h-4 w-4 flex items-center justify-center">
+                    {idea.color === color && (
+                      <Check className="h-3 w-3 text-white" />
+                    )}
+                  </div>
                 </Button>
               ))}
             </div>
