@@ -314,7 +314,7 @@ export default function Calendar() {
     <>
       <Navbar />
       <div className="container mx-auto py-20">
-        <div className="flex flex-col space-y-6">
+        <div className="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
           {/* Mobile: Daily View First */}
           <div className="md:hidden bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div className="flex items-center justify-between mb-4">
@@ -354,7 +354,7 @@ export default function Calendar() {
           </div>
 
           {/* Calendar Grid */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="flex-grow bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
               <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
               <div className="flex space-x-2">
@@ -369,7 +369,7 @@ export default function Calendar() {
 
             <div className="grid grid-cols-7 text-sm">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div key={day} className="p-2 md:p-4 text-center font-medium text-gray-600">
+                <div key={day} className="p-4 text-center font-medium text-gray-600">
                   {day}
                 </div>
               ))}
@@ -381,23 +381,15 @@ export default function Calendar() {
                 return (
                   <div
                     key={date.toString()}
-                    className={`min-h-[80px] md:min-h-[100px] p-2 md:p-3 cursor-pointer ${
+                    className={`min-h-[100px] p-3 cursor-pointer ${
                       !isSameMonth(date, currentDate) ? "text-gray-400" :
                       isToday(date) ? "bg-blue-50/30" : "hover:bg-gray-50"
                     }`}
                     onClick={() => setSelectedDate(date)}
                   >
                     <span className={isToday(date) ? "font-medium" : ""}>{format(date, "d")}</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {posts.map((post) => (
-                        <div
-                          key={post.id}
-                          className={cn(
-                            "w-2 h-2 rounded-full",
-                            getColorClasses(post.color)
-                          )}
-                        />
-                      ))}
+                    <div className="space-y-1 mt-1">
+                      {posts.map((post) => renderPost(post))}
                     </div>
                   </div>
                 );
