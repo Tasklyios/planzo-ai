@@ -1,1 +1,6 @@
-project_id = "hhkabxkelgabcsczsljf"
+
+project_id = "project_id"
+[api]
+enabled = true
+[functions.generate-ideas]
+verify_jwt = false
