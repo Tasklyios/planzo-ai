@@ -71,33 +71,42 @@ export type Database = {
       video_ideas: {
         Row: {
           category: string | null
+          color: string | null
           created_at: string | null
           description: string
           id: string
           is_saved: boolean | null
           platform: string | null
+          script: string | null
+          symbol: string | null
           tags: string[] | null
           title: string
           user_id: string | null
         }
         Insert: {
           category?: string | null
+          color?: string | null
           created_at?: string | null
           description: string
           id?: string
           is_saved?: boolean | null
           platform?: string | null
+          script?: string | null
+          symbol?: string | null
           tags?: string[] | null
           title: string
           user_id?: string | null
         }
         Update: {
           category?: string | null
+          color?: string | null
           created_at?: string | null
           description?: string
           id?: string
           is_saved?: boolean | null
           platform?: string | null
+          script?: string | null
+          symbol?: string | null
           tags?: string[] | null
           title?: string
           user_id?: string | null

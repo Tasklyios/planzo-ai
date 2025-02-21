@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -50,7 +51,6 @@ const IdeaGenerator = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
-
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
 
   // Load saved ideas on mount
@@ -84,7 +84,6 @@ const IdeaGenerator = () => {
   };
 
   const addToCalendar = async (idea: GeneratedIdea) => {
-    // Initialize the dialog with the idea's title and current date
     setAddingToCalendar({
       idea,
       title: idea.title,
@@ -167,7 +166,6 @@ const IdeaGenerator = () => {
         throw new Error('Invalid response format from AI');
       }
 
-      // Save ideas to Supabase with all fields
       const { error: saveError } = await supabase.from("video_ideas").insert(
         data.ideas.map((idea: any) => ({
           title: idea.title,
@@ -211,7 +209,6 @@ const IdeaGenerator = () => {
             <span className="text-gray-600 hover:text-[#4F92FF] cursor-pointer">Dashboard</span>
             <span className="text-[#4F92FF] font-medium cursor-pointer">Ideas</span>
             <span className="text-gray-600 hover:text-[#4F92FF] cursor-pointer">Calendar</span>
-            <span className="text-gray-600 hover:text-[#4F92FF] cursor-pointer">Scripts</span>
           </div>
           <div className="flex items-center gap-4">
             <button className="hidden md:block px-4 py-2 text-[#4F92FF] hover:bg-[#4F92FF]/10 rounded-lg relative">
@@ -336,55 +333,56 @@ const IdeaGenerator = () => {
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               {ideas.map((idea) => {
-              const IconComponent = icons[idea.symbol as keyof typeof icons] || icons.Lightbulb;
-              return (
-                <div
-                  key={idea.id}
-                  className="group bg-[#F9FAFC] rounded-xl p-6 hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-[#4F92FF]/20"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full bg-${idea.color || 'blue'}-500/10 flex items-center justify-center text-${idea.color || 'blue'}-500`}>
-                        <IconComponent className="w-5 h-5" />
+                const IconComponent = icons[idea.symbol as keyof typeof icons] || icons.Lightbulb;
+                return (
+                  <div
+                    key={idea.id}
+                    className="group bg-[#F9FAFC] rounded-xl p-6 hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-[#4F92FF]/20"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full bg-${idea.color || 'blue'}-500/10 flex items-center justify-center text-${idea.color || 'blue'}-500`}>
+                          <IconComponent className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="text-sm text-[#4F92FF] font-medium">{idea.category}</span>
+                          <h3 className="text-lg font-medium text-[#222831]">{idea.title}</h3>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-sm text-[#4F92FF] font-medium">{idea.category}</span>
-                        <h3 className="text-lg font-medium text-[#222831]">{idea.title}</h3>
+                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => addToCalendar(idea)}
+                        >
+                          <CalendarPlus className="h-4 w-4 mr-2" />
+                          Add to Calendar
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setEditingIdeaId(idea.id)}
+                        >
+                          <PenSquare className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => addToCalendar(idea)}
-                      >
-                        <CalendarPlus className="h-4 w-4 mr-2" />
-                        Add to Calendar
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setEditingIdeaId(idea.id)}
-                      >
-                        <PenSquare className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
+                    <p className="text-gray-600">{idea.description}</p>
+                    <div className="flex gap-3 mt-4">
+                      {idea.tags.map((tag, tagIndex) => (
+                        <span key={tagIndex} className="px-3 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-sm rounded-full">
+                          #{tag}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                  <p className="text-gray-600">{idea.description}</p>
-                  <div className="flex gap-3 mt-4">
-                    {idea.tags.map((tag, tagIndex) => (
-                      <span key={tagIndex} className="px-3 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-sm rounded-full">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+                );
+              })}
+            </div>
+          </section>
+        )}
+      </main>
 
       {/* Add to Calendar Dialog */}
       <Dialog open={addingToCalendar !== null} onOpenChange={(open) => !open && setAddingToCalendar(null)}>
