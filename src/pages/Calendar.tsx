@@ -27,20 +27,26 @@ import Navbar from "@/components/Navbar";
 import { cn } from "@/lib/utils";
 import EditIdea from "@/components/EditIdea";
 
-interface ScheduledPost {
+// Define the type based on the database schema
+interface VideoIdea {
   id: string;
   title: string;
-  platform: string;
-  scheduled_for: string;
+  description: string;
+  platform?: string;
   created_at: string;
   symbol?: string;
   color?: string;
-  description?: string;
   category?: string;
   tags?: string[];
   is_saved?: boolean;
   script?: string;
   user_id?: string;
+}
+
+// Define our ScheduledPost type that includes scheduled_for
+interface ScheduledPost extends Omit<VideoIdea, 'description'> {
+  description?: string;
+  scheduled_for: string;
 }
 
 const availableSymbols = [
@@ -162,30 +168,31 @@ export default function Calendar() {
         return;
       }
 
-      const newPost: Omit<ScheduledPost, 'id' | 'created_at'> = {
+      // Create the new post with required fields
+      const newVideoIdea = {
         title: `New ${platform} Post`,
+        description: "", // This is required by the database
         platform,
-        scheduled_for: new Date().toISOString(), // Make sure this is included
-        description: "",
-        category: "",
-        tags: [],
         user_id: userId,
         symbol: "calendar",
         color: "blue",
+        tags: [],
+        category: "",
+        scheduled_for: new Date().toISOString(),
       };
 
       const { data, error } = await supabase
         .from("video_ideas")
-        .insert(newPost)
+        .insert(newVideoIdea)
         .select()
         .single();
 
       if (error) throw error;
 
-      // Ensure the returned data has all required ScheduledPost properties
+      // Convert the VideoIdea to a ScheduledPost
       const scheduledPost: ScheduledPost = {
         ...data,
-        scheduled_for: data.scheduled_for || new Date().toISOString(),
+        scheduled_for: newVideoIdea.scheduled_for // Use the scheduled_for we set
       };
 
       setScheduledPosts([...scheduledPosts, scheduledPost]);
