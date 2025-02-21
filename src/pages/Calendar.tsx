@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, PenSquare, Clock } from "lucide-react";
@@ -16,6 +15,8 @@ interface ScheduledPost {
   platform: string;
   scheduled_for: string;
   created_at: string;
+  symbol?: string;
+  color?: string;
 }
 
 export default function Calendar() {
@@ -121,6 +122,8 @@ export default function Calendar() {
         .update({
           title: post.title,
           scheduled_for: post.scheduled_for,
+          symbol: post.symbol || 'Calendar',
+          color: post.color || 'blue',
         })
         .eq("id", post.id)
         .eq("user_id", userId);
@@ -235,7 +238,9 @@ export default function Calendar() {
                         }`}
                       >
                         <div className="flex items-center">
-                          <i className={`fa-brands fa-${post.platform.toLowerCase()} text-xs mr-2`}></i>
+                          {post.symbol && (
+                            <i className={`fa-brands fa-${post.platform.toLowerCase()} text-xs mr-2`}></i>
+                          )}
                           <span className="text-xs">{post.title}</span>
                         </div>
                         <div className="flex justify-end space-x-2">
