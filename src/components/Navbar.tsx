@@ -37,12 +37,13 @@ const Navbar = () => {
 
   const closeSheet = () => setIsOpen(false);
 
+  // Ensure fixed order: Dashboard, Generator, Ideas, Calendar
   const MENU_ITEMS = [
     { path: '/dashboard', label: 'Dashboard' },
     { path: '/generator', label: 'Generator' },
     { path: '/ideas', label: 'Ideas' },
     { path: '/calendar', label: 'Calendar' },
-  ];
+  ] as const;
 
   const currentPath = window.location.pathname;
 
@@ -52,6 +53,8 @@ const Navbar = () => {
         <div className="flex items-center">
           <div className="text-2xl font-bold text-[#4F92FF]">TrendAI</div>
         </div>
+        
+        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
           {MENU_ITEMS.map((item) => (
             <Link
@@ -67,6 +70,7 @@ const Navbar = () => {
             </Link>
           ))}
         </div>
+
         <div className="flex items-center space-x-4">
           <div className="hidden md:block">
             <DropdownMenu>
@@ -95,6 +99,7 @@ const Navbar = () => {
             </DropdownMenu>
           </div>
 
+          {/* Mobile Navigation */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" className="md:hidden" size="icon">
