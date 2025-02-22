@@ -218,12 +218,14 @@ export default function Calendar() {
     const postId = result.draggableId;
     const newStatus = result.destination.droppableId as "scheduled" | "in progress" | "completed";
 
-    // Type assertion to match the database schema
+    // Use type assertion to match database schema
     const { error } = await supabase
       .from("scheduled_content")
       .update({
-        status: newStatus,
-      } as any) // Using type assertion here since the database schema is now updated
+        status: newStatus
+      } as {
+        status: "scheduled" | "in progress" | "completed"
+      })
       .eq("id", postId);
 
     if (error) {
