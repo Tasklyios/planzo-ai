@@ -92,13 +92,10 @@ const Generator = () => {
 
   const handleBookmarkToggle = async (ideaId: string) => {
     try {
-      // Find the idea and toggle its saved state
-      setIdeas(prevIdeas => prevIdeas.map(idea => 
-        idea.id === ideaId ? { ...idea, is_saved: !idea.is_saved } : idea
-      ));
+      const ideaToUpdate = ideas.find(idea => idea.id === ideaId);
+      if (!ideaToUpdate) return;
 
-      const idea = ideas.find(i => i.id === ideaId);
-      const newSavedState = !idea?.is_saved;
+      const newSavedState = !ideaToUpdate.is_saved;
 
       const { error } = await supabase
         .from("video_ideas")
@@ -107,6 +104,11 @@ const Generator = () => {
 
       if (error) throw error;
 
+      // Update local state to reflect the change
+      setIdeas(prevIdeas => prevIdeas.map(idea =>
+        idea.id === ideaId ? { ...idea, is_saved: newSavedState } : idea
+      ));
+
     } catch (error: any) {
       console.error("Error updating bookmark:", error);
       toast({
@@ -114,10 +116,6 @@ const Generator = () => {
         description: "Failed to update bookmark status",
         variant: "destructive",
       });
-      // Revert the optimistic update
-      setIdeas(prevIdeas => prevIdeas.map(idea => 
-        idea.id === ideaId ? { ...idea, is_saved: !idea.is_saved } : idea
-      ));
     }
   };
 

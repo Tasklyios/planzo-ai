@@ -18,6 +18,32 @@ export const useIdeaGenerator = () => {
 
   useEffect(() => {
     fetchUserPreferences();
+
+    // Subscribe to auth state changes to refresh preferences
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchUserPreferences();
+    });
+
+    // Set up realtime subscription to profile changes
+    const profileSubscription = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+        },
+        () => {
+          fetchUserPreferences();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+      profileSubscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserPreferences = async () => {
