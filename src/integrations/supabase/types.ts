@@ -52,6 +52,7 @@ export type Database = {
           id: string
           platform: string
           scheduled_for: string
+          status: string | null
           symbol: string | null
           title: string
           user_id: string | null
@@ -62,6 +63,7 @@ export type Database = {
           id?: string
           platform: string
           scheduled_for: string
+          status?: string | null
           symbol?: string | null
           title: string
           user_id?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           id?: string
           platform?: string
           scheduled_for?: string
+          status?: string | null
           symbol?: string | null
           title?: string
           user_id?: string | null
