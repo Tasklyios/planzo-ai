@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { supabase } from "@/integrations/supabase/client";
@@ -207,7 +206,7 @@ export default function Calendar() {
       created_at: post.created_at,
       user_id: post.user_id,
       symbol: post.symbol,
-      status: post.status || "scheduled" // Use the status from DB or default to "scheduled"
+      status: (post.status as "scheduled" | "in progress" | "completed") || "scheduled"
     }));
 
     setScheduledPosts(transformedData);
@@ -219,13 +218,12 @@ export default function Calendar() {
     const postId = result.draggableId;
     const newStatus = result.destination.droppableId as "scheduled" | "in progress" | "completed";
 
-    const updateData = {
-      status: newStatus
-    };
-
+    // Type assertion to match the database schema
     const { error } = await supabase
       .from("scheduled_content")
-      .update(updateData)
+      .update({
+        status: newStatus,
+      } as any) // Using type assertion here since the database schema is now updated
       .eq("id", postId);
 
     if (error) {
