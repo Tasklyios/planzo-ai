@@ -37,6 +37,15 @@ const Navbar = () => {
 
   const closeSheet = () => setIsOpen(false);
 
+  const MENU_ITEMS = [
+    { path: '/dashboard', label: 'Dashboard' },
+    { path: '/generator', label: 'Generator' },
+    { path: '/ideas', label: 'Ideas' },
+    { path: '/calendar', label: 'Calendar' },
+  ];
+
+  const currentPath = window.location.pathname;
+
   return (
     <header className="fixed w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -44,18 +53,19 @@ const Navbar = () => {
           <div className="text-2xl font-bold text-[#4F92FF]">TrendAI</div>
         </div>
         <div className="hidden md:flex items-center gap-8">
-          <Link to="/dashboard" className="text-gray-600 hover:text-[#4F92FF]">
-            Dashboard
-          </Link>
-          <Link to="/generator" className="text-gray-600 hover:text-[#4F92FF]">
-            Generator
-          </Link>
-          <Link to="/ideas" className="text-gray-600 hover:text-[#4F92FF]">
-            Ideas
-          </Link>
-          <Link to="/calendar" className="text-gray-600 hover:text-[#4F92FF]">
-            Calendar
-          </Link>
+          {MENU_ITEMS.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`${
+                currentPath === item.path
+                  ? "text-[#4F92FF] font-medium"
+                  : "text-gray-600 hover:text-[#4F92FF]"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
         <div className="flex items-center space-x-4">
           <div className="hidden md:block">
@@ -96,34 +106,20 @@ const Navbar = () => {
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-4 mt-4">
-                <Link
-                  to="/dashboard"
-                  className="text-gray-600 hover:text-[#4F92FF]"
-                  onClick={closeSheet}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/generator"
-                  className="text-gray-600 hover:text-[#4F92FF]"
-                  onClick={closeSheet}
-                >
-                  Generator
-                </Link>
-                <Link
-                  to="/ideas"
-                  className="text-gray-600 hover:text-[#4F92FF]"
-                  onClick={closeSheet}
-                >
-                  Ideas
-                </Link>
-                <Link
-                  to="/calendar"
-                  className="text-gray-600 hover:text-[#4F92FF]"
-                  onClick={closeSheet}
-                >
-                  Calendar
-                </Link>
+                {MENU_ITEMS.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`${
+                      currentPath === item.path
+                        ? "text-[#4F92FF] font-medium"
+                        : "text-gray-600 hover:text-[#4F92FF]"
+                    }`}
+                    onClick={closeSheet}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
                 <Button variant="outline" onClick={() => {
                   navigate('/account');
                   closeSheet();
