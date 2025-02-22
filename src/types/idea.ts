@@ -1,4 +1,6 @@
 
+import { LucideIcon, Lightbulb, Video, Music, Gamepad, Camera, Heart, Star, Trophy } from "lucide-react";
+
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -19,3 +21,32 @@ export interface IdeaGeneratorFormData {
   videoStyle: string;
   toneOfVoice: string;
 }
+
+export interface GeneratedIdea {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  tags: string[];
+  platform?: string;
+  symbol?: keyof typeof IconMap;
+  color?: string;
+}
+
+export interface AddToCalendarIdea {
+  idea: GeneratedIdea;
+  title: string;
+  scheduledFor: string;
+}
+
+export const IconMap = {
+  Lightbulb,
+  Video,
+  Music,
+  Gamepad,
+  Camera,
+  Heart,
+  Star,
+  Trophy,
+} as const;
+
