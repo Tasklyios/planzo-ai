@@ -26,6 +26,7 @@ import IdeasGrid from "@/components/idea-generator/IdeasGrid";
 import MobileMenuDialog from "@/components/idea-generator/MobileMenuDialog";
 import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
 import { AddToCalendarIdea } from "@/types/idea";
+import { useToast } from "@/components/ui/use-toast";
 
 const IdeaGenerator = () => {
   const {
@@ -46,6 +47,7 @@ const IdeaGenerator = () => {
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -85,6 +87,35 @@ const IdeaGenerator = () => {
   const updateCalendarIdea = (field: keyof AddToCalendarIdea, value: string) => {
     if (!addingToCalendar) return;
     setAddingToCalendar(prev => prev ? { ...prev, [field]: value } : null);
+  };
+
+  const handleBookmarkToggle = async (ideaId: string) => {
+    try {
+      const ideaToUpdate = ideas.find(idea => idea.id === ideaId);
+      if (!ideaToUpdate) return;
+
+      const newSavedState = !ideaToUpdate.is_saved;
+
+      const { error } = await supabase
+        .from("video_ideas")
+        .update({ is_saved: newSavedState })
+        .eq("id", ideaId);
+
+      if (error) throw error;
+
+      // Update local state to reflect the change
+      setIdeas(prevIdeas => prevIdeas.map(idea =>
+        idea.id === ideaId ? { ...idea, is_saved: newSavedState } : idea
+      ));
+
+    } catch (error: any) {
+      console.error("Error updating bookmark:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update bookmark status",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -180,6 +211,7 @@ const IdeaGenerator = () => {
               scheduledFor: new Date().toISOString().split('T')[0],
             })}
             onEdit={(ideaId) => setEditingIdeaId(ideaId)}
+            onBookmarkToggle={handleBookmarkToggle}
           />
         </section>
       </main>
