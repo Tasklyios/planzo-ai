@@ -197,10 +197,17 @@ export default function Calendar() {
       return;
     }
 
-    // Transform the data to include the required status field
+    // Transform the data to ensure status has a value
     const transformedData: ScheduledPost[] = (data || []).map(post => ({
-      ...post,
-      status: post.status as "scheduled" | "in progress" | "completed" || "scheduled"
+      id: post.id,
+      title: post.title,
+      scheduled_for: post.scheduled_for,
+      platform: post.platform,
+      color: post.color,
+      created_at: post.created_at,
+      user_id: post.user_id,
+      symbol: post.symbol,
+      status: post.status || "scheduled" // Use the status from DB or default to "scheduled"
     }));
 
     setScheduledPosts(transformedData);
@@ -212,9 +219,13 @@ export default function Calendar() {
     const postId = result.draggableId;
     const newStatus = result.destination.droppableId as "scheduled" | "in progress" | "completed";
 
+    const updateData = {
+      status: newStatus
+    };
+
     const { error } = await supabase
       .from("scheduled_content")
-      .update({ status: newStatus })
+      .update(updateData)
       .eq("id", postId);
 
     if (error) {
