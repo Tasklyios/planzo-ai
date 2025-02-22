@@ -206,6 +206,7 @@ export const useIdeaGenerator = () => {
     setPlatform,
     loading,
     ideas,
+    setIdeas,
     generateIdeas,
   };
 };

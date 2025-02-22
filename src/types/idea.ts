@@ -31,6 +31,7 @@ export interface GeneratedIdea {
   platform?: string;
   symbol?: keyof typeof IconMap;
   color?: string;
+  is_saved?: boolean;
 }
 
 export interface AddToCalendarIdea {

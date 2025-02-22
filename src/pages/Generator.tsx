@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EditIdea from "@/components/EditIdea";
+import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +40,7 @@ const Generator = () => {
     setPlatform,
     loading,
     ideas,
+    setIdeas,
     generateIdeas,
   } = useIdeaGenerator();
 
@@ -45,6 +48,7 @@ const Generator = () => {
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
