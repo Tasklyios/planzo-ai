@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EditIdea from "@/components/EditIdea";
+import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +27,6 @@ import IdeasGrid from "@/components/idea-generator/IdeasGrid";
 import MobileMenuDialog from "@/components/idea-generator/MobileMenuDialog";
 import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
 import { AddToCalendarIdea } from "@/types/idea";
-import { useToast } from "@/components/ui/use-toast";
 
 const IdeaGenerator = () => {
   const {
@@ -40,6 +40,7 @@ const IdeaGenerator = () => {
     setPlatform,
     loading,
     ideas,
+    setIdeas,
     generateIdeas,
   } = useIdeaGenerator();
 
