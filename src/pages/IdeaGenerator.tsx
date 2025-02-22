@@ -115,7 +115,14 @@ const IdeaGenerator = () => {
   };
 
   const handleAddToCalendar = async () => {
-    if (!addingToCalendar) return;
+    if (!addingToCalendar?.idea?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Invalid idea selected",
+      });
+      return;
+    }
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -126,14 +133,15 @@ const IdeaGenerator = () => {
         return;
       }
 
-      // Update video_ideas table directly with scheduled_for
+      // Update video_ideas table with scheduled_for
       const { error } = await supabase
         .from("video_ideas")
         .update({
           scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
           platform: addingToCalendar.idea.platform || platform,
         })
-        .eq("id", addingToCalendar.idea.id);
+        .eq("id", addingToCalendar.idea.id)
+        .eq("user_id", userId);
 
       if (error) throw error;
 
