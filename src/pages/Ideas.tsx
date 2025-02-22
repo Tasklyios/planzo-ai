@@ -10,6 +10,7 @@ import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog
 import { AddToCalendarIdea } from "@/types/idea";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { IconMap } from "@/types/idea";
 
 export default function Ideas() {
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
@@ -17,6 +18,13 @@ export default function Ideas() {
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const validateIconKey = (key: string | undefined): keyof typeof IconMap => {
+    if (!key || !(key in IconMap)) {
+      return 'Lightbulb';
+    }
+    return key as keyof typeof IconMap;
+  };
 
   const fetchSavedIdeas = async () => {
     try {
@@ -31,7 +39,13 @@ export default function Ideas() {
 
       if (error) throw error;
       
-      setIdeas(data || []);
+      // Transform the data to ensure symbol is of the correct type
+      const transformedIdeas = (data || []).map(idea => ({
+        ...idea,
+        symbol: validateIconKey(idea.symbol)
+      })) as GeneratedIdea[];
+
+      setIdeas(transformedIdeas);
     } catch (error: any) {
       console.error("Error fetching saved ideas:", error);
       toast({
