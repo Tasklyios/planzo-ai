@@ -1,51 +1,21 @@
 
-import {
-  Lightbulb,
-  LayersIcon,
-  Users,
-  Video,
-  Smartphone,
-  Wand2,
-  Filter,
-  ArrowDownWideNarrow,
-  CalendarPlus,
-  PenSquare,
-  User,
-  CreditCard,
-  LogOut,
-  Menu,
-} from "lucide-react";
-
-export const IconMap = {
-  Lightbulb,
-  LayersIcon,
-  Users,
-  Video,
-  Smartphone,
-  Wand2,
-  Filter,
-  ArrowDownWideNarrow,
-  CalendarPlus,
-  PenSquare,
-  User,
-  CreditCard,
-  LogOut,
-  Menu,
-} as const;
-
-export interface GeneratedIdea {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  tags: string[];
-  platform?: string;
-  symbol?: keyof typeof IconMap;
-  color?: string;
+export interface IdeaResearch {
+  statistics: string;
+  trends: string;
+  examples: string;
 }
 
-export interface AddToCalendarIdea {
-  idea: GeneratedIdea;
+export interface Idea {
   title: string;
-  scheduledFor: string;
+  description: string;
+  research: IdeaResearch;
+  hashtags: string;
+  engagementPrediction: string;
+}
+
+export interface IdeaGeneratorFormData {
+  topic: string;
+  targetAudience: string;
+  videoStyle: string;
+  toneOfVoice: string;
 }

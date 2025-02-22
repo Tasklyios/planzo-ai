@@ -1,106 +1,86 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { CreateChatCompletionRequest } from "https://esm.sh/@types/openai@3.3.0";
+import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.3.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const openAiConfig = new Configuration({
+  apiKey: Deno.env.get("OPENAI_API_KEY"),
+});
+
+const openai = new OpenAIApi(openAiConfig);
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { type, title, description, platform, tags, niche, audience, videoType } = await req.json();
+    const { topic, targetAudience, videoStyle, toneOfVoice } = await req.json();
 
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
+    const prompt = `Generate 5 viral video ideas with research data for ${topic}. Target audience: ${targetAudience}. Video style: ${videoStyle}. Tone of voice: ${toneOfVoice}.
 
-    let prompt;
-    if (type === 'script') {
-      prompt = `Write a detailed video script for a ${platform} video with the following details:
-        Title: ${title}
-        Description: ${description}
-        Tags: ${tags ? tags.join(', ') : ''}
-        
-        The script should be engaging and follow ${platform}'s best practices. Include hooks, main points, and call-to-action.`;
-    } else {
-      prompt = `Generate 5 viral video ideas for ${platform} with:
-        Niche: ${niche}
-        Target Audience: ${audience}
-        Video Type: ${videoType}
-        
-        Generate ideas in this JSON format:
+For each idea, include:
+1. A catchy title
+2. Brief description
+3. Research backing:
+   - Relevant statistics or data
+   - Current trends analysis
+   - Similar successful content examples
+4. Hashtag suggestions
+5. Engagement prediction (based on similar content performance)
+
+Format each idea as a JSON object with these fields:
+{
+  "title": "string",
+  "description": "string",
+  "research": {
+    "statistics": "string",
+    "trends": "string",
+    "examples": "string"
+  },
+  "hashtags": "string",
+  "engagementPrediction": "string"
+}
+
+Ensure each idea is backed by recent data and trends.`;
+
+    const completion = await openai.createChatCompletion({
+      model: "gpt-4",
+      messages: [
         {
-          "ideas": [
-            {
-              "title": "catchy title",
-              "description": "detailed description",
-              "category": "content category",
-              "tags": ["tag1", "tag2", "tag3"]
-            }
-          ]
-        }`;
-    }
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: type === 'script' 
-              ? 'You are a professional video script writer who creates engaging social media content.'
-              : 'You are a social media content strategist who generates viral video ideas. Always respond with valid JSON.',
-          },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-      }),
+          role: "system",
+          content: "You are a social media strategist with expertise in creating viral content backed by data and research."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000,
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('OpenAI API error:', error);
-      throw new Error('Failed to generate content');
-    }
+    const ideas = JSON.parse(completion.data.choices[0].message?.content || "[]");
 
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-    
-    if (type === 'script') {
-      return new Response(JSON.stringify({ script: content }), {
+    return new Response(
+      JSON.stringify({ ideas }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    try {
-      const parsedContent = JSON.parse(content);
-      return new Response(JSON.stringify(parsedContent), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } catch (parseError) {
-      console.error('Failed to parse OpenAI response:', content);
-      throw new Error('Failed to parse generated content');
-    }
+      },
+    );
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
+      {
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      },
     );
   }
 });
