@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,50 +111,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#F9FAFC]">
-      <header className="fixed w-full top-0 bg-white border-b border-[#EAECEF] z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <div className="text-2xl font-bold text-[#4F92FF]">TrendAI</div>
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <span className="text-[#4F92FF] font-medium">Dashboard</span>
-              <span onClick={() => navigate('/calendar')} className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Calendar</span>
-              <span onClick={() => navigate('/ideas')} className="text-[#222831] hover:text-[#4F92FF] cursor-pointer">Ideas</span>
-            </nav>
-            <div className="flex items-center space-x-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="cursor-pointer">
-                    <User className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-white" align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    <span>Billing</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={async () => {
-                    await supabase.auth.signOut();
-                    navigate("/auth");
-                  }}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <main className="container mx-auto px-4 pt-24">
         <section className="mb-12">
           <h1 className="text-4xl font-bold text-[#222831] mb-8">Welcome back!</h1>
