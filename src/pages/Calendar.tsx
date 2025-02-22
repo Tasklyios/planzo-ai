@@ -25,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
 import { cn } from "@/lib/utils";
 import EditIdea from "@/components/EditIdea";
 
@@ -373,7 +372,6 @@ export default function Calendar() {
 
   return (
     <>
-      <Navbar />
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="container mx-auto py-20 flex flex-col md:flex-row gap-6">
           <div className="md:hidden w-full bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">

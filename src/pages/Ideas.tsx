@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -128,44 +127,41 @@ export default function Ideas() {
   };
 
   return (
-    <AuthGuard>
-      <Navbar />
-      <main className="container mx-auto px-4 pt-28 pb-12">
-        <section className="mb-12">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[#222831]">Saved Ideas</h1>
-            <p className="text-gray-600 mt-2">Browse and manage your bookmarked video ideas</p>
-          </div>
+    <main className="container mx-auto px-4 pt-28 pb-12">
+      <section className="mb-12">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#222831]">Saved Ideas</h1>
+          <p className="text-gray-600 mt-2">Browse and manage your bookmarked video ideas</p>
+        </div>
 
-          <IdeasGrid
-            ideas={ideas}
-            onAddToCalendar={(idea) => setAddingToCalendar({
-              idea,
-              title: idea.title,
-              scheduledFor: new Date().toISOString().split('T')[0],
-            })}
-            onEdit={(ideaId) => setEditingIdeaId(ideaId)}
-            onBookmarkToggle={handleBookmarkToggle}
-          />
-        </section>
-
-        {editingIdeaId && (
-          <EditIdea
-            ideaId={editingIdeaId}
-            onClose={() => {
-              setEditingIdeaId(null);
-              fetchSavedIdeas();
-            }}
-          />
-        )}
-
-        <AddToCalendarDialog
-          idea={addingToCalendar}
-          onOpenChange={() => setAddingToCalendar(null)}
-          onAddToCalendar={handleAddToCalendar}
-          onUpdate={updateCalendarIdea}
+        <IdeasGrid
+          ideas={ideas}
+          onAddToCalendar={(idea) => setAddingToCalendar({
+            idea,
+            title: idea.title,
+            scheduledFor: new Date().toISOString().split('T')[0],
+          })}
+          onEdit={(ideaId) => setEditingIdeaId(ideaId)}
+          onBookmarkToggle={handleBookmarkToggle}
         />
-      </main>
-    </AuthGuard>
+      </section>
+
+      {editingIdeaId && (
+        <EditIdea
+          ideaId={editingIdeaId}
+          onClose={() => {
+            setEditingIdeaId(null);
+            fetchSavedIdeas();
+          }}
+        />
+      )}
+
+      <AddToCalendarDialog
+        idea={addingToCalendar}
+        onOpenChange={() => setAddingToCalendar(null)}
+        onAddToCalendar={handleAddToCalendar}
+        onUpdate={updateCalendarIdea}
+      />
+    </main>
   );
 }
