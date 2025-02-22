@@ -11,77 +11,28 @@ import NotFound from "@/pages/NotFound";
 import Navbar from "@/components/Navbar";
 import AuthGuard from "@/components/AuthGuard";
 
+const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
+  <AuthGuard>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <main className="pt-16">
+        {children}
+      </main>
+    </div>
+  </AuthGuard>
+);
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
-        <Route
-          path="/dashboard"
-          element={
-            <AuthGuard>
-              <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="pt-16">
-                  <Dashboard />
-                </main>
-              </div>
-            </AuthGuard>
-          }
-        />
-        <Route
-          path="/generator"
-          element={
-            <AuthGuard>
-              <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="pt-16">
-                  <Generator />
-                </main>
-              </div>
-            </AuthGuard>
-          }
-        />
-        <Route
-          path="/ideas"
-          element={
-            <AuthGuard>
-              <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="pt-16">
-                  <Ideas />
-                </main>
-              </div>
-            </AuthGuard>
-          }
-        />
-        <Route
-          path="/calendar"
-          element={
-            <AuthGuard>
-              <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="pt-16">
-                  <Calendar />
-                </main>
-              </div>
-            </AuthGuard>
-          }
-        />
-        <Route
-          path="/account"
-          element={
-            <AuthGuard>
-              <div className="min-h-screen bg-background">
-                <Navbar />
-                <main className="pt-16">
-                  <Account />
-                </main>
-              </div>
-            </AuthGuard>
-          }
-        />
+        <Route path="/dashboard" element={<AuthenticatedLayout><Dashboard /></AuthenticatedLayout>} />
+        <Route path="/generator" element={<AuthenticatedLayout><Generator /></AuthenticatedLayout>} />
+        <Route path="/ideas" element={<AuthenticatedLayout><Ideas /></AuthenticatedLayout>} />
+        <Route path="/calendar" element={<AuthenticatedLayout><Calendar /></AuthenticatedLayout>} />
+        <Route path="/account" element={<AuthenticatedLayout><Account /></AuthenticatedLayout>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
