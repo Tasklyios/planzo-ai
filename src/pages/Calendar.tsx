@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Calendar as CalendarIcon, CheckCircle, GripVertical, MoreVertical } from "lucide-react";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { CalendarIcon, CheckCircle, GripVertical, MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,15 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   Sheet,
   SheetContent,
@@ -30,7 +23,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -41,6 +33,10 @@ interface ScheduledPost {
   scheduled_for: string;
   status: "scheduled" | "in progress" | "completed";
   platform: string;
+  color?: string;
+  created_at?: string;
+  user_id?: string;
+  symbol?: string;
 }
 
 interface EditIdeaProps {
@@ -161,13 +157,10 @@ const EditIdea: React.FC<EditIdeaProps> = ({ ideaId, onClose }) => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
+                <CalendarComponent
                   selected={scheduledFor}
                   onSelect={setScheduledFor}
-                  disabled={(date) =>
-                    date < new Date()
-                  }
+                  disabled={(date) => date < new Date()}
                   initialFocus
                 />
               </PopoverContent>
@@ -204,7 +197,13 @@ export default function Calendar() {
       return;
     }
 
-    setScheduledPosts(data as ScheduledPost[]);
+    // Transform the data to include the required status field
+    const transformedData: ScheduledPost[] = (data || []).map(post => ({
+      ...post,
+      status: post.status as "scheduled" | "in progress" | "completed" || "scheduled"
+    }));
+
+    setScheduledPosts(transformedData);
   };
 
   const handleDragEnd = async (result: DropResult) => {
