@@ -191,10 +191,10 @@ export default function Account() {
             <p className="text-gray-600 mt-2">Manage your account preferences and content settings</p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm space-y-6">
-            <div className="space-y-4">
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="space-y-6">
               <h2 className="text-xl font-semibold">Profile Information</h2>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="space-y-2">
                   <Label>Email</Label>
                   <Input 
@@ -219,21 +219,24 @@ export default function Account() {
 
                 <div className="space-y-2">
                   <Label>Posting Platforms</Label>
-                  <MultiSelect
-                    options={platformOptions}
-                    value={profile.posting_platforms?.map(p => ({ label: p, value: p })) || []}
-                    onChange={(selected) => setProfile(prev => ({ 
-                      ...prev, 
-                      posting_platforms: selected.map(s => s.value)
-                    }))}
-                    disabled={loading}
-                  />
+                  <div className="relative">
+                    <MultiSelect
+                      options={platformOptions}
+                      value={profile.posting_platforms?.map(p => ({ label: p, value: p })) || []}
+                      onChange={(selected) => setProfile(prev => ({ 
+                        ...prev, 
+                        posting_platforms: selected.map(s => s.value)
+                      }))}
+                      disabled={loading}
+                      className="bg-white"
+                    />
+                  </div>
                 </div>
 
                 <Button 
                   onClick={handleUpdateProfile} 
                   disabled={loading}
-                  className="w-full"
+                  className="w-full mt-6"
                 >
                   {loading ? "Updating..." : "Update Profile"}
                 </Button>
