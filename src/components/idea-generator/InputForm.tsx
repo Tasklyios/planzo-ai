@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { LayersIcon, Users, Video, Smartphone, Package2, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,7 +115,8 @@ const InputForm = ({
                 </div>
               </div>
             </div>
-          </>;
+          </>
+        );
         
       case 'ecommerce':
         return (
@@ -168,7 +168,8 @@ const InputForm = ({
                 </div>
               </div>
             </div>
-          </>;
+          </>
+        );
 
       case 'business':
         return (
@@ -220,7 +221,8 @@ const InputForm = ({
                 </div>
               </div>
             </div>
-          </>;
+          </>
+        );
     }
   };
 
