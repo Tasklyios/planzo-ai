@@ -125,11 +125,19 @@ const IdeaCard = ({
             size="sm"
             onClick={handleBookmarkToggle}
             className={cn(
-              "ml-2",
-              idea.is_saved && "text-[#4F92FF]"
+              "ml-2 cursor-pointer transition-all duration-300 ease-in-out hover:scale-110",
+              idea.is_saved 
+                ? "text-[#8B5CF6] hover:text-[#7E69AB]" 
+                : "text-gray-400 hover:text-[#9b87f5]"
             )}
           >
-            <Bookmark className="h-4 w-4" />
+            <Bookmark 
+              className={cn(
+                "h-4 w-4 transition-transform duration-300",
+                idea.is_saved && "transform scale-110"
+              )} 
+              fill={idea.is_saved ? "currentColor" : "none"}
+            />
           </Button>
         )}
       </div>
