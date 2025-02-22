@@ -18,7 +18,6 @@ export const useIdeaGenerator = () => {
 
   useEffect(() => {
     fetchUserPreferences();
-    fetchSavedIdeas();
   }, []);
 
   const fetchUserPreferences = async () => {
@@ -37,7 +36,6 @@ export const useIdeaGenerator = () => {
       if (profile) {
         switch (profile.account_type) {
           case 'business':
-            // For business accounts
             if (profile.business_niche) {
               setNiche(profile.business_niche);
               localStorage.setItem("niche", profile.business_niche);
@@ -49,7 +47,6 @@ export const useIdeaGenerator = () => {
             break;
 
           case 'ecommerce':
-            // For ecommerce accounts
             if (profile.product_niche) {
               setNiche(profile.product_niche);
               localStorage.setItem("niche", profile.product_niche);
@@ -61,7 +58,6 @@ export const useIdeaGenerator = () => {
             break;
 
           default:
-            // For personal accounts and fallback
             if (profile.content_niche) {
               setNiche(profile.content_niche);
               localStorage.setItem("niche", profile.content_niche);
@@ -69,7 +65,6 @@ export const useIdeaGenerator = () => {
             break;
         }
         
-        // Common settings for all account types
         if (profile.target_audience) {
           setAudience(profile.target_audience);
           localStorage.setItem("audience", profile.target_audience);
@@ -102,26 +97,8 @@ export const useIdeaGenerator = () => {
       platform: idea.platform,
       symbol: validateIconKey(idea.symbol),
       color: idea.color,
+      is_saved: idea.is_saved || false,
     };
-  };
-
-  const fetchSavedIdeas = async () => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session?.user.id) return;
-
-      const { data, error } = await supabase
-        .from("video_ideas")
-        .select("*")
-        .eq("user_id", sessionData.session.user.id);
-
-      if (error) throw error;
-      
-      const transformedIdeas = (data || []).map(transformSupabaseIdea);
-      setIdeas(transformedIdeas);
-    } catch (error: any) {
-      console.error("Error fetching ideas:", error);
-    }
   };
 
   const generateIdeas = async () => {
@@ -168,6 +145,7 @@ export const useIdeaGenerator = () => {
         user_id: userId,
         symbol: 'Lightbulb' as keyof typeof IconMap,
         color: 'blue',
+        is_saved: false,
       }));
 
       const { error: saveError } = await supabase
@@ -176,7 +154,17 @@ export const useIdeaGenerator = () => {
 
       if (saveError) throw saveError;
 
-      const transformedIdeas = ideasToSave.map(transformSupabaseIdea);
+      // After saving, fetch the ideas to get their IDs and saved status
+      const { data: savedIdeas, error: fetchError } = await supabase
+        .from("video_ideas")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(ideasToSave.length);
+
+      if (fetchError) throw fetchError;
+
+      const transformedIdeas = (savedIdeas || []).map(transformSupabaseIdea);
       setIdeas(transformedIdeas);
 
       toast({
