@@ -17,16 +17,41 @@ export const useIdeaGenerator = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    fetchUserPreferences();
     fetchSavedIdeas();
   }, []);
 
-  // Save inputs to localStorage
-  useEffect(() => {
-    localStorage.setItem("niche", niche);
-    localStorage.setItem("audience", audience);
-    localStorage.setItem("videoType", videoType);
-    localStorage.setItem("platform", platform);
-  }, [niche, audience, videoType, platform]);
+  const fetchUserPreferences = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('content_niche, target_audience, posting_platforms')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (profile) {
+        if (profile.content_niche) {
+          setNiche(profile.content_niche);
+          localStorage.setItem("niche", profile.content_niche);
+        }
+        if (profile.target_audience) {
+          setAudience(profile.target_audience);
+          localStorage.setItem("audience", profile.target_audience);
+        }
+        if (profile.posting_platforms && profile.posting_platforms.length > 0) {
+          setPlatform(profile.posting_platforms[0]);
+          localStorage.setItem("platform", profile.posting_platforms[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user preferences:", error);
+    }
+  };
 
   const validateIconKey = (key: string | undefined): keyof typeof IconMap => {
     if (!key || !(key in IconMap)) {
