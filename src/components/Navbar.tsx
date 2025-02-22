@@ -55,11 +55,11 @@ const Navbar = () => {
               <DropdownMenuContent className="w-56 bg-white" align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/account')}>
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/account')}>
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Billing</span>
                 </DropdownMenuItem>
@@ -90,6 +90,12 @@ const Navbar = () => {
               <Link to="/ideas" className="text-dark hover:text-primary transition-colors">
                 Ideas
               </Link>
+              <Link to="/account" className="text-dark hover:text-primary transition-colors">
+                Account
+              </Link>
+              <button onClick={handleLogout} className="text-left text-dark hover:text-primary transition-colors">
+                Sign Out
+              </button>
             </div>
           </div>
         )}

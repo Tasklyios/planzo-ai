@@ -158,17 +158,32 @@ const Dashboard = () => {
         <section className="mb-12">
           <h1 className="text-4xl font-bold text-[#222831] mb-8">Welcome back!</h1>
           <div className="grid md:grid-cols-3 gap-6">
-            <button className="bg-gradient-to-br from-[#4F92FF] to-[#6BA5FF] text-white p-8 rounded-xl hover:shadow-lg transition-all group">
-              <LightbulbIcon className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform" />
-              <h3 className="text-xl font-semibold">Generate Video Ideas</h3>
+            <button 
+              onClick={() => navigate('/ideas')}
+              className="bg-gradient-to-br from-[#4F92FF] to-[#6BA5FF] text-white p-8 rounded-xl hover:shadow-lg transition-all group"
+            >
+              <div className="flex flex-col items-center">
+                <LightbulbIcon className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-xl font-semibold">Generate Video Ideas</h3>
+              </div>
             </button>
-            <button className="bg-gradient-to-br from-[#FF6B6B] to-[#FF8E8E] text-white p-8 rounded-xl hover:shadow-lg transition-all group">
-              <PenSquareIcon className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform" />
-              <h3 className="text-xl font-semibold">Generate AI Script</h3>
+            <button 
+              onClick={() => navigate('/calendar')}
+              className="bg-gradient-to-br from-[#FF6B6B] to-[#FF8E8E] text-white p-8 rounded-xl hover:shadow-lg transition-all group"
+            >
+              <div className="flex flex-col items-center">
+                <CalendarIcon className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-xl font-semibold">Content Calendar</h3>
+              </div>
             </button>
-            <button className="bg-gradient-to-br from-[#6C63FF] to-[#8A84FF] text-white p-8 rounded-xl hover:shadow-lg transition-all group">
-              <CalendarIcon className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform" />
-              <h3 className="text-xl font-semibold">Content Calendar</h3>
+            <button 
+              onClick={() => navigate('/account')}
+              className="bg-gradient-to-br from-[#6C63FF] to-[#8A84FF] text-white p-8 rounded-xl hover:shadow-lg transition-all group"
+            >
+              <div className="flex flex-col items-center">
+                <User className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-xl font-semibold">Account Settings</h3>
+              </div>
             </button>
           </div>
         </section>
