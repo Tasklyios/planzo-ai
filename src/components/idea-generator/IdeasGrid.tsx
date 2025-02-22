@@ -3,6 +3,12 @@ import { CalendarPlus, PenSquare, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { IconMap } from "@/types/idea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { LucideIcon } from "lucide-react";
 import type { GeneratedIdea } from "@/types/idea";
 
@@ -57,19 +63,28 @@ const IdeasGrid = ({
                 </div>
               </div>
               <div className="flex gap-1 md:gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onAddToCalendar(idea)}
-                  className="hidden md:flex items-center"
-                >
-                  <CalendarPlus className="h-4 w-4 mr-2" />
-                  Add to Calendar
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => onAddToCalendar(idea)}
+                        className="h-8 w-8 md:h-9 md:w-9"
+                      >
+                        <CalendarPlus className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add to Calendar</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => onEdit(idea.id)}
+                  className="h-8 w-8 md:h-9 md:w-9"
                 >
                   <PenSquare className="h-4 w-4" />
                 </Button>
