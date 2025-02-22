@@ -28,32 +28,48 @@ export const useIdeaGenerator = () => {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('account_type, content_niche, business_niche, target_audience, posting_platforms')
+        .select('account_type, content_niche, business_niche, product_niche, target_audience, posting_platforms')
         .eq('id', session.user.id)
         .single();
 
       if (error) throw error;
 
       if (profile) {
-        if (profile.account_type === 'business') {
-          // For business accounts, set the business niche as the primary niche
-          if (profile.business_niche) {
-            setNiche(profile.business_niche);
-            localStorage.setItem("niche", profile.business_niche);
-          }
-          // Set content focus (videoType) from content_niche
-          if (profile.content_niche) {
-            setVideoType(profile.content_niche);
-            localStorage.setItem("videoType", profile.content_niche);
-          }
-        } else {
-          // For personal and ecommerce accounts, use content_niche as primary niche
-          if (profile.content_niche) {
-            setNiche(profile.content_niche);
-            localStorage.setItem("niche", profile.content_niche);
-          }
+        switch (profile.account_type) {
+          case 'business':
+            // For business accounts
+            if (profile.business_niche) {
+              setNiche(profile.business_niche);
+              localStorage.setItem("niche", profile.business_niche);
+            }
+            if (profile.content_niche) {
+              setVideoType(profile.content_niche);
+              localStorage.setItem("videoType", profile.content_niche);
+            }
+            break;
+
+          case 'ecommerce':
+            // For ecommerce accounts
+            if (profile.product_niche) {
+              setNiche(profile.product_niche);
+              localStorage.setItem("niche", profile.product_niche);
+            }
+            if (profile.content_niche) {
+              setVideoType(profile.content_niche);
+              localStorage.setItem("videoType", profile.content_niche);
+            }
+            break;
+
+          default:
+            // For personal accounts and fallback
+            if (profile.content_niche) {
+              setNiche(profile.content_niche);
+              localStorage.setItem("niche", profile.content_niche);
+            }
+            break;
         }
         
+        // Common settings for all account types
         if (profile.target_audience) {
           setAudience(profile.target_audience);
           localStorage.setItem("audience", profile.target_audience);
