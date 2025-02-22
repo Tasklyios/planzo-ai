@@ -111,7 +111,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#F9FAFC]">
-      <main className="container mx-auto px-4 pt-16 md:pt-24">
+      <main className="container mx-auto px-4 pt-24">
         <section className="mb-12">
           <h1 className="text-4xl font-bold text-[#222831] mb-8">Welcome back!</h1>
           <div className="grid md:grid-cols-3 gap-6">
