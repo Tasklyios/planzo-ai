@@ -1,7 +1,6 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 import { useNavigate, Link } from "react-router-dom";
 import {
   User,
@@ -9,7 +8,6 @@ import {
   LogOut,
   Menu,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import EditIdea from "@/components/EditIdea";
 import {
@@ -21,118 +19,41 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { useIdeaGenerator } from "@/hooks/use-idea-generator";
 import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
 import InputForm from "@/components/idea-generator/InputForm";
 import IdeasGrid from "@/components/idea-generator/IdeasGrid";
-import { GeneratedIdea, AddToCalendarIdea, IconMap } from "@/types/idea";
-
-interface SupabaseIdea {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  tags: string[];
-  platform?: string;
-  symbol?: string;
-  color?: string;
-  created_at?: string;
-  is_saved?: boolean;
-  script?: string;
-  user_id?: string;
-}
+import MobileMenuDialog from "@/components/idea-generator/MobileMenuDialog";
+import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
+import { AddToCalendarIdea } from "@/types/idea";
 
 const IdeaGenerator = () => {
-  const [niche, setNiche] = useState(() => localStorage.getItem("niche") || "");
-  const [audience, setAudience] = useState(() => localStorage.getItem("audience") || "");
-  const [videoType, setVideoType] = useState(() => localStorage.getItem("videoType") || "");
-  const [platform, setPlatform] = useState(() => localStorage.getItem("platform") || "TikTok");
-  const [loading, setLoading] = useState(false);
-  const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const {
+    niche,
+    setNiche,
+    audience,
+    setAudience,
+    videoType,
+    setVideoType,
+    platform,
+    setPlatform,
+    loading,
+    ideas,
+    generateIdeas,
+  } = useIdeaGenerator();
+
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const validateIconKey = (key: string | undefined): keyof typeof IconMap => {
-    if (!key || !(key in IconMap)) {
-      return 'Lightbulb';
-    }
-    return key as keyof typeof IconMap;
-  };
-
-  const transformSupabaseIdea = (idea: SupabaseIdea): GeneratedIdea => {
-    return {
-      id: idea.id,
-      title: idea.title,
-      category: idea.category,
-      description: idea.description,
-      tags: idea.tags,
-      platform: idea.platform,
-      symbol: validateIconKey(idea.symbol),
-      color: idea.color,
-    };
-  };
-
-  // Load saved ideas on mount
-  useEffect(() => {
-    fetchSavedIdeas();
-  }, []);
-
-  // Save inputs to localStorage
-  useEffect(() => {
-    localStorage.setItem("niche", niche);
-    localStorage.setItem("audience", audience);
-    localStorage.setItem("videoType", videoType);
-    localStorage.setItem("platform", platform);
-  }, [niche, audience, videoType, platform]);
-
-  const fetchSavedIdeas = async () => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session?.user.id) return;
-
-      const { data, error } = await supabase
-        .from("video_ideas")
-        .select("*")
-        .eq("user_id", sessionData.session.user.id);
-
-      if (error) throw error;
-      
-      // Transform the data before setting it to state
-      const transformedIdeas = (data || []).map(transformSupabaseIdea);
-      setIdeas(transformedIdeas);
-    } catch (error: any) {
-      console.error("Error fetching ideas:", error);
-    }
-  };
-
-  const addToCalendar = async (idea: GeneratedIdea) => {
-    if (!idea?.id) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Invalid idea selected",
-      });
-      return;
-    }
-    
-    setAddingToCalendar({
-      idea,
-      title: idea.title,
-      scheduledFor: new Date().toISOString().split('T')[0],
-    });
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
   };
 
   const handleAddToCalendar = async () => {
-    if (!addingToCalendar?.idea) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Invalid idea selected",
-      });
-      return;
-    }
+    if (!addingToCalendar?.idea) return;
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -143,7 +64,6 @@ const IdeaGenerator = () => {
         return;
       }
 
-      // Update video_ideas table with scheduled_for
       const { error } = await supabase
         .from("video_ideas")
         .update({
@@ -155,98 +75,16 @@ const IdeaGenerator = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Idea added to calendar",
-      });
-
       setAddingToCalendar(null);
       navigate("/calendar");
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
+      console.error("Error adding to calendar:", error);
     }
   };
 
-  const generateIdeas = async () => {
-    if (!niche || !audience || !videoType) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all fields before generating ideas.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user.id;
-
-      if (!userId) {
-        throw new Error("User not authenticated");
-      }
-
-      const { data, error } = await supabase.functions.invoke('generate-ideas', {
-        body: {
-          niche,
-          audience,
-          videoType,
-          platform,
-        },
-      });
-
-      if (error) throw error;
-
-      if (!data || !data.ideas) {
-        throw new Error('Invalid response format from AI');
-      }
-
-      // Transform and validate the generated ideas before saving
-      const ideasToSave = data.ideas.map((idea: any) => ({
-        title: idea.title,
-        description: idea.description,
-        category: idea.category,
-        tags: idea.tags,
-        platform: platform,
-        user_id: userId,
-        symbol: 'Lightbulb' as keyof typeof IconMap, // Set default icon
-        color: 'blue', // Set default color
-      }));
-
-      const { error: saveError } = await supabase
-        .from("video_ideas")
-        .insert(ideasToSave);
-
-      if (saveError) throw saveError;
-
-      // Transform the ideas before setting to state
-      const transformedIdeas = ideasToSave.map(transformSupabaseIdea);
-      setIdeas(transformedIdeas);
-
-      toast({
-        title: "Success!",
-        description: "Your video ideas have been generated and saved.",
-      });
-    } catch (error: any) {
-      console.error('Error generating ideas:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || 'Failed to generate ideas. Please try again.',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+  const updateCalendarIdea = (field: keyof AddToCalendarIdea, value: string) => {
+    if (!addingToCalendar) return;
+    setAddingToCalendar(prev => prev ? { ...prev, [field]: value } : null);
   };
 
   return (
@@ -315,7 +153,6 @@ const IdeaGenerator = () => {
             setPlatform={setPlatform}
           />
 
-          {/* Generate Button with updated styling */}
           <div className="flex justify-center mb-8">
             <Button
               onClick={generateIdeas}
@@ -337,45 +174,28 @@ const IdeaGenerator = () => {
 
           <IdeasGrid
             ideas={ideas}
-            onAddToCalendar={addToCalendar}
+            onAddToCalendar={(idea) => setAddingToCalendar({
+              idea,
+              title: idea.title,
+              scheduledFor: new Date().toISOString().split('T')[0],
+            })}
             onEdit={(ideaId) => setEditingIdeaId(ideaId)}
           />
         </section>
       </main>
 
-      {/* Dialogs */}
-      <Dialog open={!!addingToCalendar} onOpenChange={() => setAddingToCalendar(null)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add to Calendar</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="title" className="text-sm font-medium">Title</label>
-              <input
-                id="title"
-                type="text"
-                value={addingToCalendar?.title || ""}
-                onChange={(e) => setAddingToCalendar(prev => prev ? { ...prev, title: e.target.value } : null)}
-                className="w-full p-2 border rounded-md"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="date" className="text-sm font-medium">Date</label>
-              <input
-                id="date"
-                type="date"
-                value={addingToCalendar?.scheduledFor || ""}
-                onChange={(e) => setAddingToCalendar(prev => prev ? { ...prev, scheduledFor: e.target.value } : null)}
-                className="w-full p-2 border rounded-md"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleAddToCalendar}>Add to Calendar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <MobileMenuDialog 
+        open={mobileMenuOpen}
+        onOpenChange={setMobileMenuOpen}
+        onLogout={handleLogout}
+      />
+
+      <AddToCalendarDialog
+        idea={addingToCalendar}
+        onOpenChange={() => setAddingToCalendar(null)}
+        onAddToCalendar={handleAddToCalendar}
+        onUpdate={updateCalendarIdea}
+      />
 
       {editingIdeaId && (
         <EditIdea
@@ -383,48 +203,6 @@ const IdeaGenerator = () => {
           onClose={() => setEditingIdeaId(null)}
         />
       )}
-
-      {/* Mobile Menu Dialog */}
-      <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <DialogContent className="h-screen w-screen sm:max-w-[300px] p-0">
-          <div className="flex flex-col h-full bg-white">
-            <div className="p-4 border-b">
-              <h2 className="text-lg font-semibold">Menu</h2>
-            </div>
-            <div className="flex-1 overflow-auto py-4">
-              <div className="space-y-3 px-4">
-                <Link 
-                  to="/dashboard" 
-                  className="block py-2 text-gray-600 hover:text-[#4F92FF]"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link 
-                  to="/ideas" 
-                  className="block py-2 text-gray-600 hover:text-[#4F92FF]"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Ideas
-                </Link>
-                <Link 
-                  to="/calendar" 
-                  className="block py-2 text-gray-600 hover:text-[#4F92FF]"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Calendar
-                </Link>
-              </div>
-            </div>
-            <div className="border-t p-4">
-              <Button onClick={handleLogout} className="w-full">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign out
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
