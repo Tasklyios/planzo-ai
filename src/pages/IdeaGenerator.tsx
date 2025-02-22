@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -107,6 +108,15 @@ const IdeaGenerator = () => {
   };
 
   const addToCalendar = async (idea: GeneratedIdea) => {
+    if (!idea?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Invalid idea selected",
+      });
+      return;
+    }
+    
     setAddingToCalendar({
       idea,
       title: idea.title,
@@ -115,7 +125,7 @@ const IdeaGenerator = () => {
   };
 
   const handleAddToCalendar = async () => {
-    if (!addingToCalendar?.idea?.id) {
+    if (!addingToCalendar?.idea) {
       toast({
         variant: "destructive",
         title: "Error",
