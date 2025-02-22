@@ -1,167 +1,87 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
-import AuthGuard from "@/components/AuthGuard";
-import IdeasGrid from "@/components/idea-generator/IdeasGrid";
-import { GeneratedIdea } from "@/types/idea";
-import EditIdea from "@/components/EditIdea";
-import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
-import { AddToCalendarIdea } from "@/types/idea";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-import { IconMap } from "@/types/idea";
+import { BookmarkIcon, LightbulbIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+interface IdeaType {
+  id: string;
+  title: string;
+  description: string;
+  created_at: string;
+  is_saved: boolean;
+}
 
 export default function Ideas() {
-  const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
-  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
-  const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
-  const navigate = useNavigate();
+  const [ideas, setIdeas] = useState<IdeaType[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const validateIconKey = (key: string | undefined): keyof typeof IconMap => {
-    if (!key || !(key in IconMap)) {
-      return 'Lightbulb';
-    }
-    return key as keyof typeof IconMap;
-  };
+  useEffect(() => {
+    fetchIdeas();
+  }, []);
 
-  const fetchSavedIdeas = async () => {
+  const fetchIdeas = async () => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session?.user.id) return;
-
       const { data, error } = await supabase
         .from("video_ideas")
         .select("*")
-        .eq("user_id", sessionData.session.user.id)
-        .eq("is_saved", true);
-
-      if (error) throw error;
-      
-      const transformedIdeas = (data || []).map(idea => ({
-        ...idea,
-        symbol: validateIconKey(idea.symbol),
-        is_saved: true
-      })) as GeneratedIdea[];
-
-      setIdeas(transformedIdeas);
-    } catch (error: any) {
-      console.error("Error fetching saved ideas:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load saved ideas",
-        variant: "destructive",
-      });
-    }
-  };
-
-  useEffect(() => {
-    fetchSavedIdeas();
-  }, []);
-
-  const handleBookmarkToggle = async (ideaId: string) => {
-    // Optimistically update UI first
-    setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== ideaId));
-
-    try {
-      const { error } = await supabase
-        .from("video_ideas")
-        .update({ is_saved: false })
-        .eq("id", ideaId);
+        .order("created_at", { ascending: false });
 
       if (error) {
-        // If there's an error, revert the optimistic update
-        await fetchSavedIdeas();
         throw error;
       }
+
+      setIdeas(data || []);
     } catch (error: any) {
-      console.error("Error updating bookmark:", error);
       toast({
-        title: "Error",
-        description: "Failed to update bookmark status",
         variant: "destructive",
+        title: "Error",
+        description: error.message,
       });
     }
   };
 
-  const handleAddToCalendar = async () => {
-    if (!addingToCalendar?.idea) return;
-
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user.id;
-
-      if (!userId) {
-        navigate("/auth");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("video_ideas")
-        .update({
-          scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
-          is_saved: false
-        })
-        .eq("id", addingToCalendar.idea.id)
-        .eq("user_id", userId);
-
-      if (error) throw error;
-
-      setAddingToCalendar(null);
-      // Remove the scheduled idea from the list
-      setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== addingToCalendar.idea.id));
-      navigate("/calendar");
-    } catch (error: any) {
-      console.error("Error adding to calendar:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add idea to calendar",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateCalendarIdea = (field: keyof AddToCalendarIdea, value: string) => {
-    if (!addingToCalendar) return;
-    setAddingToCalendar(prev => prev ? { ...prev, [field]: value } : null);
+  const getTimeSince = (date: string) => {
+    const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+    return `${Math.floor(seconds / 86400)} days ago`;
   };
 
   return (
-    <main className="container mx-auto px-4 pt-28 pb-12">
-      <section className="mb-12">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#222831]">Saved Ideas</h1>
-          <p className="text-gray-600 mt-2">Browse and manage your bookmarked video ideas</p>
+    <main className="container mx-auto px-4 pt-16 md:pt-28 pb-12">
+      <section className="mb-8">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-[#222831]">Your Ideas</h1>
+          <button
+            onClick={() => navigate('/generator')}
+            className="bg-gradient-to-br from-[#4F92FF] to-[#6BA5FF] text-white px-4 py-2 rounded-full hover:shadow-md transition-all flex items-center"
+          >
+            <LightbulbIcon className="w-4 h-4 mr-2" />
+            Generate New
+          </button>
         </div>
-
-        <IdeasGrid
-          ideas={ideas}
-          onAddToCalendar={(idea) => setAddingToCalendar({
-            idea,
-            title: idea.title,
-            scheduledFor: new Date().toISOString().split('T')[0],
-          })}
-          onEdit={(ideaId) => setEditingIdeaId(ideaId)}
-          onBookmarkToggle={handleBookmarkToggle}
-        />
       </section>
 
-      {editingIdeaId && (
-        <EditIdea
-          ideaId={editingIdeaId}
-          onClose={() => {
-            setEditingIdeaId(null);
-            fetchSavedIdeas();
-          }}
-        />
-      )}
-
-      <AddToCalendarDialog
-        idea={addingToCalendar}
-        onOpenChange={() => setAddingToCalendar(null)}
-        onAddToCalendar={handleAddToCalendar}
-        onUpdate={updateCalendarIdea}
-      />
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {ideas.map((idea) => (
+          <div key={idea.id} className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-xl font-semibold text-[#222831]">{idea.title}</h2>
+              <BookmarkIcon
+                className={`w-5 h-5 cursor-pointer hover:scale-110 transition-transform ${
+                  idea.is_saved ? "fill-[#4F92FF]" : ""
+                } text-[#4F92FF]`}
+              />
+            </div>
+            <p className="text-gray-600 mb-4">{idea.description}</p>
+            <p className="text-sm text-gray-500">
+              Created {getTimeSince(idea.created_at)}
+            </p>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }

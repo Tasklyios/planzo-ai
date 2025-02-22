@@ -1,192 +1,186 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, Link } from "react-router-dom";
-import {
-  User,
-  CreditCard,
-  LogOut,
-  Menu,
-} from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import EditIdea from "@/components/EditIdea";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import { useIdeaGenerator } from "@/hooks/use-idea-generator";
-import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
-import InputForm from "@/components/idea-generator/InputForm";
-import IdeasGrid from "@/components/idea-generator/IdeasGrid";
-import MobileMenuDialog from "@/components/idea-generator/MobileMenuDialog";
-import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
-import { AddToCalendarIdea } from "@/types/idea";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 const Generator = () => {
-  const {
-    niche,
-    setNiche,
-    audience,
-    setAudience,
-    videoType,
-    setVideoType,
-    platform,
-    setPlatform,
-    loading,
-    ideas,
-    setIdeas,
-    generateIdeas,
-  } = useIdeaGenerator();
-
-  const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
-  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navigate = useNavigate();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [tone, setTone] = useState("Informative");
+  const [isPublic, setIsPublic] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+      }
+    };
 
-  const handleAddToCalendar = async () => {
-    if (!addingToCalendar?.idea) return;
+    checkUser();
+  }, [navigate]);
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user.id;
+      const { data, error } = await supabase
+        .from("video_ideas")
+        .insert([
+          {
+            title: title,
+            description: description,
+            tone: tone,
+            is_public: isPublic,
+          },
+        ])
+        .select();
 
-      if (!userId) {
-        navigate("/auth");
-        return;
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const { error } = await supabase
-        .from("video_ideas")
-        .update({
-          scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
-          platform: addingToCalendar.idea.platform || platform,
-        })
-        .eq("id", addingToCalendar.idea.id)
-        .eq("user_id", userId);
+      setTitle("");
+      setDescription("");
+      setTone("Informative");
+      setIsPublic(false);
 
-      if (error) throw error;
-
-      setAddingToCalendar(null);
-      navigate("/calendar");
-    } catch (error: any) {
-      console.error("Error adding to calendar:", error);
-    }
-  };
-
-  const updateCalendarIdea = (field: keyof AddToCalendarIdea, value: string) => {
-    if (!addingToCalendar) return;
-    setAddingToCalendar(prev => prev ? { ...prev, [field]: value } : null);
-  };
-
-  const handleBookmarkToggle = async (ideaId: string) => {
-    try {
-      // Find the idea and toggle its saved state
-      setIdeas(prevIdeas => prevIdeas.map(idea => 
-        idea.id === ideaId ? { ...idea, is_saved: !idea.is_saved } : idea
-      ));
-
-      const idea = ideas.find(i => i.id === ideaId);
-      const newSavedState = !idea?.is_saved;
-
-      const { error } = await supabase
-        .from("video_ideas")
-        .update({ is_saved: newSavedState })
-        .eq("id", ideaId);
-
-      if (error) throw error;
-
-    } catch (error: any) {
-      console.error("Error updating bookmark:", error);
       toast({
-        title: "Error",
-        description: "Failed to update bookmark status",
-        variant: "destructive",
+        title: "Success",
+        description: "Video idea generated successfully!",
       });
-      // Revert the optimistic update
-      setIdeas(prevIdeas => prevIdeas.map(idea => 
-        idea.id === ideaId ? { ...idea, is_saved: !idea.is_saved } : idea
-      ));
+
+      navigate("/ideas");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
-      <main className="container mx-auto px-4 pt-28 pb-12">
-        <section className="mb-12">
-          <GeneratorHeader />
-          <InputForm
-            niche={niche}
-            audience={audience}
-            videoType={videoType}
-            platform={platform}
-            setNiche={setNiche}
-            setAudience={setAudience}
-            setVideoType={setVideoType}
-            setPlatform={setPlatform}
-          />
+      <main className="container mx-auto px-4 pt-16 md:pt-28 pb-12">
+        <section className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">
+            Video Idea Generator
+          </h1>
+          <p className="text-gray-600">
+            Enter your video title and description to generate amazing video
+            ideas.
+          </p>
+        </section>
 
-          <div className="flex justify-center mb-8">
-            <Button
-              onClick={generateIdeas}
-              disabled={loading}
-              className="bg-gradient-to-r from-[#33C3F0] to-[#0EA5E9] hover:from-[#33C3F0]/90 hover:to-[#0EA5E9]/90 text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-gray-700"
             >
-              {loading ? (
-                <>
-                  <span className="animate-spin">⚡</span>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  ⚡ Generate Viral Ideas
-                </>
-              )}
-            </Button>
+              Video Title
+            </label>
+            <div className="mt-1">
+              <Input
+                type="text"
+                id="title"
+                placeholder="e.g., Best Productivity Tips for Students"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+              />
+            </div>
           </div>
 
-          <IdeasGrid
-            ideas={ideas}
-            onAddToCalendar={(idea) => setAddingToCalendar({
-              idea,
-              title: idea.title,
-              scheduledFor: new Date().toISOString().split('T')[0],
-            })}
-            onEdit={(ideaId) => setEditingIdeaId(ideaId)}
-            onBookmarkToggle={handleBookmarkToggle}
-          />
-        </section>
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Video Description
+            </label>
+            <div className="mt-1">
+              <Textarea
+                id="description"
+                rows={3}
+                placeholder="e.g., A video discussing effective productivity tips tailored for students."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="tone"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Tone
+            </label>
+            <Select onValueChange={setTone} defaultValue={tone}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Tone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Informative">Informative</SelectItem>
+                <SelectItem value="Funny">Funny</SelectItem>
+                <SelectItem value="Educational">Educational</SelectItem>
+                <SelectItem value="Inspirational">Inspirational</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Switch
+                id="public"
+                checked={isPublic}
+                onCheckedChange={() => setIsPublic(!isPublic)}
+              />
+              <label
+                htmlFor="public"
+                className="ml-3 block text-sm font-medium text-gray-700"
+              >
+                Public
+              </label>
+            </div>
+            <span className="text-gray-500 text-sm">
+              Make this idea public for other users to view?
+            </span>
+          </div>
+
+          <div>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? "Generating..." : "Generate Idea"}
+            </Button>
+          </div>
+        </form>
       </main>
-
-      <MobileMenuDialog 
-        open={mobileMenuOpen}
-        onOpenChange={setMobileMenuOpen}
-        onLogout={handleLogout}
-      />
-
-      <AddToCalendarDialog
-        idea={addingToCalendar}
-        onOpenChange={() => setAddingToCalendar(null)}
-        onAddToCalendar={handleAddToCalendar}
-        onUpdate={updateCalendarIdea}
-      />
-
-      {editingIdeaId && (
-        <EditIdea
-          ideaId={editingIdeaId}
-          onClose={() => setEditingIdeaId(null)}
-        />
-      )}
     </div>
   );
 };

@@ -1,537 +1,313 @@
 import { useState, useEffect } from "react";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { 
-  Calendar as CalendarIcon, 
-  ChevronLeft, 
-  ChevronRight, 
-  Plus, 
-  PenSquare, 
-  Video, 
-  Check,
-  Heart,
-  Star,
-  Music,
-  Image,
-  Film,
-  BookOpen,
-  Camera,
-  Palette,
-  Menu,
-  GripHorizontal,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { Calendar as CalendarIcon, CheckCircle, GripVertical, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import EditIdea from "@/components/EditIdea";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-interface VideoIdea {
+interface ScheduledPost {
   id: string;
   title: string;
-  description: string;
-  platform?: string;
-  created_at: string;
-  symbol?: string;
-  color?: string;
-  category?: string;
-  tags?: string[];
-  is_saved?: boolean;
-  script?: string;
-  user_id?: string;
-  scheduled_for?: string;
-}
-
-interface ScheduledPost extends VideoIdea {
   scheduled_for: string;
+  status: "scheduled" | "in progress" | "completed";
+  platform: string;
 }
 
-const availableSymbols = [
-  { name: 'calendar', icon: CalendarIcon },
-  { name: 'video', icon: Video },
-  { name: 'check', icon: Check },
-  { name: 'heart', icon: Heart },
-  { name: 'star', icon: Star },
-  { name: 'music', icon: Music },
-  { name: 'image', icon: Image },
-  { name: 'film', icon: Film },
-  { name: 'book', icon: BookOpen },
-  { name: 'camera', icon: Camera },
-  { name: 'palette', icon: Palette }
-] as const;
+interface EditIdeaProps {
+  ideaId: string | null;
+  onClose: () => void;
+}
 
-const availableColors = [
-  { 
-    name: 'red', 
-    class: 'bg-red-500 hover:bg-red-600 border-red-400',
-    gradient: 'bg-gradient-to-br from-red-200 to-red-300 border-red-200',
-    accent: 'bg-red-500'
-  },
-  { 
-    name: 'orange', 
-    class: 'bg-orange-500 hover:bg-orange-600 border-orange-400',
-    gradient: 'bg-gradient-to-br from-orange-200 to-orange-300 border-orange-200',
-    accent: 'bg-orange-500'
-  },
-  { 
-    name: 'yellow', 
-    class: 'bg-yellow-500 hover:bg-yellow-600 border-yellow-400',
-    gradient: 'bg-gradient-to-br from-yellow-200 to-yellow-300 border-yellow-200',
-    accent: 'bg-yellow-500'
-  },
-  { 
-    name: 'green', 
-    class: 'bg-green-500 hover:bg-green-600 border-green-400',
-    gradient: 'bg-gradient-to-br from-green-200 to-green-300 border-green-200',
-    accent: 'bg-green-500'
-  },
-  { 
-    name: 'blue', 
-    class: 'bg-blue-500 hover:bg-blue-600 border-blue-400',
-    gradient: 'bg-gradient-to-br from-blue-200 to-blue-300 border-blue-200',
-    accent: 'bg-blue-500'
-  },
-  { 
-    name: 'purple', 
-    class: 'bg-purple-500 hover:bg-purple-600 border-purple-400',
-    gradient: 'bg-gradient-to-br from-purple-200 to-purple-300 border-purple-200',
-    accent: 'bg-purple-500'
-  },
-  { 
-    name: 'pink', 
-    class: 'bg-pink-500 hover:bg-pink-600 border-pink-400',
-    gradient: 'bg-gradient-to-br from-pink-200 to-pink-300 border-pink-200',
-    accent: 'bg-pink-500'
-  },
-  { 
-    name: 'indigo', 
-    class: 'bg-indigo-500 hover:bg-indigo-600 border-indigo-400',
-    gradient: 'bg-gradient-to-br from-indigo-200 to-indigo-300 border-indigo-200',
-    accent: 'bg-indigo-500'
-  },
-] as const;
+const EditIdea: React.FC<EditIdeaProps> = ({ ideaId, onClose }) => {
+  const [title, setTitle] = useState("");
+  const [scheduledFor, setScheduledFor] = useState<Date | undefined>(undefined);
+  const [platform, setPlatform] = useState("TikTok");
+  const { toast } = useToast();
 
-const getColorClasses = (color: string | undefined, variant: 'solid' | 'gradient' | 'accent' = 'solid') => {
-  const colorConfig = availableColors.find(c => c.name === color);
-  if (!color || !colorConfig) return 'bg-gray-100 border-gray-200 hover:bg-gray-200';
-  return variant === 'gradient' ? colorConfig.gradient : 
-         variant === 'accent' ? colorConfig.accent : 
-         colorConfig.class;
+  useEffect(() => {
+    const fetchIdea = async () => {
+      if (ideaId) {
+        const { data, error } = await supabase
+          .from("scheduled_content")
+          .select("*")
+          .eq("id", ideaId)
+          .single();
+
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to fetch idea details.",
+          });
+          return;
+        }
+
+        setTitle(data.title);
+        setScheduledFor(new Date(data.scheduled_for));
+        setPlatform(data.platform);
+      }
+    };
+
+    fetchIdea();
+  }, [ideaId, toast]);
+
+  const updateIdea = async () => {
+    if (!ideaId) return;
+
+    const { error } = await supabase
+      .from("scheduled_content")
+      .update({
+        title: title,
+        scheduled_for: scheduledFor?.toISOString(),
+        platform: platform,
+      })
+      .eq("id", ideaId);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update idea.",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Idea updated successfully.",
+    });
+    onClose();
+  };
+
+  return (
+    <Sheet open={!!ideaId} onOpenChange={onClose}>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Edit Scheduled Post</SheetTitle>
+        </SheetHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label>Platform</Label>
+            <div className="flex items-center space-x-2 mt-2">
+              <Button
+                variant={platform === "TikTok" ? "default" : "outline"}
+                onClick={() => setPlatform("TikTok")}
+              >
+                TikTok
+              </Button>
+              <Button
+                variant={platform === "Instagram" ? "default" : "outline"}
+                onClick={() => setPlatform("Instagram")}
+              >
+                Instagram
+              </Button>
+            </div>
+          </div>
+          <div className="grid gap-2">
+            <Label>Schedule Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-[240px] justify-start text-left font-normal",
+                    !scheduledFor && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {scheduledFor ? (
+                    format(scheduledFor, "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={scheduledFor}
+                  onSelect={setScheduledFor}
+                  disabled={(date) =>
+                    date < new Date()
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+        <Button onClick={updateIdea}>Update Idea</Button>
+      </SheetContent>
+    </Sheet>
+  );
 };
 
 export default function Calendar() {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
-  const [editingPost, setEditingPost] = useState<ScheduledPost | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingTitle, setEditingTitle] = useState("");
-  const [editingScheduledFor, setEditingScheduledFor] = useState("");
-  const [selectedSymbol, setSelectedSymbol] = useState<string>("calendar");
-  const [selectedColor, setSelectedColor] = useState<string>("blue");
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchScheduledPosts();
   }, []);
 
   const fetchScheduledPosts = async () => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session?.user.id) {
-        navigate("/auth");
-        return;
-      }
+    const { data, error } = await supabase
+      .from("scheduled_content")
+      .select("*")
+      .order("scheduled_for", { ascending: true });
 
-      const { data: scheduledData, error: scheduledError } = await supabase
-        .from("video_ideas")
-        .select(`
-          id,
-          title,
-          description,
-          platform,
-          created_at,
-          symbol,
-          color,
-          category,
-          tags,
-          is_saved,
-          script,
-          user_id,
-          scheduled_for
-        `)
-        .eq("user_id", sessionData.session.user.id);
-
-      if (scheduledError) throw scheduledError;
-
-      const formattedPosts: ScheduledPost[] = scheduledData?.map(post => ({
-        ...post,
-        scheduled_for: post.scheduled_for || new Date().toISOString(),
-      })) || [];
-
-      setScheduledPosts(formattedPosts);
-    } catch (error: any) {
+    if (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: "Failed to fetch scheduled posts.",
       });
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    setScheduledPosts(data as ScheduledPost[]);
   };
 
-  const handleNewPost = async (platform: string) => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user.id;
-
-      if (!userId) {
-        navigate("/auth");
-        return;
-      }
-
-      const { data: videoIdea, error: videoError } = await supabase
-        .from("video_ideas")
-        .insert({
-          title: `New ${platform} Post`,
-          description: "", 
-          platform,
-          user_id: userId,
-          symbol: "calendar",
-          color: "blue",
-          tags: [],
-          category: "",
-        })
-        .select()
-        .single();
-
-      if (videoError) throw videoError;
-
-      const scheduledPost: ScheduledPost = {
-        ...videoIdea,
-        scheduled_for: new Date().toISOString(),
-      };
-
-      setScheduledPosts(prev => [...prev, scheduledPost]);
-      setEditingIdeaId(videoIdea.id);
-      
-      toast({
-        title: "Success",
-        description: "New post created successfully",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
-
-  const openEditDialog = (post: ScheduledPost) => {
-    setEditingIdeaId(post.id);
-  };
-
-  const handlePreviousMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
-
-  const daysInMonth = eachDayOfInterval({
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate),
-  });
-
-  const getPostsForDate = (date: Date) => {
-    return scheduledPosts.filter(
-      (post) => format(new Date(post.scheduled_for), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
-    );
-  };
-
-  const handleDragEnd = async (result: any) => {
+  const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
 
-    const { source, destination, draggableId } = result;
-    const sourceDate = source.droppableId;
-    const destinationDate = destination.droppableId;
+    const postId = result.draggableId;
+    const newStatus = result.destination.droppableId as "scheduled" | "in progress" | "completed";
 
-    if (sourceDate === destinationDate) return;
+    const { error } = await supabase
+      .from("scheduled_content")
+      .update({ status: newStatus })
+      .eq("id", postId);
 
-    const movedPost = scheduledPosts.find(post => post.id === draggableId);
-    if (!movedPost) return;
-
-    try {
-      const { error: updateError } = await supabase
-        .from("video_ideas")
-        .update({
-          scheduled_for: destinationDate
-        })
-        .eq("id", draggableId);
-
-      if (updateError) throw updateError;
-
-      const updatedPosts = scheduledPosts.map(post => {
-        if (post.id === draggableId) {
-          return {
-            ...post,
-            scheduled_for: destinationDate
-          };
-        }
-        return post;
-      });
-
-      setScheduledPosts(updatedPosts);
-      
-      toast({
-        title: "Success",
-        description: "Post rescheduled successfully",
-      });
-    } catch (error: any) {
+    if (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: "Failed to update post status.",
       });
+      return;
     }
+
+    fetchScheduledPosts();
   };
 
-  const renderPost = (post: ScheduledPost, index: number) => {
-    const isMobile = window.innerWidth < 768;
-
-    return (
-      <Draggable key={post.id} draggableId={post.id} index={index}>
-        {(provided) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-          >
-            {isMobile ? (
-              <div
-                className={cn(
-                  "w-2 h-2 rounded-full",
-                  getColorClasses(post.color)
-                )}
-                onClick={() => openEditDialog(post)}
-              />
-            ) : (
-              <div className="mt-2 cursor-pointer transition-colors hover:opacity-90 group">
-                <div
-                  className={cn(
-                    "p-2 rounded-lg",
-                    getColorClasses(post.color, 'gradient')
-                  )}
-                  onClick={() => openEditDialog(post)}
-                >
-                  <div className="flex items-center gap-2">
-                    {(() => {
-                      const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-                      return <IconComponent className="h-4 w-4 text-gray-700" />;
-                    })()}
-                    <span className="text-xs font-medium text-gray-700">{post.title}</span>
-                    <GripHorizontal className="h-4 w-4 opacity-0 group-hover:opacity-100 ml-auto text-gray-700" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </Draggable>
-    );
-  };
-
-  const isSelectedDate = (date: Date) => {
-    return format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
-  };
-
-  const renderEventDots = (date: Date) => {
-    const posts = getPostsForDate(date);
-    const isSelected = isSelectedDate(date);
-
-    if (isSelected) return null;
-
-    return (
-      <div className="absolute -top-[2px] left-1/2 transform -translate-x-1/2 flex gap-0.5">
-        {posts.map((post, index) => (
-          <div
-            key={`${post.id}-${index}`}
-            className={cn(
-              "w-1.5 h-1.5 rounded-full",
-              getColorClasses(post.color)
-            )}
-          />
-        ))}
-      </div>
-    );
+  const columns = {
+    scheduled: {
+      title: "Scheduled",
+      posts: scheduledPosts.filter((post) => post.status === "scheduled"),
+    },
+    "in progress": {
+      title: "In Progress",
+      posts: scheduledPosts.filter((post) => post.status === "in progress"),
+    },
+    completed: {
+      title: "Completed",
+      posts: scheduledPosts.filter((post) => post.status === "completed"),
+    },
   };
 
   return (
     <>
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="container mx-auto py-20 flex flex-col md:flex-row gap-6">
-          <div className="md:hidden w-full bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
-              <div className="flex space-x-2">
-                <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={handleNextMonth}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <div className="grid grid-cols-7 text-xs mb-2">
-                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                  <div key={day} className="text-center font-medium text-gray-600 py-2">
-                    {day}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {daysInMonth.map((date) => (
+        <div className="container mx-auto pt-16 md:pt-20 px-4 flex flex-col md:flex-row gap-6">
+          {Object.entries(columns).map(([columnId, column]) => (
+            <div key={columnId} className="w-full md:w-1/3">
+              <h2 className="text-xl font-semibold mb-4">{column.title}</h2>
+              <Droppable droppableId={columnId}>
+                {(provided) => (
                   <div
-                    key={date.toString()}
-                    className={cn(
-                      "aspect-square flex items-center justify-center relative pt-0.5",
-                      !isSameMonth(date, currentDate) && "text-gray-400",
-                      isToday(date) && "font-bold"
-                    )}
-                    onClick={() => setSelectedDate(date)}
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="bg-gray-100 rounded-md p-4 min-h-[300px]"
                   >
-                    {renderEventDots(date)}
-                    <span className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-full text-sm",
-                      isSelectedDate(date) && "bg-primary text-white",
-                    )}>
-                      {format(date, "d")}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>
-                <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
-              </div>
-              <div className="space-y-3">
-                {getPostsForDate(selectedDate).map((post) => (
-                  <div
-                    key={post.id}
-                    className={cn(
-                      "p-3 rounded-lg transition-all cursor-pointer",
-                      getColorClasses(post.color, 'gradient')
-                    )}
-                    onClick={() => openEditDialog(post)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className={cn(
-                          "w-6 h-6 rounded-lg flex items-center justify-center",
-                          getColorClasses(post.color)
-                        )}>
-                          {(() => {
-                            const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-                            return <IconComponent className="h-3 w-3 text-white" />;
-                          })()}
-                        </div>
-                        <span className="font-medium text-sm text-gray-800">{post.title}</span>
-                      </div>
-                      <span className="text-xs font-medium text-gray-600">
-                        {format(new Date(post.scheduled_for), "h:mm a")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {getPostsForDate(selectedDate).length === 0 && (
-                  <div className="text-center text-gray-500 py-4">
-                    No events scheduled for this day
+                    {column.posts.map((post, index) => (
+                      <Draggable key={post.id} draggableId={post.id} index={index}>
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className="bg-white rounded-md shadow-sm p-4 mb-4 last:mb-0"
+                          >
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-semibold">{post.title}</h3>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  <DropdownMenuItem
+                                    onClick={() => setEditingIdeaId(post.id)}
+                                  >
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem>Delete</DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              Scheduled for {new Date(post.scheduled_for).toLocaleDateString()}
+                            </p>
+                            <div className="flex items-center space-x-2 mt-2">
+                              {columnId === "completed" && (
+                                <CheckCircle className="text-green-500 h-4 w-4" />
+                              )}
+                              <GripVertical className="text-gray-400 h-4 w-4" />
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
                   </div>
                 )}
-              </div>
+              </Droppable>
             </div>
-          </div>
-
-          <div className="hidden md:block flex-grow bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
-              <div className="flex space-x-2">
-                <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={handleNextMonth}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-7 text-sm">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div key={day} className="p-4 text-center font-medium text-gray-600">
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7 divide-x divide-y divide-gray-100">
-              {daysInMonth.map((date) => {
-                const dateStr = format(date, "yyyy-MM-dd");
-                const posts = getPostsForDate(date);
-                
-                return (
-                  <Droppable key={dateStr} droppableId={dateStr}>
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={cn(
-                          "min-h-[100px] p-3 cursor-pointer relative",
-                          !isSameMonth(date, currentDate) ? "text-gray-400" :
-                          isToday(date) ? "bg-blue-50/30" : "hover:bg-gray-50"
-                        )}
-                        onClick={() => setSelectedDate(date)}
-                      >
-                        <div className="flex items-center gap-1">
-                          <span className={cn(
-                            "w-7 h-7 flex items-center justify-center rounded-full",
-                            isSelectedDate(date) && "bg-primary text-white",
-                            isToday(date) && !isSelectedDate(date) && "font-medium"
-                          )}>
-                            {format(date, "d")}
-                          </span>
-                        </div>
-                        <div className="flex md:block flex-wrap gap-1 mt-1">
-                          {posts.map((post, index) => renderPost(post, index))}
-                        </div>
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="hidden md:block w-1/3">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>
-                <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
-              </div>
-              <div className="space-y-4">
-                {renderDailyViewPost(selectedDate)}
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </DragDropContext>
 
@@ -546,47 +322,4 @@ export default function Calendar() {
       )}
     </>
   );
-
-  function renderDailyViewPost(selectedDate: Date) {
-    const posts = getPostsForDate(selectedDate);
-
-    return posts.map(post => (
-      <div
-        key={post.id}
-        className={cn(
-          "p-4 rounded-xl border transition-all shadow-sm cursor-pointer hover:opacity-90",
-          getColorClasses(post.color, 'gradient')
-        )}
-        onClick={() => openEditDialog(post)}
-      >
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center space-x-3">
-            <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center",
-              getColorClasses(post.color)
-            )}>
-              {(() => {
-                const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-                return <IconComponent className="h-4 w-4 text-white" />;
-              })()}
-            </div>
-            <span className="font-medium text-gray-800">{post.title}</span>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              openEditDialog(post);
-            }}
-          >
-            <PenSquare className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="mt-2 text-sm font-medium text-gray-600 pl-11">
-          {format(new Date(post.scheduled_for), "h:mm a")}
-        </div>
-      </div>
-    ));
-  }
 }
