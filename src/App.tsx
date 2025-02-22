@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import IdeaGenerator from "./pages/IdeaGenerator";
 import Calendar from "./pages/Calendar";
 import Account from "./pages/Account";
+import Onboarding from "./components/auth/Onboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
           <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
           <Route path="/ideas" element={<AuthGuard><IdeaGenerator /></AuthGuard>} />
           <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
