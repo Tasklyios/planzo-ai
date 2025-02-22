@@ -13,6 +13,7 @@ interface MultiSelectProps {
   value: Option[];
   onChange: (value: Option[]) => void;
   disabled?: boolean;
+  className?: string;  // Added className to the interface
 }
 
 export function MultiSelect({
@@ -20,6 +21,7 @@ export function MultiSelect({
   value,
   onChange,
   disabled = false,
+  className,  // Added className to the props
 }: MultiSelectProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -42,7 +44,8 @@ export function MultiSelect({
       <div
         className={cn(
           "flex min-h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background cursor-pointer",
-          disabled && "cursor-not-allowed opacity-50"
+          disabled && "cursor-not-allowed opacity-50",
+          className // Added className to the cn function
         )}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
@@ -62,7 +65,7 @@ export function MultiSelect({
         </div>
       </div>
       {isOpen && !disabled && (
-        <div className="absolute z-10 w-full mt-1 bg-popover rounded-md border shadow-md">
+        <div className="absolute z-10 w-full mt-1 bg-white rounded-md border shadow-md">
           {options.map((option) => (
             <div
               key={option.value}
