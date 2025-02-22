@@ -12,21 +12,36 @@ export type Database = {
       profiles: {
         Row: {
           account_type: string
+          business_niche: string | null
+          content_niche: string | null
           created_at: string
           id: string
           onboarding_completed: boolean
+          posting_platforms: string[] | null
+          product_niche: string | null
+          target_audience: string | null
         }
         Insert: {
           account_type: string
+          business_niche?: string | null
+          content_niche?: string | null
           created_at?: string
           id: string
           onboarding_completed?: boolean
+          posting_platforms?: string[] | null
+          product_niche?: string | null
+          target_audience?: string | null
         }
         Update: {
           account_type?: string
+          business_niche?: string | null
+          content_niche?: string | null
           created_at?: string
           id?: string
           onboarding_completed?: boolean
+          posting_platforms?: string[] | null
+          product_niche?: string | null
+          target_audience?: string | null
         }
         Relationships: []
       }
