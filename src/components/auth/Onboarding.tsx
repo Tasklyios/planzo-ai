@@ -45,8 +45,9 @@ const Onboarding = () => {
         return;
       }
 
-      const { error } = await supabase
-        .from('profiles')
+      // Using type assertion since we can't modify the core types
+      const { error } = await (supabase
+        .from('profiles') as any)
         .update({
           account_type: selectedType,
           onboarding_completed: true,

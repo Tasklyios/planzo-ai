@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { User, Lock, Mail } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -36,9 +36,9 @@ const Auth = () => {
         });
         if (error) throw error;
 
-        // Check if user has completed onboarding
-        const { data: profile } = await supabase
-          .from('profiles')
+        // Using type assertion since we can't modify the core types
+        const { data: profile } = await (supabase
+          .from('profiles') as any)
           .select('onboarding_completed')
           .eq('id', data.user.id)
           .single();
