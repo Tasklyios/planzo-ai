@@ -39,10 +39,10 @@ export default function Ideas() {
 
       if (error) throw error;
       
-      // Transform the data to ensure symbol is of the correct type
       const transformedIdeas = (data || []).map(idea => ({
         ...idea,
-        symbol: validateIconKey(idea.symbol)
+        symbol: validateIconKey(idea.symbol),
+        is_saved: true
       })) as GeneratedIdea[];
 
       setIdeas(transformedIdeas);
@@ -59,6 +59,31 @@ export default function Ideas() {
   useEffect(() => {
     fetchSavedIdeas();
   }, []);
+
+  const handleBookmarkToggle = async (ideaId: string) => {
+    // Optimistically update UI first
+    setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== ideaId));
+
+    try {
+      const { error } = await supabase
+        .from("video_ideas")
+        .update({ is_saved: false })
+        .eq("id", ideaId);
+
+      if (error) {
+        // If there's an error, revert the optimistic update
+        await fetchSavedIdeas();
+        throw error;
+      }
+    } catch (error: any) {
+      console.error("Error updating bookmark:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update bookmark status",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAddToCalendar = async () => {
     if (!addingToCalendar?.idea) return;
@@ -84,7 +109,8 @@ export default function Ideas() {
       if (error) throw error;
 
       setAddingToCalendar(null);
-      await fetchSavedIdeas();
+      // Remove the scheduled idea from the list
+      setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== addingToCalendar.idea.id));
       navigate("/calendar");
     } catch (error: any) {
       console.error("Error adding to calendar:", error);
@@ -119,6 +145,7 @@ export default function Ideas() {
               scheduledFor: new Date().toISOString().split('T')[0],
             })}
             onEdit={(ideaId) => setEditingIdeaId(ideaId)}
+            onBookmarkToggle={handleBookmarkToggle}
           />
         </section>
 

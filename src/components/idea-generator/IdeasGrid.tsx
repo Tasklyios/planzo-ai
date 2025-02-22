@@ -14,12 +14,14 @@ interface IdeasGridProps {
     tags: string[];
     symbol?: keyof typeof IconMap;
     color?: string;
+    is_saved?: boolean;
   }>;
   onAddToCalendar: (idea: any) => void;
   onEdit: (ideaId: string) => void;
+  onBookmarkToggle?: (ideaId: string) => void;
 }
 
-const IdeasGrid = ({ ideas, onAddToCalendar, onEdit }: IdeasGridProps) => {
+const IdeasGrid = ({ ideas, onAddToCalendar, onEdit, onBookmarkToggle }: IdeasGridProps) => {
   if (!ideas.length) return null;
 
   return (
@@ -44,6 +46,7 @@ const IdeasGrid = ({ ideas, onAddToCalendar, onEdit }: IdeasGridProps) => {
             idea={idea}
             onAddToCalendar={() => onAddToCalendar(idea)}
             onEdit={() => onEdit(idea.id)}
+            onBookmarkToggle={() => onBookmarkToggle?.(idea.id)}
           />
         ))}
       </div>

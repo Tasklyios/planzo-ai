@@ -86,6 +86,37 @@ const Generator = () => {
     setAddingToCalendar(prev => prev ? { ...prev, [field]: value } : null);
   };
 
+  const handleBookmarkToggle = async (ideaId: string) => {
+    try {
+      // Find the idea and toggle its saved state
+      setIdeas(prevIdeas => prevIdeas.map(idea => 
+        idea.id === ideaId ? { ...idea, is_saved: !idea.is_saved } : idea
+      ));
+
+      const idea = ideas.find(i => i.id === ideaId);
+      const newSavedState = !idea?.is_saved;
+
+      const { error } = await supabase
+        .from("video_ideas")
+        .update({ is_saved: newSavedState })
+        .eq("id", ideaId);
+
+      if (error) throw error;
+
+    } catch (error: any) {
+      console.error("Error updating bookmark:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update bookmark status",
+        variant: "destructive",
+      });
+      // Revert the optimistic update
+      setIdeas(prevIdeas => prevIdeas.map(idea => 
+        idea.id === ideaId ? { ...idea, is_saved: !idea.is_saved } : idea
+      ));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
       <header className="fixed w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
@@ -179,6 +210,7 @@ const Generator = () => {
               scheduledFor: new Date().toISOString().split('T')[0],
             })}
             onEdit={(ideaId) => setEditingIdeaId(ideaId)}
+            onBookmarkToggle={handleBookmarkToggle}
           />
         </section>
       </main>
