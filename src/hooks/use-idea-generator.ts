@@ -28,21 +28,37 @@ export const useIdeaGenerator = () => {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('content_niche, target_audience, posting_platforms')
+        .select('account_type, content_niche, business_niche, target_audience, posting_platforms')
         .eq('id', session.user.id)
         .single();
 
       if (error) throw error;
 
       if (profile) {
-        if (profile.content_niche) {
-          setNiche(profile.content_niche);
-          localStorage.setItem("niche", profile.content_niche);
+        if (profile.account_type === 'business') {
+          // For business accounts, set the business niche as the primary niche
+          if (profile.business_niche) {
+            setNiche(profile.business_niche);
+            localStorage.setItem("niche", profile.business_niche);
+          }
+          // Set content focus (videoType) from content_niche
+          if (profile.content_niche) {
+            setVideoType(profile.content_niche);
+            localStorage.setItem("videoType", profile.content_niche);
+          }
+        } else {
+          // For personal and ecommerce accounts, use content_niche as primary niche
+          if (profile.content_niche) {
+            setNiche(profile.content_niche);
+            localStorage.setItem("niche", profile.content_niche);
+          }
         }
+        
         if (profile.target_audience) {
           setAudience(profile.target_audience);
           localStorage.setItem("audience", profile.target_audience);
         }
+        
         if (profile.posting_platforms && profile.posting_platforms.length > 0) {
           setPlatform(profile.posting_platforms[0]);
           localStorage.setItem("platform", profile.posting_platforms[0]);
