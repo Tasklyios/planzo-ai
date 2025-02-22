@@ -1,9 +1,11 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { CalendarPlus, PenSquare, LucideIcon } from "lucide-react";
+import { CalendarPlus, PenSquare, Bookmark, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IconMap } from "@/types/idea";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface IdeaCardProps {
   idea: {
@@ -14,12 +16,22 @@ interface IdeaCardProps {
     tags: string[];
     symbol?: keyof typeof IconMap;
     color?: string;
+    is_saved?: boolean;
   };
   onAddToCalendar: () => void;
   onEdit: () => void;
+  showBookmark?: boolean;
+  onBookmarkToggle?: () => void;
 }
 
-const IdeaCard = ({ idea, onAddToCalendar, onEdit }: IdeaCardProps) => {
+const IdeaCard = ({ 
+  idea, 
+  onAddToCalendar, 
+  onEdit, 
+  showBookmark = true,
+  onBookmarkToggle 
+}: IdeaCardProps) => {
+  const { toast } = useToast();
   const getIconComponent = (symbolName?: keyof typeof IconMap): LucideIcon => {
     if (!symbolName || !(symbolName in IconMap)) {
       return IconMap.Lightbulb;
@@ -28,6 +40,35 @@ const IdeaCard = ({ idea, onAddToCalendar, onEdit }: IdeaCardProps) => {
   };
 
   const IconComponent = getIconComponent(idea.symbol);
+
+  const handleBookmarkToggle = async () => {
+    try {
+      const { error } = await supabase
+        .from('video_ideas')
+        .update({ is_saved: !idea.is_saved })
+        .eq('id', idea.id);
+
+      if (error) throw error;
+
+      if (onBookmarkToggle) {
+        onBookmarkToggle();
+      }
+
+      toast({
+        title: idea.is_saved ? "Idea removed from bookmarks" : "Idea bookmarked",
+        description: idea.is_saved 
+          ? "You can always bookmark it again later" 
+          : "You can find this idea in your saved ideas",
+      });
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update bookmark status",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="group bg-[#F9FAFC] rounded-xl p-4 md:p-6 hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-[#4F92FF]/20">
@@ -67,15 +108,30 @@ const IdeaCard = ({ idea, onAddToCalendar, onEdit }: IdeaCardProps) => {
       <p className="text-xs md:text-sm text-gray-600 line-clamp-2 md:line-clamp-none">
         {idea.description}
       </p>
-      <div className="flex flex-wrap gap-2 mt-3">
-        {idea.tags.map((tag, tagIndex) => (
-          <span 
-            key={tagIndex} 
-            className="px-2 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-xs rounded-full"
+      <div className="flex items-center justify-between mt-3">
+        <div className="flex flex-wrap gap-2">
+          {idea.tags.map((tag, tagIndex) => (
+            <span 
+              key={tagIndex} 
+              className="px-2 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-xs rounded-full"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+        {showBookmark && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBookmarkToggle}
+            className={cn(
+              "ml-2",
+              idea.is_saved && "text-[#4F92FF]"
+            )}
           >
-            #{tag}
-          </span>
-        ))}
+            <Bookmark className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );

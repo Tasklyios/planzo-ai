@@ -1,8 +1,15 @@
 
+import { Link } from "react-router-dom";
 import { useState } from "react";
-import { Menu, Bell, User, CreditCard, LogOut } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  User,
+  CreditCard,
+  LogOut,
+  Menu,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,48 +18,54 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
 
-  return (
-    <nav className="fixed w-full glass shadow-sm z-50">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-primary">
-            TrendAI
-          </Link>
-          
-          <div className="hidden md:flex items-center justify-center flex-1 space-x-8">
-            <Link to="/dashboard" className="text-dark hover:text-primary transition-colors">
-              Dashboard
-            </Link>
-            <Link to="/calendar" className="text-dark hover:text-primary transition-colors">
-              Calendar
-            </Link>
-            <Link to="/ideas" className="text-dark hover:text-primary transition-colors">
-              Ideas
-            </Link>
-          </div>
+  const closeSheet = () => setIsOpen(false);
 
-          <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
+  return (
+    <header className="fixed w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
+      <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="flex items-center">
+          <div className="text-2xl font-bold text-[#4F92FF]">TrendAI</div>
+        </div>
+        <div className="hidden md:flex items-center gap-8">
+          <Link to="/dashboard" className="text-gray-600 hover:text-[#4F92FF]">
+            Dashboard
+          </Link>
+          <Link to="/generator" className="text-gray-600 hover:text-[#4F92FF]">
+            Generator
+          </Link>
+          <Link to="/ideas" className="text-gray-600 hover:text-[#4F92FF]">
+            Ideas
+          </Link>
+          <Link to="/calendar" className="text-gray-600 hover:text-[#4F92FF]">
+            Calendar
+          </Link>
+        </div>
+        <div className="flex items-center space-x-4">
+          <div className="hidden md:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="cursor-pointer">
+                <Button variant="ghost" size="icon">
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-white" align="end">
+              <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/account')}>
@@ -72,35 +85,63 @@ const Navbar = () => {
             </DropdownMenu>
           </div>
 
-          <div className="md:hidden">
-            <button onClick={() => setIsOpen(!isOpen)} className="text-dark">
-              <Menu size={24} />
-            </button>
-          </div>
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="md:hidden" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-4 mt-4">
+                <Link
+                  to="/dashboard"
+                  className="text-gray-600 hover:text-[#4F92FF]"
+                  onClick={closeSheet}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/generator"
+                  className="text-gray-600 hover:text-[#4F92FF]"
+                  onClick={closeSheet}
+                >
+                  Generator
+                </Link>
+                <Link
+                  to="/ideas"
+                  className="text-gray-600 hover:text-[#4F92FF]"
+                  onClick={closeSheet}
+                >
+                  Ideas
+                </Link>
+                <Link
+                  to="/calendar"
+                  className="text-gray-600 hover:text-[#4F92FF]"
+                  onClick={closeSheet}
+                >
+                  Calendar
+                </Link>
+                <Button variant="outline" onClick={() => {
+                  navigate('/account');
+                  closeSheet();
+                }}>
+                  Account Settings
+                </Button>
+                <Button variant="outline" onClick={() => {
+                  handleLogout();
+                  closeSheet();
+                }}>
+                  Log out
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-        {isOpen && (
-          <div className="md:hidden pt-4 pb-4 animate-fade-in">
-            <div className="flex flex-col space-y-4">
-              <Link to="/dashboard" className="text-dark hover:text-primary transition-colors">
-                Dashboard
-              </Link>
-              <Link to="/calendar" className="text-dark hover:text-primary transition-colors">
-                Calendar
-              </Link>
-              <Link to="/ideas" className="text-dark hover:text-primary transition-colors">
-                Ideas
-              </Link>
-              <Link to="/account" className="text-dark hover:text-primary transition-colors">
-                Account
-              </Link>
-              <button onClick={handleLogout} className="text-left text-dark hover:text-primary transition-colors">
-                Sign Out
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 };
 
