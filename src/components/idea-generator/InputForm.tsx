@@ -70,50 +70,50 @@ const InputForm = ({
         return (
           <>
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full">
-                <LayersIcon className="text-[#4F92FF] w-5 h-5 shrink-0" />
-                <div className="flex-1 w-full text-center md:text-left">
-                  <label className="text-xs md:text-sm font-medium text-foreground block md:mb-2">Content Niche</label>
-                  <input
-                    type="text"
-                    value={niche}
-                    onChange={(e) => setNiche(e.target.value)}
-                    className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                    placeholder="Your content niche"
-                  />
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
                 </div>
+                <input
+                  type="text"
+                  value={niche}
+                  onChange={(e) => setNiche(e.target.value)}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Your content niche"
+                />
               </div>
             </div>
 
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full">
-                <Users className="text-[#4F92FF] w-5 h-5 shrink-0" />
-                <div className="flex-1 w-full text-center md:text-left">
-                  <label className="text-xs md:text-sm font-medium text-foreground block md:mb-2">Target Audience</label>
-                  <input
-                    type="text"
-                    value={audience}
-                    onChange={(e) => setAudience(e.target.value)}
-                    className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                    placeholder="Your target audience"
-                  />
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <Users className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Target Audience</label>
                 </div>
+                <input
+                  type="text"
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Your target audience"
+                />
               </div>
             </div>
 
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full">
-                <Video className="text-[#4F92FF] w-5 h-5 shrink-0" />
-                <div className="flex-1 w-full text-center md:text-left">
-                  <label className="text-xs md:text-sm font-medium text-foreground block md:mb-2">Type</label>
-                  <input
-                    type="text"
-                    value={videoType}
-                    onChange={(e) => setVideoType(e.target.value)}
-                    className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                    placeholder="Video type"
-                  />
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <Video className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Type</label>
                 </div>
+                <input
+                  type="text"
+                  value={videoType}
+                  onChange={(e) => setVideoType(e.target.value)}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Video type"
+                />
               </div>
             </div>
           </>
@@ -123,50 +123,50 @@ const InputForm = ({
         return (
           <>
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full">
-                <Package2 className="text-[#4F92FF] w-5 h-5 shrink-0" />
-                <div className="flex-1 w-full text-center md:text-left">
-                  <label className="text-xs md:text-sm font-medium text-foreground block md:mb-2">Product Niche</label>
-                  <input
-                    type="text"
-                    value={niche}
-                    onChange={(e) => setNiche(e.target.value)}
-                    className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                    placeholder="Your product niche"
-                  />
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <Package2 className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Product Niche</label>
                 </div>
+                <input
+                  type="text"
+                  value={niche}
+                  onChange={(e) => setNiche(e.target.value)}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Your product niche"
+                />
               </div>
             </div>
 
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full">
-                <LayersIcon className="text-[#4F92FF] w-5 h-5 shrink-0" />
-                <div className="flex-1 w-full text-center md:text-left">
-                  <label className="text-xs md:text-sm font-medium text-foreground block md:mb-2">Content Niche</label>
-                  <input
-                    type="text"
-                    value={videoType}
-                    onChange={(e) => setVideoType(e.target.value)}
-                    className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                    placeholder="Your content focus"
-                  />
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
                 </div>
+                <input
+                  type="text"
+                  value={videoType}
+                  onChange={(e) => setVideoType(e.target.value)}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Your content focus"
+                />
               </div>
             </div>
 
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full">
-                <Users className="text-[#4F92FF] w-5 h-5 shrink-0" />
-                <div className="flex-1 w-full text-center md:text-left">
-                  <label className="text-xs md:text-sm font-medium text-foreground block md:mb-2">Target Audience</label>
-                  <input
-                    type="text"
-                    value={audience}
-                    onChange={(e) => setAudience(e.target.value)}
-                    className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                    placeholder="Your target audience"
-                  />
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <Users className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Target Audience</label>
                 </div>
+                <input
+                  type="text"
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Your target audience"
+                />
               </div>
             </div>
           </>
@@ -176,50 +176,50 @@ const InputForm = ({
         return (
           <>
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full">
-                <Building2 className="text-[#4F92FF] w-5 h-5 shrink-0" />
-                <div className="flex-1 w-full text-center md:text-left">
-                  <label className="text-xs md:text-sm font-medium text-foreground block md:mb-2">Business Niche</label>
-                  <input
-                    type="text"
-                    value={niche}
-                    onChange={(e) => setNiche(e.target.value)}
-                    className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                    placeholder="Your business niche"
-                  />
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <Building2 className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Business Niche</label>
                 </div>
+                <input
+                  type="text"
+                  value={niche}
+                  onChange={(e) => setNiche(e.target.value)}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Your business niche"
+                />
               </div>
             </div>
 
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full">
-                <LayersIcon className="text-[#4F92FF] w-5 h-5 shrink-0" />
-                <div className="flex-1 w-full text-center md:text-left">
-                  <label className="text-xs md:text-sm font-medium text-foreground block md:mb-2">Content Niche</label>
-                  <input
-                    type="text"
-                    value={videoType}
-                    onChange={(e) => setVideoType(e.target.value)}
-                    className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                    placeholder="Your content focus"
-                  />
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
                 </div>
+                <input
+                  type="text"
+                  value={videoType}
+                  onChange={(e) => setVideoType(e.target.value)}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Your content focus"
+                />
               </div>
             </div>
 
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full">
-                <Users className="text-[#4F92FF] w-5 h-5 shrink-0" />
-                <div className="flex-1 w-full text-center md:text-left">
-                  <label className="text-xs md:text-sm font-medium text-foreground block md:mb-2">Target Audience</label>
-                  <input
-                    type="text"
-                    value={audience}
-                    onChange={(e) => setAudience(e.target.value)}
-                    className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                    placeholder="Your target audience"
-                  />
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <Users className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Target Audience</label>
                 </div>
+                <input
+                  type="text"
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Your target audience"
+                />
               </div>
             </div>
           </>
@@ -231,20 +231,20 @@ const InputForm = ({
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
       {renderFields()}
       <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-        <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full">
-          <Smartphone className="text-[#4F92FF] w-5 h-5 shrink-0" />
-          <div className="flex-1 w-full text-center md:text-left">
-            <label className="text-xs md:text-sm font-medium text-foreground block md:mb-2">Platform</label>
-            <select
-              value={platform}
-              onChange={(e) => setPlatform(e.target.value)}
-              className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground text-sm text-center md:text-left"
-            >
-              <option>TikTok</option>
-              <option>Instagram Reels</option>
-              <option>YouTube Shorts</option>
-            </select>
+        <div className="flex flex-col items-center w-full">
+          <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+            <Smartphone className="text-[#4F92FF] w-4 h-4" />
+            <label className="text-xs md:text-sm font-medium text-foreground">Platform</label>
           </div>
+          <select
+            value={platform}
+            onChange={(e) => setPlatform(e.target.value)}
+            className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground text-sm text-center md:text-left"
+          >
+            <option>TikTok</option>
+            <option>Instagram Reels</option>
+            <option>YouTube Shorts</option>
+          </select>
         </div>
       </div>
     </div>
