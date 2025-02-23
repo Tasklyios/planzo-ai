@@ -6,8 +6,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
-  CommandLoading
+  CommandList
 } from "@/components/ui/command";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -141,12 +140,10 @@ export function SearchBar() {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           {loading && (
-            <CommandLoading>
-              <div className="flex items-center justify-center py-6">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
-              </div>
-            </CommandLoading>
+            <div className="flex items-center justify-center py-6">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
+            </div>
           )}
           {!loading && results.length > 0 && (
             <CommandGroup heading="Results">
