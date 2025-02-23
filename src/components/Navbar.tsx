@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +24,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ const Navbar = () => {
   const currentPath = window.location.pathname;
 
   return (
-    <header className="fixed w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
+    <header className="fixed w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50 dark:bg-gray-900/90 dark:border-gray-800">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
           <div className="text-2xl font-bold text-[#4F92FF]">TrendAI</div>
@@ -63,7 +63,7 @@ const Navbar = () => {
               className={`${
                 currentPath === item.path
                   ? "text-[#4F92FF] font-medium"
-                  : "text-gray-600 hover:text-[#4F92FF]"
+                  : "text-gray-600 hover:text-[#4F92FF] dark:text-gray-400 dark:hover:text-[#4F92FF]"
               }`}
             >
               {item.label}
@@ -72,6 +72,7 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center space-x-4">
+          <ThemeToggle />
           <div className="hidden md:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

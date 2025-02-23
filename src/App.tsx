@@ -11,6 +11,7 @@ import NotFound from "@/pages/NotFound";
 import AppLayout from "@/components/layout/AppLayout";
 import AuthGuard from "@/components/AuthGuard";
 import Onboarding from "@/components/auth/Onboarding";
+import { ThemeProvider } from "@/hooks/use-theme";
 
 const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
   <AuthGuard>
@@ -22,19 +23,21 @@ const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
-        <Route path="/dashboard" element={<AuthenticatedLayout><Dashboard /></AuthenticatedLayout>} />
-        <Route path="/generator" element={<AuthenticatedLayout><Generator /></AuthenticatedLayout>} />
-        <Route path="/ideas" element={<AuthenticatedLayout><Ideas /></AuthenticatedLayout>} />
-        <Route path="/calendar" element={<AuthenticatedLayout><Calendar /></AuthenticatedLayout>} />
-        <Route path="/account" element={<AuthenticatedLayout><Account /></AuthenticatedLayout>} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider defaultTheme="system" storageKey="trendai-theme">
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
+          <Route path="/dashboard" element={<AuthenticatedLayout><Dashboard /></AuthenticatedLayout>} />
+          <Route path="/generator" element={<AuthenticatedLayout><Generator /></AuthenticatedLayout>} />
+          <Route path="/ideas" element={<AuthenticatedLayout><Ideas /></AuthenticatedLayout>} />
+          <Route path="/calendar" element={<AuthenticatedLayout><Calendar /></AuthenticatedLayout>} />
+          <Route path="/account" element={<AuthenticatedLayout><Account /></AuthenticatedLayout>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 
