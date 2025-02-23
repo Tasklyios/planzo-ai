@@ -128,7 +128,7 @@ export default function Calendar() {
 
   return (
     <AppLayout>
-      <div className="p-6">
+      <div className="min-h-screen bg-[#F9FAFC] pt-8 px-6">
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
             {daysInMonth.map((date) => (
