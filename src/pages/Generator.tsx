@@ -44,17 +44,24 @@ const Generator = () => {
         return;
       }
 
+      // Update only the specific idea by its ID
       const { error } = await supabase
         .from("video_ideas")
         .update({
           scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
           platform: addingToCalendar.idea.platform || platform,
+          title: addingToCalendar.title, // Add the title update
         })
         .eq("id", addingToCalendar.idea.id)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .single();
 
       if (error) throw error;
 
+      toast({
+        title: "Success",
+        description: "Idea added to calendar successfully",
+      });
       setAddingToCalendar(null);
       navigate("/calendar");
     } catch (error: any) {
