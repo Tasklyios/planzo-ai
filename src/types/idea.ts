@@ -1,6 +1,4 @@
 
-import { LucideIcon, Lightbulb, Video, Music, Gamepad, Camera, Heart, Star, Trophy } from "lucide-react";
-
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -29,7 +27,6 @@ export interface GeneratedIdea {
   description: string;
   tags: string[];
   platform?: string;
-  symbol?: keyof typeof IconMap;
   color?: string;
   is_saved?: boolean;
 }
@@ -39,15 +36,3 @@ export interface AddToCalendarIdea {
   title: string;
   scheduledFor: string;
 }
-
-export const IconMap = {
-  Lightbulb,
-  Video,
-  Music,
-  Gamepad,
-  Camera,
-  Heart,
-  Star,
-  Trophy,
-} as const;
-

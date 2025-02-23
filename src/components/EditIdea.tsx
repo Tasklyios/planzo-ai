@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Wand2 } from "lucide-react";
-import * as icons from 'lucide-react';
 import { Check } from "lucide-react";
 import { format } from "date-fns";
 
@@ -23,15 +22,10 @@ interface IdeaData {
   category: string;
   tags: string[];
   platform?: string;
-  symbol?: string;
   color?: string;
   script?: string;
   scheduled_for?: string | null;
 }
-
-const availableIcons = [
-  'Palette', 'Brush', 'PenTool', 'Wand', 'WandSparkles', 'Star', 'Heart', 'Lightbulb'
-] as const;
 
 const availableColors = [
   'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple', 'pink'
@@ -80,7 +74,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           category: idea.category,
           tags: idea.tags,
           platform: idea.platform,
-          symbol: idea.symbol || 'Lightbulb',
           color: idea.color || 'blue',
           script: idea.script,
           scheduled_for: idea.scheduled_for
@@ -177,25 +170,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           <DialogTitle>Edit Idea</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <label>Symbol</label>
-            <div className="flex flex-wrap gap-2">
-              {availableIcons.map((iconName) => {
-                const Icon = icons[iconName];
-                return (
-                  <Button 
-                    key={iconName}
-                    variant={idea.symbol === iconName ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setIdea({ ...idea, symbol: iconName })}
-                  >
-                    {Icon && <Icon className="h-4 w-4" />}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-
           <div className="grid gap-2">
             <label>Color</label>
             <div className="flex flex-wrap gap-2">

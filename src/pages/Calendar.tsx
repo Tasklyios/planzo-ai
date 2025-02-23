@@ -34,7 +34,6 @@ interface VideoIdea {
   description: string;
   platform?: string;
   created_at: string;
-  symbol?: string;
   color?: string;
   category?: string;
   tags?: string[];
@@ -47,20 +46,6 @@ interface VideoIdea {
 interface ScheduledPost extends VideoIdea {
   scheduled_for: string;
 }
-
-const availableSymbols = [
-  { name: 'calendar', icon: CalendarIcon },
-  { name: 'video', icon: Video },
-  { name: 'check', icon: Check },
-  { name: 'heart', icon: Heart },
-  { name: 'star', icon: Star },
-  { name: 'music', icon: Music },
-  { name: 'image', icon: Image },
-  { name: 'film', icon: Film },
-  { name: 'book', icon: BookOpen },
-  { name: 'camera', icon: Camera },
-  { name: 'palette', icon: Palette }
-] as const;
 
 const availableColors = [
   { 
@@ -130,7 +115,6 @@ export default function Calendar() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingScheduledFor, setEditingScheduledFor] = useState("");
-  const [selectedSymbol, setSelectedSymbol] = useState<string>("calendar");
   const [selectedColor, setSelectedColor] = useState<string>("blue");
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -157,7 +141,6 @@ export default function Calendar() {
           description,
           platform,
           created_at,
-          symbol,
           color,
           category,
           tags,
@@ -204,7 +187,6 @@ export default function Calendar() {
           description: "", 
           platform,
           user_id: userId,
-          symbol: "calendar",
           color: "blue",
           tags: [],
           category: "",
@@ -422,10 +404,6 @@ export default function Calendar() {
                           "w-6 h-6 rounded-lg flex items-center justify-center",
                           getColorClasses(post.color)
                         )}>
-                          {(() => {
-                            const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-                            return <IconComponent className="h-3 w-3 text-white" />;
-                          })()}
                         </div>
                         <span className="font-medium text-sm text-gray-800">{post.title}</span>
                       </div>
@@ -531,47 +509,43 @@ export default function Calendar() {
       )}
     </>
   );
+}
 
-  function renderDailyViewPost(selectedDate: Date) {
-    const posts = getPostsForDate(selectedDate);
+function renderDailyViewPost(selectedDate: Date) {
+  const posts = getPostsForDate(selectedDate);
 
-    return posts.map(post => (
-      <div
-        key={post.id}
-        className={cn(
-          "p-4 rounded-xl border transition-all shadow-sm cursor-pointer hover:opacity-90",
-          getColorClasses(post.color, 'gradient')
-        )}
-        onClick={() => openEditDialog(post)}
-      >
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center space-x-3">
-            <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center",
-              getColorClasses(post.color)
-            )}>
-              {(() => {
-                const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-                return <IconComponent className="h-4 w-4 text-white" />;
-              })()}
-            </div>
-            <span className="font-medium text-gray-800 dark:text-white">{post.title}</span>
+  return posts.map(post => (
+    <div
+      key={post.id}
+      className={cn(
+        "p-4 rounded-xl border transition-all shadow-sm cursor-pointer hover:opacity-90",
+        getColorClasses(post.color, 'gradient')
+      )}
+      onClick={() => openEditDialog(post)}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center space-x-3">
+          <div className={cn(
+            "w-8 h-8 rounded-lg flex items-center justify-center",
+            getColorClasses(post.color)
+          )}>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              openEditDialog(post);
-            }}
-          >
-            <PenSquare className="h-4 w-4 dark:text-white" />
-          </Button>
+          <span className="font-medium text-gray-800 dark:text-white">{post.title}</span>
         </div>
-        <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-200 pl-11">
-          {format(new Date(post.scheduled_for), "h:mm a")}
-        </div>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            openEditDialog(post);
+          }}
+        >
+          <PenSquare className="h-4 w-4 dark:text-white" />
+        </Button>
       </div>
-    ));
-  }
+      <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-200 pl-11">
+        {format(new Date(post.scheduled_for), "h:mm a")}
+      </div>
+    </div>
+  ));
 }

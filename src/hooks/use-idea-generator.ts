@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { GeneratedIdea } from "@/types/idea";
-import { IconMap } from "@/types/idea";
 
 export const useIdeaGenerator = () => {
   const [niche, setNiche] = useState(() => localStorage.getItem("niche") || "");
@@ -19,12 +18,10 @@ export const useIdeaGenerator = () => {
   useEffect(() => {
     fetchUserPreferences();
 
-    // Subscribe to auth state changes to refresh preferences
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       fetchUserPreferences();
     });
 
-    // Set up realtime subscription to profile changes
     const profileSubscription = supabase
       .channel('profile-changes')
       .on(
@@ -106,13 +103,6 @@ export const useIdeaGenerator = () => {
     }
   };
 
-  const validateIconKey = (key: string | undefined): keyof typeof IconMap => {
-    if (!key || !(key in IconMap)) {
-      return 'Lightbulb';
-    }
-    return key as keyof typeof IconMap;
-  };
-
   const transformSupabaseIdea = (idea: any): GeneratedIdea => {
     return {
       id: idea.id,
@@ -121,7 +111,6 @@ export const useIdeaGenerator = () => {
       description: idea.description,
       tags: idea.tags,
       platform: idea.platform,
-      symbol: validateIconKey(idea.symbol),
       color: idea.color,
       is_saved: idea.is_saved || false,
     };
@@ -169,7 +158,6 @@ export const useIdeaGenerator = () => {
         tags: idea.tags,
         platform: platform,
         user_id: userId,
-        symbol: 'Lightbulb' as keyof typeof IconMap,
         color: 'blue',
         is_saved: false,
       }));
@@ -180,7 +168,6 @@ export const useIdeaGenerator = () => {
 
       if (saveError) throw saveError;
 
-      // After saving, fetch the ideas to get their IDs and saved status
       const { data: savedIdeas, error: fetchError } = await supabase
         .from("video_ideas")
         .select("*")
