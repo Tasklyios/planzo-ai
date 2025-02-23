@@ -1,16 +1,19 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList
+  CommandList,
+  CommandLoading
 } from "@/components/ui/command";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import debounce from "lodash/debounce";
+import { useToast } from "@/components/ui/use-toast";
 
 interface SearchResult {
   id: string;
@@ -21,9 +24,79 @@ interface SearchResult {
 
 export function SearchBar() {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const performSearch = async (searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      setResults([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Fetch both results in parallel
+      const [ideaResults, scheduledResults] = await Promise.all([
+        supabase
+          .from('video_ideas')
+          .select('id, title, created_at')
+          .ilike('title', `%${searchQuery}%`)
+          .limit(5),
+        supabase
+          .from('scheduled_content')
+          .select('id, title, created_at')
+          .ilike('title', `%${searchQuery}%`)
+          .limit(5)
+      ]);
+
+      if (ideaResults.error) throw ideaResults.error;
+      if (scheduledResults.error) throw scheduledResults.error;
+
+      const formattedResults: SearchResult[] = [
+        ...(ideaResults.data?.map(item => ({
+          ...item,
+          type: 'idea' as const
+        })) || []),
+        ...(scheduledResults.data?.map(item => ({
+          ...item,
+          type: 'scheduled' as const
+        })) || [])
+      ].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setResults(formattedResults);
+    } catch (error: any) {
+      console.error('Search error:', error);
+      toast({
+        variant: "destructive",
+        title: "Search failed",
+        description: "Failed to fetch search results. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debounce the search to avoid too many requests
+  const debouncedSearch = useCallback(
+    debounce((searchQuery: string) => performSearch(searchQuery), 300),
+    []
+  );
+
+  useEffect(() => {
+    if (query) {
+      debouncedSearch(query);
+    } else {
+      setResults([]);
+    }
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [query, debouncedSearch]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -36,53 +109,9 @@ export function SearchBar() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const handleSearch = async (query: string) => {
-    if (!query) {
-      setResults([]);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Search in video_ideas
-      const { data: ideaResults, error: ideaError } = await supabase
-        .from('video_ideas')
-        .select('id, title, created_at')
-        .ilike('title', `%${query}%`)
-        .limit(5);
-
-      // Search in scheduled_content
-      const { data: scheduledResults, error: scheduledError } = await supabase
-        .from('scheduled_content')
-        .select('id, title, created_at')
-        .ilike('title', `%${query}%`)
-        .limit(5);
-
-      if (ideaError || scheduledError) throw ideaError || scheduledError;
-
-      const formattedResults: SearchResult[] = [
-        ...(ideaResults?.map(item => ({
-          ...item,
-          type: 'idea' as const
-        })) || []),
-        ...(scheduledResults?.map(item => ({
-          ...item,
-          type: 'scheduled' as const
-        })) || [])
-      ].sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-
-      setResults(formattedResults);
-    } catch (error) {
-      console.error('Search error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSelect = (result: SearchResult) => {
     setOpen(false);
+    setQuery(""); // Reset query when selecting
     if (result.type === 'idea') {
       navigate(`/ideas?selected=${result.id}`);
     } else {
@@ -106,11 +135,20 @@ export function SearchBar() {
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput 
           placeholder="Search all ideas and scheduled content..." 
-          onValueChange={handleSearch}
+          value={query}
+          onValueChange={setQuery}
         />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
-          {results.length > 0 && (
+          {loading && (
+            <CommandLoading>
+              <div className="flex items-center justify-center py-6">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
+              </div>
+            </CommandLoading>
+          )}
+          {!loading && results.length > 0 && (
             <CommandGroup heading="Results">
               {results.map((result) => (
                 <CommandItem
