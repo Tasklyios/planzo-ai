@@ -148,16 +148,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Main Content */}
       <main className="md:pl-64 w-full">
-        <div className="w-full bg-white border-b border-gray-100 px-4 py-2">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-gray-500 font-normal"
-            onClick={() => setIsSearchOpen(true)}
-          >
-            <Search className="h-4 w-4 mr-2" />
-            Search ideas...
-          </Button>
-        </div>
         {children}
       </main>
 
