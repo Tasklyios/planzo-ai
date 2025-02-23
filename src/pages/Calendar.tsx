@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import EditIdea from "@/components/EditIdea";
+import AppLayout from "@/components/layout/AppLayout";
 
 interface VideoIdea {
   id: string;
@@ -371,169 +372,171 @@ export default function Calendar() {
   };
 
   return (
-    <>
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="container mx-auto py-8 flex flex-col md:flex-row gap-6">
-          <div className="md:hidden w-full bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
-              <div className="flex space-x-2">
-                <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={handleNextMonth}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+    <AppLayout>
+      <main className="min-h-screen bg-[#F9FAFC]">
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="container mx-auto py-8 flex flex-col md:flex-row gap-6">
+            <div className="md:hidden w-full bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
+                <div className="flex space-x-2">
+                  <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleNextMonth}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <div className="grid grid-cols-7 text-xs mb-2">
+                  {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                    <div key={day} className="text-center font-medium text-gray-600 py-2">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {daysInMonth.map((date) => (
+                    <div
+                      key={date.toString()}
+                      className={cn(
+                        "aspect-square flex items-center justify-center relative pt-0.5",
+                        !isSameMonth(date, currentDate) && "text-gray-400",
+                        isToday(date) && "font-bold"
+                      )}
+                      onClick={() => setSelectedDate(date)}
+                    >
+                      {renderEventDots(date)}
+                      <span className={cn(
+                        "w-8 h-8 flex items-center justify-center rounded-full text-sm",
+                        isSelectedDate(date) && "bg-primary text-white",
+                      )}>
+                        {format(date, "d")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>
+                  <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
+                </div>
+                <div className="space-y-3">
+                  {getPostsForDate(selectedDate).map((post) => (
+                    <div
+                      key={post.id}
+                      className={cn(
+                        "p-3 rounded-lg transition-all cursor-pointer",
+                        getColorClasses(post.color, 'gradient')
+                      )}
+                      onClick={() => openEditDialog(post)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className={cn(
+                            "w-6 h-6 rounded-lg flex items-center justify-center",
+                            getColorClasses(post.color)
+                          )}>
+                            {(() => {
+                              const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
+                              return <IconComponent className="h-3 w-3 text-white" />;
+                            })()}
+                          </div>
+                          <span className="font-medium text-sm text-gray-800">{post.title}</span>
+                        </div>
+                        <span className="text-xs font-medium text-gray-600">
+                          {format(new Date(post.scheduled_for), "h:mm a")}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {getPostsForDate(selectedDate).length === 0 && (
+                    <div className="text-center text-gray-500 py-4">
+                      No events scheduled for this day
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div>
-              <div className="grid grid-cols-7 text-xs mb-2">
-                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                  <div key={day} className="text-center font-medium text-gray-600 py-2">
+            <div className="hidden md:block flex-grow bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
+                <div className="flex space-x-2">
+                  <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleNextMonth}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-7 text-sm">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                  <div key={day} className="p-4 text-center font-medium text-gray-600">
                     {day}
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-7 gap-1">
-                {daysInMonth.map((date) => (
-                  <div
-                    key={date.toString()}
-                    className={cn(
-                      "aspect-square flex items-center justify-center relative pt-0.5",
-                      !isSameMonth(date, currentDate) && "text-gray-400",
-                      isToday(date) && "font-bold"
-                    )}
-                    onClick={() => setSelectedDate(date)}
-                  >
-                    {renderEventDots(date)}
-                    <span className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-full text-sm",
-                      isSelectedDate(date) && "bg-primary text-white",
-                    )}>
-                      {format(date, "d")}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>
-                <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
-              </div>
-              <div className="space-y-3">
-                {getPostsForDate(selectedDate).map((post) => (
-                  <div
-                    key={post.id}
-                    className={cn(
-                      "p-3 rounded-lg transition-all cursor-pointer",
-                      getColorClasses(post.color, 'gradient')
-                    )}
-                    onClick={() => openEditDialog(post)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className={cn(
-                          "w-6 h-6 rounded-lg flex items-center justify-center",
-                          getColorClasses(post.color)
-                        )}>
-                          {(() => {
-                            const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-                            return <IconComponent className="h-3 w-3 text-white" />;
-                          })()}
+              <div className="grid grid-cols-7 divide-x divide-y divide-gray-100">
+                {daysInMonth.map((date) => {
+                  const dateStr = format(date, "yyyy-MM-dd");
+                  const posts = getPostsForDate(date);
+                  
+                  return (
+                    <Droppable key={dateStr} droppableId={dateStr}>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={cn(
+                            "min-h-[100px] p-3 cursor-pointer relative",
+                            !isSameMonth(date, currentDate) ? "text-gray-400" :
+                            isToday(date) ? "bg-blue-50/30" : "hover:bg-gray-50"
+                          )}
+                          onClick={() => setSelectedDate(date)}
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className={cn(
+                              "w-7 h-7 flex items-center justify-center rounded-full",
+                              isSelectedDate(date) && "bg-primary text-white",
+                              isToday(date) && !isSelectedDate(date) && "font-medium"
+                            )}>
+                              {format(date, "d")}
+                            </span>
+                          </div>
+                          <div className="flex md:block flex-wrap gap-1 mt-1">
+                            {posts.map((post, index) => renderPost(post, index))}
+                          </div>
+                          {provided.placeholder}
                         </div>
-                        <span className="font-medium text-sm text-gray-800">{post.title}</span>
-                      </div>
-                      <span className="text-xs font-medium text-gray-600">
-                        {format(new Date(post.scheduled_for), "h:mm a")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {getPostsForDate(selectedDate).length === 0 && (
-                  <div className="text-center text-gray-500 py-4">
-                    No events scheduled for this day
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="hidden md:block flex-grow bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
-              <div className="flex space-x-2">
-                <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={handleNextMonth}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                      )}
+                    </Droppable>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="grid grid-cols-7 text-sm">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div key={day} className="p-4 text-center font-medium text-gray-600">
-                  {day}
+            <div className="hidden md:block w-1/3">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>
+                  <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
                 </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7 divide-x divide-y divide-gray-100">
-              {daysInMonth.map((date) => {
-                const dateStr = format(date, "yyyy-MM-dd");
-                const posts = getPostsForDate(date);
-                
-                return (
-                  <Droppable key={dateStr} droppableId={dateStr}>
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={cn(
-                          "min-h-[100px] p-3 cursor-pointer relative",
-                          !isSameMonth(date, currentDate) ? "text-gray-400" :
-                          isToday(date) ? "bg-blue-50/30" : "hover:bg-gray-50"
-                        )}
-                        onClick={() => setSelectedDate(date)}
-                      >
-                        <div className="flex items-center gap-1">
-                          <span className={cn(
-                            "w-7 h-7 flex items-center justify-center rounded-full",
-                            isSelectedDate(date) && "bg-primary text-white",
-                            isToday(date) && !isSelectedDate(date) && "font-medium"
-                          )}>
-                            {format(date, "d")}
-                          </span>
-                        </div>
-                        <div className="flex md:block flex-wrap gap-1 mt-1">
-                          {posts.map((post, index) => renderPost(post, index))}
-                        </div>
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="hidden md:block w-1/3">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>
-                <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
-              </div>
-              <div className="space-y-4">
-                {renderDailyViewPost(selectedDate)}
+                <div className="space-y-4">
+                  {renderDailyViewPost(selectedDate)}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </DragDropContext>
+        </DragDropContext>
+      </main>
 
       {editingIdeaId && (
         <EditIdea
@@ -544,7 +547,7 @@ export default function Calendar() {
           }}
         />
       )}
-    </>
+    </AppLayout>
   );
 
   function renderDailyViewPost(selectedDate: Date) {
