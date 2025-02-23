@@ -1,9 +1,15 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import AuthGuard from "@/components/AuthGuard";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const themeOptions = [
   {
@@ -26,9 +32,71 @@ const themeOptions = [
   },
 ];
 
+interface Profile {
+  content_personality?: string | null;
+  content_style?: string | null;
+  account_type?: string;
+}
+
 export default function Account() {
   const [activeTab, setActiveTab] = useState<'settings' | 'customize'>('settings');
   const { theme, setTheme } = useTheme();
+  const [profile, setProfile] = useState<Profile>({});
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('content_personality, content_style, account_type')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data || {});
+    } catch (error: any) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          content_personality: profile.content_personality,
+          content_style: profile.content_style,
+        })
+        .eq('id', session.user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile updated",
+        description: "Your changes have been saved successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AuthGuard>
@@ -103,19 +171,17 @@ export default function Account() {
                 <div className="space-y-4">
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="name">Name</Label>
-                    <input
+                    <Input
                       id="name"
                       type="text"
-                      className="rounded-md border border-input bg-background px-3 py-2"
                       placeholder="Your name"
                     />
                   </div>
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <input
+                    <Input
                       id="email"
                       type="email"
-                      className="rounded-md border border-input bg-background px-3 py-2"
                       placeholder="Your email"
                     />
                   </div>
@@ -130,9 +196,9 @@ export default function Account() {
                       <p className="font-medium">Free Plan</p>
                       <p className="text-sm text-muted-foreground">Basic features included</p>
                     </div>
-                    <button className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90">
+                    <Button>
                       Upgrade
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -140,30 +206,33 @@ export default function Account() {
           ) : (
             <div className="widget-box p-6">
               <h2 className="text-xl font-semibold mb-6">Customize Experience</h2>
-              <div className="space-y-4">
-                <div className="flex flex-col space-y-2">
-                  <Label htmlFor="language">Language</Label>
-                  <select
-                    id="language"
-                    className="rounded-md border border-input bg-background px-3 py-2"
-                  >
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                  </select>
+              <form onSubmit={(e) => { e.preventDefault(); handleUpdateProfile(); }} className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="personality">Content Personality</Label>
+                    <Textarea
+                      id="personality"
+                      placeholder="E.g., Energetic and funny, Professional and educational, Casual and relatable..."
+                      value={profile.content_personality || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="style">Content Style</Label>
+                    <Textarea
+                      id="style"
+                      placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences..."
+                      value={profile.content_style || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
+                      className="min-h-[100px]"
+                    />
+                  </div>
                 </div>
-                <div className="flex flex-col space-y-2">
-                  <Label htmlFor="timezone">Timezone</Label>
-                  <select
-                    id="timezone"
-                    className="rounded-md border border-input bg-background px-3 py-2"
-                  >
-                    <option value="utc">UTC</option>
-                    <option value="est">EST</option>
-                    <option value="pst">PST</option>
-                  </select>
-                </div>
-              </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Saving..." : "Save Changes"}
+                </Button>
+              </form>
             </div>
           )}
         </div>

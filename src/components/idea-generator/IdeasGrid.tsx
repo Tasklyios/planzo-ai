@@ -30,7 +30,7 @@ const IdeasGrid = ({
           key={idea.id}
           className="group bg-card rounded-xl p-4 md:p-6 hover:bg-accent transition-all border border-border"
         >
-          <div className="flex items-start justify-between mb-3 md:mb-4">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <div className="flex items-center gap-2 md:gap-3">
               <div
                 className={cn(
@@ -38,9 +38,7 @@ const IdeasGrid = ({
                   `bg-${idea.color || "primary"}/10`,
                   `text-${idea.color || "primary"}`
                 )}
-              >
-                <div className="w-4 h-4 md:w-5 md:h-5" />
-              </div>
+              />
               <div>
                 <span className="text-xs md:text-sm text-primary font-medium">
                   {idea.category}
