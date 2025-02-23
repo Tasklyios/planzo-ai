@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MultiSelect } from "@/components/ui/multi-select";
 import AuthGuard from "@/components/AuthGuard";
-import { CreditCard } from "lucide-react";
+import { CreditCard, Moon, Sun, Monitor } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "@/hooks/use-theme";
 
 const platformOptions = [
   { label: "TikTok", value: "TikTok" },
@@ -57,10 +57,7 @@ export default function Account() {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    getProfile();
-  }, []);
+  const { theme, setTheme } = useTheme();
 
   const getProfile = async () => {
     try {
@@ -224,6 +221,27 @@ export default function Account() {
     }
   };
 
+  const themeOptions = [
+    {
+      value: "light",
+      title: "Light",
+      description: "Light theme for bright environments",
+      icon: Sun
+    },
+    {
+      value: "dark",
+      title: "Dark",
+      description: "Dark theme for low-light environments",
+      icon: Moon
+    },
+    {
+      value: "system",
+      title: "System",
+      description: "Follows your system preferences",
+      icon: Monitor
+    }
+  ];
+
   return (
     <AuthGuard>
       <div className="container mx-auto py-20">
@@ -256,6 +274,42 @@ export default function Account() {
 
           {activeTab === 'settings' ? (
             <div className="space-y-6">
+              <div className="bg-white p-6 rounded-xl shadow-sm">
+                <h2 className="text-xl font-semibold mb-6">Theme Settings</h2>
+                <div className="space-y-4">
+                  <RadioGroup
+                    value={theme}
+                    onValueChange={(value: "light" | "dark" | "system") => setTheme(value)}
+                    className="grid gap-4"
+                  >
+                    {themeOptions.map((option) => {
+                      const Icon = option.icon;
+                      return (
+                        <div key={option.value} className="relative">
+                          <RadioGroupItem
+                            value={option.value}
+                            id={`theme-${option.value}`}
+                            className="peer sr-only"
+                          />
+                          <Label
+                            htmlFor={`theme-${option.value}`}
+                            className="flex items-center gap-4 p-4 rounded-lg border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                          >
+                            <Icon className="h-5 w-5" />
+                            <div>
+                              <div className="font-semibold">{option.title}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {option.description}
+                              </div>
+                            </div>
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </RadioGroup>
+                </div>
+              </div>
+
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <h2 className="text-xl font-semibold mb-6">Account Settings</h2>
                 <div className="space-y-4">
