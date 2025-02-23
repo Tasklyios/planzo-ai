@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Sparkles,
@@ -9,11 +9,21 @@ import {
   User,
   Settings,
   LogOut,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -30,10 +40,51 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
+  };
+
+  const handleSearch = async (query: string) => {
+    if (!query) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      const { data: savedIdeas } = await supabase
+        .from("video_ideas")
+        .select("*")
+        .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+        .eq("is_saved", true);
+
+      const { data: scheduledIdeas } = await supabase
+        .from("video_ideas")
+        .select("*")
+        .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+        .not("scheduled_for", "is", null);
+
+      const combinedResults = [
+        ...(savedIdeas || []).map(idea => ({ ...idea, type: 'saved' })),
+        ...(scheduledIdeas || []).map(idea => ({ ...idea, type: 'scheduled' }))
+      ];
+
+      setSearchResults(combinedResults);
+    } catch (error) {
+      console.error("Error searching ideas:", error);
+    }
+  };
+
+  const navigateToIdea = (idea: any) => {
+    if (idea.type === 'saved') {
+      navigate('/ideas');
+    } else {
+      navigate('/calendar');
+    }
+    setIsSearchOpen(false);
   };
 
   return (
@@ -97,8 +148,56 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Main Content */}
       <main className="md:pl-64 w-full">
+        <div className="w-full bg-white border-b border-gray-100 px-4 py-2">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-gray-500 font-normal"
+            onClick={() => setIsSearchOpen(true)}
+          >
+            <Search className="h-4 w-4 mr-2" />
+            Search ideas...
+          </Button>
+        </div>
         {children}
       </main>
+
+      <CommandDialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+        <CommandInput
+          placeholder="Search all ideas..."
+          onValueChange={handleSearch}
+        />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandGroup heading="Saved Ideas">
+            {searchResults
+              .filter(result => result.type === 'saved')
+              .map(idea => (
+                <CommandItem
+                  key={idea.id}
+                  onSelect={() => navigateToIdea(idea)}
+                  className="flex items-center"
+                >
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  {idea.title}
+                </CommandItem>
+              ))}
+          </CommandGroup>
+          <CommandGroup heading="Scheduled Ideas">
+            {searchResults
+              .filter(result => result.type === 'scheduled')
+              .map(idea => (
+                <CommandItem
+                  key={idea.id}
+                  onSelect={() => navigateToIdea(idea)}
+                  className="flex items-center"
+                >
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  {idea.title}
+                </CommandItem>
+              ))}
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
     </div>
   );
 }
