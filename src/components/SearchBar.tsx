@@ -122,7 +122,7 @@ export function SearchBar() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="w-full max-w-xl h-10 flex items-center gap-2 px-4 rounded-lg border bg-white shadow-sm text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        className="w-full max-w-xl h-10 flex items-center gap-2 px-4 rounded-lg border bg-card text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       >
         <Search className="h-4 w-4" />
         <span>Search ideas and content...</span>

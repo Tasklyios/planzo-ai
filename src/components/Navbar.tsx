@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -37,7 +38,6 @@ const Navbar = () => {
 
   const closeSheet = () => setIsOpen(false);
 
-  // Ensure fixed order: Dashboard, Generator, Ideas, Calendar
   const MENU_ITEMS = [
     { path: '/dashboard', label: 'Dashboard' },
     { path: '/generator', label: 'Generator' },
@@ -48,10 +48,10 @@ const Navbar = () => {
   const currentPath = window.location.pathname;
 
   return (
-    <header className="fixed w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50 dark:bg-gray-900/90 dark:border-gray-800">
+    <header className="fixed w-full bg-card/80 backdrop-blur-sm border-b border-border z-50">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
-          <div className="text-2xl font-bold text-[#4F92FF]">TrendAI</div>
+          <div className="text-2xl font-bold text-primary">TrendAI</div>
         </div>
         
         {/* Desktop Navigation */}
@@ -62,8 +62,8 @@ const Navbar = () => {
               to={item.path}
               className={`${
                 currentPath === item.path
-                  ? "text-[#4F92FF] font-medium"
-                  : "text-gray-600 hover:text-[#4F92FF] dark:text-gray-400 dark:hover:text-[#4F92FF]"
+                  ? "text-primary font-medium"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {item.label}
@@ -118,8 +118,8 @@ const Navbar = () => {
                     to={item.path}
                     className={`${
                       currentPath === item.path
-                        ? "text-[#4F92FF] font-medium"
-                        : "text-gray-600 hover:text-[#4F92FF]"
+                        ? "text-primary font-medium"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                     onClick={closeSheet}
                   >
@@ -145,6 +145,6 @@ const Navbar = () => {
       </nav>
     </header>
   );
-};
+}
 
 export default Navbar;

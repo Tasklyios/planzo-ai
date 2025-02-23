@@ -54,14 +54,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-background">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
           <AppSidebar />
         </div>
 
         {/* Mobile Header */}
-        <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-gray-200 bg-white z-50 px-4">
+        <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-card/80 backdrop-blur-sm z-50 px-4">
           <div className="h-full flex items-center justify-between">
             <h1 className="text-2xl font-bold text-primary">TrendAI</h1>
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -70,62 +70,62 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[280px] p-0 bg-white">
-                <nav className="h-full flex flex-col">
-                  <div className="p-4 border-b border-gray-200">
+              <SheetContent side="left" className="w-[280px] p-0">
+                <nav className="h-full flex flex-col bg-card">
+                  <div className="p-4 border-b border-border">
                     <h2 className="text-2xl font-bold text-primary">TrendAI</h2>
                   </div>
                   <div className="flex-1 overflow-auto py-2">
                     <div className="space-y-1">
                       <Link 
                         to="/dashboard" 
-                        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100"
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
                       >
                         <LayoutDashboard className="h-5 w-5" />
                         <span>Dashboard</span>
                       </Link>
                       <Link 
                         to="/generator" 
-                        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100"
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
                       >
                         <Lightbulb className="h-5 w-5" />
                         <span>Generator</span>
                       </Link>
                       <Link 
                         to="/ideas" 
-                        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100"
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
                       >
                         <BookmarkIcon className="h-5 w-5" />
                         <span>Ideas</span>
                       </Link>
                       <Link 
                         to="/calendar" 
-                        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100"
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
                       >
                         <CalendarIcon className="h-5 w-5" />
                         <span>Calendar</span>
                       </Link>
                     </div>
                   </div>
-                  <div className="border-t border-gray-200 p-2">
+                  <div className="border-t border-border p-2">
                     <div className="space-y-1">
                       <Link 
                         to="/account" 
-                        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100"
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
                       >
                         <UserCircle className="h-5 w-5" />
                         <span>My Account</span>
                       </Link>
                       <Link 
                         to="/billing" 
-                        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100"
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
                       >
                         <CreditCard className="h-5 w-5" />
                         <span>Billing</span>
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
                       >
                         <LogOut className="h-5 w-5" />
                         <span>Logout</span>
@@ -140,7 +140,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
         <div className="flex-1 flex flex-col">
           {/* Search Bar */}
-          <div className="h-16 border-b border-gray-200 bg-white/50 backdrop-blur-sm flex items-center justify-center px-4 md:px-8">
+          <div className="h-16 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-center px-4 md:px-8">
             <SearchBar />
           </div>
 
