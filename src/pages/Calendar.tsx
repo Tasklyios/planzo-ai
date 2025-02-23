@@ -555,7 +555,7 @@ export default function Calendar() {
                 return <IconComponent className="h-4 w-4 text-white" />;
               })()}
             </div>
-            <span className="font-medium text-gray-800">{post.title}</span>
+            <span className="font-medium text-gray-800 dark:text-white">{post.title}</span>
           </div>
           <Button 
             variant="ghost" 
@@ -565,10 +565,10 @@ export default function Calendar() {
               openEditDialog(post);
             }}
           >
-            <PenSquare className="h-4 w-4" />
+            <PenSquare className="h-4 w-4 dark:text-white" />
           </Button>
         </div>
-        <div className="mt-2 text-sm font-medium text-gray-600 pl-11">
+        <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-200 pl-11">
           {format(new Date(post.scheduled_for), "h:mm a")}
         </div>
       </div>
