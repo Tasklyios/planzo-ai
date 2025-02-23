@@ -348,13 +348,7 @@ export default function Calendar() {
         onClick={() => openEditDialog(post)}
       >
         <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center space-x-3">
-            <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center",
-              getColorClasses(post.color)
-            )} />
-            <span className="font-medium text-gray-800 dark:text-white">{post.title}</span>
-          </div>
+          <span className="font-medium text-gray-800 dark:text-white">{post.title}</span>
           <Button 
             variant="ghost" 
             size="sm"
@@ -366,7 +360,7 @@ export default function Calendar() {
             <PenSquare className="h-4 w-4 dark:text-white" />
           </Button>
         </div>
-        <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-200 pl-11">
+        <div className="text-sm font-medium text-gray-600 dark:text-gray-200">
           {format(new Date(post.scheduled_for), "h:mm a")}
         </div>
       </div>

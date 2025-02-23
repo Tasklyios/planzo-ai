@@ -30,23 +30,14 @@ const IdeasGrid = ({
           key={idea.id}
           className="group bg-card rounded-xl p-4 md:p-6 hover:bg-accent transition-all border border-border"
         >
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <div className="flex items-center gap-2 md:gap-3">
-              <div
-                className={cn(
-                  "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center",
-                  `bg-${idea.color || "primary"}/10`,
-                  `text-${idea.color || "primary"}`
-                )}
-              />
-              <div>
-                <span className="text-xs md:text-sm text-primary font-medium">
-                  {idea.category}
-                </span>
-                <h3 className="text-sm md:text-lg font-medium text-foreground">
-                  {idea.title}
-                </h3>
-              </div>
+          <div className="flex items-start justify-between mb-3 md:mb-4">
+            <div>
+              <span className="text-xs md:text-sm text-primary font-medium">
+                {idea.category}
+              </span>
+              <h3 className="text-sm md:text-lg font-medium text-foreground">
+                {idea.title}
+              </h3>
             </div>
             <div className="flex gap-1 md:gap-2">
               <TooltipProvider>
