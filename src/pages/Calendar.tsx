@@ -65,51 +65,51 @@ const availableSymbols = [
 const availableColors = [
   { 
     name: 'red', 
-    class: 'bg-red-500 hover:bg-red-600 border-red-400',
-    gradient: 'bg-gradient-to-br from-red-200 to-red-300 border-red-200',
-    accent: 'bg-red-500'
+    class: 'bg-red-500 hover:bg-red-600 border-red-400 dark:bg-red-600 dark:hover:bg-red-700 dark:border-red-500',
+    gradient: 'bg-gradient-to-br from-red-200 to-red-300 border-red-200 dark:from-red-900/50 dark:to-red-800/50 dark:border-red-800/30',
+    accent: 'bg-red-500 dark:bg-red-600'
   },
   { 
     name: 'orange', 
-    class: 'bg-orange-500 hover:bg-orange-600 border-orange-400',
-    gradient: 'bg-gradient-to-br from-orange-200 to-orange-300 border-orange-200',
-    accent: 'bg-orange-500'
+    class: 'bg-orange-500 hover:bg-orange-600 border-orange-400 dark:bg-orange-600 dark:hover:bg-orange-700 dark:border-orange-500',
+    gradient: 'bg-gradient-to-br from-orange-200 to-orange-300 border-orange-200 dark:from-orange-900/50 dark:to-orange-800/50 dark:border-orange-800/30',
+    accent: 'bg-orange-500 dark:bg-orange-600'
   },
   { 
     name: 'yellow', 
-    class: 'bg-yellow-500 hover:bg-yellow-600 border-yellow-400',
-    gradient: 'bg-gradient-to-br from-yellow-200 to-yellow-300 border-yellow-200',
-    accent: 'bg-yellow-500'
+    class: 'bg-yellow-500 hover:bg-yellow-600 border-yellow-400 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:border-yellow-500',
+    gradient: 'bg-gradient-to-br from-yellow-200 to-yellow-300 border-yellow-200 dark:from-yellow-900/50 dark:to-yellow-800/50 dark:border-yellow-800/30',
+    accent: 'bg-yellow-500 dark:bg-yellow-600'
   },
   { 
     name: 'green', 
-    class: 'bg-green-500 hover:bg-green-600 border-green-400',
-    gradient: 'bg-gradient-to-br from-green-200 to-green-300 border-green-200',
-    accent: 'bg-green-500'
+    class: 'bg-green-500 hover:bg-green-600 border-green-400 dark:bg-green-600 dark:hover:bg-green-700 dark:border-green-500',
+    gradient: 'bg-gradient-to-br from-green-200 to-green-300 border-green-200 dark:from-green-900/50 dark:to-green-800/50 dark:border-green-800/30',
+    accent: 'bg-green-500 dark:bg-green-600'
   },
   { 
     name: 'blue', 
-    class: 'bg-blue-500 hover:bg-blue-600 border-blue-400',
-    gradient: 'bg-gradient-to-br from-blue-200 to-blue-300 border-blue-200',
-    accent: 'bg-blue-500'
+    class: 'bg-blue-500 hover:bg-blue-600 border-blue-400 dark:bg-blue-600 dark:hover:bg-blue-700 dark:border-blue-500',
+    gradient: 'bg-gradient-to-br from-blue-200 to-blue-300 border-blue-200 dark:from-blue-900/50 dark:to-blue-800/50 dark:border-blue-800/30',
+    accent: 'bg-blue-500 dark:bg-blue-600'
   },
   { 
     name: 'purple', 
-    class: 'bg-purple-500 hover:bg-purple-600 border-purple-400',
-    gradient: 'bg-gradient-to-br from-purple-200 to-purple-300 border-purple-200',
-    accent: 'bg-purple-500'
+    class: 'bg-purple-500 hover:bg-purple-600 border-purple-400 dark:bg-purple-600 dark:hover:bg-purple-700 dark:border-purple-500',
+    gradient: 'bg-gradient-to-br from-purple-200 to-purple-300 border-purple-200 dark:from-purple-900/50 dark:to-purple-800/50 dark:border-purple-800/30',
+    accent: 'bg-purple-500 dark:bg-purple-600'
   },
   { 
     name: 'pink', 
-    class: 'bg-pink-500 hover:bg-pink-600 border-pink-400',
-    gradient: 'bg-gradient-to-br from-pink-200 to-pink-300 border-pink-200',
-    accent: 'bg-pink-500'
+    class: 'bg-pink-500 hover:bg-pink-600 border-pink-400 dark:bg-pink-600 dark:hover:bg-pink-700 dark:border-pink-500',
+    gradient: 'bg-gradient-to-br from-pink-200 to-pink-300 border-pink-200 dark:from-pink-900/50 dark:to-pink-800/50 dark:border-pink-800/30',
+    accent: 'bg-pink-500 dark:bg-pink-600'
   },
   { 
     name: 'indigo', 
-    class: 'bg-indigo-500 hover:bg-indigo-600 border-indigo-400',
-    gradient: 'bg-gradient-to-br from-indigo-200 to-indigo-300 border-indigo-200',
-    accent: 'bg-indigo-500'
+    class: 'bg-indigo-500 hover:bg-indigo-600 border-indigo-400 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:border-indigo-500',
+    gradient: 'bg-gradient-to-br from-indigo-200 to-indigo-300 border-indigo-200 dark:from-indigo-900/50 dark:to-indigo-800/50 dark:border-indigo-800/30',
+    accent: 'bg-indigo-500 dark:bg-indigo-600'
   },
 ] as const;
 
