@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import Navbar from "@/components/Navbar";
 import AuthGuard from "@/components/AuthGuard";
 import IdeasGrid from "@/components/idea-generator/IdeasGrid";
 import { GeneratedIdea } from "@/types/idea";
@@ -9,7 +10,6 @@ import { AddToCalendarIdea } from "@/types/idea";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { IconMap } from "@/types/idea";
-import AppLayout from "@/components/layout/AppLayout";
 
 export default function Ideas() {
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
@@ -127,43 +127,41 @@ export default function Ideas() {
   };
 
   return (
-    <AppLayout>
-      <main className="container mx-auto px-4 pt-8 pb-12">
-        <section className="mb-12">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[#222831]">Saved Ideas</h1>
-            <p className="text-gray-600 mt-2">Browse and manage your bookmarked video ideas</p>
-          </div>
+    <main className="container mx-auto px-4 pt-8 pb-12">
+      <section className="mb-12">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#222831]">Saved Ideas</h1>
+          <p className="text-gray-600 mt-2">Browse and manage your bookmarked video ideas</p>
+        </div>
 
-          <IdeasGrid
-            ideas={ideas}
-            onAddToCalendar={(idea) => setAddingToCalendar({
-              idea,
-              title: idea.title,
-              scheduledFor: new Date().toISOString().split('T')[0],
-            })}
-            onEdit={(ideaId) => setEditingIdeaId(ideaId)}
-            onBookmarkToggle={handleBookmarkToggle}
-          />
-        </section>
-
-        {editingIdeaId && (
-          <EditIdea
-            ideaId={editingIdeaId}
-            onClose={() => {
-              setEditingIdeaId(null);
-              fetchSavedIdeas();
-            }}
-          />
-        )}
-
-        <AddToCalendarDialog
-          idea={addingToCalendar}
-          onOpenChange={() => setAddingToCalendar(null)}
-          onAddToCalendar={handleAddToCalendar}
-          onUpdate={updateCalendarIdea}
+        <IdeasGrid
+          ideas={ideas}
+          onAddToCalendar={(idea) => setAddingToCalendar({
+            idea,
+            title: idea.title,
+            scheduledFor: new Date().toISOString().split('T')[0],
+          })}
+          onEdit={(ideaId) => setEditingIdeaId(ideaId)}
+          onBookmarkToggle={handleBookmarkToggle}
         />
-      </main>
-    </AppLayout>
+      </section>
+
+      {editingIdeaId && (
+        <EditIdea
+          ideaId={editingIdeaId}
+          onClose={() => {
+            setEditingIdeaId(null);
+            fetchSavedIdeas();
+          }}
+        />
+      )}
+
+      <AddToCalendarDialog
+        idea={addingToCalendar}
+        onOpenChange={() => setAddingToCalendar(null)}
+        onAddToCalendar={handleAddToCalendar}
+        onUpdate={updateCalendarIdea}
+      />
+    </main>
   );
 }

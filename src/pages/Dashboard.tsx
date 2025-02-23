@@ -22,7 +22,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import AppLayout from "@/components/layout/AppLayout";
 
 interface IdeaType {
   title: string;
@@ -110,7 +109,7 @@ const Dashboard = () => {
   };
 
   return (
-    <AppLayout>
+    <div className="min-h-screen bg-[#F9FAFC]">
       <main className="container mx-auto px-4 pt-8">
         <section className="mb-12">
           <h1 className="text-4xl font-bold text-[#222831] mb-8">Welcome back!</h1>
@@ -224,7 +223,7 @@ const Dashboard = () => {
           </div>
         </section>
       </main>
-    </AppLayout>
+    </div>
   );
 };
 
