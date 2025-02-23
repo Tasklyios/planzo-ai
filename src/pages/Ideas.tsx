@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -9,7 +10,6 @@ import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog
 import { AddToCalendarIdea } from "@/types/idea";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-import { IconMap } from "@/types/idea";
 
 export default function Ideas() {
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
@@ -17,13 +17,6 @@ export default function Ideas() {
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const validateIconKey = (key: string | undefined): keyof typeof IconMap => {
-    if (!key || !(key in IconMap)) {
-      return 'Lightbulb';
-    }
-    return key as keyof typeof IconMap;
-  };
 
   const fetchSavedIdeas = async () => {
     try {
@@ -40,7 +33,6 @@ export default function Ideas() {
       
       const transformedIdeas = (data || []).map(idea => ({
         ...idea,
-        symbol: validateIconKey(idea.symbol),
         is_saved: true
       })) as GeneratedIdea[];
 
@@ -60,7 +52,6 @@ export default function Ideas() {
   }, []);
 
   const handleBookmarkToggle = async (ideaId: string) => {
-    // Optimistically update UI first
     setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== ideaId));
 
     try {
@@ -70,7 +61,6 @@ export default function Ideas() {
         .eq("id", ideaId);
 
       if (error) {
-        // If there's an error, revert the optimistic update
         await fetchSavedIdeas();
         throw error;
       }
@@ -108,7 +98,6 @@ export default function Ideas() {
       if (error) throw error;
 
       setAddingToCalendar(null);
-      // Remove the scheduled idea from the list
       setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== addingToCalendar.idea.id));
       navigate("/calendar");
     } catch (error: any) {

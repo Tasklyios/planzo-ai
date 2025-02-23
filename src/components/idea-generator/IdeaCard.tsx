@@ -1,23 +1,14 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { CalendarPlus, PenSquare, Bookmark, LucideIcon } from "lucide-react";
+import { CalendarPlus, PenSquare, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { IconMap } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import type { GeneratedIdea } from "@/types/idea";
 
 interface IdeaCardProps {
-  idea: {
-    id: string;
-    title: string;
-    category: string;
-    description: string;
-    tags: string[];
-    symbol?: keyof typeof IconMap;
-    color?: string;
-    is_saved?: boolean;
-  };
+  idea: GeneratedIdea;
   onAddToCalendar: () => void;
   onEdit: () => void;
   showBookmark?: boolean;
@@ -32,14 +23,6 @@ const IdeaCard = ({
   onBookmarkToggle 
 }: IdeaCardProps) => {
   const { toast } = useToast();
-  const getIconComponent = (symbolName?: keyof typeof IconMap): LucideIcon => {
-    if (!symbolName || !(symbolName in IconMap)) {
-      return IconMap.Lightbulb;
-    }
-    return IconMap[symbolName];
-  };
-
-  const IconComponent = getIconComponent(idea.symbol);
 
   const handleBookmarkToggle = async () => {
     try {
@@ -79,7 +62,7 @@ const IdeaCard = ({
             `bg-${idea.color || 'blue'}-500/10`,
             `text-${idea.color || 'blue'}-500`
           )}>
-            <IconComponent className="w-4 h-4 md:w-5 md:h-5" />
+            <div className="w-4 h-4 md:w-5 md:h-5" />
           </div>
           <div>
             <span className="text-xs md:text-sm text-[#4F92FF] font-medium">{idea.category}</span>
@@ -110,7 +93,7 @@ const IdeaCard = ({
       </p>
       <div className="flex items-center justify-between mt-3">
         <div className="flex flex-wrap gap-2">
-          {idea.tags.map((tag, tagIndex) => (
+          {idea.tags?.map((tag, tagIndex) => (
             <span 
               key={tagIndex} 
               className="px-2 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-xs rounded-full"
