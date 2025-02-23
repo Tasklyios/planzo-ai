@@ -1,4 +1,5 @@
 
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,11 +37,38 @@ const Navbar = () => {
 
   const closeSheet = () => setIsOpen(false);
 
+  // Ensure fixed order: Dashboard, Generator, Ideas, Calendar
+  const MENU_ITEMS = [
+    { path: '/dashboard', label: 'Dashboard' },
+    { path: '/generator', label: 'Generator' },
+    { path: '/ideas', label: 'Ideas' },
+    { path: '/calendar', label: 'Calendar' },
+  ] as const;
+
+  const currentPath = window.location.pathname;
+
   return (
-    <header className="w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
+    <header className="fixed w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
           <div className="text-2xl font-bold text-[#4F92FF]">TrendAI</div>
+        </div>
+        
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-8">
+          {MENU_ITEMS.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`${
+                currentPath === item.path
+                  ? "text-[#4F92FF] font-medium"
+                  : "text-gray-600 hover:text-[#4F92FF]"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
 
         <div className="flex items-center space-x-4">
@@ -83,6 +111,20 @@ const Navbar = () => {
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-4 mt-4">
+                {MENU_ITEMS.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`${
+                      currentPath === item.path
+                        ? "text-[#4F92FF] font-medium"
+                        : "text-gray-600 hover:text-[#4F92FF]"
+                    }`}
+                    onClick={closeSheet}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
                 <Button variant="outline" onClick={() => {
                   navigate('/account');
                   closeSheet();

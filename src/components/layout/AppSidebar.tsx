@@ -43,7 +43,7 @@ export function AppSidebar() {
   const location = useLocation();
 
   return (
-    <Sidebar className="border-r border-gray-200 bg-white h-screen pt-16">
+    <Sidebar className="border-r border-gray-200 bg-white">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -52,7 +52,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     asChild
-                    isActive={location.pathname === item.path}
+                    active={location.pathname === item.path}
                   >
                     <Link to={item.path} className="flex items-center gap-2">
                       <item.icon className="h-4 w-4" />
