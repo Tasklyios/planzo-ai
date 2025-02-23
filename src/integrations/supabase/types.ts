@@ -14,6 +14,8 @@ export type Database = {
           account_type: string
           business_niche: string | null
           content_niche: string | null
+          content_personality: string | null
+          content_style: string | null
           created_at: string
           id: string
           onboarding_completed: boolean
@@ -25,6 +27,8 @@ export type Database = {
           account_type: string
           business_niche?: string | null
           content_niche?: string | null
+          content_personality?: string | null
+          content_style?: string | null
           created_at?: string
           id: string
           onboarding_completed?: boolean
@@ -36,6 +40,8 @@ export type Database = {
           account_type?: string
           business_niche?: string | null
           content_niche?: string | null
+          content_personality?: string | null
+          content_style?: string | null
           created_at?: string
           id?: string
           onboarding_completed?: boolean
