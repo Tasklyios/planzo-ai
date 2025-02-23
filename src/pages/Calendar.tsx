@@ -100,7 +100,7 @@ const availableColors = [
 
 const getColorClasses = (color: string | undefined, variant: 'solid' | 'gradient' | 'accent' = 'solid') => {
   const colorConfig = availableColors.find(c => c.name === color);
-  if (!color || !colorConfig) return 'bg-gray-100 border-gray-200 hover:bg-gray-200';
+  if (!color || !colorConfig) return 'bg-gray-100 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700';
   return variant === 'gradient' ? colorConfig.gradient : 
          variant === 'accent' ? colorConfig.accent : 
          colorConfig.class;
@@ -335,6 +335,44 @@ export default function Calendar() {
     );
   };
 
+  function renderDailyViewPost(selectedDate: Date) {
+    const posts = getPostsForDate(selectedDate);
+
+    return posts.map(post => (
+      <div
+        key={post.id}
+        className={cn(
+          "p-4 rounded-xl border transition-all shadow-sm cursor-pointer hover:opacity-90",
+          getColorClasses(post.color, 'gradient')
+        )}
+        onClick={() => openEditDialog(post)}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center space-x-3">
+            <div className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center",
+              getColorClasses(post.color)
+            )} />
+            <span className="font-medium text-gray-800 dark:text-white">{post.title}</span>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              openEditDialog(post);
+            }}
+          >
+            <PenSquare className="h-4 w-4 dark:text-white" />
+          </Button>
+        </div>
+        <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-200 pl-11">
+          {format(new Date(post.scheduled_for), "h:mm a")}
+        </div>
+      </div>
+    ));
+  }
+
   return (
     <>
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -509,43 +547,4 @@ export default function Calendar() {
       )}
     </>
   );
-}
-
-function renderDailyViewPost(selectedDate: Date) {
-  const posts = getPostsForDate(selectedDate);
-
-  return posts.map(post => (
-    <div
-      key={post.id}
-      className={cn(
-        "p-4 rounded-xl border transition-all shadow-sm cursor-pointer hover:opacity-90",
-        getColorClasses(post.color, 'gradient')
-      )}
-      onClick={() => openEditDialog(post)}
-    >
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center space-x-3">
-          <div className={cn(
-            "w-8 h-8 rounded-lg flex items-center justify-center",
-            getColorClasses(post.color)
-          )}>
-          </div>
-          <span className="font-medium text-gray-800 dark:text-white">{post.title}</span>
-        </div>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            openEditDialog(post);
-          }}
-        >
-          <PenSquare className="h-4 w-4 dark:text-white" />
-        </Button>
-      </div>
-      <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-200 pl-11">
-        {format(new Date(post.scheduled_for), "h:mm a")}
-      </div>
-    </div>
-  ));
 }
