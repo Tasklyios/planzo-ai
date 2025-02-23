@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
+import { useIdeaGenerator } from "@/hooks/use-idea-generator";
+import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
+import InputForm from "@/components/idea-generator/InputForm";
+import IdeasGrid from "@/components/idea-generator/IdeasGrid";
+import EditIdea from "@/components/EditIdea";
+import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
+import { AddToCalendarIdea } from "@/types/idea";
+import AppLayout from "@/components/layout/AppLayout";
 import {
   User,
   CreditCard,
@@ -8,8 +17,6 @@ import {
   Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import EditIdea from "@/components/EditIdea";
-import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,14 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import { useIdeaGenerator } from "@/hooks/use-idea-generator";
-import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
-import InputForm from "@/components/idea-generator/InputForm";
-import IdeasGrid from "@/components/idea-generator/IdeasGrid";
 import MobileMenuDialog from "@/components/idea-generator/MobileMenuDialog";
-import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
-import { AddToCalendarIdea } from "@/types/idea";
 
 const Generator = () => {
   const {
@@ -119,52 +119,54 @@ const Generator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
-      <main className="container mx-auto px-4 pt-8 pb-12">
-        <section className="mb-8">
-          <GeneratorHeader />
-          <InputForm
-            niche={niche}
-            audience={audience}
-            videoType={videoType}
-            platform={platform}
-            setNiche={setNiche}
-            setAudience={setAudience}
-            setVideoType={setVideoType}
-            setPlatform={setPlatform}
-          />
+    <AppLayout>
+      <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
+        <main className="container mx-auto px-4 pt-8 pb-12">
+          <section className="mb-8">
+            <GeneratorHeader />
+            <InputForm
+              niche={niche}
+              audience={audience}
+              videoType={videoType}
+              platform={platform}
+              setNiche={setNiche}
+              setAudience={setAudience}
+              setVideoType={setVideoType}
+              setPlatform={setPlatform}
+            />
 
-          <div className="flex justify-center mb-8">
-            <Button
-              onClick={generateIdeas}
-              disabled={loading}
-              className="bg-gradient-to-r from-[#33C3F0] to-[#0EA5E9] hover:from-[#33C3F0]/90 hover:to-[#0EA5E9]/90 text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
-            >
-              {loading ? (
-                <>
-                  <span className="animate-spin">⚡</span>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  ⚡ Generate Viral Ideas
-                </>
-              )}
-            </Button>
-          </div>
+            <div className="flex justify-center mb-8">
+              <Button
+                onClick={generateIdeas}
+                disabled={loading}
+                className="bg-gradient-to-r from-[#33C3F0] to-[#0EA5E9] hover:from-[#33C3F0]/90 hover:to-[#0EA5E9]/90 text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                {loading ? (
+                  <>
+                    <span className="animate-spin">⚡</span>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    ⚡ Generate Viral Ideas
+                  </>
+                )}
+              </Button>
+            </div>
 
-          <IdeasGrid
-            ideas={ideas}
-            onAddToCalendar={(idea) => setAddingToCalendar({
-              idea,
-              title: idea.title,
-              scheduledFor: new Date().toISOString().split('T')[0],
-            })}
-            onEdit={(ideaId) => setEditingIdeaId(ideaId)}
-            onBookmarkToggle={handleBookmarkToggle}
-          />
-        </section>
-      </main>
+            <IdeasGrid
+              ideas={ideas}
+              onAddToCalendar={(idea) => setAddingToCalendar({
+                idea,
+                title: idea.title,
+                scheduledFor: new Date().toISOString().split('T')[0],
+              })}
+              onEdit={(ideaId) => setEditingIdeaId(ideaId)}
+              onBookmarkToggle={handleBookmarkToggle}
+            />
+          </section>
+        </main>
+      </div>
 
       <MobileMenuDialog 
         open={mobileMenuOpen}
@@ -185,7 +187,7 @@ const Generator = () => {
           onClose={() => setEditingIdeaId(null)}
         />
       )}
-    </div>
+    </AppLayout>
   );
 };
 
