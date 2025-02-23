@@ -19,7 +19,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <div className="flex-none">
             <Navbar />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 pt-4">
             {children}
           </div>
         </div>

@@ -37,7 +37,7 @@ const Navbar = () => {
   const closeSheet = () => setIsOpen(false);
 
   return (
-    <header className="fixed w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
+    <header className="w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
           <div className="text-2xl font-bold text-[#4F92FF]">TrendAI</div>
