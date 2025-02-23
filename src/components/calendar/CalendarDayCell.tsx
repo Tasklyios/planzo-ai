@@ -4,13 +4,14 @@ import { Droppable, Draggable } from "react-beautiful-dnd";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type ScheduledPost } from "@/types/calendar";
+import type { availableSymbols as AvailableSymbolsType } from "@/utils/calendar-utils";
 
 interface CalendarDayCellProps {
   date: Date;
   currentDate: Date;
   posts: ScheduledPost[];
   getColorClasses: (color: string | undefined, variant: 'solid' | 'gradient' | 'accent') => string;
-  availableSymbols: Array<{ name: string; icon: any; }>;
+  availableSymbols: typeof AvailableSymbolsType;
 }
 
 export function CalendarDayCell({ date, currentDate, posts, getColorClasses, availableSymbols }: CalendarDayCellProps) {
