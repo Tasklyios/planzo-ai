@@ -52,9 +52,13 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     asChild
-                    active={location.pathname === item.path}
                   >
-                    <Link to={item.path} className="flex items-center gap-2">
+                    <Link 
+                      to={item.path}
+                      className={`flex items-center gap-2 ${
+                        location.pathname === item.path ? "text-[#4F92FF] font-medium" : "text-gray-600"
+                      }`}
+                    >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
