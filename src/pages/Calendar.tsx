@@ -339,12 +339,12 @@ export default function Calendar() {
     if (isSelected) return null;
 
     return (
-      <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 flex gap-[2px]">
+      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex flex-wrap justify-center gap-[3px] max-w-[80%]">
         {posts.map((post, index) => (
           <div
             key={`${post.id}-${index}`}
             className={cn(
-              "w-1 h-1 rounded-full",
+              "w-2 h-2 rounded-full",
               getColorClasses(post.color)
             )}
           />
