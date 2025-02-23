@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import AuthGuard from "@/components/AuthGuard";
 import { MultiSelect } from "@/components/ui/multi-select";
+import AuthGuard from "@/components/AuthGuard";
+import { CreditCard } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const platformOptions = [
   { label: "TikTok", value: "TikTok" },
@@ -48,11 +50,13 @@ const accountTypes = [
 
 export default function Account() {
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'settings' | 'customize'>('settings');
   const [profile, setProfile] = useState<ProfileData>({
     account_type: 'personal',
     posting_platforms: []
   });
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     getProfile();
@@ -134,21 +138,40 @@ export default function Account() {
     }
   };
 
+  const handleResetPassword = async () => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(profile.email || '', {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      
+      if (error) throw error;
+
+      toast({
+        title: "Password reset email sent",
+        description: "Check your email for the password reset link.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
+
   const renderAccountTypeFields = () => {
     switch (profile.account_type) {
       case 'personal':
         return (
-          <>
-            <div className="space-y-2">
-              <Label>Content Niche</Label>
-              <Input
-                value={profile.content_niche || ''}
-                onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
-                placeholder="e.g., Fitness, Technology, Fashion"
-                disabled={loading}
-              />
-            </div>
-          </>
+          <div className="space-y-2">
+            <Label>Content Niche</Label>
+            <Input
+              value={profile.content_niche || ''}
+              onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+              placeholder="e.g., Fitness, Technology, Fashion"
+              disabled={loading}
+            />
+          </div>
         );
       case 'ecommerce':
         return (
@@ -205,113 +228,162 @@ export default function Account() {
     <AuthGuard>
       <div className="container mx-auto py-20">
         <div className="max-w-2xl mx-auto space-y-8">
-          <div>
-            <h1 className="text-3xl font-bold">Account Settings</h1>
-            <p className="text-gray-600 mt-2">Manage your account preferences and content settings</p>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Account</h1>
+            <div className="inline-flex items-center rounded-lg border p-1 bg-white shadow-sm">
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'settings'
+                    ? 'bg-primary text-white'
+                    : 'hover:bg-gray-100'
+                }`}
+              >
+                Settings
+              </button>
+              <button
+                onClick={() => setActiveTab('customize')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'customize'
+                    ? 'bg-primary text-white'
+                    : 'hover:bg-gray-100'
+                }`}
+              >
+                Customize
+              </button>
+            </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          {activeTab === 'settings' ? (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold">Profile Information</h2>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input 
-                    type="email" 
-                    value={profile.email || ''} 
-                    onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
-                    disabled={loading}
-                  />
-                </div>
-
+              <div className="bg-white p-6 rounded-xl shadow-sm">
+                <h2 className="text-xl font-semibold mb-6">Account Settings</h2>
                 <div className="space-y-4">
-                  <Label>Account Type</Label>
-                  <RadioGroup
-                    value={profile.account_type}
-                    onValueChange={(value) => setProfile(prev => ({ ...prev, account_type: value }))}
-                    className="grid gap-4"
-                  >
-                    {accountTypes.map((type) => (
-                      <div key={type.value} className="relative">
-                        <RadioGroupItem
-                          value={type.value}
-                          id={`account-${type.value}`}
-                          className="peer sr-only"
-                        />
-                        <Label
-                          htmlFor={`account-${type.value}`}
-                          className="flex flex-col p-4 rounded-lg border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                        >
-                          <span className="font-semibold">{type.title}</span>
-                          <span className="text-sm text-muted-foreground">
-                            {type.description}
-                          </span>
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-
-                {renderAccountTypeFields()}
-
-                <div className="space-y-2">
-                  <Label>Target Audience</Label>
-                  <Input
-                    value={profile.target_audience || ''}
-                    onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
-                    placeholder="e.g., Young Professionals, Fitness Enthusiasts"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Content Personality</Label>
-                  <Textarea
-                    value={profile.content_personality || ''}
-                    onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
-                    placeholder="E.g., Energetic and funny, Professional and educational, Casual and relatable..."
-                    className="min-h-[100px]"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Content Style</Label>
-                  <Textarea
-                    value={profile.content_style || ''}
-                    onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
-                    placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences..."
-                    className="min-h-[100px]"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Posting Platforms</Label>
-                  <div className="relative">
-                    <MultiSelect
-                      options={platformOptions}
-                      value={profile.posting_platforms?.map(p => ({ label: p, value: p })) || []}
-                      onChange={(selected) => setProfile(prev => ({ 
-                        ...prev, 
-                        posting_platforms: selected.map(s => s.value)
-                      }))}
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input 
+                      type="email" 
+                      value={profile.email || ''} 
+                      onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
                       disabled={loading}
-                      className="bg-white"
                     />
                   </div>
+                  <Button 
+                    variant="outline"
+                    onClick={handleResetPassword}
+                    className="w-full"
+                  >
+                    Reset Password
+                  </Button>
                 </div>
+              </div>
 
+              <div className="bg-white p-6 rounded-xl shadow-sm">
+                <h2 className="text-xl font-semibold mb-6">Billing</h2>
                 <Button 
-                  onClick={handleUpdateProfile} 
-                  disabled={loading}
-                  className="w-full mt-6"
+                  variant="outline"
+                  onClick={() => navigate('/billing')}
+                  className="w-full"
                 >
-                  {loading ? "Updating..." : "Update Profile"}
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  View Billing Details
                 </Button>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold">AI Customization</h2>
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <Label>Account Type</Label>
+                    <RadioGroup
+                      value={profile.account_type}
+                      onValueChange={(value) => setProfile(prev => ({ ...prev, account_type: value }))}
+                      className="grid gap-4"
+                    >
+                      {accountTypes.map((type) => (
+                        <div key={type.value} className="relative">
+                          <RadioGroupItem
+                            value={type.value}
+                            id={`account-${type.value}`}
+                            className="peer sr-only"
+                          />
+                          <Label
+                            htmlFor={`account-${type.value}`}
+                            className="flex flex-col p-4 rounded-lg border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                          >
+                            <span className="font-semibold">{type.title}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {type.description}
+                            </span>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
+                  {renderAccountTypeFields()}
+
+                  <div className="space-y-2">
+                    <Label>Target Audience</Label>
+                    <Input
+                      value={profile.target_audience || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                      placeholder="e.g., Young Professionals, Fitness Enthusiasts"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Content Personality</Label>
+                    <Textarea
+                      value={profile.content_personality || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
+                      placeholder="E.g., Energetic and funny, Professional and educational, Casual and relatable..."
+                      className="min-h-[100px]"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Content Style</Label>
+                    <Textarea
+                      value={profile.content_style || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
+                      placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences..."
+                      className="min-h-[100px]"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Posting Platforms</Label>
+                    <div className="relative">
+                      <MultiSelect
+                        options={platformOptions}
+                        value={profile.posting_platforms?.map(p => ({ label: p, value: p })) || []}
+                        onChange={(selected) => setProfile(prev => ({ 
+                          ...prev, 
+                          posting_platforms: selected.map(s => s.value)
+                        }))}
+                        disabled={loading}
+                        className="bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={handleUpdateProfile} 
+                    disabled={loading}
+                    className="w-full"
+                  >
+                    {loading ? "Updating..." : "Update Profile"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </AuthGuard>
