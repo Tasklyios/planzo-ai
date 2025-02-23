@@ -303,15 +303,15 @@ export default function Calendar() {
   const renderPost = (post: ScheduledPost, index: number) => {
     const isMobile = window.innerWidth < 768;
 
-    return (
-      <Draggable key={post.id} draggableId={post.id} index={index}>
-        {(provided) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-          >
-            {isMobile ? (
+    if (isMobile) {
+      return (
+        <Draggable key={post.id} draggableId={post.id} index={index}>
+          {(provided) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.draggableProps}
+              {...provided.dragHandleProps}
+            >
               <div
                 className={cn(
                   "w-2 h-2 rounded-full",
@@ -319,30 +319,13 @@ export default function Calendar() {
                 )}
                 onClick={() => openEditDialog(post)}
               />
-            ) : (
-              <div className="mt-2 cursor-pointer transition-colors hover:opacity-90 group">
-                <div
-                  className={cn(
-                    "p-2 rounded-lg",
-                    getColorClasses(post.color, 'gradient')
-                  )}
-                  onClick={() => openEditDialog(post)}
-                >
-                  <div className="flex items-center gap-2">
-                    {(() => {
-                      const IconComponent = availableSymbols.find(s => s.name === post.symbol)?.icon || CalendarIcon;
-                      return <IconComponent className="h-4 w-4 text-gray-700" />;
-                    })()}
-                    <span className="text-xs font-medium text-gray-700">{post.title}</span>
-                    <GripHorizontal className="h-4 w-4 opacity-0 group-hover:opacity-100 ml-auto text-gray-700" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </Draggable>
-    );
+            </div>
+          )}
+        </Draggable>
+      );
+    }
+
+    return null; // Don't render task widgets on desktop
   };
 
   const isSelectedDate = (date: Date) => {
@@ -510,9 +493,6 @@ export default function Calendar() {
                           </span>
                         </div>
                         {renderEventDots(date)}
-                        <div className="flex md:block flex-wrap gap-1 mt-3">
-                          {posts.map((post, index) => renderPost(post, index))}
-                        </div>
                         {provided.placeholder}
                       </div>
                     )}
