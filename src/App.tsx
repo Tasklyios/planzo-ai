@@ -23,7 +23,7 @@ const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="trendai-theme">
+    <ThemeProvider defaultTheme="light" storageKey="trendai-theme">
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
