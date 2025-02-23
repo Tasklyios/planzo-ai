@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
@@ -121,7 +120,7 @@ const Generator = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
-      <main className="container mx-auto px-4 pt-4 pb-12">
+      <main className="container mx-auto px-4 pt-8 pb-12">
         <section className="mb-8">
           <GeneratorHeader />
           <InputForm
