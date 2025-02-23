@@ -1,9 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import AuthGuard from "@/components/AuthGuard";
 import { MultiSelect } from "@/components/ui/multi-select";
 
@@ -21,7 +24,27 @@ interface ProfileData {
   posting_platforms?: string[];
   product_niche?: string;
   business_niche?: string;
+  content_personality?: string;
+  content_style?: string;
 }
+
+const accountTypes = [
+  {
+    value: 'personal',
+    title: 'Create ideas for my personal brand',
+    description: 'Perfect for content creators, influencers, and personal branding',
+  },
+  {
+    value: 'ecommerce',
+    title: 'Create ideas for my e-commerce brand',
+    description: 'Ideal for online stores and digital product sellers',
+  },
+  {
+    value: 'business',
+    title: 'Create ideas for my business',
+    description: 'Great for companies and organizations looking to grow their online presence',
+  },
+];
 
 export default function Account() {
   const [loading, setLoading] = useState(false);
@@ -40,12 +63,10 @@ export default function Account() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
-      // Get email from auth
       if (session.user.email) {
         setProfile(prev => ({ ...prev, email: session.user.email }));
       }
 
-      // Get profile data from profiles table
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
@@ -75,7 +96,6 @@ export default function Account() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error("No user logged in");
 
-      // Update email if changed
       if (profile.email !== session.user.email) {
         const { error: emailError } = await supabase.auth.updateUser({ 
           email: profile.email 
@@ -83,15 +103,17 @@ export default function Account() {
         if (emailError) throw emailError;
       }
 
-      // Update profile data
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
+          account_type: profile.account_type,
           content_niche: profile.content_niche,
           target_audience: profile.target_audience,
           posting_platforms: profile.posting_platforms,
           product_niche: profile.product_niche,
-          business_niche: profile.business_niche
+          business_niche: profile.business_niche,
+          content_personality: profile.content_personality,
+          content_style: profile.content_style
         })
         .eq('id', session.user.id);
 
@@ -202,6 +224,34 @@ export default function Account() {
                   />
                 </div>
 
+                <div className="space-y-4">
+                  <Label>Account Type</Label>
+                  <RadioGroup
+                    value={profile.account_type}
+                    onValueChange={(value) => setProfile(prev => ({ ...prev, account_type: value }))}
+                    className="grid gap-4"
+                  >
+                    {accountTypes.map((type) => (
+                      <div key={type.value} className="relative">
+                        <RadioGroupItem
+                          value={type.value}
+                          id={`account-${type.value}`}
+                          className="peer sr-only"
+                        />
+                        <Label
+                          htmlFor={`account-${type.value}`}
+                          className="flex flex-col p-4 rounded-lg border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                        >
+                          <span className="font-semibold">{type.title}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {type.description}
+                          </span>
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+
                 {renderAccountTypeFields()}
 
                 <div className="space-y-2">
@@ -210,6 +260,28 @@ export default function Account() {
                     value={profile.target_audience || ''}
                     onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
                     placeholder="e.g., Young Professionals, Fitness Enthusiasts"
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Content Personality</Label>
+                  <Textarea
+                    value={profile.content_personality || ''}
+                    onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
+                    placeholder="E.g., Energetic and funny, Professional and educational, Casual and relatable..."
+                    className="min-h-[100px]"
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Content Style</Label>
+                  <Textarea
+                    value={profile.content_style || ''}
+                    onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
+                    placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences..."
+                    className="min-h-[100px]"
                     disabled={loading}
                   />
                 </div>
