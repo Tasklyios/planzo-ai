@@ -40,7 +40,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-[300px]">
-                <div className="h-full overflow-auto">
+                <div className="h-full overflow-auto bg-white">
                   <AppSidebar />
                 </div>
               </SheetContent>

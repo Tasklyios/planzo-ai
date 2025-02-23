@@ -82,7 +82,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="border-r border-gray-200 bg-white">
+    <Sidebar className="w-full h-full bg-white">
       <SidebarHeader className="p-4">
         <h1 className="text-2xl font-bold text-primary">TrendAI</h1>
       </SidebarHeader>
@@ -98,7 +98,7 @@ export function AppSidebar() {
                   >
                     <Link 
                       to={item.path}
-                      className={`flex items-center gap-2 ${
+                      className={`flex items-center gap-2 px-4 py-2 ${
                         location.pathname === item.path ? "text-[#4F92FF] font-medium" : "text-gray-600"
                       }`}
                     >
@@ -124,7 +124,7 @@ export function AppSidebar() {
                   >
                     <Link 
                       to={item.path}
-                      className={`flex items-center gap-2 ${
+                      className={`flex items-center gap-2 px-4 py-2 ${
                         location.pathname === item.path ? "text-[#4F92FF] font-medium" : "text-gray-600"
                       }`}
                     >
@@ -138,7 +138,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   onClick={handleLogout}
                   tooltip="Logout"
-                  className="flex items-center gap-2 text-gray-600 w-full"
+                  className="flex items-center gap-2 text-gray-600 w-full px-4 py-2"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
