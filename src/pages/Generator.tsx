@@ -81,6 +81,11 @@ const Generator = () => {
       navigate("/calendar");
     } catch (error: any) {
       console.error("Error adding to calendar:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add idea to calendar. Please try again.",
+      });
     }
   };
 
