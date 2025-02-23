@@ -8,14 +8,17 @@ import Ideas from "@/pages/Ideas";
 import Calendar from "@/pages/Calendar";
 import Account from "@/pages/Account";
 import NotFound from "@/pages/NotFound";
-import AppLayout from "@/components/layout/AppLayout";
+import Navbar from "@/components/Navbar";
 import AuthGuard from "@/components/AuthGuard";
 
 const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
   <AuthGuard>
-    <AppLayout>
-      {children}
-    </AppLayout>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <main className="pt-16">
+        {children}
+      </main>
+    </div>
   </AuthGuard>
 );
 

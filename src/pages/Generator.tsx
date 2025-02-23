@@ -26,7 +26,6 @@ import IdeasGrid from "@/components/idea-generator/IdeasGrid";
 import MobileMenuDialog from "@/components/idea-generator/MobileMenuDialog";
 import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
 import { AddToCalendarIdea } from "@/types/idea";
-import AppLayout from "@/components/layout/AppLayout";
 
 const Generator = () => {
   const {
@@ -120,54 +119,52 @@ const Generator = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
-        <main className="container mx-auto px-4 pt-8 pb-12">
-          <section className="mb-8">
-            <GeneratorHeader />
-            <InputForm
-              niche={niche}
-              audience={audience}
-              videoType={videoType}
-              platform={platform}
-              setNiche={setNiche}
-              setAudience={setAudience}
-              setVideoType={setVideoType}
-              setPlatform={setPlatform}
-            />
+    <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
+      <main className="container mx-auto px-4 pt-8 pb-12">
+        <section className="mb-8">
+          <GeneratorHeader />
+          <InputForm
+            niche={niche}
+            audience={audience}
+            videoType={videoType}
+            platform={platform}
+            setNiche={setNiche}
+            setAudience={setAudience}
+            setVideoType={setVideoType}
+            setPlatform={setPlatform}
+          />
 
-            <div className="flex justify-center mb-8">
-              <Button
-                onClick={generateIdeas}
-                disabled={loading}
-                className="bg-gradient-to-r from-[#33C3F0] to-[#0EA5E9] hover:from-[#33C3F0]/90 hover:to-[#0EA5E9]/90 text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
-              >
-                {loading ? (
-                  <>
-                    <span className="animate-spin">⚡</span>
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    ⚡ Generate Viral Ideas
-                  </>
-                )}
-              </Button>
-            </div>
+          <div className="flex justify-center mb-8">
+            <Button
+              onClick={generateIdeas}
+              disabled={loading}
+              className="bg-gradient-to-r from-[#33C3F0] to-[#0EA5E9] hover:from-[#33C3F0]/90 hover:to-[#0EA5E9]/90 text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              {loading ? (
+                <>
+                  <span className="animate-spin">⚡</span>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  ⚡ Generate Viral Ideas
+                </>
+              )}
+            </Button>
+          </div>
 
-            <IdeasGrid
-              ideas={ideas}
-              onAddToCalendar={(idea) => setAddingToCalendar({
-                idea,
-                title: idea.title,
-                scheduledFor: new Date().toISOString().split('T')[0],
-              })}
-              onEdit={(ideaId) => setEditingIdeaId(ideaId)}
-              onBookmarkToggle={handleBookmarkToggle}
-            />
-          </section>
-        </main>
-      </div>
+          <IdeasGrid
+            ideas={ideas}
+            onAddToCalendar={(idea) => setAddingToCalendar({
+              idea,
+              title: idea.title,
+              scheduledFor: new Date().toISOString().split('T')[0],
+            })}
+            onEdit={(ideaId) => setEditingIdeaId(ideaId)}
+            onBookmarkToggle={handleBookmarkToggle}
+          />
+        </section>
+      </main>
 
       <MobileMenuDialog 
         open={mobileMenuOpen}
@@ -188,7 +185,7 @@ const Generator = () => {
           onClose={() => setEditingIdeaId(null)}
         />
       )}
-    </AppLayout>
+    </div>
   );
 };
 
