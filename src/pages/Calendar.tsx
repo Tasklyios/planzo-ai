@@ -356,12 +356,12 @@ export default function Calendar() {
     if (isSelected) return null;
 
     return (
-      <div className="absolute -top-[2px] left-1/2 transform -translate-x-1/2 flex gap-0.5">
+      <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 flex gap-[2px]">
         {posts.map((post, index) => (
           <div
             key={`${post.id}-${index}`}
             className={cn(
-              "w-1.5 h-1.5 rounded-full",
+              "w-1 h-1 rounded-full",
               getColorClasses(post.color)
             )}
           />
@@ -509,7 +509,8 @@ export default function Calendar() {
                             {format(date, "d")}
                           </span>
                         </div>
-                        <div className="flex md:block flex-wrap gap-1 mt-1">
+                        {renderEventDots(date)}
+                        <div className="flex md:block flex-wrap gap-1 mt-3">
                           {posts.map((post, index) => renderPost(post, index))}
                         </div>
                         {provided.placeholder}
