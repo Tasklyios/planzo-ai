@@ -1,7 +1,9 @@
+
 import { ReactNode, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
+import { SearchBar } from "@/components/SearchBar";
 import { 
   Menu,
   LayoutDashboard,
@@ -137,7 +139,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </div>
 
         <div className="flex-1 flex flex-col">
-          <main className="flex-1 p-4 md:p-4 mt-16 md:mt-0">
+          {/* Search Bar */}
+          <div className="h-16 border-b border-gray-200 bg-white/50 backdrop-blur-sm flex items-center justify-center px-4 md:px-8">
+            <SearchBar />
+          </div>
+
+          <main className="flex-1 p-4 md:p-8 mt-16 md:mt-0">
             {children}
           </main>
         </div>
