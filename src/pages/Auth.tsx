@@ -24,9 +24,27 @@ const Auth = () => {
           password,
         });
         if (error) throw error;
+        
+        // Get the user session to ensure we have the user ID
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) throw new Error("No session after signup");
+
+        // Create a profile record with default values
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            { 
+              id: session.user.id,
+              account_type: 'personal', // Default value, will be updated in onboarding
+              onboarding_completed: false
+            }
+          ]);
+
+        if (profileError) throw profileError;
+
         toast({
           title: "Success!",
-          description: "Please check your email to verify your account.",
+          description: "Account created successfully. Let's set up your profile.",
         });
         navigate("/onboarding");
       } else {
@@ -36,9 +54,9 @@ const Auth = () => {
         });
         if (error) throw error;
 
-        // Using type assertion since we can't modify the core types
-        const { data: profile } = await (supabase
-          .from('profiles') as any)
+        // Check if user has completed onboarding
+        const { data: profile } = await supabase
+          .from('profiles')
           .select('onboarding_completed')
           .eq('id', data.user.id)
           .single();
