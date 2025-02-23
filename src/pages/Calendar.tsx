@@ -357,7 +357,7 @@ export default function Calendar() {
     <>
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="container mx-auto py-8 flex flex-col md:flex-row gap-6">
-          <div className="md:hidden w-full bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
+          <div className="md:hidden w-full bg-card rounded-xl shadow-sm border border-border p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
               <div className="flex space-x-2">
@@ -444,9 +444,9 @@ export default function Calendar() {
             </div>
           </div>
 
-          <div className="hidden md:block flex-grow bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
+          <div className="hidden md:block flex-grow bg-card rounded-xl shadow-sm border border-border">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h3 className="font-semibold text-foreground">{format(currentDate, "MMMM yyyy")}</h3>
               <div className="flex space-x-2">
                 <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
                   <ChevronLeft className="h-4 w-4" />
@@ -459,13 +459,13 @@ export default function Calendar() {
 
             <div className="grid grid-cols-7 text-sm">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div key={day} className="p-4 text-center font-medium text-gray-600">
+                <div key={day} className="p-4 text-center font-medium text-muted-foreground">
                   {day}
                 </div>
               ))}
             </div>
 
-            <div className="grid grid-cols-7 divide-x divide-y divide-gray-100">
+            <div className="grid grid-cols-7 divide-x divide-y divide-border">
               {daysInMonth.map((date) => {
                 const dateStr = format(date, "yyyy-MM-dd");
                 const posts = getPostsForDate(date);
@@ -477,9 +477,9 @@ export default function Calendar() {
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={cn(
-                          "min-h-[100px] p-3 cursor-pointer relative",
-                          !isSameMonth(date, currentDate) ? "text-gray-400" :
-                          isToday(date) ? "bg-blue-50/30" : "hover:bg-gray-50"
+                          "min-h-[100px] p-3 cursor-pointer relative bg-card",
+                          !isSameMonth(date, currentDate) ? "text-muted-foreground" :
+                          isToday(date) ? "bg-accent/30" : "hover:bg-accent/50"
                         )}
                         onClick={() => setSelectedDate(date)}
                       >
@@ -503,10 +503,14 @@ export default function Calendar() {
           </div>
 
           <div className="hidden md:block w-1/3">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>
-                <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
+                <h3 className="text-lg font-semibold text-foreground">
+                  {format(selectedDate, "MMMM d, yyyy")}
+                </h3>
+                <span className="text-sm text-muted-foreground">
+                  {format(selectedDate, "EEEE")}
+                </span>
               </div>
               <div className="space-y-4">
                 {renderDailyViewPost(selectedDate)}

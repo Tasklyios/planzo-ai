@@ -117,28 +117,28 @@ const Dashboard = () => {
           <div className="grid md:grid-cols-3 gap-6">
             <button 
               onClick={() => navigate('/ideas')}
-              className="bg-card hover:bg-accent text-foreground p-8 rounded-xl border border-border hover:shadow-lg transition-all group"
+              className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 dark:from-blue-500/10 dark:to-blue-600/10 hover:bg-accent text-foreground p-8 rounded-xl border border-border hover:shadow-lg transition-all group"
             >
               <div className="flex flex-col items-center">
-                <LightbulbIcon className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform text-primary" />
+                <LightbulbIcon className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform text-blue-500 dark:text-blue-400" />
                 <h3 className="text-xl font-semibold">Generate Video Ideas</h3>
               </div>
             </button>
             <button 
               onClick={() => navigate('/calendar')}
-              className="bg-card hover:bg-accent text-foreground p-8 rounded-xl border border-border hover:shadow-lg transition-all group"
+              className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 dark:from-purple-500/10 dark:to-purple-600/10 hover:bg-accent text-foreground p-8 rounded-xl border border-border hover:shadow-lg transition-all group"
             >
               <div className="flex flex-col items-center">
-                <CalendarIcon className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform text-primary" />
+                <CalendarIcon className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform text-purple-500 dark:text-purple-400" />
                 <h3 className="text-xl font-semibold">Content Calendar</h3>
               </div>
             </button>
             <button 
               onClick={() => navigate('/account')}
-              className="bg-card hover:bg-accent text-foreground p-8 rounded-xl border border-border hover:shadow-lg transition-all group"
+              className="bg-gradient-to-br from-green-500/20 to-green-600/20 dark:from-green-500/10 dark:to-green-600/10 hover:bg-accent text-foreground p-8 rounded-xl border border-border hover:shadow-lg transition-all group"
             >
               <div className="flex flex-col items-center">
-                <User className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform text-primary" />
+                <User className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform text-green-500 dark:text-green-400" />
                 <h3 className="text-xl font-semibold">Account Settings</h3>
               </div>
             </button>

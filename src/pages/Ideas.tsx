@@ -130,8 +130,8 @@ export default function Ideas() {
     <main className="container mx-auto px-4 pt-8 pb-12">
       <section className="mb-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#222831]">Saved Ideas</h1>
-          <p className="text-gray-600 mt-2">Browse and manage your bookmarked video ideas</p>
+          <h1 className="text-3xl font-bold text-foreground">Saved Ideas</h1>
+          <p className="text-muted-foreground mt-2">Browse and manage your bookmarked video ideas</p>
         </div>
 
         <IdeasGrid
