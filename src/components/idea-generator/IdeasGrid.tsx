@@ -40,24 +40,24 @@ const IdeasGrid = ({
         return (
           <div
             key={idea.id}
-            className="group bg-[#F9FAFC] rounded-xl p-4 md:p-6 hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-[#4F92FF]/20"
+            className="group bg-card rounded-xl p-4 md:p-6 hover:bg-accent transition-all border border-border"
           >
             <div className="flex items-start justify-between mb-3 md:mb-4">
               <div className="flex items-center gap-2 md:gap-3">
                 <div
                   className={cn(
                     "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center",
-                    `bg-${idea.color || "blue"}-500/10`,
-                    `text-${idea.color || "blue"}-500`
+                    `bg-${idea.color || "primary"}/10`,
+                    `text-${idea.color || "primary"}`
                   )}
                 >
                   <IconComponent className="w-4 h-4 md:w-5 md:h-5" />
                 </div>
                 <div>
-                  <span className="text-xs md:text-sm text-[#4F92FF] font-medium">
+                  <span className="text-xs md:text-sm text-primary font-medium">
                     {idea.category}
                   </span>
-                  <h3 className="text-sm md:text-lg font-medium text-[#222831]">
+                  <h3 className="text-sm md:text-lg font-medium text-foreground">
                     {idea.title}
                   </h3>
                 </div>
@@ -90,7 +90,7 @@ const IdeasGrid = ({
                 </Button>
               </div>
             </div>
-            <p className="text-xs md:text-sm text-gray-600 line-clamp-2 md:line-clamp-none">
+            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 md:line-clamp-none">
               {idea.description}
             </p>
             <div className="flex items-center justify-between mt-3">
@@ -98,7 +98,7 @@ const IdeasGrid = ({
                 {idea.tags?.map((tag, tagIndex) => (
                   <span
                     key={tagIndex}
-                    className="px-2 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-xs rounded-full"
+                    className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full"
                   >
                     #{tag}
                   </span>
@@ -111,8 +111,8 @@ const IdeasGrid = ({
                 className={cn(
                   "ml-2 cursor-pointer transition-all duration-300 ease-in-out hover:scale-110",
                   idea.is_saved
-                    ? "text-[#4F92FF] hover:text-[#4F92FF]/90"
-                    : "text-gray-400 hover:text-[#4F92FF]/70"
+                    ? "text-primary hover:text-primary/90"
+                    : "text-muted-foreground hover:text-primary/70"
                 )}
               >
                 <Bookmark
