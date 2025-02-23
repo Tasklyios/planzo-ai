@@ -19,13 +19,18 @@ const AddToCalendarDialog = ({
 }: AddToCalendarDialogProps) => {
   if (!idea) return null;
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onAddToCalendar();
+  };
+
   return (
     <Dialog open={!!idea} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add to Calendar</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="space-y-2">
             <label htmlFor="title" className="text-sm font-medium">Title</label>
             <input
@@ -34,6 +39,7 @@ const AddToCalendarDialog = ({
               value={idea.title}
               onChange={(e) => onUpdate('title', e.target.value)}
               className="w-full p-2 border rounded-md"
+              required
             />
           </div>
           <div className="space-y-2">
@@ -44,12 +50,13 @@ const AddToCalendarDialog = ({
               value={idea.scheduledFor}
               onChange={(e) => onUpdate('scheduledFor', e.target.value)}
               className="w-full p-2 border rounded-md"
+              required
             />
           </div>
-        </div>
-        <DialogFooter>
-          <Button onClick={onAddToCalendar}>Add to Calendar</Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="submit">Add to Calendar</Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
