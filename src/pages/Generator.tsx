@@ -44,19 +44,18 @@ const Generator = () => {
         return;
       }
 
-      // Update only the specific idea by its ID
-      const { error } = await supabase
-        .from("video_ideas")
-        .update({
-          scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
+      // Create a new scheduled content entry
+      const { error: scheduleError } = await supabase
+        .from("scheduled_content")
+        .insert({
+          title: addingToCalendar.title,
           platform: addingToCalendar.idea.platform || platform,
-          title: addingToCalendar.title, // Add the title update
-        })
-        .eq("id", addingToCalendar.idea.id)
-        .eq("user_id", userId)
-        .single();
+          scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
+          user_id: userId,
+          color: addingToCalendar.idea.color || 'blue',
+        });
 
-      if (error) throw error;
+      if (scheduleError) throw scheduleError;
 
       toast({
         title: "Success",
