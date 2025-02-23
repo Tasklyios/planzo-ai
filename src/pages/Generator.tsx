@@ -1,29 +1,13 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, Link } from "react-router-dom";
-import {
-  User,
-  CreditCard,
-  LogOut,
-  Menu,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import EditIdea from "@/components/EditIdea";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
+import EditIdea from "@/components/EditIdea";
 import { useIdeaGenerator } from "@/hooks/use-idea-generator";
 import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
 import InputForm from "@/components/idea-generator/InputForm";
 import IdeasGrid from "@/components/idea-generator/IdeasGrid";
-import MobileMenuDialog from "@/components/idea-generator/MobileMenuDialog";
 import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
 import { AddToCalendarIdea } from "@/types/idea";
 
@@ -45,14 +29,8 @@ const Generator = () => {
 
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
 
   const handleAddToCalendar = async () => {
     if (!addingToCalendar?.idea) return;
@@ -108,7 +86,6 @@ const Generator = () => {
 
       if (error) throw error;
 
-      // Update local state to reflect the change
       setIdeas(prevIdeas => prevIdeas.map(idea =>
         idea.id === ideaId ? { ...idea, is_saved: newSavedState } : idea
       ));
@@ -140,7 +117,7 @@ const Generator = () => {
           />
 
           <div className="flex justify-center mb-8">
-            <Button
+            <button
               onClick={generateIdeas}
               disabled={loading}
               className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
@@ -155,7 +132,7 @@ const Generator = () => {
                   ⚡ Generate Viral Ideas
                 </>
               )}
-            </Button>
+            </button>
           </div>
 
           <IdeasGrid
@@ -169,6 +146,20 @@ const Generator = () => {
             onBookmarkToggle={handleBookmarkToggle}
           />
         </section>
+
+        {editingIdeaId && (
+          <EditIdea
+            ideaId={editingIdeaId}
+            onClose={() => setEditingIdeaId(null)}
+          />
+        )}
+
+        <AddToCalendarDialog
+          idea={addingToCalendar}
+          onOpenChange={() => setAddingToCalendar(null)}
+          onAddToCalendar={handleAddToCalendar}
+          onUpdate={updateCalendarIdea}
+        />
       </main>
     </div>
   );
