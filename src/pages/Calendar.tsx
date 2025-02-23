@@ -373,7 +373,7 @@ export default function Calendar() {
   return (
     <>
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="container mx-auto py-20 flex flex-col md:flex-row gap-6">
+        <div className="container mx-auto py-4 flex flex-col md:flex-row gap-6">
           <div className="md:hidden w-full bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
