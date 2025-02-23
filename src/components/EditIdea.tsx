@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Wand2 } from "lucide-react";
+import { Wand2, Trash2 } from "lucide-react";
 import { Check } from "lucide-react";
 import { format } from "date-fns";
 
@@ -35,6 +35,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const [idea, setIdea] = useState<IdeaData | null>(null);
   const [loading, setLoading] = useState(true);
   const [generatingScript, setGeneratingScript] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,6 +60,34 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!idea) return;
+    
+    try {
+      setDeleting(true);
+      const { error } = await supabase
+        .from("video_ideas")
+        .delete()
+        .eq("id", idea.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Idea deleted successfully",
+      });
+      onClose();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete idea. Please try again.",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -269,13 +298,25 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave}>
-            Save Changes
-          </Button>
+        <DialogFooter className="flex justify-between sm:justify-between">
+          <div className="flex gap-2">
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>
+              Save Changes
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
