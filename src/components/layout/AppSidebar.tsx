@@ -82,7 +82,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="border-r border-gray-200 bg-white">
+    <Sidebar className="border-r border-border bg-card">
       <SidebarHeader className="p-4">
         <h1 className="text-2xl font-bold text-primary">TrendAI</h1>
       </SidebarHeader>
@@ -99,7 +99,9 @@ export function AppSidebar() {
                     <Link 
                       to={item.path}
                       className={`flex items-center gap-2 ${
-                        location.pathname === item.path ? "text-[#4F92FF] font-medium" : "text-gray-600"
+                        location.pathname === item.path 
+                          ? "text-primary font-medium" 
+                          : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       <item.icon className="h-4 w-4" />
@@ -112,7 +114,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-gray-200">
+      <SidebarFooter className="border-t border-border">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -125,7 +127,9 @@ export function AppSidebar() {
                     <Link 
                       to={item.path}
                       className={`flex items-center gap-2 ${
-                        location.pathname === item.path ? "text-[#4F92FF] font-medium" : "text-gray-600"
+                        location.pathname === item.path 
+                          ? "text-primary font-medium" 
+                          : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       <item.icon className="h-4 w-4" />
@@ -138,7 +142,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   onClick={handleLogout}
                   tooltip="Logout"
-                  className="flex items-center gap-2 text-gray-600 w-full"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground w-full"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
