@@ -121,8 +121,8 @@ const Generator = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
-      <main className="container mx-auto px-4 pt-2 pb-12">
-        <section>
+      <main className="container mx-auto px-4 pt-4 pb-12">
+        <section className="mb-8">
           <GeneratorHeader />
           <InputForm
             niche={niche}
