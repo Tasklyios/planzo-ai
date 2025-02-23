@@ -12,9 +12,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <AppSidebar />
+        <div className="flex-none">
+          <AppSidebar />
+        </div>
         <div className="flex-1 flex flex-col">
-          <Navbar />
+          <div className="flex-none">
+            <Navbar />
+          </div>
           <div className="flex-1">
             {children}
           </div>

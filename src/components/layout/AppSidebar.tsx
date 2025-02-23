@@ -43,7 +43,7 @@ export function AppSidebar() {
   const location = useLocation();
 
   return (
-    <Sidebar className="border-r border-gray-200 bg-white">
+    <Sidebar className="border-r border-gray-200 bg-white h-screen pt-16">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
