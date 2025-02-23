@@ -39,8 +39,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0">
-                <AppSidebar />
+              <SheetContent side="left" className="p-0 w-[300px]">
+                <div className="h-full overflow-auto">
+                  <AppSidebar />
+                </div>
               </SheetContent>
             </Sheet>
           </div>
