@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { supabase } from "@/integrations/supabase/client";
@@ -137,42 +136,40 @@ export default function Calendar() {
   return (
     <AppLayout>
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="container mx-auto py-8">
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
-            {daysOfWeek.map((day, dayIndex) => (
-              <div key={dayIndex} className="w-full">
-                <h2 className="text-xl font-semibold mb-4">{day}</h2>
-                <Droppable droppableId={dayIndex.toString()}>
-                  {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="bg-gray-100 rounded p-4 min-h-[200px]"
-                    >
-                      {scheduledContent[dayIndex].map((content, index) => (
-                        <Draggable key={content.id} draggableId={content.id} index={index}>
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className="bg-white rounded p-2 mb-2 shadow-sm border border-gray-200"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <CalendarIcon className="h-4 w-4 text-gray-500" />
-                                <span>{content.title}</span>
-                              </div>
+        <div className="container mx-auto py-8 flex flex-col md:flex-row gap-6">
+          {daysOfWeek.map((day, dayIndex) => (
+            <div key={dayIndex} className="w-full md:w-1/3">
+              <h2 className="text-xl font-semibold mb-4">{day}</h2>
+              <Droppable droppableId={dayIndex.toString()}>
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="bg-gray-100 rounded p-4 min-h-[50px]"
+                  >
+                    {scheduledContent[dayIndex].map((content, index) => (
+                      <Draggable key={content.id} draggableId={content.id} index={index}>
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className="bg-white rounded p-2 mb-2 shadow-sm border border-gray-200"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <CalendarIcon className="h-4 w-4 text-gray-500" />
+                              <span>{content.title}</span>
                             </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </div>
-            ))}
-          </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </div>
+          ))}
         </div>
       </DragDropContext>
     </AppLayout>
