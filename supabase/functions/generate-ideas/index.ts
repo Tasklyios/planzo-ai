@@ -1,11 +1,10 @@
-
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 const VIRAL_VIDEO_EXAMPLES = [
   {
@@ -30,39 +29,70 @@ const VIRAL_VIDEO_EXAMPLES = [
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { niche, audience, videoType, platform, customIdeas, type } = await req.json();
+    const { type, title, description, category, tags, toneOfVoice, duration, additionalNotes } = await req.json()
+
+    if (type === 'script') {
+      const prompt = `Create a compelling video script based on the following parameters:
+
+Title: ${title}
+Description: ${description}
+Category: ${category}
+Tags: ${tags?.join(', ')}
+Tone of Voice: ${toneOfVoice}
+Duration: ${duration} seconds
+Additional Notes: ${additionalNotes}
+
+The script should:
+1. Match the specified tone of voice (${toneOfVoice})
+2. Be optimized for a ${duration}-second video
+3. Include clear sections marked with timestamps
+4. Address the core topic while maintaining engagement
+5. Include pattern interrupts and hooks
+6. Reference the contextual information from tags and category
+
+Format the script with:
+- [HOOK] section at the start
+- [TIMESTAMPS] for each major section
+- [VISUAL CUES] for transitions or special effects
+- [CTA] at the end
+
+Keep the pacing appropriate for the ${duration}-second duration.`
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a professional video script writer who creates engaging scripts
+              that perfectly match the requested tone, duration, and topic while maintaining
+              viewer engagement. You always include proper timing markers and visual cues.`
+            },
+            { role: 'user', content: prompt }
+          ],
+        }),
+      })
+
+      const data = await response.json()
+      return new Response(
+        JSON.stringify({ script: data.choices[0].message.content }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const { niche, audience, videoType, platform, customIdeas } = await req.json();
 
     let prompt;
-    if (type === 'script') {
-      prompt = `Create a viral video script for ${platform} that will captivate ${audience} interested in ${niche}. This is for a ${videoType} video.
-
-Key elements to include:
-1. Hook (first 3 seconds): Create an attention-grabbing opening
-2. Problem/Promise: Clearly state what the viewer will learn/gain
-3. Credibility: Why should they listen to you
-4. Main Content: Deliver value in a structured way
-5. Call to Action: Clear next step for viewers
-
-Format the script with clear sections and timing markers.
-Make it conversational, energetic, and include pattern interrupts to maintain attention.
-Keep sentences short and punchy for social media.
-Include transitions and visual cues in [brackets].
-
-For reference, successful ${platform} videos in this niche use these techniques:
-- Start with a strong hook ("You've been doing [common task] wrong...")
-- Use curiosity gaps ("Wait until you see what happens at 0:45...")
-- Show before/after or transformation
-- Include specific numbers/stats
-- Use storytelling elements
-
-Make the script between 30-60 seconds for optimal engagement.`;
-
-    } else {
-      prompt = `Generate 5 viral video ideas for ${platform} targeting ${audience} in the ${niche} niche. These should be ${videoType} style videos.
+    prompt = `Generate 5 viral video ideas for ${platform} targeting ${audience} in the ${niche} niche. These should be ${videoType} style videos.
 
 Your response must be valid JSON matching this structure exactly:
 {
@@ -94,7 +124,6 @@ Focus on:
 - Transformation stories
 - Behind-the-scenes reveals
 - Testing viral trends/hacks`;
-    }
 
     console.log("Sending request to OpenAI with prompt:", prompt);
 
@@ -109,9 +138,7 @@ Focus on:
         messages: [
           { 
             role: 'system', 
-            content: type === 'script' 
-              ? 'You are an expert viral video scriptwriter who creates engaging social media content. Focus on hooks, pattern interrupts, and clear value delivery.'
-              : 'You are a viral content strategist who creates trending social media ideas. Always output valid JSON matching the example structure exactly.'
+            content: 'You are a viral content strategist who creates trending social media ideas. Always output valid JSON matching the example structure exactly.'
           },
           { role: 'user', content: prompt }
         ],
@@ -125,14 +152,6 @@ Focus on:
     if (!data.choices?.[0]?.message?.content) {
       throw new Error('Invalid response from OpenAI');
     }
-
-    if (type === 'script') {
-      // For scripts, return the raw content
-      return new Response(JSON.stringify({ script: data.choices[0].message.content }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } else {
-      // For ideas, parse as JSON
       try {
         const parsedContent = JSON.parse(data.choices[0].message.content);
         return new Response(JSON.stringify(parsedContent), {
@@ -143,16 +162,15 @@ Focus on:
         console.log('Raw content:', data.choices[0].message.content);
         throw new Error('Failed to parse OpenAI response as JSON');
       }
-    }
 
   } catch (error) {
-    console.error('Error in generate-ideas function:', error);
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      details: 'Check function logs for more information'
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Error:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
   }
-});
+})

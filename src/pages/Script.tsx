@@ -63,6 +63,8 @@ export default function Script() {
       const ideaToUse = scriptType === "existing" ? selectedIdea : {
         title: customTitle,
         description: customDescription,
+        category: "custom",
+        tags: [],
       };
 
       if (!ideaToUse?.title || !ideaToUse?.description) {
@@ -74,19 +76,41 @@ export default function Script() {
           type: 'script',
           title: ideaToUse.title,
           description: ideaToUse.description,
+          category: ideaToUse.category,
+          tags: ideaToUse.tags,
           toneOfVoice,
-          duration,
+          duration: parseInt(duration),
           additionalNotes,
         },
       });
 
       if (error) throw error;
-      setGeneratedScript(data.script);
       
-      toast({
-        title: "Success",
-        description: "Script generated successfully!",
-      });
+      if (data?.script) {
+        setGeneratedScript(data.script);
+        
+        // Save the generated script to the scripts table if using an existing idea
+        if (scriptType === "existing" && selectedIdea?.id) {
+          const { error: saveError } = await supabase
+            .from('scripts')
+            .insert({
+              content: data.script,
+              idea_id: selectedIdea.id,
+              user_id: (await supabase.auth.getSession()).data.session?.user.id,
+            });
+
+          if (saveError) {
+            console.error("Error saving script:", saveError);
+          }
+        }
+
+        toast({
+          title: "Success",
+          description: "Script generated successfully!",
+        });
+      } else {
+        throw new Error("No script was generated");
+      }
     } catch (error: any) {
       console.error("Error generating script:", error);
       toast({
