@@ -1,26 +1,39 @@
+
 import { ReactNode, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { SearchBar } from "@/components/SearchBar";
-import { Menu, LayoutDashboard, Lightbulb, BookmarkIcon, CalendarIcon, UserCircle, CreditCard, LogOut } from "lucide-react";
+import { 
+  Menu,
+  LayoutDashboard,
+  Lightbulb,
+  BookmarkIcon,
+  CalendarIcon,
+  UserCircle,
+  CreditCard,
+  LogOut 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+
 interface AppLayoutProps {
   children: ReactNode;
 }
-export default function AppLayout({
-  children
-}: AppLayoutProps) {
+
+export default function AppLayout({ children }: AppLayoutProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -28,17 +41,19 @@ export default function AppLayout({
       setIsOpen(false);
       toast({
         title: "Logged out successfully",
-        description: "You have been logged out of your account."
+        description: "You have been logged out of your account.",
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error logging out",
-        description: error.message
+        description: error.message,
       });
     }
   };
-  return <SidebarProvider>
+
+  return (
+    <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
@@ -62,19 +77,31 @@ export default function AppLayout({
                   </div>
                   <div className="flex-1 overflow-auto py-2">
                     <div className="space-y-1">
-                      <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <Link 
+                        to="/dashboard" 
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
+                      >
                         <LayoutDashboard className="h-5 w-5" />
                         <span>Dashboard</span>
                       </Link>
-                      <Link to="/generator" className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <Link 
+                        to="/generator" 
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
+                      >
                         <Lightbulb className="h-5 w-5" />
                         <span>Generator</span>
                       </Link>
-                      <Link to="/ideas" className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <Link 
+                        to="/ideas" 
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
+                      >
                         <BookmarkIcon className="h-5 w-5" />
                         <span>Ideas</span>
                       </Link>
-                      <Link to="/calendar" className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <Link 
+                        to="/calendar" 
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
+                      >
                         <CalendarIcon className="h-5 w-5" />
                         <span>Calendar</span>
                       </Link>
@@ -82,15 +109,24 @@ export default function AppLayout({
                   </div>
                   <div className="border-t border-border p-2">
                     <div className="space-y-1">
-                      <Link to="/account" className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <Link 
+                        to="/account" 
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
+                      >
                         <UserCircle className="h-5 w-5" />
                         <span>My Account</span>
                       </Link>
-                      <Link to="/billing" className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <Link 
+                        to="/billing" 
+                        className="flex items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
+                      >
                         <CreditCard className="h-5 w-5" />
                         <span>Billing</span>
                       </Link>
-                      <button onClick={handleLogout} className="flex w-full items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <button
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-2 px-4 py-2 text-foreground hover:bg-accent hover:text-accent-foreground"
+                      >
                         <LogOut className="h-5 w-5" />
                         <span>Logout</span>
                       </button>
@@ -108,10 +144,11 @@ export default function AppLayout({
             <SearchBar />
           </div>
 
-          <main className="flex-1 p-4 md:p-8 mt-8 md:mt-0 py-0">
+          <main className="flex-1 p-4 md:p-8 mt-4 md:mt-0">
             {children}
           </main>
         </div>
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 }
