@@ -258,7 +258,7 @@ const InputForm = ({
         </div>
       </div>
       
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mb-6 md:mb-8">
         <CollapsibleTrigger className="mx-auto flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
           <div className="flex items-center justify-center w-full gap-2">
             {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
