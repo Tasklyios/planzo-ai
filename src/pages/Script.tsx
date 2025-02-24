@@ -16,6 +16,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GeneratedIdea } from "@/types/idea";
+import { Save } from "lucide-react";
 
 export default function Script() {
   const [loading, setLoading] = useState(false);
@@ -160,6 +161,44 @@ export default function Script() {
   };
 
   const { parsedContent } = parseScript(generatedScript, showVisuals);
+
+  const handleSaveScript = async () => {
+    if (!generatedScript) return;
+
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user.id) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to save scripts",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('scripts')
+        .insert({
+          content: generatedScript,
+          user_id: session.session.user.id,
+          idea_id: selectedIdea?.id || null,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Script saved successfully",
+      });
+    } catch (error: any) {
+      console.error("Error saving script:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save script",
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -319,6 +358,16 @@ export default function Script() {
                     {line}
                   </div>
                 ))}
+              </div>
+              <div className="mt-6 flex justify-end">
+                <Button
+                  onClick={handleSaveScript}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  Save Script
+                </Button>
               </div>
             </div>
           )}
