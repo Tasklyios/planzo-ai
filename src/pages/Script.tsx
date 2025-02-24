@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -124,26 +123,37 @@ export default function Script() {
     }
   };
 
-  const parseScript = (script: string) => {
-    if (!script) return { scriptContent: "", visualContent: "" };
+  const parseScript = (script: string, showVisuals: boolean) => {
+    if (!script) return { parsedContent: "" };
 
-    const sections = script.split("[VISUAL]");
-    let scriptContent = sections[0];
-    let visualContent = "";
+    // Split the script into sections
+    const lines = script.split('\n');
+    let currentSection = 'script';
+    let parsedContent = '';
 
-    if (sections.length > 1) {
-      visualContent = sections.slice(1).join("\n[VISUAL]");
-      scriptContent = scriptContent.replace(/\[TIMESTAMPS?\]|\[HOOK\]|\[CTA\]/g, "");
-      visualContent = visualContent.replace(/\[TIMESTAMPS?\]|\[HOOK\]|\[CTA\]/g, "");
+    for (const line of lines) {
+      if (line.includes('[VISUAL]')) {
+        if (showVisuals) {
+          parsedContent += `\n\n${line.replace('[VISUAL]', '→ Visual Guide:')}\n`;
+        }
+        continue;
+      }
+
+      // Handle regular script lines
+      if (!line.includes('[VISUAL]')) {
+        parsedContent += `${line}\n`;
+      }
     }
 
-    return {
-      scriptContent: scriptContent.trim(),
-      visualContent: visualContent.trim(),
-    };
+    // Clean up markers if visuals are not shown
+    if (!showVisuals) {
+      parsedContent = parsedContent.replace(/\[TIMESTAMPS?\]|\[HOOK\]|\[CTA\]/g, "");
+    }
+
+    return { parsedContent: parsedContent.trim() };
   };
 
-  const { scriptContent, visualContent } = parseScript(generatedScript);
+  const { parsedContent } = parseScript(generatedScript, showVisuals);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -282,7 +292,7 @@ export default function Script() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Generated Script</h2>
                 <div className="flex items-center space-x-2">
-                  <Label htmlFor="show-visuals" className="text-sm">Show Visuals</Label>
+                  <Label htmlFor="show-visuals" className="text-sm">Show Visual Guides</Label>
                   <Switch
                     id="show-visuals"
                     checked={showVisuals}
@@ -290,8 +300,19 @@ export default function Script() {
                   />
                 </div>
               </div>
-              <div className="whitespace-pre-wrap font-mono text-sm">
-                {showVisuals ? visualContent : scriptContent}
+              <div className="whitespace-pre-wrap font-mono text-sm space-y-2">
+                {parsedContent.split('\n').map((line, index) => (
+                  <div 
+                    key={index} 
+                    className={`${
+                      line.startsWith('→ Visual Guide:') 
+                        ? 'pl-4 text-blue-500 dark:text-blue-400 italic'
+                        : ''
+                    }`}
+                  >
+                    {line}
+                  </div>
+                ))}
               </div>
             </div>
           )}
