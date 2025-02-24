@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail, Github } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -35,7 +36,7 @@ const Auth = () => {
           .insert([
             { 
               id: session.user.id,
-              account_type: 'personal', // Default value, will be updated in onboarding
+              account_type: 'personal',
               onboarding_completed: false
             }
           ]);
@@ -78,6 +79,24 @@ const Auth = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-light-bg to-light-bg-2 flex items-center justify-center p-4">
       <div className="max-w-md w-full glass rounded-2xl p-8 shadow-xl fade-up">
@@ -90,6 +109,25 @@ const Auth = () => {
               ? "Sign up to start creating amazing videos"
               : "Sign in to your account"}
           </p>
+        </div>
+
+        <div className="space-y-4 mb-6">
+          <button
+            onClick={handleGoogleSignIn}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <FcGoogle size={20} />
+            <span className="text-dark">Continue with Google</span>
+          </button>
+        </div>
+
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-dark/60">Or continue with</span>
+          </div>
         </div>
 
         <form onSubmit={handleAuth} className="space-y-6">
