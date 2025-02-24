@@ -52,9 +52,9 @@ export default function Ideas() {
   }, []);
 
   const handleBookmarkToggle = async (ideaId: string) => {
-    setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== ideaId));
-
     try {
+      setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== ideaId));
+
       const { error } = await supabase
         .from("video_ideas")
         .update({ is_saved: false })
@@ -64,6 +64,11 @@ export default function Ideas() {
         await fetchSavedIdeas();
         throw error;
       }
+
+      toast({
+        title: "Success",
+        description: "Idea removed from saved ideas",
+      });
     } catch (error: any) {
       console.error("Error updating bookmark:", error);
       toast({
@@ -96,6 +101,11 @@ export default function Ideas() {
         .eq("user_id", userId);
 
       if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Idea added to calendar successfully",
+      });
 
       setAddingToCalendar(null);
       setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== addingToCalendar.idea.id));
