@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
@@ -34,9 +33,11 @@ serve(async (req) => {
   }
 
   try {
-    const { type, title, description, category, tags, toneOfVoice, duration, additionalNotes } = await req.json()
+    const requestData = await req.json();
+    console.log("Received request data:", requestData);
 
-    if (type === 'script') {
+    if (requestData.type === 'script') {
+      const { title, description, category, tags, toneOfVoice, duration, additionalNotes } = requestData;
       const prompt = `Create a compelling video script based on the following parameters:
 
 Title: ${title}
@@ -94,7 +95,8 @@ Keep the pacing appropriate for the ${duration}-second duration.`
     }
 
     // Handle idea generation
-    const { niche, audience, videoType, platform, customIdeas } = await req.json();
+    const { niche, audience, videoType, platform, customIdeas } = requestData;
+    console.log("Generating ideas with params:", { niche, audience, videoType, platform, customIdeas });
 
     const prompt = `Generate 5 viral video ideas for ${platform} targeting ${audience} in the ${niche} niche. These should be ${videoType} style videos.
 
@@ -129,7 +131,7 @@ Focus on:
 - Behind-the-scenes reveals
 - Testing viral trends/hacks`;
 
-    console.log("Sending request to OpenAI with prompt:", prompt);
+    console.log("Sending prompt to OpenAI:", prompt);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -151,14 +153,16 @@ Focus on:
     });
 
     const data = await response.json();
-    console.log("OpenAI response:", data);
+    console.log("OpenAI response received:", data);
 
     if (!data.choices?.[0]?.message?.content) {
+      console.error("Invalid OpenAI response:", data);
       throw new Error('Invalid response from OpenAI');
     }
 
     try {
       const parsedContent = JSON.parse(data.choices[0].message.content);
+      console.log("Successfully parsed OpenAI response:", parsedContent);
       return new Response(JSON.stringify(parsedContent), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -169,7 +173,7 @@ Focus on:
     }
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
