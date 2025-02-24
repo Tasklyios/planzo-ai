@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { LayersIcon, Users, Video, Smartphone, Package2, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
 
 interface InputFormProps {
   niche: string;
@@ -28,6 +29,7 @@ const InputForm = ({
 }: InputFormProps) => {
   const [accountType, setAccountType] = useState<AccountType>('personal');
   const [loading, setLoading] = useState(true);
+  const [customIdeas, setCustomIdeas] = useState("");
 
   useEffect(() => {
     getAccountType();
@@ -228,27 +230,41 @@ const InputForm = ({
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
-      {renderFields()}
-      <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-        <div className="flex flex-col items-center w-full">
-          <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-            <Smartphone className="text-[#4F92FF] w-4 h-4" />
-            <label className="text-xs md:text-sm font-medium text-foreground">Platform</label>
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
+        {renderFields()}
+        <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
+          <div className="flex flex-col items-center w-full">
+            <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+              <Smartphone className="text-[#4F92FF] w-4 h-4" />
+              <label className="text-xs md:text-sm font-medium text-foreground">Platform</label>
+            </div>
+            <select
+              value={platform}
+              onChange={(e) => setPlatform(e.target.value)}
+              className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground text-sm text-center md:text-left"
+            >
+              <option>TikTok</option>
+              <option>Instagram Reels</option>
+              <option>YouTube Shorts</option>
+            </select>
           </div>
-          <select
-            value={platform}
-            onChange={(e) => setPlatform(e.target.value)}
-            className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground text-sm text-center md:text-left"
-          >
-            <option>TikTok</option>
-            <option>Instagram Reels</option>
-            <option>YouTube Shorts</option>
-          </select>
+        </div>
+      </div>
+      
+      <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border">
+        <div className="flex flex-col space-y-2">
+          <label className="text-sm font-medium text-foreground">Already have some ideas for your videos? Add them here!</label>
+          <Textarea
+            value={customIdeas}
+            onChange={(e) => setCustomIdeas(e.target.value)}
+            placeholder="Enter your video ideas..."
+            className="min-h-[100px] bg-background"
+          />
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default InputForm;
