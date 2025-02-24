@@ -126,31 +126,37 @@ export default function Script() {
   const parseScript = (script: string, showVisuals: boolean) => {
     if (!script) return { parsedContent: "" };
 
-    // Split the script into sections
     const lines = script.split('\n');
-    let currentSection = 'script';
     let parsedContent = '';
+    let isInVisualBlock = false;
 
     for (const line of lines) {
-      if (line.includes('[VISUAL]')) {
+      if (line.includes('[VISUAL_GUIDE]')) {
+        const visualContent = line.replace('[VISUAL_GUIDE]', '').replace('[/VISUAL_GUIDE]', '');
         if (showVisuals) {
-          parsedContent += `\n\n${line.replace('[VISUAL]', '→ Visual Guide:')}\n`;
+          parsedContent += `\n→ Visual: ${visualContent}\n`;
         }
         continue;
       }
 
-      // Handle regular script lines
-      if (!line.includes('[VISUAL]')) {
+      // Skip visual end tags
+      if (line.includes('[/VISUAL_GUIDE]')) {
+        continue;
+      }
+
+      // Add regular script lines
+      if (!line.includes('[VISUAL_GUIDE]') && !line.includes('[/VISUAL_GUIDE]')) {
         parsedContent += `${line}\n`;
       }
     }
 
-    // Clean up markers if visuals are not shown
-    if (!showVisuals) {
-      parsedContent = parsedContent.replace(/\[TIMESTAMPS?\]|\[HOOK\]|\[CTA\]/g, "");
-    }
+    // Clean up any remaining markers
+    parsedContent = parsedContent
+      .replace(/\[TIMESTAMPS?\]|\[HOOK\]|\[CTA\]/g, '')
+      .replace(/\n{3,}/g, '\n\n') // Remove excess newlines
+      .trim();
 
-    return { parsedContent: parsedContent.trim() };
+    return { parsedContent };
   };
 
   const { parsedContent } = parseScript(generatedScript, showVisuals);
@@ -305,8 +311,8 @@ export default function Script() {
                   <div 
                     key={index} 
                     className={`${
-                      line.startsWith('→ Visual Guide:') 
-                        ? 'pl-4 text-blue-500 dark:text-blue-400 italic'
+                      line.startsWith('→ Visual:') 
+                        ? 'pl-4 text-blue-500 dark:text-blue-400 italic border-l-2 border-blue-500 dark:border-blue-400'
                         : ''
                     }`}
                   >

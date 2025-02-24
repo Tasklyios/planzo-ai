@@ -39,7 +39,6 @@ serve(async (req) => {
 
     if (requestData.type === 'script') {
       const { title, description, category, tags, toneOfVoice, duration, additionalNotes } = requestData;
-      console.log("Generating script with params:", { title, description, category, tags, toneOfVoice, duration, additionalNotes });
 
       const scriptPrompt = `Create a professional video script based on the following parameters:
 
@@ -51,29 +50,33 @@ Tone of Voice: ${toneOfVoice}
 Duration: ${duration} seconds
 Additional Notes: ${additionalNotes || 'None'}
 
+Format Requirements:
+- For each section of the script, provide the script text first
+- After each relevant section, add visual directions using this exact format:
+  [VISUAL_GUIDE]This is what should be shown[/VISUAL_GUIDE]
+- Use the visual guide tags to wrap ALL visual directions
+- Keep visual directions brief and specific
+
 Style Guidelines:
 - Maintain a professional, authoritative tone
 - Focus on data, research, and concrete examples
-- Avoid clickbait phrases, excessive emotion, or manufactured suspense
+- Avoid clickbait phrases or manufactured suspense
 - Present information clearly and directly
 - Use precise language and specific terminology
-- Include expert perspectives or citations when relevant
 
 Structure:
 1. Open with a clear thesis or problem statement
 2. Present key points in a logical sequence
-3. Support claims with evidence or examples
+3. Support claims with evidence
 4. Conclude with actionable insights
 
-Format the script with:
-[HOOK] Brief, professional introduction (5-7 seconds)
-[TIMESTAMPS] Clear section markers
-[VISUAL] Specific visual direction notes
-[CTA] Clear, value-focused call to action
+Example format:
+Here's the script text for the opening.
+[VISUAL_GUIDE]Medium shot of speaker with key statistic on screen[/VISUAL_GUIDE]
+Next part of the script text.
+[VISUAL_GUIDE]Show diagram illustrating the concept[/VISUAL_GUIDE]
 
 Pacing: Structure the content to fit naturally within ${duration} seconds.`;
-
-      console.log("Sending script prompt to OpenAI");
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -86,11 +89,11 @@ Pacing: Structure the content to fit naturally within ${duration} seconds.`;
           messages: [
             {
               role: 'system',
-              content: 'You are a professional content strategist who creates sophisticated, research-backed video scripts. Your style is authoritative, evidence-based, and eschews clickbait or artificial excitement. Focus on delivering valuable insights in a clear, professional manner.'
+              content: 'You are a professional content strategist who creates sophisticated, research-backed video scripts. Format all visual directions with [VISUAL_GUIDE] tags.'
             },
             { role: 'user', content: scriptPrompt }
           ],
-          temperature: 0.5, // Lower temperature for more focused, professional outputs
+          temperature: 0.7,
         }),
       });
 
@@ -98,7 +101,6 @@ Pacing: Structure the content to fit naturally within ${duration} seconds.`;
       console.log("OpenAI script response received");
 
       if (!data.choices?.[0]?.message?.content) {
-        console.error("Invalid OpenAI script response:", data);
         throw new Error('Invalid response from OpenAI');
       }
 
