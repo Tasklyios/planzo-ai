@@ -9,22 +9,22 @@ const corsHeaders = {
 
 const VIRAL_VIDEO_EXAMPLES = [
   {
-    title: "I Tried the Viral Productivity Hack That Made Me 10x More Efficient",
-    description: "Testing the '2-minute rule' productivity technique with shocking results. From procrastination to getting everything done, here's what changed.",
+    title: "A Month-Long Study of the Two-Minute Productivity Method",
+    description: "An evidence-based analysis of the '2-minute rule' productivity technique, examining its impact on task completion and workflow efficiency.",
     category: "Productivity",
-    tags: ["productivity", "lifehack", "studytips"]
+    tags: ["productivity", "workflow", "research"]
   },
   {
-    title: "5 Morning Habits That Changed My Life (With Real Results)",
-    description: "A morning routine experiment showing the impact of 5 science-backed habits. Including before/after energy levels and productivity metrics.",
+    title: "The Science Behind Successful Morning Routines",
+    description: "A data-driven exploration of five research-backed morning habits, analyzing their effects on productivity and well-being.",
     category: "Lifestyle",
-    tags: ["morningroutine", "selfimprovement", "habits"]
+    tags: ["productivity", "wellness", "research"]
   },
   {
-    title: "What Happens When You Drink a Gallon of Water Daily for 30 Days",
-    description: "A month-long experiment documenting the physical and mental changes from increasing water intake, with surprising transformation results.",
+    title: "30-Day Hydration Study: Measuring the Effects of Increased Water Intake",
+    description: "A methodical analysis of physiological and cognitive changes observed during a controlled hydration experiment.",
     category: "Health",
-    tags: ["waterchallenge", "wellness", "transformation"]
+    tags: ["health", "research", "wellness"]
   }
 ];
 
@@ -41,7 +41,7 @@ serve(async (req) => {
       const { title, description, category, tags, toneOfVoice, duration, additionalNotes } = requestData;
       console.log("Generating script with params:", { title, description, category, tags, toneOfVoice, duration, additionalNotes });
 
-      const scriptPrompt = `Create a compelling video script based on the following parameters:
+      const scriptPrompt = `Create a professional video script based on the following parameters:
 
 Title: ${title}
 Description: ${description}
@@ -51,21 +51,27 @@ Tone of Voice: ${toneOfVoice}
 Duration: ${duration} seconds
 Additional Notes: ${additionalNotes || 'None'}
 
-The script should:
-1. Match the specified tone of voice (${toneOfVoice})
-2. Be optimized for a ${duration}-second video
-3. Include clear sections marked with timestamps
-4. Address the core topic while maintaining engagement
-5. Include pattern interrupts and hooks
-6. Reference the contextual information from tags and category
+Style Guidelines:
+- Maintain a professional, authoritative tone
+- Focus on data, research, and concrete examples
+- Avoid clickbait phrases, excessive emotion, or manufactured suspense
+- Present information clearly and directly
+- Use precise language and specific terminology
+- Include expert perspectives or citations when relevant
+
+Structure:
+1. Open with a clear thesis or problem statement
+2. Present key points in a logical sequence
+3. Support claims with evidence or examples
+4. Conclude with actionable insights
 
 Format the script with:
-- [HOOK] section at the start
-- [TIMESTAMPS] for each major section
-- [VISUAL CUES] for transitions or special effects
-- [CTA] at the end
+[HOOK] Brief, professional introduction (5-7 seconds)
+[TIMESTAMPS] Clear section markers
+[VISUAL] Specific visual direction notes
+[CTA] Clear, value-focused call to action
 
-Keep the pacing appropriate for the ${duration}-second duration.`;
+Pacing: Structure the content to fit naturally within ${duration} seconds.`;
 
       console.log("Sending script prompt to OpenAI");
 
@@ -80,10 +86,11 @@ Keep the pacing appropriate for the ${duration}-second duration.`;
           messages: [
             {
               role: 'system',
-              content: 'You are a professional video script writer who creates engaging scripts that perfectly match the requested tone, duration, and topic while maintaining viewer engagement. You always include proper timing markers and visual cues.'
+              content: 'You are a professional content strategist who creates sophisticated, research-backed video scripts. Your style is authoritative, evidence-based, and eschews clickbait or artificial excitement. Focus on delivering valuable insights in a clear, professional manner.'
             },
             { role: 'user', content: scriptPrompt }
           ],
+          temperature: 0.5, // Lower temperature for more focused, professional outputs
         }),
       });
 
