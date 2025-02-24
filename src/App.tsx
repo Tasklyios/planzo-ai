@@ -11,6 +11,7 @@ import NotFound from "@/pages/NotFound";
 import AppLayout from "@/components/layout/AppLayout";
 import AuthGuard from "@/components/AuthGuard";
 import Onboarding from "@/components/auth/Onboarding";
+import Script from "@/pages/Script";
 import { ThemeProvider } from "@/hooks/use-theme";
 
 const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
           <Route path="/dashboard" element={<AuthenticatedLayout><Dashboard /></AuthenticatedLayout>} />
           <Route path="/generator" element={<AuthenticatedLayout><Generator /></AuthenticatedLayout>} />
+          <Route path="/script" element={<AuthenticatedLayout><Script /></AuthenticatedLayout>} />
           <Route path="/ideas" element={<AuthenticatedLayout><Ideas /></AuthenticatedLayout>} />
           <Route path="/calendar" element={<AuthenticatedLayout><Calendar /></AuthenticatedLayout>} />
           <Route path="/account" element={<AuthenticatedLayout><Account /></AuthenticatedLayout>} />
