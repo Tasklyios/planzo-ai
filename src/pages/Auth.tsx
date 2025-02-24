@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Lock, Mail, Github } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
 const Auth = () => {
@@ -84,6 +84,10 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
           redirectTo: `${window.location.origin}/dashboard`
         }
       });
