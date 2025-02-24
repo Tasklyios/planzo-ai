@@ -32,10 +32,31 @@ const themeOptions = [
   },
 ];
 
+const accountTypes = [
+  {
+    value: "personal",
+    title: "Personal Brand",
+    description: "Create content for your personal brand",
+  },
+  {
+    value: "business",
+    title: "Business",
+    description: "Create content for your business",
+  },
+  {
+    value: "ecommerce",
+    title: "E-commerce",
+    description: "Create content for your online store",
+  },
+];
+
 interface Profile {
   content_personality?: string | null;
   content_style?: string | null;
   account_type?: string;
+  content_niche?: string | null;
+  target_audience?: string | null;
+  posting_platforms?: string[] | null;
 }
 
 export default function Account() {
@@ -56,7 +77,7 @@ export default function Account() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('content_personality, content_style, account_type')
+        .select('content_personality, content_style, account_type, content_niche, target_audience, posting_platforms')
         .eq('id', session.user.id)
         .single();
 
@@ -78,6 +99,10 @@ export default function Account() {
         .update({
           content_personality: profile.content_personality,
           content_style: profile.content_style,
+          account_type: profile.account_type,
+          content_niche: profile.content_niche,
+          target_audience: profile.target_audience,
+          posting_platforms: profile.posting_platforms,
         })
         .eq('id', session.user.id);
 
@@ -131,76 +156,65 @@ export default function Account() {
           {activeTab === 'settings' ? (
             <div className="space-y-6">
               <div className="widget-box p-6">
-                <h2 className="text-xl font-semibold mb-6">Theme Settings</h2>
-                <div className="space-y-4">
-                  <RadioGroup
-                    value={theme}
-                    onValueChange={(value: "light" | "dark" | "system") => setTheme(value)}
-                    className="grid gap-4"
-                  >
-                    {themeOptions.map((option) => {
-                      const Icon = option.icon;
-                      return (
-                        <div key={option.value} className="relative">
-                          <RadioGroupItem
-                            value={option.value}
-                            id={`theme-${option.value}`}
-                            className="peer sr-only"
-                          />
-                          <Label
-                            htmlFor={`theme-${option.value}`}
-                            className="flex items-center gap-4 p-4 rounded-lg border-2 border-muted bg-accent hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                          >
-                            <Icon className="h-5 w-5" />
-                            <div>
-                              <div className="font-semibold">{option.title}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {option.description}
-                              </div>
-                            </div>
-                          </Label>
-                        </div>
-                      );
-                    })}
-                  </RadioGroup>
-                </div>
-              </div>
-
-              <div className="widget-box p-6">
-                <h2 className="text-xl font-semibold mb-6">Account Settings</h2>
-                <div className="space-y-4">
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="Your name"
-                    />
-                  </div>
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Your email"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="widget-box p-6">
-                <h2 className="text-xl font-semibold mb-6">Billing</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg bg-accent">
-                    <div>
-                      <p className="font-medium">Free Plan</p>
-                      <p className="text-sm text-muted-foreground">Basic features included</p>
+                <h2 className="text-xl font-semibold mb-6">Account Type</h2>
+                <RadioGroup
+                  value={profile.account_type || 'personal'}
+                  onValueChange={(value) => setProfile(prev => ({ ...prev, account_type: value }))}
+                  className="grid gap-4"
+                >
+                  {accountTypes.map((type) => (
+                    <div key={type.value} className="relative">
+                      <RadioGroupItem
+                        value={type.value}
+                        id={`account-${type.value}`}
+                        className="peer sr-only"
+                      />
+                      <Label
+                        htmlFor={`account-${type.value}`}
+                        className="flex flex-col p-4 rounded-lg border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                      >
+                        <span className="font-semibold">{type.title}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {type.description}
+                        </span>
+                      </Label>
                     </div>
-                    <Button>
-                      Upgrade
-                    </Button>
-                  </div>
-                </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              <div className="widget-box p-6">
+                <h2 className="text-xl font-semibold mb-6">Theme Settings</h2>
+                <RadioGroup
+                  value={theme}
+                  onValueChange={(value: "light" | "dark" | "system") => setTheme(value)}
+                  className="grid gap-4"
+                >
+                  {themeOptions.map((option) => {
+                    const Icon = option.icon;
+                    return (
+                      <div key={option.value} className="relative">
+                        <RadioGroupItem
+                          value={option.value}
+                          id={`theme-${option.value}`}
+                          className="peer sr-only"
+                        />
+                        <Label
+                          htmlFor={`theme-${option.value}`}
+                          className="flex items-center gap-4 p-4 rounded-lg border-2 border-muted bg-accent hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                        >
+                          <Icon className="h-5 w-5" />
+                          <div>
+                            <div className="font-semibold">{option.title}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {option.description}
+                            </div>
+                          </div>
+                        </Label>
+                      </div>
+                    )
+                  })}
+                </RadioGroup>
               </div>
             </div>
           ) : (
@@ -208,6 +222,39 @@ export default function Account() {
               <h2 className="text-xl font-semibold mb-6">Customize Experience</h2>
               <form onSubmit={(e) => { e.preventDefault(); handleUpdateProfile(); }} className="space-y-6">
                 <div className="space-y-4">
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="content_niche">Content Niche</Label>
+                    <Input
+                      id="content_niche"
+                      placeholder="E.g., Technology, Fitness, Personal Development..."
+                      value={profile.content_niche || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="target_audience">Target Audience</Label>
+                    <Input
+                      id="target_audience"
+                      placeholder="E.g., Entrepreneurs, Students, Fitness Enthusiasts..."
+                      value={profile.target_audience || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="posting_platforms">Preferred Platforms (comma-separated)</Label>
+                    <Input
+                      id="posting_platforms"
+                      placeholder="E.g., TikTok, Instagram, YouTube..."
+                      value={profile.posting_platforms?.join(', ') || ''}
+                      onChange={(e) => setProfile(prev => ({ 
+                        ...prev, 
+                        posting_platforms: e.target.value.split(',').map(p => p.trim()).filter(Boolean)
+                      }))}
+                    />
+                  </div>
+
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="personality">Content Personality</Label>
                     <Textarea
@@ -218,6 +265,7 @@ export default function Account() {
                       className="min-h-[100px]"
                     />
                   </div>
+
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="style">Content Style</Label>
                     <Textarea
