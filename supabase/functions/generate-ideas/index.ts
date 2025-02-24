@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
@@ -38,7 +39,9 @@ serve(async (req) => {
 
     if (requestData.type === 'script') {
       const { title, description, category, tags, toneOfVoice, duration, additionalNotes } = requestData;
-      const prompt = `Create a compelling video script based on the following parameters:
+      console.log("Generating script with params:", { title, description, category, tags, toneOfVoice, duration, additionalNotes });
+
+      const scriptPrompt = `Create a compelling video script based on the following parameters:
 
 Title: ${title}
 Description: ${description}
@@ -46,7 +49,7 @@ Category: ${category}
 Tags: ${tags?.join(', ')}
 Tone of Voice: ${toneOfVoice}
 Duration: ${duration} seconds
-Additional Notes: ${additionalNotes}
+Additional Notes: ${additionalNotes || 'None'}
 
 The script should:
 1. Match the specified tone of voice (${toneOfVoice})
@@ -62,7 +65,9 @@ Format the script with:
 - [VISUAL CUES] for transitions or special effects
 - [CTA] at the end
 
-Keep the pacing appropriate for the ${duration}-second duration.`
+Keep the pacing appropriate for the ${duration}-second duration.`;
+
+      console.log("Sending script prompt to OpenAI");
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -75,23 +80,25 @@ Keep the pacing appropriate for the ${duration}-second duration.`
           messages: [
             {
               role: 'system',
-              content: `You are a professional video script writer who creates engaging scripts
-              that perfectly match the requested tone, duration, and topic while maintaining
-              viewer engagement. You always include proper timing markers and visual cues.`
+              content: 'You are a professional video script writer who creates engaging scripts that perfectly match the requested tone, duration, and topic while maintaining viewer engagement. You always include proper timing markers and visual cues.'
             },
-            { role: 'user', content: prompt }
+            { role: 'user', content: scriptPrompt }
           ],
         }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
+      console.log("OpenAI script response received");
+
+      if (!data.choices?.[0]?.message?.content) {
+        console.error("Invalid OpenAI script response:", data);
+        throw new Error('Invalid response from OpenAI');
+      }
+
       return new Response(
-        JSON.stringify({ error: "Script generation not implemented" }),
-        { 
-          status: 501,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+        JSON.stringify({ script: data.choices[0].message.content }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Handle idea generation
