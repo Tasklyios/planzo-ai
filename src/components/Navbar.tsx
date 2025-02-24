@@ -46,6 +46,7 @@ const Navbar = () => {
   ] as const;
 
   const currentPath = window.location.pathname;
+  const isIndexPage = currentPath === '/';
 
   return (
     <header className="fixed w-full bg-card/80 backdrop-blur-sm border-b border-border z-50">
@@ -72,7 +73,7 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center space-x-4">
-          <ThemeToggle />
+          {!isIndexPage && <ThemeToggle />}
           <div className="hidden md:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
