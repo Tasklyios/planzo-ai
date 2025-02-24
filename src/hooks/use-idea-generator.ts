@@ -12,6 +12,7 @@ export const useIdeaGenerator = () => {
   const [platform, setPlatform] = useState(() => localStorage.getItem("platform") || "TikTok");
   const [loading, setLoading] = useState(false);
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
+  const [customIdeas, setCustomIdeas] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -133,7 +134,13 @@ export const useIdeaGenerator = () => {
       const userId = sessionData.session?.user.id;
 
       if (!userId) {
-        throw new Error("User not authenticated");
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please log in to generate ideas.",
+        });
+        navigate("/auth");
+        return;
       }
 
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
@@ -142,6 +149,7 @@ export const useIdeaGenerator = () => {
           audience,
           videoType,
           platform,
+          customIdeas
         },
       });
 
@@ -209,5 +217,8 @@ export const useIdeaGenerator = () => {
     ideas,
     setIdeas,
     generateIdeas,
+    customIdeas,
+    setCustomIdeas
   };
 };
+

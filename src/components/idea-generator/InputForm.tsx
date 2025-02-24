@@ -14,10 +14,12 @@ interface InputFormProps {
   audience: string;
   videoType: string;
   platform: string;
+  customIdeas: string;
   setNiche: (value: string) => void;
   setAudience: (value: string) => void;
   setVideoType: (value: string) => void;
   setPlatform: (value: string) => void;
+  setCustomIdeas: (value: string) => void;
 }
 
 type AccountType = 'personal' | 'ecommerce' | 'business';
@@ -27,14 +29,15 @@ const InputForm = ({
   audience,
   videoType,
   platform,
+  customIdeas,
   setNiche,
   setAudience,
   setVideoType,
   setPlatform,
+  setCustomIdeas,
 }: InputFormProps) => {
   const [accountType, setAccountType] = useState<AccountType>('personal');
   const [loading, setLoading] = useState(true);
-  const [customIdeas, setCustomIdeas] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {

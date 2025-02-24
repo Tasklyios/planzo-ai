@@ -9,6 +9,7 @@ import InputForm from "@/components/idea-generator/InputForm";
 import IdeasGrid from "@/components/idea-generator/IdeasGrid";
 import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
 import { AddToCalendarIdea } from "@/types/idea";
+
 const Generator = () => {
   const {
     niche,
@@ -22,14 +23,16 @@ const Generator = () => {
     loading,
     ideas,
     setIdeas,
-    generateIdeas
+    generateIdeas,
+    customIdeas,
+    setCustomIdeas
   } = useIdeaGenerator();
+
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   const handleAddToCalendar = async () => {
     if (!addingToCalendar?.idea) return;
     try {
@@ -68,6 +71,7 @@ const Generator = () => {
       });
     }
   };
+
   const updateCalendarIdea = (field: keyof AddToCalendarIdea, value: string) => {
     if (!addingToCalendar) return;
     setAddingToCalendar(prev => prev ? {
@@ -75,6 +79,7 @@ const Generator = () => {
       [field]: value
     } : null);
   };
+
   const handleBookmarkToggle = async (ideaId: string) => {
     try {
       const ideaToUpdate = ideas.find(idea => idea.id === ideaId);
@@ -99,11 +104,23 @@ const Generator = () => {
       });
     }
   };
+
   return <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 pt-8 pb-12 py-0">
         <section className="mb-8">
           <GeneratorHeader />
-          <InputForm niche={niche} audience={audience} videoType={videoType} platform={platform} setNiche={setNiche} setAudience={setAudience} setVideoType={setVideoType} setPlatform={setPlatform} />
+          <InputForm 
+            niche={niche} 
+            audience={audience} 
+            videoType={videoType} 
+            platform={platform}
+            customIdeas={customIdeas}
+            setNiche={setNiche} 
+            setAudience={setAudience} 
+            setVideoType={setVideoType} 
+            setPlatform={setPlatform}
+            setCustomIdeas={setCustomIdeas}
+          />
 
           <div className="flex justify-center mb-8">
             <button onClick={generateIdeas} disabled={loading} className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md">
@@ -116,17 +133,28 @@ const Generator = () => {
             </button>
           </div>
 
-          <IdeasGrid ideas={ideas} onAddToCalendar={idea => setAddingToCalendar({
-          idea,
-          title: idea.title,
-          scheduledFor: new Date().toISOString().split('T')[0]
-        })} onEdit={ideaId => setEditingIdeaId(ideaId)} onBookmarkToggle={handleBookmarkToggle} />
+          <IdeasGrid 
+            ideas={ideas} 
+            onAddToCalendar={idea => setAddingToCalendar({
+              idea,
+              title: idea.title,
+              scheduledFor: new Date().toISOString().split('T')[0]
+            })} 
+            onEdit={ideaId => setEditingIdeaId(ideaId)} 
+            onBookmarkToggle={handleBookmarkToggle} 
+          />
         </section>
 
         {editingIdeaId && <EditIdea ideaId={editingIdeaId} onClose={() => setEditingIdeaId(null)} />}
 
-        <AddToCalendarDialog idea={addingToCalendar} onOpenChange={() => setAddingToCalendar(null)} onAddToCalendar={handleAddToCalendar} onUpdate={updateCalendarIdea} />
+        <AddToCalendarDialog 
+          idea={addingToCalendar} 
+          onOpenChange={() => setAddingToCalendar(null)} 
+          onAddToCalendar={handleAddToCalendar} 
+          onUpdate={updateCalendarIdea} 
+        />
       </main>
     </div>;
 };
+
 export default Generator;
