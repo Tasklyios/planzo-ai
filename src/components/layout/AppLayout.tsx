@@ -144,7 +144,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <SearchBar />
           </div>
 
-          <main className="flex-1 p-4 md:p-8 mt-16 md:mt-0">
+          <main className="flex-1 p-4 md:p-8 mt-8 md:mt-0">
             {children}
           </main>
         </div>
