@@ -236,8 +236,8 @@ const InputForm = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
+    <div className="space-y-2 md:space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4">
         {renderFields()}
         <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
           <div className="flex flex-col items-center w-full">
@@ -259,9 +259,11 @@ const InputForm = ({
       </div>
       
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
-          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          Already have some ideas for your videos? Add them here!
+        <CollapsibleTrigger className="mx-auto flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
+          <div className="flex items-center justify-center w-full gap-2">
+            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            Already have some ideas for your videos? Add them here!
+          </div>
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-4">
           <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border">
