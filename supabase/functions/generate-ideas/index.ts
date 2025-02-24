@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
@@ -84,15 +85,18 @@ Keep the pacing appropriate for the ${duration}-second duration.`
 
       const data = await response.json()
       return new Response(
-        JSON.stringify({ script: data.choices[0].message.content }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Script generation not implemented" }),
+        { 
+          status: 501,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
       )
     }
 
+    // Handle idea generation
     const { niche, audience, videoType, platform, customIdeas } = await req.json();
 
-    let prompt;
-    prompt = `Generate 5 viral video ideas for ${platform} targeting ${audience} in the ${niche} niche. These should be ${videoType} style videos.
+    const prompt = `Generate 5 viral video ideas for ${platform} targeting ${audience} in the ${niche} niche. These should be ${videoType} style videos.
 
 Your response must be valid JSON matching this structure exactly:
 {
@@ -152,16 +156,17 @@ Focus on:
     if (!data.choices?.[0]?.message?.content) {
       throw new Error('Invalid response from OpenAI');
     }
-      try {
-        const parsedContent = JSON.parse(data.choices[0].message.content);
-        return new Response(JSON.stringify(parsedContent), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } catch (parseError) {
-        console.error('Error parsing OpenAI response:', parseError);
-        console.log('Raw content:', data.choices[0].message.content);
-        throw new Error('Failed to parse OpenAI response as JSON');
-      }
+
+    try {
+      const parsedContent = JSON.parse(data.choices[0].message.content);
+      return new Response(JSON.stringify(parsedContent), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (parseError) {
+      console.error('Error parsing OpenAI response:', parseError);
+      console.log('Raw content:', data.choices[0].message.content);
+      throw new Error('Failed to parse OpenAI response as JSON');
+    }
 
   } catch (error) {
     console.error('Error:', error)
