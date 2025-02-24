@@ -301,6 +301,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         <DialogFooter className="flex justify-between sm:justify-between">
           <div className="flex gap-2">
             <Button
+              type="button"
               variant="destructive"
               onClick={handleDelete}
               disabled={deleting}
@@ -310,10 +311,10 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             </Button>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>
+            <Button type="button" onClick={handleSave}>
               Save Changes
             </Button>
           </div>
