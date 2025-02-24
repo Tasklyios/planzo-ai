@@ -81,6 +81,10 @@ export function AppSidebar() {
     }
   };
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
     <Sidebar className="border-r border-border bg-card">
       <SidebarHeader className="p-4">
@@ -98,14 +102,16 @@ export function AppSidebar() {
                   >
                     <Link 
                       to={item.path}
-                      className={`flex items-center gap-2 ${
-                        location.pathname === item.path 
-                          ? "text-primary font-medium" 
-                          : "text-muted-foreground hover:text-foreground"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+                        isActive(item.path) 
+                          ? "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent text-primary font-medium shadow-sm border border-primary/10" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                       }`}
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <item.icon className={`h-4 w-4 transition-colors ${
+                        isActive(item.path) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                      }`} />
+                      <span className="flex-1">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -126,14 +132,16 @@ export function AppSidebar() {
                   >
                     <Link 
                       to={item.path}
-                      className={`flex items-center gap-2 ${
-                        location.pathname === item.path 
-                          ? "text-primary font-medium" 
-                          : "text-muted-foreground hover:text-foreground"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+                        isActive(item.path) 
+                          ? "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent text-primary font-medium shadow-sm border border-primary/10" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                       }`}
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <item.icon className={`h-4 w-4 transition-colors ${
+                        isActive(item.path) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                      }`} />
+                      <span className="flex-1">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -142,10 +150,10 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   onClick={handleLogout}
                   tooltip="Logout"
-                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground w-full"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent/50 w-full"
                 >
                   <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
+                  <span className="flex-1">Logout</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
