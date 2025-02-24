@@ -8,6 +8,7 @@ import {
   UserCircle,
   CreditCard,
   LogOut,
+  FileText,
 } from "lucide-react";
 import {
   Sidebar,
@@ -30,17 +31,22 @@ const mainMenuItems = [
     path: "/dashboard",
   },
   {
-    title: "Generator",
+    title: "Generate Ideas",
     icon: Lightbulb,
     path: "/generator",
   },
   {
-    title: "Ideas",
+    title: "Generate Script",
+    icon: FileText,
+    path: "/script",
+  },
+  {
+    title: "Saved Ideas",
     icon: BookmarkIcon,
     path: "/ideas",
   },
   {
-    title: "Calendar",
+    title: "Content Calendar",
     icon: CalendarIcon,
     path: "/calendar",
   },
