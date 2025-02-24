@@ -236,7 +236,7 @@ const InputForm = ({
   };
 
   return (
-    <div className="space-y-2 md:space-y-4">
+    <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4">
         {renderFields()}
         <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
@@ -258,24 +258,26 @@ const InputForm = ({
         </div>
       </div>
       
-      <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mb-6 md:mb-8">
-        <CollapsibleTrigger className="mx-auto flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
-          <div className="flex items-center justify-center w-full gap-2">
-            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            Already have some ideas for your videos? Add them here!
-          </div>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4">
-          <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border">
-            <Textarea
-              value={customIdeas}
-              onChange={(e) => setCustomIdeas(e.target.value)}
-              placeholder="Enter your video ideas..."
-              className="min-h-[100px] bg-background"
-            />
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+      <div className="mb-8">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger className="mx-auto flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
+            <div className="flex items-center justify-center w-full gap-2">
+              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              Already have some ideas for your videos? Add them here!
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4">
+            <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border">
+              <Textarea
+                value={customIdeas}
+                onChange={(e) => setCustomIdeas(e.target.value)}
+                placeholder="Enter your video ideas..."
+                className="min-h-[100px] bg-background"
+              />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
     </div>
   );
 }
