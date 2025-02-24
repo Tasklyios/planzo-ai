@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
@@ -42,6 +41,8 @@ const IdeaGenerator = () => {
     ideas,
     setIdeas,
     generateIdeas,
+    customIdeas,
+    setCustomIdeas
   } = useIdeaGenerator();
 
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
@@ -119,8 +120,7 @@ const IdeaGenerator = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
+  return <div className="min-h-screen bg-gradient-to-b from-[#F9FAFC] to-white">
       <header className="fixed w-full bg-white/90 backdrop-blur-sm border-b border-gray-100 z-50">
         <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center">
@@ -174,15 +174,17 @@ const IdeaGenerator = () => {
       <main className="container mx-auto px-4 pt-28 pb-12">
         <section className="mb-12">
           <GeneratorHeader />
-          <InputForm
-            niche={niche}
-            audience={audience}
-            videoType={videoType}
+          <InputForm 
+            niche={niche} 
+            audience={audience} 
+            videoType={videoType} 
             platform={platform}
-            setNiche={setNiche}
-            setAudience={setAudience}
-            setVideoType={setVideoType}
+            customIdeas={customIdeas}
+            setNiche={setNiche} 
+            setAudience={setAudience} 
+            setVideoType={setVideoType} 
             setPlatform={setPlatform}
+            setCustomIdeas={setCustomIdeas}
           />
 
           <div className="flex justify-center mb-8">
@@ -204,15 +206,15 @@ const IdeaGenerator = () => {
             </Button>
           </div>
 
-          <IdeasGrid
-            ideas={ideas}
-            onAddToCalendar={(idea) => setAddingToCalendar({
+          <IdeasGrid 
+            ideas={ideas} 
+            onAddToCalendar={idea => setAddingToCalendar({
               idea,
               title: idea.title,
               scheduledFor: new Date().toISOString().split('T')[0],
-            })}
-            onEdit={(ideaId) => setEditingIdeaId(ideaId)}
-            onBookmarkToggle={handleBookmarkToggle}
+            })} 
+            onEdit={ideaId => setEditingIdeaId(ideaId)} 
+            onBookmarkToggle={handleBookmarkToggle} 
           />
         </section>
       </main>
@@ -223,11 +225,11 @@ const IdeaGenerator = () => {
         onLogout={handleLogout}
       />
 
-      <AddToCalendarDialog
-        idea={addingToCalendar}
-        onOpenChange={() => setAddingToCalendar(null)}
-        onAddToCalendar={handleAddToCalendar}
-        onUpdate={updateCalendarIdea}
+      <AddToCalendarDialog 
+        idea={addingToCalendar} 
+        onOpenChange={() => setAddingToCalendar(null)} 
+        onAddToCalendar={handleAddToCalendar} 
+        onUpdate={updateCalendarIdea} 
       />
 
       {editingIdeaId && (
@@ -236,8 +238,7 @@ const IdeaGenerator = () => {
           onClose={() => setEditingIdeaId(null)}
         />
       )}
-    </div>
-  );
+    </div>;
 };
 
 export default IdeaGenerator;
