@@ -1,8 +1,13 @@
 
 import React, { useState, useEffect } from "react";
-import { LayersIcon, Users, Video, Smartphone, Package2, Building2 } from "lucide-react";
+import { LayersIcon, Users, Video, Smartphone, Package2, Building2, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface InputFormProps {
   niche: string;
@@ -30,6 +35,7 @@ const InputForm = ({
   const [accountType, setAccountType] = useState<AccountType>('personal');
   const [loading, setLoading] = useState(true);
   const [customIdeas, setCustomIdeas] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     getAccountType();
@@ -252,17 +258,22 @@ const InputForm = ({
         </div>
       </div>
       
-      <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border">
-        <div className="flex flex-col space-y-2">
-          <label className="text-sm font-medium text-foreground">Already have some ideas for your videos? Add them here!</label>
-          <Textarea
-            value={customIdeas}
-            onChange={(e) => setCustomIdeas(e.target.value)}
-            placeholder="Enter your video ideas..."
-            className="min-h-[100px] bg-background"
-          />
-        </div>
-      </div>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
+          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          Already have some ideas for your videos? Add them here!
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-4">
+          <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border">
+            <Textarea
+              value={customIdeas}
+              onChange={(e) => setCustomIdeas(e.target.value)}
+              placeholder="Enter your video ideas..."
+              className="min-h-[100px] bg-background"
+            />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
