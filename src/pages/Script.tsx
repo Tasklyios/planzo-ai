@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,7 @@ export default function Script() {
   const [toneOfVoice, setToneOfVoice] = useState("conversational");
   const [duration, setDuration] = useState("60");
   const [additionalNotes, setAdditionalNotes] = useState("");
+  const [showVisuals, setShowVisuals] = useState(false);
   const { toast } = useToast();
 
   const fetchSavedIdeas = async () => {
@@ -89,7 +91,6 @@ export default function Script() {
       if (data?.script) {
         setGeneratedScript(data.script);
         
-        // Save the generated script to the scripts table if using an existing idea
         if (scriptType === "existing" && selectedIdea?.id) {
           const { error: saveError } = await supabase
             .from('scripts')
@@ -122,6 +123,27 @@ export default function Script() {
       setLoading(false);
     }
   };
+
+  const parseScript = (script: string) => {
+    if (!script) return { scriptContent: "", visualContent: "" };
+
+    const sections = script.split("[VISUAL]");
+    let scriptContent = sections[0];
+    let visualContent = "";
+
+    if (sections.length > 1) {
+      visualContent = sections.slice(1).join("\n[VISUAL]");
+      scriptContent = scriptContent.replace(/\[TIMESTAMPS?\]|\[HOOK\]|\[CTA\]/g, "");
+      visualContent = visualContent.replace(/\[TIMESTAMPS?\]|\[HOOK\]|\[CTA\]/g, "");
+    }
+
+    return {
+      scriptContent: scriptContent.trim(),
+      visualContent: visualContent.trim(),
+    };
+  };
+
+  const { scriptContent, visualContent } = parseScript(generatedScript);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -257,9 +279,19 @@ export default function Script() {
 
           {generatedScript && (
             <div className="rounded-lg border p-6 bg-card mt-8">
-              <h2 className="text-xl font-semibold mb-4">Generated Script</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Generated Script</h2>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="show-visuals" className="text-sm">Show Visuals</Label>
+                  <Switch
+                    id="show-visuals"
+                    checked={showVisuals}
+                    onCheckedChange={setShowVisuals}
+                  />
+                </div>
+              </div>
               <div className="whitespace-pre-wrap font-mono text-sm">
-                {generatedScript}
+                {showVisuals ? visualContent : scriptContent}
               </div>
             </div>
           )}
