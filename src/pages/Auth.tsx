@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,6 +81,10 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     try {
+      const redirectURL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8080'
+        : window.location.origin;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -87,6 +92,7 @@ const Auth = () => {
             access_type: 'offline',
             prompt: 'consent',
           },
+          redirectTo: redirectURL
         }
       });
       if (error) throw error;
