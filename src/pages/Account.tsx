@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun } from "lucide-react";
@@ -57,6 +56,8 @@ interface Profile {
   content_niche?: string | null;
   target_audience?: string | null;
   posting_platforms?: string[] | null;
+  business_niche?: string | null;
+  product_niche?: string | null;
 }
 
 export default function Account() {
@@ -77,14 +78,27 @@ export default function Account() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('content_personality, content_style, account_type, content_niche, target_audience, posting_platforms')
+        .select('content_personality, content_style, account_type, content_niche, target_audience, posting_platforms, business_niche, product_niche')
         .eq('id', session.user.id)
         .single();
 
       if (error) throw error;
-      setProfile(data || {});
+      if (data) {
+        setProfile(data);
+        // Update localStorage with the fetched values
+        if (data.content_niche) localStorage.setItem("niche", data.content_niche);
+        if (data.target_audience) localStorage.setItem("audience", data.target_audience);
+        if (data.posting_platforms && data.posting_platforms.length > 0) {
+          localStorage.setItem("platform", data.posting_platforms[0]);
+        }
+      }
     } catch (error: any) {
       console.error('Error fetching profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load profile data",
+      });
     }
   };
 
@@ -92,21 +106,44 @@ export default function Account() {
     try {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      if (!session?.user) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to update your profile",
+        });
+        return;
+      }
+
+      const updateData: Profile = {
+        content_personality: profile.content_personality,
+        content_style: profile.content_style,
+        account_type: profile.account_type,
+        content_niche: profile.content_niche,
+        target_audience: profile.target_audience,
+        posting_platforms: profile.posting_platforms,
+      };
+
+      // Add niche based on account type
+      if (profile.account_type === 'business') {
+        updateData.business_niche = profile.business_niche;
+      } else if (profile.account_type === 'ecommerce') {
+        updateData.product_niche = profile.product_niche;
+      }
 
       const { error } = await supabase
         .from('profiles')
-        .update({
-          content_personality: profile.content_personality,
-          content_style: profile.content_style,
-          account_type: profile.account_type,
-          content_niche: profile.content_niche,
-          target_audience: profile.target_audience,
-          posting_platforms: profile.posting_platforms,
-        })
+        .update(updateData)
         .eq('id', session.user.id);
 
       if (error) throw error;
+
+      // Update localStorage after successful save
+      if (profile.content_niche) localStorage.setItem("niche", profile.content_niche);
+      if (profile.target_audience) localStorage.setItem("audience", profile.target_audience);
+      if (profile.posting_platforms && profile.posting_platforms.length > 0) {
+        localStorage.setItem("platform", profile.posting_platforms[0]);
+      }
 
       toast({
         title: "Profile updated",
@@ -118,6 +155,7 @@ export default function Account() {
         title: "Error",
         description: "Failed to update profile. Please try again.",
       });
+      console.error('Error updating profile:', error);
     } finally {
       setLoading(false);
     }
@@ -212,7 +250,7 @@ export default function Account() {
                           </div>
                         </Label>
                       </div>
-                    )
+                    );
                   })}
                 </RadioGroup>
               </div>
@@ -222,6 +260,30 @@ export default function Account() {
               <h2 className="text-xl font-semibold mb-6">Customize Experience</h2>
               <form onSubmit={(e) => { e.preventDefault(); handleUpdateProfile(); }} className="space-y-6">
                 <div className="space-y-4">
+                  {profile.account_type === 'business' && (
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="business_niche">Business Niche</Label>
+                      <Input
+                        id="business_niche"
+                        placeholder="E.g., Technology, Services, Retail..."
+                        value={profile.business_niche || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, business_niche: e.target.value }))}
+                      />
+                    </div>
+                  )}
+
+                  {profile.account_type === 'ecommerce' && (
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="product_niche">Product Niche</Label>
+                      <Input
+                        id="product_niche"
+                        placeholder="E.g., Fashion, Electronics, Home Decor..."
+                        value={profile.product_niche || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, product_niche: e.target.value }))}
+                      />
+                    </div>
+                  )}
+
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="content_niche">Content Niche</Label>
                     <Input

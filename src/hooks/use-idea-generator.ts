@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -58,35 +57,25 @@ export const useIdeaGenerator = () => {
       if (error) throw error;
 
       if (profile) {
+        let nicheValue = "";
         switch (profile.account_type) {
           case 'business':
-            if (profile.business_niche) {
-              setNiche(profile.business_niche);
-              localStorage.setItem("niche", profile.business_niche);
-            }
-            if (profile.content_niche) {
-              setVideoType(profile.content_niche);
-              localStorage.setItem("videoType", profile.content_niche);
-            }
+            nicheValue = profile.business_niche || profile.content_niche || "";
             break;
-
           case 'ecommerce':
-            if (profile.product_niche) {
-              setNiche(profile.product_niche);
-              localStorage.setItem("niche", profile.product_niche);
-            }
-            if (profile.content_niche) {
-              setVideoType(profile.content_niche);
-              localStorage.setItem("videoType", profile.content_niche);
-            }
+            nicheValue = profile.product_niche || profile.content_niche || "";
             break;
-
           default:
-            if (profile.content_niche) {
-              setNiche(profile.content_niche);
-              localStorage.setItem("niche", profile.content_niche);
-            }
+            nicheValue = profile.content_niche || "";
             break;
+        }
+
+        setNiche(nicheValue);
+        localStorage.setItem("niche", nicheValue);
+
+        if (profile.content_niche) {
+          setVideoType(profile.content_niche);
+          localStorage.setItem("videoType", profile.content_niche);
         }
         
         if (profile.target_audience) {
@@ -221,4 +210,3 @@ export const useIdeaGenerator = () => {
     setCustomIdeas
   };
 };
-
