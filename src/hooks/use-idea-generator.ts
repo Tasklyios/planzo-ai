@@ -125,6 +125,7 @@ export const useIdeaGenerator = () => {
           description: "Please log in to generate ideas.",
         });
         navigate("/auth");
+        setLoading(false);  // Make sure to set loading to false here
         return;
       }
 
@@ -185,7 +186,7 @@ export const useIdeaGenerator = () => {
         description: error.message || 'Failed to generate ideas. Please try again.',
       });
     } finally {
-      setLoading(false);
+      setLoading(false);  // Make sure loading state is always reset
     }
   };
 
