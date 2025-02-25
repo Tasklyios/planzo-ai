@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -73,11 +74,7 @@ export const useIdeaGenerator = () => {
         setNiche(nicheValue);
         localStorage.setItem("niche", nicheValue);
 
-        if (profile.content_niche) {
-          setVideoType(profile.content_niche);
-          localStorage.setItem("videoType", profile.content_niche);
-        }
-        
+        // Don't set videoType from content_niche anymore
         if (profile.target_audience) {
           setAudience(profile.target_audience);
           localStorage.setItem("audience", profile.target_audience);
