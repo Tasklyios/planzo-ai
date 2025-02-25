@@ -13,7 +13,8 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+// Initialize Stripe with the publishable key
+const stripePromise = loadStripe('pk_test_51OpXBiG4Kts8pL4Fn5nPglUWjTVduJQDdIhjuBQgKpcMWB2KirQoKn2Pz0Q2FsJRXgdFuQqSPBixFftBGbIoXO5Q00zZ9XJ5iU');
 
 interface PricingSheetProps {
   trigger: React.ReactNode;
@@ -36,7 +37,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Get Pro",
       color: "white",
-      stripePriceId: import.meta.env.VITE_STRIPE_PRO_PRICE_ID
+      stripePriceId: 'price_1OpXCZG4Kts8pL4FlyWa2YWW'
     },
     {
       name: "Plus",
@@ -51,7 +52,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Plus",
       color: "primary",
-      stripePriceId: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID
+      stripePriceId: 'price_1OpXCZG4Kts8pL4FpEFRkN9E'
     },
     {
       name: "Business",
@@ -68,7 +69,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Business",
       color: "primary",
-      stripePriceId: import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID
+      stripePriceId: 'price_1OpXCZG4Kts8pL4FOUStPIin'
     }
   ];
 
