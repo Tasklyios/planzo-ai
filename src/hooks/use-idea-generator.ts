@@ -113,8 +113,6 @@ export const useIdeaGenerator = () => {
     }
 
     setLoading(true);
-    // Clear previous ideas before generating new ones
-    setIdeas([]);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -163,12 +161,12 @@ export const useIdeaGenerator = () => {
 
       if (saveError) throw saveError;
 
+      // Fetch all ideas for the user, not just the new ones
       const { data: savedIdeas, error: fetchError } = await supabase
         .from("video_ideas")
         .select("*")
         .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(ideasToSave.length);
+        .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
 
