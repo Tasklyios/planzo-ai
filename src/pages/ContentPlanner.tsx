@@ -152,6 +152,7 @@ export default function ContentPlanner() {
                     index={index}
                     title={item.title}
                     description={item.description}
+                    color={item.color}
                   />
                 ))}
               </PlannerColumn>
