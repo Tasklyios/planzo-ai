@@ -76,7 +76,7 @@ ${customIdeas ? `\nUse these custom ideas as additional inspiration:\n${customId
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',  // Changed to a valid model name
+        model: 'gpt-4o-mini',
         messages: [
           { 
             role: 'system', 
@@ -111,6 +111,7 @@ ${customIdeas ? `\nUse these custom ideas as additional inspiration:\n${customId
 
       return new Response(JSON.stringify(parsedContent), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       });
     } catch (parseError) {
       console.error('Error parsing OpenAI response:', parseError);
