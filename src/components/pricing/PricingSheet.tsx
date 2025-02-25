@@ -36,7 +36,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Get Pro",
       color: "white",
-      stripePriceId: String(import.meta.env.VITE_STRIPE_PRO_PRICE_ID)
+      stripePriceId: import.meta.env.VITE_STRIPE_PRO_PRICE_ID
     },
     {
       name: "Plus",
@@ -51,7 +51,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Plus",
       color: "primary",
-      stripePriceId: String(import.meta.env.VITE_STRIPE_PLUS_PRICE_ID)
+      stripePriceId: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID
     },
     {
       name: "Business",
@@ -68,11 +68,11 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Business",
       color: "primary",
-      stripePriceId: String(import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID)
+      stripePriceId: import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID
     }
   ];
 
-  const handleUpgradeClick = async (tier: string, priceId: string) => {
+  const handleUpgradeClick = async (tier: string, priceId: string | undefined) => {
     if (!priceId) {
       toast({
         variant: "destructive",
