@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
@@ -6,51 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
-
-// High-performing hook patterns based on viral content
-const HOOK_PATTERNS = [
-  "Here's the one thing {topic} that nobody talks about...",
-  "I made {result} in {timeframe} using this {strategy}...",
-  "Watch how I {action} in less than {timeframe}...",
-  "The truth about {topic} that {audience} needs to know...",
-  "Here's how much {metric} as a {role}...",
-  "{number} things I wish I knew before {action}...",
-];
-
-// Content structures that consistently perform well
-const CONTENT_STRUCTURES = [
-  {
-    type: "story_reveal",
-    format: [
-      "Hook with unexpected result/situation",
-      "Quick backstory/context",
-      "Key turning point or realization",
-      "Specific action taken",
-      "Results and proof",
-      "Call to action"
-    ]
-  },
-  {
-    type: "day_in_life",
-    format: [
-      "Attention-grabbing moment",
-      "Time-stamped activities",
-      "Behind-the-scenes reality",
-      "Unexpected challenges",
-      "Key learning or result"
-    ]
-  },
-  {
-    type: "contrarian_take",
-    format: [
-      "Challenge common belief",
-      "Personal experience/proof",
-      "Why conventional wisdom fails",
-      "Better alternative",
-      "How to implement"
-    ]
-  }
-];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -146,60 +100,35 @@ Additional Context: ${additionalNotes || ''}`;
     const { niche, audience, videoType, platform, customIdeas } = requestData;
     console.log("Generating ideas with params:", { niche, audience, videoType, platform, customIdeas });
 
-    const prompt = `Generate 5 viral ${platform} video ideas for ${audience} in the ${niche} niche.
+    const prompt = `Generate 5 viral ${platform} video ideas that target ${audience} in the ${niche} niche.
 
-Use these high-performing video formats as inspiration:
-[
-  {
-    "title": "Here's how I made $10k in 24 hours with zero audience",
-    "description": "A step-by-step walkthrough of launching a digital product and making the first sale within a day, focusing on specific tactics and real numbers.",
-    "category": "Business",
-    "tags": [
-      "startup",
-      "entrepreneurship",
-      "business"
-    ]
-  },
-  {
-    "title": "I tracked every minute of my day for a month as a tech CEO",
-    "description": "Behind-the-scenes look at real startup life, with surprising insights about productivity and work-life balance.",
-    "category": "Day in Life",
-    "tags": [
-      "productivity",
-      "startup",
-      "lifestyle"
-    ]
-  },
-  {
-    "title": "3 things I wish I knew before raising $1M for my startup",
-    "description": "Raw, honest take on the fundraising process with specific mistakes and learnings from personal experience.",
-    "category": "Business",
-    "tags": [
-      "startup",
-      "investing",
-      "business"
-    ]
-  }
-]
+Create ideas based on these proven formats:
+1. "Here's how I made $10k in 24 hours with zero audience"
+2. "I tested every viral ${niche} hack so you don't have to"
+3. "Here's what ${audience} actually wants (based on real data)"
+4. "The truth about ${niche} that nobody talks about"
+5. "How I went from zero to success in ${niche} (real numbers)"
 
-${customIdeas ? `\nAlso consider these custom ideas as inspiration:\n${customIdeas}` : ''}
+Key requirements for each idea:
+- Must hook viewers in first 3 seconds
+- Include specific numbers or results
+- Focus on real experiences/data
+- Create instant curiosity
+- Provide actionable value
 
-Key elements each idea must include:
-- Title: Use curiosity gaps, numbers, or emotional triggers
-- Description: Clear value proposition and hook
-- Category: Specific content type
-- Tags: Relevant, trending hashtags (without # symbol)
+Format response as JSON with this structure:
+{
+  "ideas": [
+    {
+      "title": "string (attention-grabbing hook)",
+      "description": "string (specific value proposition)",
+      "category": "string (content type)",
+      "tags": ["string"] (3-5 relevant keywords)
+    }
+  ]
+}
 
-Focus on: 
-- Problem-solution format
-- Relatable situations
-- Behind-the-scenes reveals
-- Specific results and numbers
-- Personal experiences
-- Day-in-life content
-- Testing/comparison content
-
-Format as JSON with exactly the same structure as the examples above.`;
+${customIdeas ? `\nUse these custom ideas as additional inspiration:\n${customIdeas}` : ''}`;
 
     console.log("Sending idea generation prompt to OpenAI");
 
@@ -210,11 +139,21 @@ Format as JSON with exactly the same structure as the examples above.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',  // Changed from gpt-4o-mini to gpt-4o
+        model: 'gpt-4o',
         messages: [
           { 
             role: 'system', 
-            content: 'You are a successful content creator who consistently goes viral by sharing authentic, value-driven content with specific results and personal experiences. Focus on hooks that create immediate curiosity and deliver real transformation.'
+            content: `You are an expert content strategist who creates viral ideas based on proven formulas. You focus on:
+            - Hooks that create instant curiosity
+            - Specific results and numbers
+            - Behind-the-scenes insights
+            - Data-driven approaches
+            - Personal experiences
+            Never use:
+            - Generic/vague statements
+            - Clickbait without substance
+            - Overused phrases
+            - Complex jargon`
           },
           { role: 'user', content: prompt }
         ],
@@ -223,21 +162,35 @@ Format as JSON with exactly the same structure as the examples above.`;
     });
 
     const data = await response.json();
-    console.log("OpenAI response received");
+    console.log("OpenAI response received:", data);
 
     if (!data.choices?.[0]?.message?.content) {
       throw new Error('Invalid response from OpenAI');
     }
 
-    const parsedContent = JSON.parse(data.choices[0].message.content);
-    return new Response(JSON.stringify(parsedContent), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    try {
+      const parsedContent = JSON.parse(data.choices[0].message.content);
+      console.log("Successfully parsed OpenAI response:", parsedContent);
+
+      if (!parsedContent.ideas || !Array.isArray(parsedContent.ideas)) {
+        throw new Error('Invalid response format from AI');
+      }
+
+      return new Response(JSON.stringify(parsedContent), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (parseError) {
+      console.error('Error parsing OpenAI response:', parseError);
+      throw new Error('Failed to parse AI response');
+    }
 
   } catch (error) {
     console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        message: 'Failed to generate ideas. Please try again.'
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
