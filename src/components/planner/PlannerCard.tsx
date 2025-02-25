@@ -11,10 +11,18 @@ interface PlannerCardProps {
   title: string;
   description: string;
   color?: string;
+  onEdit?: () => void;
 }
 
-export function PlannerCard({ id, index, title, description, color = "blue" }: PlannerCardProps) {
+export function PlannerCard({ id, index, title, description, color = "blue", onEdit }: PlannerCardProps) {
   const [showEdit, setShowEdit] = useState(false);
+
+  const handleEditClose = () => {
+    setShowEdit(false);
+    if (onEdit) {
+      onEdit();
+    }
+  };
 
   return (
     <>
@@ -43,7 +51,7 @@ export function PlannerCard({ id, index, title, description, color = "blue" }: P
       {showEdit && (
         <EditIdea 
           ideaId={id} 
-          onClose={() => setShowEdit(false)} 
+          onClose={handleEditClose}
         />
       )}
     </>

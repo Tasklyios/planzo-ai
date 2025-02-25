@@ -153,6 +153,7 @@ export default function ContentPlanner() {
                     title={item.title}
                     description={item.description}
                     color={item.color}
+                    onEdit={fetchIdeas}
                   />
                 ))}
               </PlannerColumn>
