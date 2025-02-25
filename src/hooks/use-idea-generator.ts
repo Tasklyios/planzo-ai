@@ -74,7 +74,6 @@ export const useIdeaGenerator = () => {
         setNiche(nicheValue);
         localStorage.setItem("niche", nicheValue);
 
-        // Don't set videoType from content_niche anymore
         if (profile.target_audience) {
           setAudience(profile.target_audience);
           localStorage.setItem("audience", profile.target_audience);
@@ -114,6 +113,8 @@ export const useIdeaGenerator = () => {
     }
 
     setLoading(true);
+    // Clear previous ideas before generating new ones
+    setIdeas([]);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
