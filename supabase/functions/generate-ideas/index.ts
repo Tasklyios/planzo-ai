@@ -76,7 +76,7 @@ ${customIdeas ? `\nUse these custom ideas as additional inspiration:\n${customId
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-3.5-turbo',  // Changed back to gpt-3.5-turbo
         messages: [
           { 
             role: 'system', 
