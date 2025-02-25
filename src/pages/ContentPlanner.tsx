@@ -1,16 +1,16 @@
 
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlannerColumn } from "@/components/planner/PlannerColumn";
 import { PlannerCard } from "@/components/planner/PlannerCard";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { GeneratedIdea } from "@/types/idea";
 
-interface PlannerItem {
-  id: string;
-  title: string;
-  description: string;
+interface PlannerItem extends GeneratedIdea {
+  status: string;
 }
 
 interface PlannerColumn {
@@ -29,45 +29,104 @@ export default function ContentPlanner() {
     { id: 'ready', title: 'Ready to Post', items: [] },
   ]);
 
-  const onDragEnd = (result: any) => {
+  useEffect(() => {
+    fetchIdeas();
+  }, []);
+
+  const fetchIdeas = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data: ideas, error } = await supabase
+        .from('video_ideas')
+        .select('*')
+        .eq('user_id', session.user.id);
+
+      if (error) throw error;
+
+      // Group ideas by status
+      const groupedIdeas = ideas.reduce((acc: { [key: string]: PlannerItem[] }, idea) => {
+        const status = idea.status || 'ideas';
+        if (!acc[status]) acc[status] = [];
+        acc[status].push(idea as PlannerItem);
+        return acc;
+      }, {});
+
+      // Update columns with fetched ideas
+      setColumns(columns.map(col => ({
+        ...col,
+        items: groupedIdeas[col.id] || []
+      })));
+
+    } catch (error: any) {
+      console.error('Error fetching ideas:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load ideas. Please try again."
+      });
+    }
+  };
+
+  const onDragEnd = async (result: any) => {
     if (!result.destination) return;
 
     const { source, destination } = result;
 
-    if (source.droppableId !== destination.droppableId) {
-      const sourceColumn = columns.find(col => col.id === source.droppableId);
-      const destColumn = columns.find(col => col.id === destination.droppableId);
-      
-      if (!sourceColumn || !destColumn) return;
+    try {
+      // Update in Supabase first
+      const ideaId = result.draggableId;
+      const { error } = await supabase
+        .from('video_ideas')
+        .update({ status: destination.droppableId })
+        .eq('id', ideaId);
 
-      const sourceItems = [...sourceColumn.items];
-      const destItems = [...destColumn.items];
-      const [removed] = sourceItems.splice(source.index, 1);
-      destItems.splice(destination.index, 0, removed);
+      if (error) throw error;
 
-      setColumns(columns.map(col => {
-        if (col.id === source.droppableId) {
-          return { ...col, items: sourceItems };
-        }
-        if (col.id === destination.droppableId) {
-          return { ...col, items: destItems };
-        }
-        return col;
-      }));
-    } else {
-      const column = columns.find(col => col.id === source.droppableId);
-      if (!column) return;
+      // Then update local state
+      if (source.droppableId !== destination.droppableId) {
+        const sourceColumn = columns.find(col => col.id === source.droppableId);
+        const destColumn = columns.find(col => col.id === destination.droppableId);
+        
+        if (!sourceColumn || !destColumn) return;
 
-      const copiedItems = [...column.items];
-      const [removed] = copiedItems.splice(source.index, 1);
-      copiedItems.splice(destination.index, 0, removed);
+        const sourceItems = [...sourceColumn.items];
+        const destItems = [...destColumn.items];
+        const [removed] = sourceItems.splice(source.index, 1);
+        destItems.splice(destination.index, 0, removed);
 
-      setColumns(columns.map(col => {
-        if (col.id === source.droppableId) {
-          return { ...col, items: copiedItems };
-        }
-        return col;
-      }));
+        setColumns(columns.map(col => {
+          if (col.id === source.droppableId) {
+            return { ...col, items: sourceItems };
+          }
+          if (col.id === destination.droppableId) {
+            return { ...col, items: destItems };
+          }
+          return col;
+        }));
+      } else {
+        const column = columns.find(col => col.id === source.droppableId);
+        if (!column) return;
+
+        const copiedItems = [...column.items];
+        const [removed] = copiedItems.splice(source.index, 1);
+        copiedItems.splice(destination.index, 0, removed);
+
+        setColumns(columns.map(col => {
+          if (col.id === source.droppableId) {
+            return { ...col, items: copiedItems };
+          }
+          return col;
+        }));
+      }
+    } catch (error: any) {
+      console.error('Error updating idea status:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update idea status. Please try again."
+      });
     }
   };
 

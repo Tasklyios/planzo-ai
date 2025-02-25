@@ -130,6 +130,7 @@ export type Database = {
           platform: string | null
           scheduled_for: string | null
           script: string | null
+          status: string | null
           symbol: string | null
           tags: string[] | null
           title: string
@@ -145,6 +146,7 @@ export type Database = {
           platform?: string | null
           scheduled_for?: string | null
           script?: string | null
+          status?: string | null
           symbol?: string | null
           tags?: string[] | null
           title: string
@@ -160,6 +162,7 @@ export type Database = {
           platform?: string | null
           scheduled_for?: string | null
           script?: string | null
+          status?: string | null
           symbol?: string | null
           tags?: string[] | null
           title?: string

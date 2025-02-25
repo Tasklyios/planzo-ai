@@ -9,6 +9,7 @@ import {
   CreditCard,
   LogOut,
   FileText,
+  Kanban,
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,6 +40,11 @@ const mainMenuItems = [
     title: "Generate Script",
     icon: FileText,
     path: "/script",
+  },
+  {
+    title: "Content Planner",
+    icon: Kanban,
+    path: "/planner",
   },
   {
     title: "Saved Ideas",
