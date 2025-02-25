@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,7 +87,6 @@ const Auth = () => {
             access_type: 'offline',
             prompt: 'consent',
           },
-          redirectTo: window.location.origin // This will use the current domain
         }
       });
       if (error) throw error;
