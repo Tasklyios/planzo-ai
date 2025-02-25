@@ -125,10 +125,12 @@ export const useIdeaGenerator = () => {
           description: "Please log in to generate ideas.",
         });
         navigate("/auth");
-        setLoading(false);  // Make sure to set loading to false here
+        setLoading(false);
         return;
       }
 
+      console.log("Calling generate-ideas function with:", { niche, audience, videoType, platform, customIdeas });
+      
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: {
           niche,
@@ -139,11 +141,19 @@ export const useIdeaGenerator = () => {
         },
       });
 
-      if (error) throw error;
+      console.log("Response from generate-ideas:", { data, error });
+
+      if (error) {
+        console.error("Function invocation error:", error);
+        throw error;
+      }
 
       if (!data || !data.ideas) {
+        console.error("Invalid response format:", data);
         throw new Error('Invalid response format from AI');
       }
+
+      console.log("Saving ideas to database:", data.ideas);
 
       const ideasToSave = data.ideas.map((idea: any) => ({
         title: idea.title,
@@ -160,16 +170,21 @@ export const useIdeaGenerator = () => {
         .from("video_ideas")
         .insert(ideasToSave);
 
-      if (saveError) throw saveError;
+      if (saveError) {
+        console.error("Error saving ideas:", saveError);
+        throw saveError;
+      }
 
-      // Fetch all ideas for the user, not just the new ones
       const { data: savedIdeas, error: fetchError } = await supabase
         .from("video_ideas")
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error("Error fetching saved ideas:", fetchError);
+        throw fetchError;
+      }
 
       const transformedIdeas = (savedIdeas || []).map(transformSupabaseIdea);
       setIdeas(transformedIdeas);
@@ -186,7 +201,7 @@ export const useIdeaGenerator = () => {
         description: error.message || 'Failed to generate ideas. Please try again.',
       });
     } finally {
-      setLoading(false);  // Make sure loading state is always reset
+      setLoading(false);
     }
   };
 
