@@ -7,26 +7,47 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const VIRAL_VIDEO_EXAMPLES = [
-  {
-    title: "A Month-Long Study of the Two-Minute Productivity Method",
-    description: "An evidence-based analysis of the '2-minute rule' productivity technique, examining its impact on task completion and workflow efficiency.",
-    category: "Productivity",
-    tags: ["productivity", "workflow", "research"]
-  },
-  {
-    title: "The Science Behind Successful Morning Routines",
-    description: "A data-driven exploration of five research-backed morning habits, analyzing their effects on productivity and well-being.",
-    category: "Lifestyle",
-    tags: ["productivity", "wellness", "research"]
-  },
-  {
-    title: "30-Day Hydration Study: Measuring the Effects of Increased Water Intake",
-    description: "A methodical analysis of physiological and cognitive changes observed during a controlled hydration experiment.",
-    category: "Health",
-    tags: ["health", "research", "wellness"]
-  }
-];
+const CONTENT_PATTERNS = {
+  hook_templates: [
+    "New research shows that {topic}...",
+    "I analyzed {number} successful {platform} creators and found that...",
+    "The hidden psychology behind why {topic} actually works...",
+    "Here's what {number} years of data reveals about {topic}...",
+    "I tested {topic} for 30 days, here's what happened...",
+  ],
+  structure_templates: [
+    {
+      type: "data_driven",
+      format: [
+        "Hook with data point",
+        "Present problem/misconception",
+        "Share research/evidence",
+        "Actionable takeaway",
+        "Call to action"
+      ]
+    },
+    {
+      type: "case_study",
+      format: [
+        "Specific result/outcome",
+        "Initial situation",
+        "Key turning point",
+        "Implementation steps",
+        "Proof/validation"
+      ]
+    },
+    {
+      type: "myth_busting",
+      format: [
+        "Common belief statement",
+        "Why it's wrong (data)",
+        "Real mechanism/truth",
+        "Better approach",
+        "Implementation tip"
+      ]
+    }
+  ]
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -40,43 +61,40 @@ serve(async (req) => {
     if (requestData.type === 'script') {
       const { title, description, category, tags, toneOfVoice, duration, additionalNotes } = requestData;
 
-      const scriptPrompt = `Create a professional video script based on the following parameters:
+      // Calculate optimal script length based on duration
+      const wordsPerSecond = 2.5; // Average speaking rate
+      const targetWordCount = Math.floor(duration * wordsPerSecond);
+
+      const scriptPrompt = `Create a high-performing ${duration}-second script for ${platform} based on proven content strategies.
 
 Title: ${title}
 Description: ${description}
 Category: ${category}
-Tags: ${tags?.join(', ')}
-Tone of Voice: ${toneOfVoice}
-Duration: ${duration} seconds
-Additional Notes: ${additionalNotes || 'None'}
+Target Word Count: ${targetWordCount}
 
-Format Requirements:
-- For each section of the script, provide the script text first
-- After each relevant section, add visual directions using this exact format:
-  [VISUAL_GUIDE]This is what should be shown[/VISUAL_GUIDE]
-- Use the visual guide tags to wrap ALL visual directions
-- Keep visual directions brief and specific
+Requirements:
+1. Focus on data-driven insights and specific results
+2. Use pattern interrupts every 2-3 sentences
+3. Include B-roll suggestions that create scroll-stopping visuals
+4. Maintain high information density with zero fluff
+5. Use ${toneOfVoice} tone while staying authentic
+6. Include specific numbers and percentages when relevant
+7. Format visual directions with [VISUAL_GUIDE] tags
 
-Style Guidelines:
-- Maintain a professional, authoritative tone
-- Focus on data, research, and concrete examples
-- Avoid clickbait phrases or manufactured suspense
-- Present information clearly and directly
-- Use precise language and specific terminology
+Content Structure:
+- First 3 seconds must hook viewer with concrete value
+- Focus on one clear insight/takeaway
+- End with clear next step or call-to-action
+- Keep each segment 2-3 sentences max
+- Use strategic pauses for emphasis
 
-Structure:
-1. Open with a clear thesis or problem statement
-2. Present key points in a logical sequence
-3. Support claims with evidence
-4. Conclude with actionable insights
+Additional Context: ${additionalNotes}
 
-Example format:
-Here's the script text for the opening.
-[VISUAL_GUIDE]Medium shot of speaker with key statistic on screen[/VISUAL_GUIDE]
-Next part of the script text.
-[VISUAL_GUIDE]Show diagram illustrating the concept[/VISUAL_GUIDE]
-
-Pacing: Structure the content to fit naturally within ${duration} seconds.`;
+Example Format:
+Here's the research-backed script text.
+[VISUAL_GUIDE]Overlay key statistic with dynamic typography[/VISUAL_GUIDE]
+Next part of the script with specific data point.
+[VISUAL_GUIDE]Split screen comparison showing before/after[/VISUAL_GUIDE]`;
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -89,7 +107,19 @@ Pacing: Structure the content to fit naturally within ${duration} seconds.`;
           messages: [
             {
               role: 'system',
-              content: 'You are a professional content strategist who creates sophisticated, research-backed video scripts. Format all visual directions with [VISUAL_GUIDE] tags.'
+              content: `You are an expert content strategist who creates high-performing scripts based on proven data from top creators.
+              Focus on:
+              - Opening with concrete value/results
+              - Using specific numbers and data points
+              - Creating pattern interrupts
+              - Maintaining high information density
+              - Suggesting scroll-stopping visuals
+              - Writing in a natural, authentic voice
+              Never use:
+              - Clickbait or misleading hooks
+              - Vague statements without backup
+              - Overused phrases or clichés
+              - Unnecessary buildup or fluff`
             },
             { role: 'user', content: scriptPrompt }
           ],
@@ -110,13 +140,26 @@ Pacing: Structure the content to fit naturally within ${duration} seconds.`;
       );
     }
 
-    // Handle idea generation
+    // Handle idea generation with improved templates
     const { niche, audience, videoType, platform, customIdeas } = requestData;
     console.log("Generating ideas with params:", { niche, audience, videoType, platform, customIdeas });
 
-    const prompt = `Generate 5 viral video ideas for ${platform} targeting ${audience} in the ${niche} niche. These should be ${videoType} style videos.
+    const prompt = `Generate 5 high-performing ${platform} video ideas for ${audience} in the ${niche} niche focusing on ${videoType} content.
 
-Your response must be valid JSON matching this structure exactly:
+Use these proven content frameworks:
+1. Data-Driven Content: Share specific insights backed by research/testing
+2. Process Deconstruction: Break down complex topics into actionable steps
+3. Myth Busting: Challenge common misconceptions with evidence
+4. Case Studies: Share specific results and implementation details
+5. Comparative Analysis: Test different approaches and show clear results
+
+Each idea must include:
+- A hook based on concrete value/results
+- Specific numbers or data points
+- Clear transformation or takeaway
+- Unique visual hook concept
+
+Format as JSON:
 {
   "ideas": [
     {
@@ -128,24 +171,20 @@ Your response must be valid JSON matching this structure exactly:
   ]
 }
 
-Use these high-performing video formats as inspiration:
-${JSON.stringify(VIRAL_VIDEO_EXAMPLES, null, 2)}
+Focus on:
+- Opening with specific results/data
+- Creating pattern interrupts
+- High information density
+- Scroll-stopping moments
+- Clear value proposition
 
-${customIdeas ? `\nAlso consider these custom ideas as inspiration:\n${customIdeas}` : ''}
+Avoid:
+- Clickbait or misleading titles
+- Vague or generic content
+- Overused formats
+- Purely entertainment content
 
-Key elements each idea must include:
-- Title: Use curiosity gaps, numbers, or emotional triggers
-- Description: Clear value proposition and hook
-- Category: Specific content type
-- Tags: Relevant, trending hashtags (without # symbol)
-
-Focus on: 
-- Problem-solution format
-- Relatable situations
-- Data-driven insights
-- Transformation stories
-- Behind-the-scenes reveals
-- Testing viral trends/hacks`;
+${customIdeas ? `\nConsider these custom ideas as reference:\n${customIdeas}` : ''}`;
 
     console.log("Sending prompt to OpenAI:", prompt);
 
@@ -160,7 +199,7 @@ Focus on:
         messages: [
           { 
             role: 'system', 
-            content: 'You are a viral content strategist who creates trending social media ideas. Always output valid JSON matching the example structure exactly.'
+            content: 'You are a data-driven content strategist who creates high-performing ideas based on proven strategies from successful creators. Focus on specific results, clear value, and unique angles.'
           },
           { role: 'user', content: prompt }
         ],
@@ -169,24 +208,16 @@ Focus on:
     });
 
     const data = await response.json();
-    console.log("OpenAI response received:", data);
+    console.log("OpenAI response received");
 
     if (!data.choices?.[0]?.message?.content) {
-      console.error("Invalid OpenAI response:", data);
       throw new Error('Invalid response from OpenAI');
     }
 
-    try {
-      const parsedContent = JSON.parse(data.choices[0].message.content);
-      console.log("Successfully parsed OpenAI response:", parsedContent);
-      return new Response(JSON.stringify(parsedContent), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
-      console.log('Raw content:', data.choices[0].message.content);
-      throw new Error('Failed to parse OpenAI response as JSON');
-    }
+    const parsedContent = JSON.parse(data.choices[0].message.content);
+    return new Response(JSON.stringify(parsedContent), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
     console.error('Error:', error);
