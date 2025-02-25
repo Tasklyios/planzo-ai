@@ -133,23 +133,19 @@ export const useIdeaGenerator = () => {
       
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: {
-          niche,
-          audience,
-          videoType,
-          platform,
-          customIdeas
+          niche: niche.trim(),
+          audience: audience.trim(),
+          videoType: videoType.trim(),
+          platform: platform.toLowerCase(),
+          customIdeas: customIdeas.trim()
         },
       });
 
       console.log("Response from generate-ideas:", { data, error });
 
-      if (error) {
-        console.error("Function invocation error:", error);
-        throw error;
-      }
+      if (error) throw error;
 
-      if (!data || !data.ideas) {
-        console.error("Invalid response format:", data);
+      if (!data?.ideas) {
         throw new Error('Invalid response format from AI');
       }
 
@@ -179,7 +175,8 @@ export const useIdeaGenerator = () => {
         .from("video_ideas")
         .select("*")
         .eq("user_id", userId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(5);
 
       if (fetchError) {
         console.error("Error fetching saved ideas:", fetchError);
