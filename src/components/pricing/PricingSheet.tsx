@@ -1,6 +1,5 @@
-
 import { Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,10 +12,30 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+const initializeStripe = async () => {
+  try {
+    const { data, error } = await supabase.functions.invoke('get-stripe-key');
+    
+    if (error) {
+      console.error('Error fetching Stripe key:', error);
+      throw error;
+    }
+    
+    if (!data?.publishableKey) {
+      console.error('No publishable key received from server');
+      throw new Error('Invalid publishable key');
+    }
+
+    console.log('Initializing Stripe with key');
+    return loadStripe(data.publishableKey);
+  } catch (error) {
+    console.error('Failed to initialize Stripe:', error);
+    throw error;
+  }
+};
+
 // Initialize Stripe with the publishable key from Supabase
-const stripePromise = supabase.functions.invoke('get-stripe-key').then(({ data }) => {
-  return loadStripe(data?.publishableKey);
-});
+const stripePromise = initializeStripe();
 
 interface PricingSheetProps {
   trigger: React.ReactNode;
@@ -25,6 +44,18 @@ interface PricingSheetProps {
 const PricingSheet = ({ trigger }: PricingSheetProps) => {
   const [loading, setLoading] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Verify Stripe initialization on component mount
+    stripePromise.catch(error => {
+      console.error('Error initializing Stripe:', error);
+      toast({
+        variant: "destructive",
+        title: "Configuration Error",
+        description: "Failed to initialize payment system. Please try again later.",
+      });
+    });
+  }, [toast]);
 
   const tiers = [
     {
