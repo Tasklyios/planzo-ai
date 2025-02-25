@@ -1,4 +1,3 @@
-
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -13,8 +12,10 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-// Initialize Stripe with the publishable key
-const stripePromise = loadStripe('pk_test_51OpXBiG4Kts8pL4Fn5nPglUWjTVduJQDdIhjuBQgKpcMWB2KirQoKn2Pz0Q2FsJRXgdFuQqSPBixFftBGbIoXO5Q00zZ9XJ5iU');
+// Initialize Stripe with the publishable key from Supabase
+const stripePromise = supabase.functions.invoke('get-stripe-key').then(({ data }) => {
+  return loadStripe(data?.publishableKey);
+});
 
 interface PricingSheetProps {
   trigger: React.ReactNode;
