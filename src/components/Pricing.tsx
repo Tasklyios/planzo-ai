@@ -8,22 +8,22 @@ const Pricing = () => {
 
   const tiers = [
     {
-      name: "Free",
+      name: "Pro",
       description: "Perfect to get started",
-      price: "0",
+      price: "19.99",
       features: [
         "2 AI video ideas per day",
         "2 script generations per day",
         "Basic analytics",
         "Simple calendar features"
       ],
-      cta: "Get Started",
+      cta: "Get Pro",
       color: "white"
     },
     {
-      name: "Pro",
+      name: "Plus",
       description: "For serious creators",
-      price: "29",
+      price: "29.99",
       features: [
         "20 AI video ideas per day",
         "20 script generations per day",
@@ -31,13 +31,13 @@ const Pricing = () => {
         "Full calendar features",
         "Priority support"
       ],
-      cta: "Upgrade to Pro",
+      cta: "Upgrade to Plus",
       color: "primary"
     },
     {
       name: "Business",
       description: "For teams and agencies",
-      price: "99",
+      price: "69.99",
       features: [
         "Unlimited AI video ideas",
         "Unlimited script generations",
@@ -78,7 +78,7 @@ const Pricing = () => {
                 {tier.description}
               </p>
               <div className="text-4xl font-bold mb-8">
-                ${tier.price}
+                £{tier.price}
                 <span className={`text-lg font-normal ${tier.color === 'primary' ? 'text-white/70' : 'text-dark/70'}`}>
                   /month
                 </span>
