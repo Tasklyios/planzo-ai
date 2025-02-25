@@ -1,6 +1,7 @@
 
 import { Check } from "lucide-react";
 import { useState } from "react";
+import { loadStripe } from "@stripe/stripe-js";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -11,6 +12,8 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface PricingSheetProps {
   trigger: React.ReactNode;
@@ -71,6 +74,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
 
   const handleUpgradeClick = async (tier: string, priceId: string) => {
     try {
+      console.log('Starting upgrade process for tier:', tier, 'with priceId:', priceId);
       setLoading(tier);
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -83,6 +87,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         return;
       }
 
+      console.log('Creating checkout session with:', { priceId, userId: session.user.id });
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           priceId,
@@ -91,8 +96,12 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
 
+      console.log('Checkout session response:', data);
       if (data?.url) {
         window.location.href = data.url;
       } else {
