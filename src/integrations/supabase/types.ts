@@ -119,6 +119,60 @@ export type Database = {
           },
         ]
       }
+      user_daily_usage: {
+        Row: {
+          date: string
+          id: string
+          ideas_generated: number | null
+          scripts_generated: number | null
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          id?: string
+          ideas_generated?: number | null
+          scripts_generated?: number | null
+          user_id: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          ideas_generated?: number | null
+          scripts_generated?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       video_ideas: {
         Row: {
           category: string | null
@@ -175,10 +229,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_and_increment_usage: {
+        Args: {
+          p_user_id: string
+          p_action: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      subscription_tier: "free" | "pro" | "business"
     }
     CompositeTypes: {
       [_ in never]: never

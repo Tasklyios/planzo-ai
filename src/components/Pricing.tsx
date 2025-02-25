@@ -1,64 +1,108 @@
 
 import { Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const Pricing = () => {
+  const navigate = useNavigate();
+
+  const tiers = [
+    {
+      name: "Free",
+      description: "Perfect to get started",
+      price: "0",
+      features: [
+        "2 AI video ideas per day",
+        "2 script generations per day",
+        "Basic analytics",
+        "Simple calendar features"
+      ],
+      cta: "Get Started",
+      color: "white"
+    },
+    {
+      name: "Pro",
+      description: "For serious creators",
+      price: "29",
+      features: [
+        "20 AI video ideas per day",
+        "20 script generations per day",
+        "Advanced analytics",
+        "Full calendar features",
+        "Priority support"
+      ],
+      cta: "Upgrade to Pro",
+      color: "primary"
+    },
+    {
+      name: "Business",
+      description: "For teams and agencies",
+      price: "99",
+      features: [
+        "Unlimited AI video ideas",
+        "Unlimited script generations",
+        "Advanced analytics",
+        "Team collaboration",
+        "Custom branding",
+        "Priority support",
+        "API access"
+      ],
+      cta: "Upgrade to Business",
+      color: "primary"
+    }
+  ];
+
+  const handleUpgradeClick = (tier: string) => {
+    // For now, just redirect to account page
+    // We'll implement Stripe checkout later
+    navigate('/account');
+  };
+
   return (
     <section className="bg-light-bg py-16">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center text-dark mb-16 fade-up">
           Simple Pricing
         </h2>
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 fade-up">
-            <h3 className="text-2xl font-bold text-dark mb-2">Free</h3>
-            <p className="text-dark/70 mb-6">Perfect to get started</p>
-            <div className="text-4xl font-bold text-dark mb-8">
-              $0<span className="text-lg font-normal text-dark/70">/month</span>
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {tiers.map((tier, index) => (
+            <div 
+              key={tier.name}
+              className={`bg-${tier.color} p-8 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 fade-up ${
+                tier.color === 'primary' ? 'text-white' : ''
+              }`}
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <h3 className="text-2xl font-bold mb-2">{tier.name}</h3>
+              <p className={`${tier.color === 'primary' ? 'text-white/70' : 'text-dark/70'} mb-6`}>
+                {tier.description}
+              </p>
+              <div className="text-4xl font-bold mb-8">
+                ${tier.price}
+                <span className={`text-lg font-normal ${tier.color === 'primary' ? 'text-white/70' : 'text-dark/70'}`}>
+                  /month
+                </span>
+              </div>
+              <ul className="space-y-4 mb-8">
+                {tier.features.map((feature) => (
+                  <li key={feature} className="flex items-center">
+                    <Check className={`${tier.color === 'primary' ? 'text-white' : 'text-primary'} mr-2`} size={20} />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Button 
+                className={`w-full ${
+                  tier.color === 'primary' 
+                    ? 'bg-white text-primary hover:bg-white/90'
+                    : 'bg-primary text-white hover:bg-primary/90'
+                }`}
+                onClick={() => handleUpgradeClick(tier.name.toLowerCase())}
+              >
+                {tier.cta}
+              </Button>
             </div>
-            <ul className="space-y-4 mb-8">
-              <li className="flex items-center">
-                <Check className="text-primary mr-2" size={20} />
-                5 AI video ideas/month
-              </li>
-              <li className="flex items-center">
-                <Check className="text-primary mr-2" size={20} />
-                Basic script generator
-              </li>
-              <li className="flex items-center">
-                <Check className="text-primary mr-2" size={20} />
-                Simple calendar
-              </li>
-            </ul>
-            <button className="w-full btn-secondary">Get Started</button>
-          </div>
-          <div className="bg-primary p-8 rounded-2xl shadow-lg text-white fade-up" style={{ animationDelay: "100ms" }}>
-            <h3 className="text-2xl font-bold mb-2">Premium</h3>
-            <p className="text-white/70 mb-6">For serious creators</p>
-            <div className="text-4xl font-bold mb-8">
-              $29<span className="text-lg font-normal opacity-70">/month</span>
-            </div>
-            <ul className="space-y-4 mb-8">
-              <li className="flex items-center">
-                <Check className="mr-2" size={20} />
-                Unlimited AI video ideas
-              </li>
-              <li className="flex items-center">
-                <Check className="mr-2" size={20} />
-                Advanced script generator
-              </li>
-              <li className="flex items-center">
-                <Check className="mr-2" size={20} />
-                Full calendar features
-              </li>
-              <li className="flex items-center">
-                <Check className="mr-2" size={20} />
-                Analytics & insights
-              </li>
-            </ul>
-            <button className="w-full bg-white text-primary hover:bg-white/90 transition-all duration-300 py-3 rounded-full">
-              Get Premium
-            </button>
-          </div>
+          ))}
         </div>
       </div>
     </section>

@@ -129,6 +129,39 @@ export const useIdeaGenerator = () => {
         return;
       }
 
+      // Check usage limits
+      const { data: canGenerate, error: usageError } = await supabase
+        .rpc('check_and_increment_usage', {
+          p_user_id: userId,
+          p_action: 'ideas'
+        });
+
+      if (usageError) {
+        throw usageError;
+      }
+
+      if (!canGenerate) {
+        const { data: subscription } = await supabase
+          .from('user_subscriptions')
+          .select('tier')
+          .eq('user_id', userId)
+          .single();
+
+        let message = "You've reached your daily limit for generating ideas. ";
+        if (subscription?.tier === 'free') {
+          message += "Upgrade to Pro for more generations!";
+        } else if (subscription?.tier === 'pro') {
+          message += "Upgrade to Business for unlimited generations!";
+        }
+
+        toast({
+          variant: "destructive",
+          title: "Usage Limit Reached",
+          description: message,
+        });
+        return;
+      }
+
       console.log("Calling generate-ideas function with:", { niche, audience, videoType, platform, customIdeas });
       
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
