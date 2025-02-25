@@ -59,13 +59,13 @@ serve(async (req) => {
     console.log("Received request data:", requestData);
 
     if (requestData.type === 'script') {
-      const { title, description, category, tags, toneOfVoice, duration, additionalNotes } = requestData;
+      const { title, description, category, tags, toneOfVoice, duration, additionalNotes, platform } = requestData;
 
       // Calculate optimal script length based on duration
       const wordsPerSecond = 2.5; // Average speaking rate
       const targetWordCount = Math.floor(duration * wordsPerSecond);
 
-      const scriptPrompt = `Create a high-performing ${duration}-second script for ${platform} based on proven content strategies.
+      const scriptPrompt = `Create a high-performing ${duration}-second script for ${platform || 'social media'} based on proven content strategies.
 
 Title: ${title}
 Description: ${description}
@@ -77,7 +77,7 @@ Requirements:
 2. Use pattern interrupts every 2-3 sentences
 3. Include B-roll suggestions that create scroll-stopping visuals
 4. Maintain high information density with zero fluff
-5. Use ${toneOfVoice} tone while staying authentic
+5. Use ${toneOfVoice || 'professional'} tone while staying authentic
 6. Include specific numbers and percentages when relevant
 7. Format visual directions with [VISUAL_GUIDE] tags
 
@@ -88,13 +88,15 @@ Content Structure:
 - Keep each segment 2-3 sentences max
 - Use strategic pauses for emphasis
 
-Additional Context: ${additionalNotes}
+Additional Context: ${additionalNotes || ''}
 
 Example Format:
 Here's the research-backed script text.
 [VISUAL_GUIDE]Overlay key statistic with dynamic typography[/VISUAL_GUIDE]
 Next part of the script with specific data point.
 [VISUAL_GUIDE]Split screen comparison showing before/after[/VISUAL_GUIDE]`;
+
+      console.log("Sending script generation prompt to OpenAI");
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -140,7 +142,7 @@ Next part of the script with specific data point.
       );
     }
 
-    // Handle idea generation with improved templates
+    // Handle idea generation
     const { niche, audience, videoType, platform, customIdeas } = requestData;
     console.log("Generating ideas with params:", { niche, audience, videoType, platform, customIdeas });
 
@@ -186,7 +188,7 @@ Avoid:
 
 ${customIdeas ? `\nConsider these custom ideas as reference:\n${customIdeas}` : ''}`;
 
-    console.log("Sending prompt to OpenAI:", prompt);
+    console.log("Sending idea generation prompt to OpenAI");
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
