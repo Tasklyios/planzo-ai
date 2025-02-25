@@ -26,6 +26,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import PricingSheet from "./pricing/PricingSheet";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -70,6 +71,13 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
+          <PricingSheet 
+            trigger={
+              <Button variant="default" size="sm">
+                Upgrade
+              </Button>
+            }
+          />
         </div>
 
         <div className="flex items-center space-x-4">
@@ -127,6 +135,13 @@ const Navbar = () => {
                     {item.label}
                   </Link>
                 ))}
+                <PricingSheet 
+                  trigger={
+                    <Button variant="default" size="sm" className="w-full">
+                      Upgrade
+                    </Button>
+                  }
+                />
                 <Button variant="outline" onClick={() => {
                   navigate('/account');
                   closeSheet();
@@ -146,6 +161,6 @@ const Navbar = () => {
       </nav>
     </header>
   );
-}
+};
 
 export default Navbar;
