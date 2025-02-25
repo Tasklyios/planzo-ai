@@ -1,3 +1,4 @@
+
 import { Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -119,6 +120,12 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
     try {
       console.log('Starting upgrade process for tier:', tier, 'with priceId:', priceId);
       setLoading(tier);
+      
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error('Failed to initialize Stripe');
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {
@@ -145,11 +152,11 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       }
 
       console.log('Checkout session response:', data);
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
+      if (!data?.url) {
         throw new Error('No checkout URL received');
       }
+
+      window.location.href = data.url;
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
       toast({
