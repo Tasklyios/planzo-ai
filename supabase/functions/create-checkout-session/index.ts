@@ -18,6 +18,10 @@ Deno.serve(async (req) => {
   try {
     const { priceId, userId, returnUrl } = await req.json()
 
+    if (!priceId) {
+      throw new Error('Price ID is required')
+    }
+
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',

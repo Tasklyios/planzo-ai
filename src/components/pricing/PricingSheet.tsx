@@ -1,7 +1,6 @@
 
 import { Check } from "lucide-react";
 import { useState } from "react";
-import { loadStripe } from "@stripe/stripe-js";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -12,8 +11,6 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface PricingSheetProps {
   trigger: React.ReactNode;
@@ -86,7 +83,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         return;
       }
 
-      const { data: { url }, error } = await supabase.functions.invoke('create-checkout-session', {
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           priceId,
           userId: session.user.id,
@@ -96,8 +93,11 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
 
       if (error) throw error;
 
-      // Redirect to Stripe Checkout
-      window.location.href = url;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
       toast({
