@@ -36,7 +36,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Get Pro",
       color: "white",
-      stripePriceId: import.meta.env.VITE_STRIPE_PRO_PRICE_ID
+      stripePriceId: String(import.meta.env.VITE_STRIPE_PRO_PRICE_ID)
     },
     {
       name: "Plus",
@@ -51,7 +51,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Plus",
       color: "primary",
-      stripePriceId: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID
+      stripePriceId: String(import.meta.env.VITE_STRIPE_PLUS_PRICE_ID)
     },
     {
       name: "Business",
@@ -68,11 +68,20 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Business",
       color: "primary",
-      stripePriceId: import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID
+      stripePriceId: String(import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID)
     }
   ];
 
   const handleUpgradeClick = async (tier: string, priceId: string) => {
+    if (!priceId) {
+      toast({
+        variant: "destructive",
+        title: "Configuration Error",
+        description: "Subscription configuration is incomplete. Please try again later.",
+      });
+      return;
+    }
+
     try {
       console.log('Starting upgrade process for tier:', tier, 'with priceId:', priceId);
       setLoading(tier);
