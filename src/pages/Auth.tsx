@@ -88,7 +88,7 @@ const Auth = () => {
             access_type: 'offline',
             prompt: 'consent',
           },
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: window.location.origin // This will use the current domain
         }
       });
       if (error) throw error;
