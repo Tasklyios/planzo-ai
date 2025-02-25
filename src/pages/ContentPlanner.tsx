@@ -41,7 +41,8 @@ export default function ContentPlanner() {
       const { data: ideas, error } = await supabase
         .from('video_ideas')
         .select('*')
-        .eq('user_id', session.user.id);
+        .eq('user_id', session.user.id)
+        .eq('is_saved', true); // Only fetch saved ideas
 
       if (error) throw error;
 
