@@ -17,9 +17,10 @@ Deno.serve(async (req) => {
 
   try {
     const { priceId, userId, returnUrl } = await req.json()
+    console.log('Received request with:', { priceId, userId, returnUrl });
 
-    if (!priceId) {
-      throw new Error('Price ID is required')
+    if (!priceId || typeof priceId !== 'string') {
+      throw new Error('Valid price ID is required')
     }
 
     // Initialize Stripe
@@ -70,6 +71,8 @@ Deno.serve(async (req) => {
         })
     }
 
+    console.log('Creating checkout session for customer:', customerId);
+
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -89,6 +92,8 @@ Deno.serve(async (req) => {
       },
     })
 
+    console.log('Created checkout session:', session.id);
+
     return new Response(
       JSON.stringify({ url: session.url }),
       {
@@ -99,7 +104,7 @@ Deno.serve(async (req) => {
       },
     )
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error:', error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
