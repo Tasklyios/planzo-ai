@@ -106,7 +106,7 @@ Additional Context: ${additionalNotes || ''}`;
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4o',  // Changed from gpt-4o-mini to gpt-4o
           messages: [
             {
               role: 'system',
@@ -210,7 +210,7 @@ Format as JSON with exactly the same structure as the examples above.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',  // Changed from gpt-4o-mini to gpt-4o
         messages: [
           { 
             role: 'system', 
