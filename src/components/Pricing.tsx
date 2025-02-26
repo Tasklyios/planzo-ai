@@ -14,7 +14,7 @@ const Pricing = () => {
       description: "Perfect to get started",
       price: isYearly ? "13.99" : "19.99",
       features: [
-        "10 AI video ideas per day",
+        "50 AI video ideas per day",
         "20 script generations per day",
         "Basic analytics",
         "Simple calendar features"
@@ -27,7 +27,7 @@ const Pricing = () => {
       description: "For serious creators",
       price: isYearly ? "20.99" : "29.99",
       features: [
-        "20 AI video ideas per day",
+        "100 AI video ideas per day",
         "30 script generations per day",
         "Advanced analytics",
         "Full calendar features",
