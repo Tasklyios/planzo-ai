@@ -27,7 +27,7 @@ const initializeStripe = async () => {
       throw new Error('Invalid publishable key');
     }
 
-    console.log('Initializing Stripe with key');
+    console.log('Initializing Stripe with key:', data.publishableKey);
     return loadStripe(data.publishableKey);
   } catch (error) {
     console.error('Failed to initialize Stripe:', error);
@@ -120,15 +120,12 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
     try {
       console.log('Starting upgrade process for tier:', tier, 'with priceId:', priceId);
       setLoading(tier);
-      
-      const stripe = await stripePromise;
-      if (!stripe) {
-        throw new Error('Failed to initialize Stripe');
-      }
 
-      const { data: { session } } = await supabase.auth.getSession();
+      // Check authentication first
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
       
-      if (!session?.user) {
+      if (authError || !session?.user) {
+        console.error('Authentication error:', authError);
         toast({
           variant: "destructive",
           title: "Authentication Required",
@@ -137,28 +134,33 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         return;
       }
 
-      console.log('Creating checkout session with:', { priceId, userId: session.user.id });
-      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: { 
-          priceId,
-          userId: session.user.id,
-          returnUrl: window.location.origin + '/account'
+      console.log('User authenticated:', session.user.id);
+
+      // Create checkout session
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+        'create-checkout-session',
+        {
+          body: { 
+            priceId,
+            userId: session.user.id,
+            returnUrl: window.location.origin + '/account'
+          }
         }
-      });
+      );
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw error;
+      console.log('Checkout session response:', checkoutData, checkoutError);
+
+      if (checkoutError || !checkoutData?.url) {
+        console.error('Checkout error:', checkoutError);
+        throw new Error(checkoutError?.message || 'Failed to create checkout session');
       }
 
-      console.log('Checkout session response:', data);
-      if (!data?.url) {
-        throw new Error('No checkout URL received');
-      }
-
-      window.location.href = data.url;
+      // Redirect to checkout
+      console.log('Redirecting to:', checkoutData.url);
+      window.location.href = checkoutData.url;
+      
     } catch (error: any) {
-      console.error('Error creating checkout session:', error);
+      console.error('Error in upgrade process:', error);
       toast({
         variant: "destructive",
         title: "Error",
