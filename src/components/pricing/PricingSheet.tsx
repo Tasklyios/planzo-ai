@@ -1,4 +1,3 @@
-
 import { Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -42,7 +41,6 @@ interface PricingSheetProps {
 
 const PricingSheet = ({ trigger }: PricingSheetProps) => {
   const [loading, setLoading] = useState<string | null>(null);
-  const [stripeInstance, setStripeInstance] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -50,7 +48,6 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
     const setupStripe = async () => {
       try {
         const stripe = await initializeStripe();
-        setStripeInstance(stripe);
       } catch (error) {
         console.error('Error setting up Stripe:', error);
         toast({
@@ -127,10 +124,6 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       console.log('Starting upgrade process for tier:', tier);
       setLoading(tier);
 
-      if (!stripeInstance) {
-        throw new Error('Stripe is not initialized');
-      }
-
       // Check authentication first
       const { data: { session }, error: authError } = await supabase.auth.getSession();
       
@@ -143,7 +136,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       console.log('User authenticated:', session.user.id);
 
       // Create checkout session
-      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+      const { data, error: checkoutError } = await supabase.functions.invoke(
         'create-checkout-session',
         {
           body: { 
@@ -154,16 +147,16 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         }
       );
 
-      console.log('Checkout session response:', checkoutData);
-
-      if (checkoutError || !checkoutData?.url) {
-        console.error('Checkout error:', checkoutError);
-        throw new Error(checkoutError?.message || 'Failed to create checkout session');
+      if (checkoutError) {
+        throw new Error(checkoutError.message || 'Failed to create checkout session');
       }
 
-      // Redirect to checkout
-      console.log('Redirecting to:', checkoutData.url);
-      window.location.href = checkoutData.url;
+      if (!data?.url) {
+        throw new Error('No checkout URL received from server');
+      }
+
+      console.log('Redirecting to checkout:', data.url);
+      window.location.href = data.url;
       
     } catch (error: any) {
       console.error('Error in upgrade process:', error);
