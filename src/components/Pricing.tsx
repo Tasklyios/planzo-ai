@@ -12,8 +12,8 @@ const Pricing = () => {
       description: "Perfect to get started",
       price: "19.99",
       features: [
-        "2 AI video ideas per day",
-        "2 script generations per day",
+        "10 AI video ideas per day",
+        "20 script generations per day",
         "Basic analytics",
         "Simple calendar features"
       ],
@@ -26,7 +26,7 @@ const Pricing = () => {
       price: "29.99",
       features: [
         "20 AI video ideas per day",
-        "20 script generations per day",
+        "30 script generations per day",
         "Advanced analytics",
         "Full calendar features",
         "Priority support"
@@ -110,3 +110,4 @@ const Pricing = () => {
 };
 
 export default Pricing;
+
