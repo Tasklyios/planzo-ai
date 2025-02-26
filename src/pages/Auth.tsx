@@ -33,23 +33,6 @@ const Auth = () => {
         });
         if (error) throw error;
         
-        // Get the user session to ensure we have the user ID
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) throw new Error("No session after signup");
-
-        // Create a profile record with default values
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            { 
-              id: session.user.id,
-              account_type: 'personal',
-              onboarding_completed: false
-            }
-          ]);
-
-        if (profileError) throw profileError;
-
         setShowPricing(true); // Show pricing dialog after successful signup
       } else {
         const { error } = await supabase.auth.signInWithPassword({
