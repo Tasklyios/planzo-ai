@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +26,19 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+// Available colors with their corresponding Tailwind classes
+const colorClasses: { [key: string]: string } = {
+  red: "border-red-500",
+  orange: "border-orange-500",
+  yellow: "border-yellow-500",
+  green: "border-green-500",
+  blue: "border-blue-500",
+  indigo: "border-indigo-500",
+  purple: "border-purple-500",
+  pink: "border-pink-500"
+};
 
 export default function Script() {
   const [loading, setLoading] = useState(false);
@@ -290,11 +304,13 @@ export default function Script() {
                   {filteredIdeas.map((idea) => (
                     <CarouselItem key={idea.id} className="md:basis-1/2 lg:basis-1/3">
                       <Card 
-                        className={`p-4 cursor-pointer transition-all ${
+                        className={cn(
+                          "p-4 cursor-pointer transition-all border-l-4",
+                          colorClasses[idea.color || 'blue'] || colorClasses.blue,
                           selectedIdea?.id === idea.id 
                             ? 'ring-2 ring-primary' 
                             : 'hover:border-primary'
-                        }`}
+                        )}
                         onClick={() => setSelectedIdea(idea)}
                       >
                         <h4 className="font-medium mb-2">{idea.title}</h4>
