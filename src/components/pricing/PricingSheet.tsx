@@ -72,69 +72,45 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
   ];
 
   const handleUpgradeClick = async (tier: string, priceId: string | undefined) => {
-    if (!priceId) {
-      toast({
-        variant: "destructive",
-        title: "Configuration Error",
-        description: "Subscription configuration is incomplete. Please try again later.",
-      });
-      return;
-    }
-
     try {
       setLoading(tier);
-      console.log('Starting upgrade process for tier:', tier);
+      
+      if (!priceId) {
+        throw new Error('Price ID is not configured');
+      }
 
       // Check authentication first
       const { data: { session }, error: authError } = await supabase.auth.getSession();
-      console.log('Auth check response:', { session, error: authError });
       
       if (authError || !session?.user) {
-        console.log('No active session found, redirecting to auth');
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to upgrade your plan.",
-        });
         navigate('/auth');
-        return;
+        throw new Error('Please sign in to upgrade your plan');
       }
 
-      console.log('User authenticated:', session.user.id);
+      const response = await supabase.functions.invoke('create-checkout-session', {
+        body: JSON.stringify({ 
+          priceId,
+          userId: session.user.id,
+          returnUrl: `${window.location.origin}/account`
+        })
+      });
 
-      // Create checkout session
-      console.log('Creating checkout session with:', { priceId, userId: session.user.id });
-      const { data, error: checkoutError } = await supabase.functions.invoke(
-        'create-checkout-session',
-        {
-          body: { 
-            priceId,
-            userId: session.user.id,
-            returnUrl: `${window.location.origin}/account`
-          }
-        }
-      );
-
-      console.log('Checkout session response:', { data, error: checkoutError });
-
-      if (checkoutError) {
-        console.error('Checkout error:', checkoutError);
-        throw new Error(checkoutError.message || 'Failed to create checkout session');
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to create checkout session');
       }
 
-      if (!data?.url) {
-        console.error('No URL in response:', data);
-        throw new Error('No checkout URL received from server');
+      if (!response.data?.url) {
+        throw new Error('No checkout URL received');
       }
 
-      console.log('Redirecting to Stripe checkout:', data.url);
-      window.location.href = data.url;
+      window.location.href = response.data.url;
       
     } catch (error: any) {
-      console.error('Error in upgrade process:', error);
+      console.error('Upgrade error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to start checkout process. Please try again.",
+        description: error.message || "Failed to start checkout process",
       });
     } finally {
       setLoading(null);

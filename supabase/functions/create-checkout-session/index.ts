@@ -8,7 +8,6 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -16,12 +15,15 @@ Deno.serve(async (req) => {
   try {
     // Get request body
     const { priceId, userId, returnUrl } = await req.json()
-    console.log('Received request:', { priceId, userId, returnUrl })
+    
+    if (!priceId || !userId || !returnUrl) {
+      throw new Error('Missing required parameters')
+    }
 
     // Initialize Stripe
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
     if (!stripeKey) {
-      throw new Error('Missing Stripe secret key')
+      throw new Error('Missing Stripe configuration')
     }
 
     const stripe = new Stripe(stripeKey, {
@@ -29,7 +31,7 @@ Deno.serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     })
 
-    // Initialize Supabase Admin client
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     
@@ -39,71 +41,42 @@ Deno.serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
 
-    // Get user subscription data
-    const { data: subscriptionData, error: subscriptionError } = await supabaseAdmin
+    // Get or create Stripe customer
+    const { data: subscription } = await supabaseAdmin
       .from('user_subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', userId)
       .single()
 
-    if (subscriptionError && subscriptionError.code !== 'PGRST116') {
-      throw new Error(`Error fetching subscription: ${subscriptionError.message}`)
-    }
-
-    let customerId = subscriptionData?.stripe_customer_id
+    let customerId = subscription?.stripe_customer_id
 
     if (!customerId) {
-      // Get user email from auth.users
-      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
+      const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
       
-      if (userError || !userData.user) {
+      if (userError || !user?.email) {
         throw new Error('User not found')
       }
 
-      console.log('Creating new Stripe customer for user:', userData.user.email)
-      
-      // Create new Stripe customer
       const customer = await stripe.customers.create({
-        email: userData.user.email,
+        email: user.email,
         metadata: { userId },
       })
 
       customerId = customer.id
 
-      try {
-        // Try to insert new subscription record
-        const { error: insertError } = await supabaseAdmin
-          .from('user_subscriptions')
-          .insert({
-            user_id: userId,
-            stripe_customer_id: customerId,
-            tier: 'free',
-          })
-
-        if (insertError) {
-          // If insert fails, try to update existing record
-          const { error: updateError } = await supabaseAdmin
-            .from('user_subscriptions')
-            .update({ stripe_customer_id: customerId })
-            .eq('user_id', userId)
-
-          if (updateError) {
-            throw updateError
-          }
-        }
-      } catch (error) {
-        console.error('Error managing subscription record:', error)
-        // Continue with checkout even if DB update fails
-      }
+      await supabaseAdmin
+        .from('user_subscriptions')
+        .upsert({
+          user_id: userId,
+          stripe_customer_id: customerId,
+          tier: 'free',
+        })
     }
 
-    // Create Stripe checkout session
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      line_items: [{
-        price: priceId,
-        quantity: 1,
-      }],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
       success_url: `${returnUrl}?success=true`,
       cancel_url: `${returnUrl}?success=false`,
@@ -111,8 +84,6 @@ Deno.serve(async (req) => {
       billing_address_collection: 'auto',
       metadata: { userId },
     })
-
-    console.log('Created checkout session:', session.id)
 
     return new Response(
       JSON.stringify({ url: session.url }),
