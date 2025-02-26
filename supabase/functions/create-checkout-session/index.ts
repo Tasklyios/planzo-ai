@@ -19,16 +19,25 @@ Deno.serve(async (req) => {
     console.log('Received request:', { priceId, userId, returnUrl })
 
     // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
+    if (!stripeKey) {
+      throw new Error('Missing Stripe secret key')
+    }
+
+    const stripe = new Stripe(stripeKey, {
       apiVersion: '2023-10-16',
       httpClient: Stripe.createFetchHttpClient(),
     })
 
     // Initialize Supabase Admin client
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') || '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase configuration')
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
 
     // Get user subscription data
     const { data: subscriptionData, error: subscriptionError } = await supabaseAdmin
