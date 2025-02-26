@@ -301,32 +301,37 @@ export default function Script() {
               <Carousel className="w-full">
                 <CarouselContent className="-ml-2 md:-ml-4">
                   {filteredIdeas.map((idea) => (
-                    <CarouselItem key={idea.id} className="pl-2 md:pl-4 pt-6 md:basis-1/2 lg:basis-1/3">
-                      <Card 
-                        className={cn(
-                          "p-4 cursor-pointer transition-all border-l-4 relative overflow-visible",
-                          colorClasses[idea.color || 'blue'] || colorClasses.blue,
-                          selectedIdea?.id === idea.id 
-                            ? 'ring-2 ring-primary shadow-lg scale-[1.02] bg-primary/5' 
-                            : 'hover:border-primary hover:shadow-md hover:scale-[1.01]'
-                        )}
-                        onClick={() => setSelectedIdea(idea)}
-                      >
-                        {selectedIdea?.id === idea.id && (
-                          <div className="absolute -top-4 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs z-10">
-                            ✓
-                          </div>
-                        )}
-                        <h4 className="font-medium mb-2">{idea.title}</h4>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {idea.description}
-                        </p>
-                      </Card>
+                    <CarouselItem 
+                      key={idea.id} 
+                      className="pl-2 md:pl-4 pt-6 pb-4 md:basis-1/2 lg:basis-1/3"
+                    >
+                      <div className="p-2"> {/* Added padding wrapper */}
+                        <Card 
+                          className={cn(
+                            "p-4 cursor-pointer transition-all border-l-4 relative overflow-visible",
+                            colorClasses[idea.color || 'blue'] || colorClasses.blue,
+                            selectedIdea?.id === idea.id 
+                              ? 'ring-2 ring-primary shadow-lg scale-[1.02] bg-primary/5' 
+                              : 'hover:border-primary hover:shadow-md hover:scale-[1.01]'
+                          )}
+                          onClick={() => setSelectedIdea(idea)}
+                        >
+                          {selectedIdea?.id === idea.id && (
+                            <div className="absolute -top-4 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs z-10">
+                              ✓
+                            </div>
+                          )}
+                          <h4 className="font-medium mb-2">{idea.title}</h4>
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {idea.description}
+                          </p>
+                        </Card>
+                      </div>
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
+                <CarouselPrevious className="-left-12 md:-left-16" />
+                <CarouselNext className="-right-12 md:-right-16" />
               </Carousel>
             </div>
           ) : (
