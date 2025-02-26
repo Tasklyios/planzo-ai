@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -5,20 +6,8 @@ import {
   Calendar as CalendarIcon, 
   ChevronLeft, 
   ChevronRight, 
-  Plus, 
-  PenSquare, 
-  Video, 
-  Check,
-  Heart,
-  Star,
-  Music,
-  Image,
-  Film,
-  BookOpen,
-  Camera,
-  Palette,
-  Menu,
-  GripHorizontal,
+  Plus,
+  PenSquare,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -371,23 +360,24 @@ export default function Calendar() {
     <>
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="container mx-auto py-8 flex flex-col md:flex-row gap-6">
+          {/* Mobile Calendar View */}
           <div className="md:hidden w-full bg-card rounded-xl shadow-sm border border-border p-4 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold">{format(currentDate, "MMMM yyyy")}</h3>
+              <h3 className="font-semibold text-xl">{format(currentDate, "MMMM yyyy")}</h3>
               <div className="flex space-x-2">
-                <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
+                <Button variant="ghost" size="icon" onClick={handlePreviousMonth} className="hover:bg-accent">
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={handleNextMonth}>
+                <Button variant="ghost" size="icon" onClick={handleNextMonth} className="hover:bg-accent">
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            <div>
+            <div className="bg-card rounded-lg shadow-inner">
               <div className="grid grid-cols-7 text-xs mb-2">
                 {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                  <div key={day} className="text-center font-medium text-gray-600 py-2">
+                  <div key={day} className="text-center font-medium text-muted-foreground py-2">
                     {day}
                   </div>
                 ))}
@@ -397,16 +387,16 @@ export default function Calendar() {
                   <div
                     key={date.toString()}
                     className={cn(
-                      "aspect-square flex items-center justify-center relative pt-0.5",
-                      !isSameMonth(date, currentDate) && "text-gray-400",
+                      "aspect-square flex items-center justify-center relative pt-0.5 cursor-pointer hover:bg-accent/50 rounded-lg transition-colors",
+                      !isSameMonth(date, currentDate) && "text-muted-foreground opacity-50",
                       isToday(date) && "font-bold"
                     )}
                     onClick={() => setSelectedDate(date)}
                   >
                     {renderEventDots(date)}
                     <span className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-full text-sm",
-                      isSelectedDate(date) && "bg-primary text-white",
+                      "w-8 h-8 flex items-center justify-center rounded-full text-sm transition-colors",
+                      isSelectedDate(date) && "bg-primary text-primary-foreground",
                     )}>
                       {format(date, "d")}
                     </span>
@@ -415,61 +405,62 @@ export default function Calendar() {
               </div>
             </div>
 
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-4">
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h3>
-                <span className="text-sm text-gray-500">{format(selectedDate, "EEEE")}</span>
+                <span className="text-sm text-muted-foreground">{format(selectedDate, "EEEE")}</span>
               </div>
               <div className="space-y-3">
                 {getPostsForDate(selectedDate).map((post) => (
                   <div
                     key={post.id}
                     className={cn(
-                      "p-3 rounded-lg transition-all cursor-pointer",
+                      "p-4 rounded-lg transition-all cursor-pointer hover:opacity-90",
                       getColorClasses(post.color, 'gradient')
                     )}
                     onClick={() => openEditDialog(post)}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-3">
                         <div className={cn(
-                          "w-6 h-6 rounded-lg flex items-center justify-center",
+                          "w-2 h-2 rounded-full",
                           getColorClasses(post.color)
-                        )}>
-                        </div>
-                        <span className="font-medium text-sm text-gray-800">{post.title}</span>
+                        )} />
+                        <span className="font-medium">{post.title}</span>
                       </div>
-                      <span className="text-xs font-medium text-gray-600">
+                      <span className="text-sm font-medium text-muted-foreground">
                         {format(new Date(post.scheduled_for), "h:mm a")}
                       </span>
                     </div>
                   </div>
                 ))}
                 {getPostsForDate(selectedDate).length === 0 && (
-                  <div className="text-center text-gray-500 py-4">
-                    No events scheduled for this day
+                  <div className="text-center text-muted-foreground py-8 bg-accent/50 rounded-lg">
+                    <CalendarIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>No events scheduled</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
+          {/* Desktop Calendar View */}
           <div className="hidden md:block flex-grow bg-card rounded-xl shadow-sm border border-border">
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">{format(currentDate, "MMMM yyyy")}</h3>
-              <div className="flex space-x-2">
-                <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <h3 className="font-semibold text-2xl">{format(currentDate, "MMMM yyyy")}</h3>
+              <div className="flex items-center space-x-4">
+                <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={handleNextMonth}>
+                <Button variant="outline" size="icon" onClick={handleNextMonth}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
             <div className="grid grid-cols-7 text-sm">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div key={day} className="p-4 text-center font-medium text-muted-foreground">
+              {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => (
+                <div key={day} className="p-4 text-center font-medium text-muted-foreground border-b border-border">
                   {day}
                 </div>
               ))}
@@ -487,22 +478,43 @@ export default function Calendar() {
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={cn(
-                          "min-h-[100px] p-3 cursor-pointer relative bg-card",
-                          !isSameMonth(date, currentDate) ? "text-muted-foreground" :
-                          isToday(date) ? "bg-accent/30" : "hover:bg-accent/50"
+                          "min-h-[120px] p-3 cursor-pointer relative transition-colors",
+                          !isSameMonth(date, currentDate) && "bg-muted/50",
+                          isSameMonth(date, currentDate) && "hover:bg-accent/50",
+                          isToday(date) && "bg-accent/30"
                         )}
                         onClick={() => setSelectedDate(date)}
                       >
-                        <div className="flex items-center gap-1">
-                          <span className={cn(
-                            "w-7 h-7 flex items-center justify-center rounded-full",
-                            isSelectedDate(date) && "bg-primary text-white",
-                            isToday(date) && !isSelectedDate(date) && "font-medium"
-                          )}>
-                            {format(date, "d")}
-                          </span>
+                        <span className={cn(
+                          "inline-flex items-center justify-center w-7 h-7 rounded-full text-sm mb-1",
+                          isSelectedDate(date) && "bg-primary text-primary-foreground",
+                          isToday(date) && !isSelectedDate(date) && "font-medium"
+                        )}>
+                          {format(date, "d")}
+                        </span>
+                        <div className="space-y-1">
+                          {posts.map((post, index) => (
+                            <Draggable key={post.id} draggableId={post.id} index={index}>
+                              {(provided) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={cn(
+                                    "text-xs p-1.5 rounded truncate",
+                                    getColorClasses(post.color, 'gradient')
+                                  )}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditDialog(post);
+                                  }}
+                                >
+                                  {post.title}
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
                         </div>
-                        {renderEventDots(date)}
                         {provided.placeholder}
                       </div>
                     )}
@@ -512,18 +524,72 @@ export default function Calendar() {
             </div>
           </div>
 
+          {/* Daily View Sidebar */}
           <div className="hidden md:block w-1/3">
-            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-foreground">
-                  {format(selectedDate, "MMMM d, yyyy")}
-                </h3>
-                <span className="text-sm text-muted-foreground">
-                  {format(selectedDate, "EEEE")}
-                </span>
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold">
+                    {format(selectedDate, "MMMM d, yyyy")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {format(selectedDate, "EEEE")}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleNewPost('content')}
+                  className="rounded-full"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
+
               <div className="space-y-4">
-                {renderDailyViewPost(selectedDate)}
+                {getPostsForDate(selectedDate).length > 0 ? (
+                  getPostsForDate(selectedDate).map((post) => (
+                    <div
+                      key={post.id}
+                      className={cn(
+                        "p-4 rounded-xl border transition-all shadow-sm cursor-pointer hover:shadow-md",
+                        getColorClasses(post.color, 'gradient')
+                      )}
+                      onClick={() => openEditDialog(post)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">{post.title}</span>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditDialog(post);
+                          }}
+                          className="h-8 w-8"
+                        >
+                          <PenSquare className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {format(new Date(post.scheduled_for), "h:mm a")}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 bg-accent/50 rounded-xl space-y-2">
+                    <CalendarIcon className="w-12 h-12 mx-auto text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground">No events scheduled</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleNewPost('content')}
+                      className="mt-2"
+                    >
+                      Add Event
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
