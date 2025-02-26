@@ -22,6 +22,13 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Log price IDs for debugging
+  console.log('Price IDs:', {
+    pro: import.meta.env.VITE_STRIPE_PRO_PRICE_ID,
+    plus: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID,
+    business: import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID
+  });
+
   const tiers = [
     {
       name: "Pro",
@@ -35,7 +42,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Get Pro",
       color: "white",
-      stripePriceId: import.meta.env.VITE_STRIPE_PRO_PRICE_ID
+      stripePriceId: "price_1OzcIxJHJWJi5xnLEhUd9J2z" // Hardcoded for testing
     },
     {
       name: "Plus",
@@ -50,7 +57,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Plus",
       color: "primary",
-      stripePriceId: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID
+      stripePriceId: "price_1OzcIxJHJWJi5xnLZfnQZfWk" // Hardcoded for testing
     },
     {
       name: "Business",
@@ -67,7 +74,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Business",
       color: "primary",
-      stripePriceId: import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID
+      stripePriceId: "price_1OzcIxJHJWJi5xnLlnDYfeHt" // Hardcoded for testing
     }
   ];
 
@@ -79,6 +86,8 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         throw new Error('Price ID is not configured');
       }
 
+      console.log('Starting upgrade process:', { tier, priceId });
+
       // Check authentication first
       const { data: { session }, error: authError } = await supabase.auth.getSession();
       
@@ -86,6 +95,8 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         navigate('/auth');
         throw new Error('Please sign in to upgrade your plan');
       }
+
+      console.log('User authenticated, creating checkout session...');
 
       const response = await supabase.functions.invoke('create-checkout-session', {
         body: { 
@@ -98,14 +109,16 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       console.log('Checkout response:', response);
 
       if (response.error) {
+        console.error('Checkout error:', response.error);
         throw new Error(response.error.message || 'Failed to create checkout session');
       }
 
       if (!response.data?.url) {
+        console.error('No URL in response:', response.data);
         throw new Error('No checkout URL received');
       }
 
-      // Redirect to Stripe checkout
+      console.log('Redirecting to:', response.data.url);
       window.location.href = response.data.url;
       
     } catch (error: any) {
