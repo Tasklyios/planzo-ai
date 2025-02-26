@@ -27,6 +27,8 @@ import {
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 // Available colors with their corresponding Tailwind classes
 const colorClasses: { [key: string]: string } = {
   red: "border-red-500",
@@ -273,31 +275,32 @@ export default function Script() {
             </RadioGroup>
           </div>
 
-          {scriptType === "existing" ? (
-            <div className="space-y-6">
-              <div className="flex flex-wrap gap-2">
-                {statuses.map((status) => (
-                  <Button
-                    key={status.id}
-                    variant={selectedStatus === status.id ? "default" : "outline"}
-                    onClick={() => setSelectedStatus(status.id)}
-                    className="text-sm"
-                  >
-                    {status.label}
-                  </Button>
-                ))}
-              </div>
+        {scriptType === "existing" ? (
+          <div className="space-y-6">
+            <div className="flex flex-wrap gap-2">
+              {statuses.map((status) => (
+                <Button
+                  key={status.id}
+                  variant={selectedStatus === status.id ? "default" : "outline"}
+                  onClick={() => setSelectedStatus(status.id)}
+                  className="text-sm"
+                >
+                  {status.label}
+                </Button>
+              ))}
+            </div>
 
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search ideas..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search ideas..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
+            <ScrollArea className="h-[400px] rounded-lg border">
               <Carousel className="w-full">
                 <CarouselContent className="-ml-2 md:-ml-4">
                   {filteredIdeas.map((idea) => (
@@ -305,7 +308,7 @@ export default function Script() {
                       key={idea.id} 
                       className="pl-2 md:pl-4 pt-6 pb-4 md:basis-1/2 lg:basis-1/3"
                     >
-                      <div className="p-2"> {/* Added padding wrapper */}
+                      <div className="p-2">
                         <Card 
                           className={cn(
                             "p-4 cursor-pointer transition-all border-l-4 relative overflow-visible",
@@ -333,8 +336,9 @@ export default function Script() {
                 <CarouselPrevious className="-left-12 md:-left-16" />
                 <CarouselNext className="-right-12 md:-right-16" />
               </Carousel>
-            </div>
-          ) : (
+            </ScrollArea>
+          </div>
+        ) : (
             <div className="space-y-4">
               <div>
                 <Label htmlFor="customTitle">Title</Label>
