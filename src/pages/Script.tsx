@@ -300,7 +300,7 @@ export default function Script() {
               />
             </div>
 
-            <ScrollArea className="h-[300px] rounded-lg border p-4">
+            <ScrollArea className="h-[250px] rounded-lg border p-4">
               <Carousel className="w-full">
                 <CarouselContent className="-ml-2 md:-ml-4">
                   {filteredIdeas.map((idea) => (
