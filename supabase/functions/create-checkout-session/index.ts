@@ -44,9 +44,9 @@ Deno.serve(async (req) => {
       .from('user_subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', userId)
-      .maybeSingle()
+      .single()
 
-    if (subscriptionError) {
+    if (subscriptionError && subscriptionError.code !== 'PGRST116') {
       throw new Error(`Error fetching subscription: ${subscriptionError.message}`)
     }
 
@@ -70,17 +70,30 @@ Deno.serve(async (req) => {
 
       customerId = customer.id
 
-      // Store Stripe customer ID
-      const { error: updateError } = await supabaseAdmin
-        .from('user_subscriptions')
-        .upsert({
-          user_id: userId,
-          stripe_customer_id: customerId,
-          tier: 'free',
-        })
+      try {
+        // Try to insert new subscription record
+        const { error: insertError } = await supabaseAdmin
+          .from('user_subscriptions')
+          .insert({
+            user_id: userId,
+            stripe_customer_id: customerId,
+            tier: 'free',
+          })
 
-      if (updateError) {
-        throw new Error(`Error storing customer ID: ${updateError.message}`)
+        if (insertError) {
+          // If insert fails, try to update existing record
+          const { error: updateError } = await supabaseAdmin
+            .from('user_subscriptions')
+            .update({ stripe_customer_id: customerId })
+            .eq('user_id', userId)
+
+          if (updateError) {
+            throw updateError
+          }
+        }
+      } catch (error) {
+        console.error('Error managing subscription record:', error)
+        // Continue with checkout even if DB update fails
       }
     }
 
@@ -119,8 +132,8 @@ Deno.serve(async (req) => {
         }
       }),
       {
-        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
       },
     )
   }
