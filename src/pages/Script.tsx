@@ -308,7 +308,7 @@ export default function Script() {
                       key={idea.id} 
                       className="pl-2 md:pl-4 pt-2 pb-2 md:basis-1/2 lg:basis-1/3"
                     >
-                      <div className="p-1 mt-4"> {/* Added mt-4 to create space for the checkmark */}
+                      <div className="p-1">
                         <Card 
                           className={cn(
                             "p-3 cursor-pointer transition-all border-l-4 relative overflow-visible",
@@ -320,11 +320,11 @@ export default function Script() {
                           onClick={() => setSelectedIdea(idea)}
                         >
                           {selectedIdea?.id === idea.id && (
-                            <div className="absolute -top-6 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs z-20">
+                            <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs z-20">
                               ✓
                             </div>
                           )}
-                          <h4 className="font-medium mb-2">{idea.title}</h4>
+                          <h4 className="font-medium mb-2 pr-8">{idea.title}</h4>
                           <p className="text-sm text-muted-foreground line-clamp-2">
                             {idea.description}
                           </p>
