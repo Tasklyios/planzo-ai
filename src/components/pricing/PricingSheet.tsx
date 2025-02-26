@@ -35,7 +35,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Get Pro",
       color: "white",
-      stripePriceId: 'price_1OpXCZG4Kts8pL4FlyWa2YWW'
+      stripePriceId: import.meta.env.VITE_STRIPE_PRO_PRICE_ID
     },
     {
       name: "Plus",
@@ -50,7 +50,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Plus",
       color: "primary",
-      stripePriceId: 'price_1OpXCZG4Kts8pL4FpEFRkN9E'
+      stripePriceId: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID
     },
     {
       name: "Business",
@@ -67,7 +67,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Business",
       color: "primary",
-      stripePriceId: 'price_1OpXCZG4Kts8pL4FOUStPIin'
+      stripePriceId: import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID
     }
   ];
 
