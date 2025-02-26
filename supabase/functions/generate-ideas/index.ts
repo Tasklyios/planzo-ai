@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
@@ -41,22 +42,13 @@ Format the script with clear sections for:
 
 Make the script conversational and engaging while maintaining the ${toneOfVoice} tone.`;
     } else {
-      prompt = `Generate 5 viral ${platform} video ideas for ${audience} in the ${niche} niche.
-The video type should be: ${videoType}
-
+      prompt = `Generate 5 viral video ideas for ${duration} second videos.
 Create ideas based on these proven formats:
 1. How-to and tutorials that solve specific problems
 2. Behind-the-scenes insights and real experiences
 3. Data-driven content with specific numbers/results
 4. Myth-busting and truth-revealing content
 5. Personal journey and transformation stories
-
-Each idea should:
-- Hook viewers in first 3 seconds
-- Include specific numbers or results
-- Focus on real experiences/data
-- Create instant curiosity
-- Provide actionable value
 
 Format response as JSON with this structure:
 {
@@ -68,9 +60,7 @@ Format response as JSON with this structure:
       "tags": ["string"] (3-5 relevant keywords)
     }
   ]
-}
-
-${customIdeas ? `\nUse these custom ideas as additional inspiration:\n${customIdeas}` : ''}`;
+}`;
     }
 
     console.log("Sending request to OpenAI with prompt:", prompt);
@@ -82,7 +72,7 @@ ${customIdeas ? `\nUse these custom ideas as additional inspiration:\n${customId
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           { 
             role: 'system', 
