@@ -134,29 +134,39 @@ export default function Script() {
 
       if (error) throw error;
       
-      if (data?.script) {
-        setGeneratedScript(data.script);
-        
-        if (scriptType === "existing" && selectedIdea?.id) {
-          const { error: saveError } = await supabase
-            .from('scripts')
-            .insert({
-              content: data.script,
-              idea_id: selectedIdea.id,
-              user_id: (await supabase.auth.getSession()).data.session?.user.id,
-            });
+      if (!data?.script) {
+        throw new Error("Failed to generate script. Please try again.");
+      }
+      
+      setGeneratedScript(data.script);
+      
+      if (scriptType === "existing" && selectedIdea?.id) {
+        const { error: saveError } = await supabase
+          .from('scripts')
+          .insert({
+            content: data.script,
+            idea_id: selectedIdea.id,
+            user_id: (await supabase.auth.getSession()).data.session?.user.id,
+          });
 
-          if (saveError) {
-            console.error("Error saving script:", saveError);
-          }
+        if (saveError) {
+          console.error("Error saving script:", saveError);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Script was generated but couldn't be saved.",
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Script generated and saved successfully!",
+          });
         }
-
+      } else {
         toast({
           title: "Success",
           description: "Script generated successfully!",
         });
-      } else {
-        throw new Error("No script was generated");
       }
     } catch (error: any) {
       console.error("Error generating script:", error);
