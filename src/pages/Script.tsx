@@ -227,7 +227,8 @@ export default function Script() {
         return;
       }
 
-      const { error } = await supabase
+      // First save the script
+      const { error: scriptError } = await supabase
         .from('scripts')
         .insert({
           content: generatedScript,
@@ -235,12 +236,31 @@ export default function Script() {
           idea_id: selectedIdea?.id || null,
         });
 
-      if (error) throw error;
+      if (scriptError) throw scriptError;
+
+      // If we're using an existing idea, update its script field
+      if (selectedIdea?.id) {
+        const { error: ideaError } = await supabase
+          .from('video_ideas')
+          .update({ 
+            script: generatedScript,
+            is_saved: true  // Ensure the idea is marked as saved
+          })
+          .eq('id', selectedIdea.id)
+          .eq('user_id', session.session.user.id);
+
+        if (ideaError) throw ideaError;
+      }
 
       toast({
         title: "Success",
         description: "Script saved successfully",
       });
+
+      // If this is an existing idea, let's refresh the saved ideas
+      if (fetchSavedIdeas) {
+        await fetchSavedIdeas();
+      }
     } catch (error: any) {
       console.error("Error saving script:", error);
       toast({
