@@ -1,3 +1,4 @@
+
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,12 +23,12 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Log price IDs for debugging
-  console.log('Price IDs:', {
-    pro: import.meta.env.VITE_STRIPE_PRO_PRICE_ID,
-    plus: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID,
-    business: import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID
-  });
+  // Hardcode price IDs for testing - replace these with your actual price IDs
+  const PRICE_IDS = {
+    pro: 'price_1OpXCZG4Kts8pL4FpEFRkN9E',
+    plus: 'price_2OpXCZG4Kts8pL4FpEFRkN9E',
+    business: 'price_3OpXCZG4Kts8pL4FpEFRkN9E'
+  };
 
   const tiers = [
     {
@@ -42,7 +43,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Get Pro",
       color: "white",
-      stripePriceId: import.meta.env.VITE_STRIPE_PRO_PRICE_ID
+      stripePriceId: PRICE_IDS.pro
     },
     {
       name: "Plus",
@@ -57,7 +58,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Plus",
       color: "primary",
-      stripePriceId: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID
+      stripePriceId: PRICE_IDS.plus
     },
     {
       name: "Business",
@@ -74,7 +75,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Business",
       color: "primary",
-      stripePriceId: import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID
+      stripePriceId: PRICE_IDS.business
     }
   ];
 
