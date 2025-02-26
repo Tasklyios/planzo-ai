@@ -35,7 +35,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Get Pro",
       color: "white",
-      stripePriceId: 'pro'
+      stripePriceId: import.meta.env.VITE_STRIPE_PRO_PRICE_ID
     },
     {
       name: "Plus",
@@ -50,7 +50,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Plus",
       color: "primary",
-      stripePriceId: 'plus'
+      stripePriceId: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID
     },
     {
       name: "Business",
@@ -67,26 +67,11 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Business",
       color: "primary",
-      stripePriceId: 'business'
+      stripePriceId: import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID
     }
   ];
 
-  const getPriceId = (tier: string) => {
-    switch (tier.toLowerCase()) {
-      case 'pro':
-        return Deno.env.get('STRIPE_PRO_PRICE_ID');
-      case 'plus':
-        return Deno.env.get('STRIPE_PLUS_PRICE_ID');
-      case 'business':
-        return Deno.env.get('STRIPE_BUSINESS_PRICE_ID');
-      default:
-        return null;
-    }
-  };
-
-  const handleUpgradeClick = async (tier: string, stripePriceId: string) => {
-    const priceId = getPriceId(stripePriceId);
-    
+  const handleUpgradeClick = async (tier: string, priceId: string | undefined) => {
     if (!priceId) {
       toast({
         variant: "destructive",
@@ -221,4 +206,3 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
 };
 
 export default PricingSheet;
-
