@@ -1,6 +1,6 @@
+
 import { Check } from "lucide-react";
-import { useState, useEffect } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,28 +13,6 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const initializeStripe = async () => {
-  try {
-    const { data, error } = await supabase.functions.invoke('get-stripe-key');
-    
-    if (error) {
-      console.error('Error fetching Stripe key:', error);
-      throw error;
-    }
-    
-    if (!data?.publishableKey) {
-      console.error('No publishable key received from server');
-      throw new Error('Invalid publishable key');
-    }
-
-    console.log('Initializing Stripe with key:', data.publishableKey);
-    return await loadStripe(data.publishableKey);
-  } catch (error) {
-    console.error('Failed to initialize Stripe:', error);
-    throw error;
-  }
-};
-
 interface PricingSheetProps {
   trigger: React.ReactNode;
 }
@@ -43,23 +21,6 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
   const [loading, setLoading] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const setupStripe = async () => {
-      try {
-        const stripe = await initializeStripe();
-      } catch (error) {
-        console.error('Error setting up Stripe:', error);
-        toast({
-          variant: "destructive",
-          title: "Configuration Error",
-          description: "Failed to initialize payment system. Please try again later.",
-        });
-      }
-    };
-
-    setupStripe();
-  }, [toast]);
 
   const tiers = [
     {
@@ -121,14 +82,19 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
     }
 
     try {
-      console.log('Starting upgrade process for tier:', tier);
       setLoading(tier);
+      console.log('Starting upgrade process for tier:', tier);
 
       // Check authentication first
       const { data: { session }, error: authError } = await supabase.auth.getSession();
+      console.log('Auth check response:', { session, error: authError });
       
       if (authError || !session?.user) {
-        console.log('User not authenticated, redirecting to auth page');
+        console.log('No active session found, redirecting to auth');
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to upgrade your plan.",
+        });
         navigate('/auth');
         return;
       }
@@ -136,26 +102,31 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       console.log('User authenticated:', session.user.id);
 
       // Create checkout session
+      console.log('Creating checkout session with:', { priceId, userId: session.user.id });
       const { data, error: checkoutError } = await supabase.functions.invoke(
         'create-checkout-session',
         {
           body: { 
             priceId,
             userId: session.user.id,
-            returnUrl: window.location.origin + '/account'
+            returnUrl: `${window.location.origin}/account`
           }
         }
       );
 
+      console.log('Checkout session response:', { data, error: checkoutError });
+
       if (checkoutError) {
+        console.error('Checkout error:', checkoutError);
         throw new Error(checkoutError.message || 'Failed to create checkout session');
       }
 
       if (!data?.url) {
+        console.error('No URL in response:', data);
         throw new Error('No checkout URL received from server');
       }
 
-      console.log('Redirecting to checkout:', data.url);
+      console.log('Redirecting to Stripe checkout:', data.url);
       window.location.href = data.url;
       
     } catch (error: any) {
