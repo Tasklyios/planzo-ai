@@ -13,14 +13,15 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get request body
-    const { priceId, userId, returnUrl } = await req.json()
+    const body = await req.json()
+    const { priceId, userId, returnUrl } = body
     
+    console.log('Received request:', { priceId, userId, returnUrl })
+
     if (!priceId || !userId || !returnUrl) {
-      throw new Error('Missing required parameters')
+      throw new Error(`Missing required parameters: ${JSON.stringify({ priceId, userId, returnUrl })}`)
     }
 
-    // Initialize Stripe
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
     if (!stripeKey) {
       throw new Error('Missing Stripe configuration')
@@ -31,7 +32,6 @@ Deno.serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     })
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     
@@ -40,8 +40,9 @@ Deno.serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
+    console.log('Initialized clients')
 
-    // Get or create Stripe customer
+    // Get or create customer
     const { data: subscription } = await supabaseAdmin
       .from('user_subscriptions')
       .select('stripe_customer_id')
@@ -51,10 +52,11 @@ Deno.serve(async (req) => {
     let customerId = subscription?.stripe_customer_id
 
     if (!customerId) {
+      console.log('No existing customer found, creating new customer')
       const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
       
       if (userError || !user?.email) {
-        throw new Error('User not found')
+        throw new Error(`User not found: ${userError?.message}`)
       }
 
       const customer = await stripe.customers.create({
@@ -63,6 +65,7 @@ Deno.serve(async (req) => {
       })
 
       customerId = customer.id
+      console.log('Created new customer:', customerId)
 
       await supabaseAdmin
         .from('user_subscriptions')
@@ -73,7 +76,7 @@ Deno.serve(async (req) => {
         })
     }
 
-    // Create checkout session
+    console.log('Creating checkout session for customer:', customerId)
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
@@ -85,6 +88,8 @@ Deno.serve(async (req) => {
       metadata: { userId },
     })
 
+    console.log('Created checkout session:', session.id)
+
     return new Response(
       JSON.stringify({ url: session.url }),
       {
@@ -93,7 +98,7 @@ Deno.serve(async (req) => {
       },
     )
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error in create-checkout-session:', error)
     return new Response(
       JSON.stringify({ 
         error: {

@@ -88,12 +88,14 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       }
 
       const response = await supabase.functions.invoke('create-checkout-session', {
-        body: JSON.stringify({ 
+        body: { 
           priceId,
           userId: session.user.id,
           returnUrl: `${window.location.origin}/account`
-        })
+        }
       });
+
+      console.log('Checkout response:', response);
 
       if (response.error) {
         throw new Error(response.error.message || 'Failed to create checkout session');
@@ -103,6 +105,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         throw new Error('No checkout URL received');
       }
 
+      // Redirect to Stripe checkout
       window.location.href = response.data.url;
       
     } catch (error: any) {
