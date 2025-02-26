@@ -138,11 +138,11 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       <SheetTrigger asChild>
         {trigger}
       </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-xl">
+      <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="text-2xl font-bold">Upgrade Your Plan</SheetTitle>
         </SheetHeader>
-        <div className="mt-6 space-y-6">
+        <div className="mt-6 space-y-6 pb-6">
           {tiers.map((tier) => (
             <div
               key={tier.name}
@@ -179,13 +179,15 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
                 ))}
               </ul>
               <Button
+                type="button"
+                variant={tier.color === 'primary' ? 'outline' : 'default'}
                 className={`mt-6 w-full ${
                   tier.color === 'primary'
-                    ? 'bg-white text-primary hover:bg-white/90'
+                    ? 'bg-white text-primary hover:bg-white/90 border-white'
                     : 'bg-primary text-white hover:bg-primary/90'
                 }`}
                 onClick={() => handleUpgradeClick(tier.name.toLowerCase(), tier.stripePriceId)}
-                disabled={!!loading}
+                disabled={loading === tier.name.toLowerCase()}
               >
                 {loading === tier.name.toLowerCase() ? "Loading..." : tier.cta}
               </Button>
