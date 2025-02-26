@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
@@ -27,26 +26,35 @@ serve(async (req) => {
 
     let prompt;
     if (type === 'script') {
-      prompt = `Write a natural, conversational ${duration}-second script for a ${toneOfVoice} video about: ${title}
+      prompt = `Write a ${duration}-second script for: ${title}
 
-Topic: ${description}
-Style: ${category}
-Keywords: ${tags?.join(', ') || 'none'}
+Context:
+${description}
+Style: ${toneOfVoice}
 Notes: ${additionalNotes || 'none'}
 
-Important:
-- Write like you're talking to a friend
-- No corporate or cliché phrases
-- Be authentic and relatable
-- Keep it simple and direct
+Key guidelines:
+- Start with a strong hook - get straight to the point
+- No greetings or introductions
+- No "hey guys" or "what's up"
+- No asking for likes/follows
+- Use natural, everyday language
+- Get to the value immediately
+- Keep the pace quick and engaging
 
-Include these markers in the script:
-[HOOK] for the opening hook
-[TIMESTAMP] for timing cues
-[VISUAL_GUIDE] for filming suggestions
-[CTA] for the natural close
+Structure (use these markers):
+[HOOK] Quick attention grab (2-3 seconds)
+[TIMESTAMP] Pacing markers
+[VISUAL_GUIDE] Shot suggestions
+[CTA] Subtle, natural call-to-action
 
-Remember: Write how people actually talk - keep it real and engaging.`;
+Example hooks:
+"I found a way to [solve problem] in under 2 minutes"
+"This [technique/tip] saved me [time/money/effort]"
+"The one thing nobody tells you about [topic]"
+"Here's what actually works for [goal]"
+
+Write the script exactly as it would be spoken, with natural pauses and emphasis. No corporate language, no fake enthusiasm, just real talk.`;
     } else {
       prompt = `Generate 5 viral video ideas for ${duration} second videos.
 Create ideas based on these proven formats:
@@ -83,12 +91,12 @@ Format response as JSON with this structure:
           { 
             role: 'system', 
             content: type === 'script' 
-              ? 'You are a friendly content creator who writes authentic, conversational scripts. Write like you\'re talking to a friend - avoid corporate language, buzzwords, and clichés.'
+              ? 'You are generating a social media script. Write in a natural, direct style like successful TikTok/Instagram creators. No fluff, no cringe, no fake friendliness - just valuable content delivered clearly and naturally. Think of creators like @aliabdaal or @elizabeth_fillips who deliver value without the typical YouTuber persona.'
               : 'You are an expert content strategist who creates viral ideas based on proven formulas. Output must be valid JSON.'
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.8, // Slightly increased for more natural language
+        temperature: 0.7,
       }),
     });
 
