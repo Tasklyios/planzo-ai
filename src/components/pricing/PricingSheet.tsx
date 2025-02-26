@@ -1,4 +1,3 @@
-
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +20,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
   const [loading, setLoading] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
 
   // Log price IDs for debugging
   console.log('Price IDs:', {
@@ -78,7 +78,10 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
     }
   ];
 
-  const handleUpgradeClick = async (tier: string, priceId: string | undefined) => {
+  const handleUpgradeClick = async (e: React.MouseEvent, tier: string, priceId: string | undefined) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     try {
       setLoading(tier);
       
@@ -134,11 +137,14 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
   };
 
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         {trigger}
       </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+      <SheetContent 
+        side="right" 
+        className="w-full sm:max-w-xl overflow-y-auto"
+      >
         <SheetHeader>
           <SheetTitle className="text-2xl font-bold">Upgrade Your Plan</SheetTitle>
         </SheetHeader>
@@ -178,19 +184,18 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
                   </li>
                 ))}
               </ul>
-              <Button
+              <button
                 type="button"
-                variant={tier.color === 'primary' ? 'outline' : 'default'}
-                className={`mt-6 w-full ${
+                className={`mt-6 w-full px-4 py-2 rounded-md font-medium transition-colors ${
                   tier.color === 'primary'
-                    ? 'bg-white text-primary hover:bg-white/90 border-white'
+                    ? 'bg-white text-primary hover:bg-white/90 border border-white'
                     : 'bg-primary text-white hover:bg-primary/90'
-                }`}
-                onClick={() => handleUpgradeClick(tier.name.toLowerCase(), tier.stripePriceId)}
+                } ${loading === tier.name.toLowerCase() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={(e) => handleUpgradeClick(e, tier.name.toLowerCase(), tier.stripePriceId)}
                 disabled={loading === tier.name.toLowerCase()}
               >
                 {loading === tier.name.toLowerCase() ? "Loading..." : tier.cta}
-              </Button>
+              </button>
             </div>
           ))}
         </div>
