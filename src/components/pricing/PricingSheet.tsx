@@ -23,74 +23,15 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Hardcode price IDs for testing - replace these with your actual price IDs
-  const PRICE_IDS = {
-    pro: 'price_1OpXCZG4Kts8pL4FpEFRkN9E',
-    plus: 'price_2OpXCZG4Kts8pL4FpEFRkN9E',
-    business: 'price_3OpXCZG4Kts8pL4FpEFRkN9E'
-  };
-
-  const tiers = [
-    {
-      name: "Pro",
-      description: "Perfect to get started",
-      price: "19.99",
-      features: [
-        "2 AI video ideas per day",
-        "2 script generations per day",
-        "Basic analytics",
-        "Simple calendar features"
-      ],
-      cta: "Get Pro",
-      color: "white",
-      stripePriceId: PRICE_IDS.pro
-    },
-    {
-      name: "Plus",
-      description: "For serious creators",
-      price: "29.99",
-      features: [
-        "20 AI video ideas per day",
-        "20 script generations per day",
-        "Advanced analytics",
-        "Full calendar features",
-        "Priority support"
-      ],
-      cta: "Upgrade to Plus",
-      color: "primary",
-      stripePriceId: PRICE_IDS.plus
-    },
-    {
-      name: "Business",
-      description: "For teams and agencies",
-      price: "69.99",
-      features: [
-        "Unlimited AI video ideas",
-        "Unlimited script generations",
-        "Advanced analytics",
-        "Team collaboration",
-        "Custom branding",
-        "Priority support",
-        "API access"
-      ],
-      cta: "Upgrade to Business",
-      color: "primary",
-      stripePriceId: PRICE_IDS.business
-    }
-  ];
-
-  const handleUpgradeClick = async (e: React.MouseEvent, tier: string, priceId: string | undefined) => {
+  // We'll fetch the price IDs from the backend to ensure we're using the correct ones
+  const handleUpgradeClick = async (e: React.MouseEvent, tier: string) => {
     e.preventDefault();
     e.stopPropagation();
     
     try {
       setLoading(tier);
       
-      if (!priceId) {
-        throw new Error('Price ID is not configured');
-      }
-
-      console.log('Starting upgrade process:', { tier, priceId });
+      console.log('Starting upgrade process for tier:', tier);
 
       // Check authentication first
       const { data: { session }, error: authError } = await supabase.auth.getSession();
@@ -102,9 +43,10 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
 
       console.log('User authenticated, creating checkout session...');
 
+      // Pass the tier name instead of price ID - let the backend handle price ID mapping
       const response = await supabase.functions.invoke('create-checkout-session', {
         body: { 
-          priceId,
+          tier, // Send tier name instead of price ID
           userId: session.user.id,
           returnUrl: `${window.location.origin}/account`
         }
@@ -136,6 +78,52 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       setLoading(null);
     }
   };
+
+  const tiers = [
+    {
+      name: "Pro",
+      description: "Perfect to get started",
+      price: "19.99",
+      features: [
+        "2 AI video ideas per day",
+        "2 script generations per day",
+        "Basic analytics",
+        "Simple calendar features"
+      ],
+      cta: "Get Pro",
+      color: "white"
+    },
+    {
+      name: "Plus",
+      description: "For serious creators",
+      price: "29.99",
+      features: [
+        "20 AI video ideas per day",
+        "20 script generations per day",
+        "Advanced analytics",
+        "Full calendar features",
+        "Priority support"
+      ],
+      cta: "Upgrade to Plus",
+      color: "primary"
+    },
+    {
+      name: "Business",
+      description: "For teams and agencies",
+      price: "69.99",
+      features: [
+        "Unlimited AI video ideas",
+        "Unlimited script generations",
+        "Advanced analytics",
+        "Team collaboration",
+        "Custom branding",
+        "Priority support",
+        "API access"
+      ],
+      cta: "Upgrade to Business",
+      color: "primary"
+    }
+  ];
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -192,7 +180,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
                     ? 'bg-white text-primary hover:bg-white/90 border border-white'
                     : 'bg-primary text-white hover:bg-primary/90'
                 } ${loading === tier.name.toLowerCase() ? 'opacity-50 cursor-not-allowed' : ''}`}
-                onClick={(e) => handleUpgradeClick(e, tier.name.toLowerCase(), tier.stripePriceId)}
+                onClick={(e) => handleUpgradeClick(e, tier.name.toLowerCase())}
                 disabled={loading === tier.name.toLowerCase()}
               >
                 {loading === tier.name.toLowerCase() ? "Loading..." : tier.cta}

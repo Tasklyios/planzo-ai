@@ -1,114 +1,92 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
-import Stripe from 'https://esm.sh/stripe@14.14.0'
+// Follow this setup guide to integrate the Deno runtime into your application:
+// https://deno.com/manual/getting_started/installation
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import Stripe from 'https://esm.sh/stripe@13.3.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
-  }
-
+serve(async (req) => {
   try {
-    const body = await req.json()
-    const { priceId, userId, returnUrl } = body
-    
-    console.log('Received request:', { priceId, userId, returnUrl })
-
-    if (!priceId || !userId || !returnUrl) {
-      throw new Error(`Missing required parameters: ${JSON.stringify({ priceId, userId, returnUrl })}`)
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response('ok', { headers: corsHeaders });
     }
 
-    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
-    if (!stripeKey) {
-      throw new Error('Missing Stripe configuration')
-    }
+    // Get the request body
+    const { tier, userId, returnUrl } = await req.json();
 
-    const stripe = new Stripe(stripeKey, {
+    // Create Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Initialize Stripe
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
       apiVersion: '2023-10-16',
       httpClient: Stripe.createFetchHttpClient(),
-    })
+    });
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing Supabase configuration')
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
-    console.log('Initialized clients')
-
-    // Get or create customer
-    const { data: subscription } = await supabaseAdmin
-      .from('user_subscriptions')
-      .select('stripe_customer_id')
-      .eq('user_id', userId)
-      .single()
-
-    let customerId = subscription?.stripe_customer_id
-
-    if (!customerId) {
-      console.log('No existing customer found, creating new customer')
-      const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
-      
-      if (userError || !user?.email) {
-        throw new Error(`User not found: ${userError?.message}`)
+    // Map tier to price ID
+    const priceId = (() => {
+      switch (tier) {
+        case 'pro':
+          return Deno.env.get('STRIPE_PRO_PRICE_ID');
+        case 'plus':
+          return Deno.env.get('STRIPE_PLUS_PRICE_ID');
+        case 'business':
+          return Deno.env.get('STRIPE_BUSINESS_PRICE_ID');
+        default:
+          throw new Error('Invalid tier');
       }
+    })();
 
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: { userId },
-      })
-
-      customerId = customer.id
-      console.log('Created new customer:', customerId)
-
-      await supabaseAdmin
-        .from('user_subscriptions')
-        .upsert({
-          user_id: userId,
-          stripe_customer_id: customerId,
-          tier: 'free',
-        })
+    if (!priceId) {
+      throw new Error(`Price ID not found for tier: ${tier}`);
     }
 
-    console.log('Creating checkout session for customer:', customerId)
+    console.log('Creating checkout session with price ID:', priceId);
+
+    // Create Checkout Session
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{
+        price: priceId,
+        quantity: 1,
+      }],
       mode: 'subscription',
-      success_url: `${returnUrl}?success=true`,
-      cancel_url: `${returnUrl}?success=false`,
-      allow_promotion_codes: true,
-      billing_address_collection: 'auto',
-      metadata: { userId },
-    })
+      success_url: returnUrl,
+      cancel_url: returnUrl,
+      client_reference_id: userId,
+    });
 
-    console.log('Created checkout session:', session.id)
-
+    // Return the session URL
     return new Response(
       JSON.stringify({ url: session.url }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
       },
-    )
+    );
+
   } catch (error) {
-    console.error('Error in create-checkout-session:', error)
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({ 
-        error: {
-          message: error instanceof Error ? error.message : 'An unknown error occurred'
-        }
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      JSON.stringify({ error: error.message }),
+      { 
         status: 400,
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
       },
-    )
+    );
   }
-})
+});
