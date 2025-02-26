@@ -300,18 +300,18 @@ export default function Script() {
               />
             </div>
 
-            <ScrollArea className="h-[400px] rounded-lg border">
+            <ScrollArea className="h-[300px] rounded-lg border p-4">
               <Carousel className="w-full">
                 <CarouselContent className="-ml-2 md:-ml-4">
                   {filteredIdeas.map((idea) => (
                     <CarouselItem 
                       key={idea.id} 
-                      className="pl-2 md:pl-4 pt-6 pb-4 md:basis-1/2 lg:basis-1/3"
+                      className="pl-2 md:pl-4 pt-2 pb-2 md:basis-1/2 lg:basis-1/3"
                     >
-                      <div className="p-2">
+                      <div className="p-1">
                         <Card 
                           className={cn(
-                            "p-4 cursor-pointer transition-all border-l-4 relative overflow-visible",
+                            "p-3 cursor-pointer transition-all border-l-4 relative overflow-visible",
                             colorClasses[idea.color || 'blue'] || colorClasses.blue,
                             selectedIdea?.id === idea.id 
                               ? 'ring-2 ring-primary shadow-lg scale-[1.02] bg-primary/5' 
