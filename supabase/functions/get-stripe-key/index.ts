@@ -7,7 +7,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -16,39 +15,30 @@ serve(async (req) => {
     const publishableKey = Deno.env.get('STRIPE_PUBLISHABLE_KEY')
     
     if (!publishableKey) {
-      console.error('Stripe publishable key not found in environment variables');
-      return new Response(
-        JSON.stringify({ error: 'Stripe publishable key not found' }),
-        { 
-          status: 500, 
-          headers: { 
-            ...corsHeaders,
-            'Content-Type': 'application/json' 
-          } 
-        }
-      )
+      throw new Error('Stripe publishable key not found')
     }
 
-    console.log('Successfully retrieved publishable key');
+    console.log('Successfully retrieved publishable key')
+    
     return new Response(
       JSON.stringify({ publishableKey }),
       { 
         headers: { 
           ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
+          'Content-Type': 'application/json'
+        }
       }
     )
   } catch (error) {
-    console.error('Error retrieving Stripe publishable key:', error);
+    console.error('Error:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: error.message }),
       { 
-        status: 500, 
+        status: 500,
         headers: { 
           ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
+          'Content-Type': 'application/json'
+        }
       }
     )
   }
