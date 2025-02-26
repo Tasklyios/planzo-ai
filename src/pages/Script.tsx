@@ -16,7 +16,15 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GeneratedIdea } from "@/types/idea";
-import { Save } from "lucide-react";
+import { Save, Search } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { Card } from "@/components/ui/card";
 
 export default function Script() {
   const [loading, setLoading] = useState(false);
@@ -30,18 +38,36 @@ export default function Script() {
   const [duration, setDuration] = useState("60");
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [showVisuals, setShowVisuals] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const statuses = [
+    { id: 'all', label: 'All Ideas' },
+    { id: 'ideas', label: 'Ideas' },
+    { id: 'planning', label: 'Planning' },
+    { id: 'filming', label: 'Ready to Film' },
+    { id: 'editing', label: 'To Edit' },
+    { id: 'ready', label: 'Ready to Post' },
+  ];
 
   const fetchSavedIdeas = async () => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session?.user.id) return;
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("video_ideas")
         .select("*")
         .eq("user_id", sessionData.session.user.id)
         .eq("is_saved", true);
+
+      if (selectedStatus !== 'all') {
+        query = query.eq('status', selectedStatus);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setSavedIdeas(data || []);
@@ -57,7 +83,12 @@ export default function Script() {
 
   useEffect(() => {
     fetchSavedIdeas();
-  }, []);
+  }, [selectedStatus]);
+
+  const filteredIdeas = savedIdeas.filter(idea =>
+    idea.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    idea.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const generateScript = async () => {
     setLoading(true);
@@ -230,32 +261,53 @@ export default function Script() {
           </div>
 
           {scriptType === "existing" ? (
-            <div className="space-y-4">
-              <Label>Select an idea</Label>
-              <Select
-                value={selectedIdea?.id}
-                onValueChange={(value) => {
-                  const idea = savedIdeas.find(i => i.id === value);
-                  setSelectedIdea(idea || null);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose an idea" />
-                </SelectTrigger>
-                <SelectContent>
-                  {savedIdeas.map((idea) => (
-                    <SelectItem key={idea.id} value={idea.id}>
-                      {idea.title}
-                    </SelectItem>
+            <div className="space-y-6">
+              <div className="flex flex-wrap gap-2">
+                {statuses.map((status) => (
+                  <Button
+                    key={status.id}
+                    variant={selectedStatus === status.id ? "default" : "outline"}
+                    onClick={() => setSelectedStatus(status.id)}
+                    className="text-sm"
+                  >
+                    {status.label}
+                  </Button>
+                ))}
+              </div>
+
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search ideas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {filteredIdeas.map((idea) => (
+                    <CarouselItem key={idea.id} className="md:basis-1/2 lg:basis-1/3">
+                      <Card 
+                        className={`p-4 cursor-pointer transition-all ${
+                          selectedIdea?.id === idea.id 
+                            ? 'ring-2 ring-primary' 
+                            : 'hover:border-primary'
+                        }`}
+                        onClick={() => setSelectedIdea(idea)}
+                      >
+                        <h4 className="font-medium mb-2">{idea.title}</h4>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {idea.description}
+                        </p>
+                      </Card>
+                    </CarouselItem>
                   ))}
-                </SelectContent>
-              </Select>
-              {selectedIdea && (
-                <div className="rounded-lg border p-4 bg-muted/50">
-                  <p className="font-medium">{selectedIdea.title}</p>
-                  <p className="text-sm text-muted-foreground mt-2">{selectedIdea.description}</p>
-                </div>
-              )}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
             </div>
           ) : (
             <div className="space-y-4">
