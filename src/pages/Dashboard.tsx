@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,16 +12,10 @@ import {
   User,
   CreditCard,
   LogOut,
+  Rocket,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import PricingSheet from "@/components/pricing/PricingSheet";
 
 interface IdeaType {
   title: string;
@@ -161,26 +154,24 @@ const Dashboard = () => {
             </div>
           </section>
 
-          <section className="bg-card rounded-xl p-8 border border-border">
+          <section className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-8 border border-border relative overflow-hidden">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-foreground">Recent Ideas</h2>
-              <button className="text-primary hover:underline">View All</button>
+              <h2 className="text-2xl font-bold text-foreground">Upgrade Your Plan</h2>
             </div>
-            <div className="space-y-4">
-              {recentIdeas.map((idea, index) => (
-                <div key={index} className="p-4 bg-accent rounded-lg">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-foreground font-semibold">{idea.title}</h3>
-                    <BookmarkIcon 
-                      className={`w-5 h-5 cursor-pointer hover:scale-110 transition-transform ${
-                        idea.is_saved ? "fill-primary" : ""
-                      } text-primary`}
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">{getTimeSince(idea.created_at)}</p>
-                </div>
-              ))}
+            <div className="relative z-10">
+              <p className="text-muted-foreground mb-6">
+                Unlock unlimited ideas, advanced analytics, and premium features to supercharge your content creation.
+              </p>
+              <PricingSheet 
+                trigger={
+                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                    <Rocket className="w-4 h-4 mr-2" />
+                    Upgrade Now
+                  </Button>
+                }
+              />
             </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
           </section>
         </div>
 
