@@ -1,4 +1,3 @@
-
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +34,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Get Pro",
       color: "white",
-      stripePriceId: import.meta.env.VITE_STRIPE_PRO_PRICE_ID
+      stripePriceId: 'price_1OpXCZG4Kts8pL4FlyWa2YWW'
     },
     {
       name: "Plus",
@@ -50,7 +49,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Plus",
       color: "primary",
-      stripePriceId: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID
+      stripePriceId: 'price_1OpXCZG4Kts8pL4FpEFRkN9E'
     },
     {
       name: "Business",
@@ -67,7 +66,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Business",
       color: "primary",
-      stripePriceId: import.meta.env.VITE_STRIPE_BUSINESS_PRICE_ID
+      stripePriceId: 'price_1OpXCZG4Kts8pL4FOUStPIin'
     }
   ];
 
