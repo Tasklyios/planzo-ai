@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -305,14 +304,19 @@ export default function Script() {
                     <CarouselItem key={idea.id} className="md:basis-1/2 lg:basis-1/3">
                       <Card 
                         className={cn(
-                          "p-4 cursor-pointer transition-all border-l-4",
+                          "p-4 cursor-pointer transition-all border-l-4 relative",
                           colorClasses[idea.color || 'blue'] || colorClasses.blue,
                           selectedIdea?.id === idea.id 
-                            ? 'ring-2 ring-primary' 
-                            : 'hover:border-primary'
+                            ? 'ring-2 ring-primary shadow-lg scale-[1.02] bg-primary/5' 
+                            : 'hover:border-primary hover:shadow-md hover:scale-[1.01]'
                         )}
                         onClick={() => setSelectedIdea(idea)}
                       >
+                        {selectedIdea?.id === idea.id && (
+                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs">
+                            ✓
+                          </div>
+                        )}
                         <h4 className="font-medium mb-2">{idea.title}</h4>
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           {idea.description}
