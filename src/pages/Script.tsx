@@ -301,10 +301,10 @@ export default function Script() {
               <Carousel className="w-full">
                 <CarouselContent className="-ml-2 md:-ml-4">
                   {filteredIdeas.map((idea) => (
-                    <CarouselItem key={idea.id} className="pl-2 md:pl-4 pt-4 md:basis-1/2 lg:basis-1/3">
+                    <CarouselItem key={idea.id} className="pl-2 md:pl-4 pt-6 md:basis-1/2 lg:basis-1/3">
                       <Card 
                         className={cn(
-                          "p-4 cursor-pointer transition-all border-l-4 relative",
+                          "p-4 cursor-pointer transition-all border-l-4 relative overflow-visible",
                           colorClasses[idea.color || 'blue'] || colorClasses.blue,
                           selectedIdea?.id === idea.id 
                             ? 'ring-2 ring-primary shadow-lg scale-[1.02] bg-primary/5' 
@@ -313,7 +313,7 @@ export default function Script() {
                         onClick={() => setSelectedIdea(idea)}
                       >
                         {selectedIdea?.id === idea.id && (
-                          <div className="absolute -top-3.5 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs z-10">
+                          <div className="absolute -top-4 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs z-10">
                             ✓
                           </div>
                         )}
