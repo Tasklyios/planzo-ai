@@ -12,8 +12,8 @@ import NotFound from "@/pages/NotFound";
 import Script from "@/pages/Script";
 import ContentPlanner from "@/pages/ContentPlanner";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthGuard } from "@/components/AuthGuard";
-import { AppLayout } from "@/components/layout/AppLayout";
+import AuthGuard from "@/components/AuthGuard";
+import AppLayout from "@/components/layout/AppLayout";
 import { ThemeProvider } from "@/hooks/use-theme";
 
 function App() {
