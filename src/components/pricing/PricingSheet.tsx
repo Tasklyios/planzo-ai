@@ -1,7 +1,7 @@
-
 import { Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -45,6 +45,7 @@ interface PricingSheetProps {
 const PricingSheet = ({ trigger }: PricingSheetProps) => {
   const [loading, setLoading] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Verify Stripe initialization on component mount
@@ -125,12 +126,8 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       const { data: { session }, error: authError } = await supabase.auth.getSession();
       
       if (authError || !session?.user) {
-        console.error('Authentication error:', authError);
-        toast({
-          variant: "destructive",
-          title: "Authentication Required",
-          description: "Please login to upgrade your subscription",
-        });
+        console.log('User not authenticated, redirecting to auth page');
+        navigate('/auth');
         return;
       }
 
