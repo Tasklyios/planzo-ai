@@ -2,7 +2,7 @@
 import { 
   MessageSquare,
   Mic, 
-  Reddit,
+  BookOpen, // Changed from Reddit to BookOpen for Reddit stories
   Split,
   Image,
   Download,
@@ -25,7 +25,7 @@ const Features = () => {
       image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/voiceover-interface.png"
     },
     {
-      icon: <Reddit className="text-primary" size={24} />,
+      icon: <BookOpen className="text-primary" size={24} />, // Changed icon here
       title: "Create Reddit Story Videos",
       description: "Write your own script or generate one auto-magically from a Reddit link.",
       image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/reddit-interface.png"
