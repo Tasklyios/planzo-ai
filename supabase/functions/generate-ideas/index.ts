@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
@@ -17,15 +16,32 @@ serve(async (req) => {
     const requestData = await req.json();
     console.log("Received request data:", requestData);
 
-    const { niche, audience, videoType, platform, customIdeas } = requestData;
-    console.log("Processing request with params:", { niche, audience, videoType, platform, customIdeas });
+    const { type, title, description, category, tags, toneOfVoice, duration, additionalNotes } = requestData;
+    console.log("Processing request with params:", { type, title, description, category, tags, toneOfVoice, duration, additionalNotes });
 
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    const prompt = `Generate 5 viral ${platform} video ideas for ${audience} in the ${niche} niche.
+    let prompt;
+    if (type === 'script') {
+      prompt = `Create a ${duration}-second video script for a ${toneOfVoice} video about: ${title}
+
+Description: ${description}
+Category: ${category}
+Tags: ${tags?.join(', ') || 'none'}
+Additional Notes: ${additionalNotes || 'none'}
+
+Format the script with clear sections for:
+1. [HOOK] - An attention-grabbing opening (first 3 seconds)
+2. [TIMESTAMP] Main content sections with approximate timestamps
+3. [VISUAL_GUIDE] Visual directions and shot suggestions between script sections
+4. [CTA] - Clear call to action at the end
+
+Make the script conversational and engaging while maintaining the ${toneOfVoice} tone.`;
+    } else {
+      prompt = `Generate 5 viral ${platform} video ideas for ${audience} in the ${niche} niche.
 The video type should be: ${videoType}
 
 Create ideas based on these proven formats:
@@ -55,6 +71,7 @@ Format response as JSON with this structure:
 }
 
 ${customIdeas ? `\nUse these custom ideas as additional inspiration:\n${customIdeas}` : ''}`;
+    }
 
     console.log("Sending request to OpenAI with prompt:", prompt);
     
@@ -65,11 +82,13 @@ ${customIdeas ? `\nUse these custom ideas as additional inspiration:\n${customId
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4',
         messages: [
           { 
             role: 'system', 
-            content: 'You are an expert content strategist who creates viral ideas based on proven formulas. Output must be valid JSON.'
+            content: type === 'script' 
+              ? 'You are an expert video script writer who creates engaging scripts optimized for social media.'
+              : 'You are an expert content strategist who creates viral ideas based on proven formulas. Output must be valid JSON.'
           },
           { role: 'user', content: prompt }
         ],
@@ -89,30 +108,38 @@ ${customIdeas ? `\nUse these custom ideas as additional inspiration:\n${customId
       throw new Error('Invalid response format from OpenAI');
     }
 
-    let parsedContent;
-    try {
-      parsedContent = JSON.parse(content);
-    } catch (e) {
-      console.error('Failed to parse OpenAI response:', content);
-      throw new Error('Invalid JSON response from OpenAI');
-    }
-
-    if (!parsedContent.ideas || !Array.isArray(parsedContent.ideas)) {
-      throw new Error('Invalid ideas format from OpenAI');
-    }
-
-    return new Response(
-      JSON.stringify(parsedContent),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (type === 'script') {
+      return new Response(
+        JSON.stringify({ script: content }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    } else {
+      let parsedContent;
+      try {
+        parsedContent = JSON.parse(content);
+      } catch (e) {
+        console.error('Failed to parse OpenAI response:', content);
+        throw new Error('Invalid JSON response from OpenAI');
       }
-    );
 
+      if (!parsedContent.ideas || !Array.isArray(parsedContent.ideas)) {
+        throw new Error('Invalid ideas format from OpenAI');
+      }
+
+      return new Response(
+        JSON.stringify(parsedContent),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
   } catch (error) {
     console.error('Error in generate-ideas function:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'Error generating ideas',
+        error: 'Error generating content',
         message: error.message
       }),
       { 
