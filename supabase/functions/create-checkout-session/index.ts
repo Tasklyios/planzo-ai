@@ -8,6 +8,7 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -105,14 +106,19 @@ Deno.serve(async (req) => {
       JSON.stringify({ url: session.url }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
       },
     )
   } catch (error) {
     console.error('Error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: {
+          message: error instanceof Error ? error.message : 'An unknown error occurred'
+        }
+      }),
       {
-        status: 500,
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       },
     )
