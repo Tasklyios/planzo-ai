@@ -97,8 +97,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log('Creating checkout session for customer:', customerId)
-
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

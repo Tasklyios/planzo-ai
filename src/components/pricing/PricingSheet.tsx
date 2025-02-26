@@ -1,3 +1,4 @@
+
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -34,7 +35,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Get Pro",
       color: "white",
-      stripePriceId: 'price_1OpXCZG4Kts8pL4FlyWa2YWW'
+      stripePriceId: 'pro'
     },
     {
       name: "Plus",
@@ -49,7 +50,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Plus",
       color: "primary",
-      stripePriceId: 'price_1OpXCZG4Kts8pL4FpEFRkN9E'
+      stripePriceId: 'plus'
     },
     {
       name: "Business",
@@ -66,11 +67,26 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       ],
       cta: "Upgrade to Business",
       color: "primary",
-      stripePriceId: 'price_1OpXCZG4Kts8pL4FOUStPIin'
+      stripePriceId: 'business'
     }
   ];
 
-  const handleUpgradeClick = async (tier: string, priceId: string | undefined) => {
+  const getPriceId = (tier: string) => {
+    switch (tier.toLowerCase()) {
+      case 'pro':
+        return Deno.env.get('STRIPE_PRO_PRICE_ID');
+      case 'plus':
+        return Deno.env.get('STRIPE_PLUS_PRICE_ID');
+      case 'business':
+        return Deno.env.get('STRIPE_BUSINESS_PRICE_ID');
+      default:
+        return null;
+    }
+  };
+
+  const handleUpgradeClick = async (tier: string, stripePriceId: string) => {
+    const priceId = getPriceId(stripePriceId);
+    
     if (!priceId) {
       toast({
         variant: "destructive",
@@ -205,3 +221,4 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
 };
 
 export default PricingSheet;
+
