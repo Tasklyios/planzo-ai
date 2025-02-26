@@ -27,20 +27,26 @@ serve(async (req) => {
 
     let prompt;
     if (type === 'script') {
-      prompt = `Create a ${duration}-second video script for a ${toneOfVoice} video about: ${title}
+      prompt = `Write a natural, conversational ${duration}-second script for a ${toneOfVoice} video about: ${title}
 
-Description: ${description}
-Category: ${category}
-Tags: ${tags?.join(', ') || 'none'}
-Additional Notes: ${additionalNotes || 'none'}
+Topic: ${description}
+Style: ${category}
+Keywords: ${tags?.join(', ') || 'none'}
+Notes: ${additionalNotes || 'none'}
 
-Format the script with clear sections for:
-1. [HOOK] - An attention-grabbing opening (first 3 seconds)
-2. [TIMESTAMP] Main content sections with approximate timestamps
-3. [VISUAL_GUIDE] Visual directions and shot suggestions between script sections
-4. [CTA] - Clear call to action at the end
+Important:
+- Write like you're talking to a friend
+- No corporate or cliché phrases
+- Be authentic and relatable
+- Keep it simple and direct
 
-Make the script conversational and engaging while maintaining the ${toneOfVoice} tone.`;
+Include these markers in the script:
+[HOOK] for the opening hook
+[TIMESTAMP] for timing cues
+[VISUAL_GUIDE] for filming suggestions
+[CTA] for the natural close
+
+Remember: Write how people actually talk - keep it real and engaging.`;
     } else {
       prompt = `Generate 5 viral video ideas for ${duration} second videos.
 Create ideas based on these proven formats:
@@ -77,12 +83,12 @@ Format response as JSON with this structure:
           { 
             role: 'system', 
             content: type === 'script' 
-              ? 'You are an expert video script writer who creates engaging scripts optimized for social media.'
+              ? 'You are a friendly content creator who writes authentic, conversational scripts. Write like you\'re talking to a friend - avoid corporate language, buzzwords, and clichés.'
               : 'You are an expert content strategist who creates viral ideas based on proven formulas. Output must be valid JSON.'
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
+        temperature: 0.8, // Slightly increased for more natural language
       }),
     });
 
