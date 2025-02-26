@@ -18,7 +18,7 @@ const Pricing = () => {
         "Simple calendar features"
       ],
       cta: "Get Pro",
-      color: "white"
+      color: "gray"
     },
     {
       name: "Plus",
@@ -48,7 +48,7 @@ const Pricing = () => {
         "API access"
       ],
       cta: "Upgrade to Business",
-      color: "primary"
+      color: "gray"
     }
   ];
 
@@ -68,11 +68,20 @@ const Pricing = () => {
           {tiers.map((tier, index) => (
             <div 
               key={tier.name}
-              className={`bg-${tier.color} p-8 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 fade-up ${
-                tier.color === 'primary' ? 'text-white' : ''
-              }`}
+              className={`${
+                tier.color === 'primary' 
+                  ? 'bg-gradient-to-br from-[#4F92FF] to-[#6BA5FF] text-white scale-105 shadow-xl' 
+                  : 'bg-[#F6F6F6] border border-gray-100 shadow-sm'
+              } p-8 rounded-2xl transform transition-all duration-300 hover:-translate-y-2 relative`}
               style={{ animationDelay: `${index * 100}ms` }}
             >
+              {tier.color === 'primary' && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-white text-[#4F92FF] px-4 py-1 rounded-full text-sm font-semibold">
+                    Most Popular
+                  </span>
+                </div>
+              )}
               <h3 className="text-2xl font-bold mb-2">{tier.name}</h3>
               <p className={`${tier.color === 'primary' ? 'text-white/70' : 'text-dark/70'} mb-6`}>
                 {tier.description}
@@ -95,7 +104,7 @@ const Pricing = () => {
                 className={`w-full ${
                   tier.color === 'primary' 
                     ? 'bg-white text-primary hover:bg-white/90'
-                    : 'bg-primary text-white hover:bg-primary/90'
+                    : 'bg-[#F2F4F8] text-[#222831] hover:bg-gray-200'
                 }`}
                 onClick={() => handleUpgradeClick(tier.name.toLowerCase())}
               >
@@ -110,4 +119,3 @@ const Pricing = () => {
 };
 
 export default Pricing;
-
