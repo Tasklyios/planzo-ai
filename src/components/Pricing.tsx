@@ -2,15 +2,17 @@
 import { Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const [isYearly, setIsYearly] = useState(false);
 
   const tiers = [
     {
       name: "Pro",
       description: "Perfect to get started",
-      price: "19.99",
+      price: isYearly ? "13.99" : "19.99",
       features: [
         "10 AI video ideas per day",
         "20 script generations per day",
@@ -23,7 +25,7 @@ const Pricing = () => {
     {
       name: "Plus",
       description: "For serious creators",
-      price: "29.99",
+      price: isYearly ? "20.99" : "29.99",
       features: [
         "20 AI video ideas per day",
         "30 script generations per day",
@@ -37,7 +39,7 @@ const Pricing = () => {
     {
       name: "Business",
       description: "For teams and agencies",
-      price: "69.99",
+      price: isYearly ? "48.99" : "69.99",
       features: [
         "Unlimited AI video ideas",
         "Unlimited script generations",
@@ -61,9 +63,25 @@ const Pricing = () => {
   return (
     <section className="bg-light-bg py-16">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-dark mb-16 fade-up">
-          Simple Pricing
-        </h2>
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-dark mb-8 fade-up">
+            Simple Pricing
+          </h2>
+          <div className="flex items-center justify-center gap-4">
+            <span className="text-gray-600">Monthly</span>
+            <div className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                className="sr-only peer" 
+                checked={isYearly} 
+                onChange={() => setIsYearly(!isYearly)}
+              />
+              <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[#4F92FF]"></div>
+            </div>
+            <span className="text-gray-600">Yearly</span>
+            <span className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full">Save 30%</span>
+          </div>
+        </div>
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {tiers.map((tier, index) => (
             <div 
@@ -89,7 +107,7 @@ const Pricing = () => {
               <div className="text-4xl font-bold mb-8">
                 £{tier.price}
                 <span className={`text-lg font-normal ${tier.color === 'primary' ? 'text-white/70' : 'text-dark/70'}`}>
-                  /month
+                  /{isYearly ? 'year' : 'month'}
                 </span>
               </div>
               <ul className="space-y-4 mb-8">
