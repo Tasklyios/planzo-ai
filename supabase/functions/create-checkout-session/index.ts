@@ -18,34 +18,27 @@ serve(async (req) => {
       return new Response('ok', { headers: corsHeaders });
     }
 
+    console.log('Request received');
+
     // Get the request body
     const { tier, userId, returnUrl } = await req.json();
+    
+    console.log('Request body:', { tier, userId, returnUrl });
 
-    // Create Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Initialize Stripe with your secret key
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!stripeSecretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
 
-    // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2023-10-16',
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    // Map tier to price ID
-    const priceId = (() => {
-      switch (tier) {
-        case 'pro':
-          return Deno.env.get('STRIPE_PRO_PRICE_ID');
-        case 'plus':
-          return Deno.env.get('STRIPE_PLUS_PRICE_ID');
-        case 'business':
-          return Deno.env.get('STRIPE_BUSINESS_PRICE_ID');
-        default:
-          throw new Error('Invalid tier');
-      }
-    })();
+    // Get the price ID directly from function secrets
+    const priceId = Deno.env.get(`STRIPE_${tier.toUpperCase()}_PRICE_ID`);
+    console.log('Retrieved price ID:', priceId);
 
     if (!priceId) {
       throw new Error(`Price ID not found for tier: ${tier}`);
@@ -64,6 +57,8 @@ serve(async (req) => {
       cancel_url: returnUrl,
       client_reference_id: userId,
     });
+
+    console.log('Checkout session created:', session.url);
 
     // Return the session URL
     return new Response(
