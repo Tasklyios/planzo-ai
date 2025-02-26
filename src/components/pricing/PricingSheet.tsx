@@ -1,3 +1,4 @@
+
 import { Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -28,15 +29,12 @@ const initializeStripe = async () => {
     }
 
     console.log('Initializing Stripe with key:', data.publishableKey);
-    return loadStripe(data.publishableKey);
+    return await loadStripe(data.publishableKey);
   } catch (error) {
     console.error('Failed to initialize Stripe:', error);
     throw error;
   }
 };
-
-// Initialize Stripe with the publishable key from Supabase
-const stripePromise = initializeStripe();
 
 interface PricingSheetProps {
   trigger: React.ReactNode;
@@ -44,19 +42,26 @@ interface PricingSheetProps {
 
 const PricingSheet = ({ trigger }: PricingSheetProps) => {
   const [loading, setLoading] = useState<string | null>(null);
+  const [stripeInstance, setStripeInstance] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Verify Stripe initialization on component mount
-    stripePromise.catch(error => {
-      console.error('Error initializing Stripe:', error);
-      toast({
-        variant: "destructive",
-        title: "Configuration Error",
-        description: "Failed to initialize payment system. Please try again later.",
-      });
-    });
+    const setupStripe = async () => {
+      try {
+        const stripe = await initializeStripe();
+        setStripeInstance(stripe);
+      } catch (error) {
+        console.error('Error setting up Stripe:', error);
+        toast({
+          variant: "destructive",
+          title: "Configuration Error",
+          description: "Failed to initialize payment system. Please try again later.",
+        });
+      }
+    };
+
+    setupStripe();
   }, [toast]);
 
   const tiers = [
@@ -119,8 +124,12 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
     }
 
     try {
-      console.log('Starting upgrade process for tier:', tier, 'with priceId:', priceId);
+      console.log('Starting upgrade process for tier:', tier);
       setLoading(tier);
+
+      if (!stripeInstance) {
+        throw new Error('Stripe is not initialized');
+      }
 
       // Check authentication first
       const { data: { session }, error: authError } = await supabase.auth.getSession();
@@ -145,7 +154,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         }
       );
 
-      console.log('Checkout session response:', checkoutData, checkoutError);
+      console.log('Checkout session response:', checkoutData);
 
       if (checkoutError || !checkoutData?.url) {
         console.error('Checkout error:', checkoutError);
@@ -161,7 +170,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to start checkout process. Please try again.",
+        description: error.message || "Failed to start checkout process. Please try again.",
       });
     } finally {
       setLoading(null);
