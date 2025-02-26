@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
@@ -23,8 +23,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
-          <Route element={<AuthGuard />}>
-            <Route element={<AppLayout />}>
+          <Route element={<AuthGuard><Outlet /></AuthGuard>}>
+            <Route element={<AppLayout><Outlet /></AppLayout>}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/generator" element={<Generator />} />
               <Route path="/script" element={<Script />} />
