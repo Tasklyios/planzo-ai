@@ -313,7 +313,7 @@ export default function Script() {
                         onClick={() => setSelectedIdea(idea)}
                       >
                         {selectedIdea?.id === idea.id && (
-                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs">
+                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs z-10">
                             ✓
                           </div>
                         )}
