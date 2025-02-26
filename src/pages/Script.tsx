@@ -181,42 +181,37 @@ export default function Script() {
   };
 
   const parseScript = (script: string, showVisuals: boolean) => {
-    if (!script) return { parsedContent: "" };
+    if (!script) return { parsedLines: [], isVisual: [] };
 
     const lines = script.split('\n');
-    let parsedContent = '';
-    let isInVisualBlock = false;
+    const parsedLines = [];
+    const isVisual = [];
 
     for (const line of lines) {
+      // Skip empty lines
+      if (!line.trim()) continue;
+
       if (line.includes('[VISUAL_GUIDE]')) {
-        const visualContent = line.replace('[VISUAL_GUIDE]', '').replace('[/VISUAL_GUIDE]', '');
+        const visualContent = line.replace('[VISUAL_GUIDE]', '').replace('[/VISUAL_GUIDE]', '').trim();
         if (showVisuals) {
-          parsedContent += `\n→ Visual: ${visualContent}\n`;
+          parsedLines.push(visualContent);
+          isVisual.push(true);
         }
-        continue;
-      }
-
-      // Skip visual end tags
-      if (line.includes('[/VISUAL_GUIDE]')) {
-        continue;
-      }
-
-      // Add regular script lines
-      if (!line.includes('[VISUAL_GUIDE]') && !line.includes('[/VISUAL_GUIDE]')) {
-        parsedContent += `${line}\n`;
+      } else if (!line.includes('[/VISUAL_GUIDE]')) {
+        // Add regular script lines (remove any other markers)
+        const cleanLine = line
+          .replace(/\[TIMESTAMPS?\]|\[HOOK\]|\[CTA\]/g, '')
+          .trim();
+        
+        if (cleanLine) {
+          parsedLines.push(cleanLine);
+          isVisual.push(false);
+        }
       }
     }
 
-    // Clean up any remaining markers
-    parsedContent = parsedContent
-      .replace(/\[TIMESTAMPS?\]|\[HOOK\]|\[CTA\]/g, '')
-      .replace(/\n{3,}/g, '\n\n') // Remove excess newlines
-      .trim();
-
-    return { parsedContent };
+    return { parsedLines, isVisual };
   };
-
-  const { parsedContent } = parseScript(generatedScript, showVisuals);
 
   const handleSaveScript = async () => {
     if (!generatedScript) return;
@@ -255,6 +250,8 @@ export default function Script() {
       });
     }
   };
+
+  const { parsedLines, isVisual } = parseScript(generatedScript, showVisuals);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -437,16 +434,17 @@ export default function Script() {
                 </div>
               </div>
               <div className="whitespace-pre-wrap font-mono text-sm space-y-2">
-                {parsedContent.split('\n').map((line, index) => (
+                {parsedLines.map((line, index) => (
                   <div 
-                    key={index} 
-                    className={`${
-                      line.startsWith('→ Visual:') 
-                        ? 'pl-4 text-blue-500 dark:text-blue-400 italic border-l-2 border-blue-500 dark:border-blue-400'
-                        : ''
-                    }`}
+                    key={index}
+                    className={cn(
+                      "py-2",
+                      isVisual[index] ? 
+                        "pl-4 text-blue-500 dark:text-blue-400 italic border-l-2 border-blue-500 dark:border-blue-400 bg-blue-500/5 rounded-r-lg" :
+                        "text-foreground"
+                    )}
                   >
-                    {line}
+                    {isVisual[index] ? `→ Visual: ${line}` : line}
                   </div>
                 ))}
               </div>
