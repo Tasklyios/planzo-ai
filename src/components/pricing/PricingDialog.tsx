@@ -88,7 +88,7 @@ const PricingDialog = ({ open, onOpenChange, onContinueFree }: PricingDialogProp
           </div>
 
           <div id="pricing-cards" className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
-            <div id="pro-plan" className="bg-white rounded-2xl p-8 shadow-lg transform transition-all duration-300 hover:-translate-y-2">
+            <div id="pro-plan" className="bg-[#FFFFFF] rounded-2xl p-8 shadow-sm border border-gray-100 transform transition-all duration-300 hover:-translate-y-2">
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-[#222831]">Pro</h3>
                 <div className="mt-4">
@@ -153,7 +153,7 @@ const PricingDialog = ({ open, onOpenChange, onContinueFree }: PricingDialogProp
               </button>
             </div>
 
-            <div id="business-plan" className="bg-white rounded-2xl p-8 shadow-lg transform transition-all duration-300 hover:-translate-y-2">
+            <div id="business-plan" className="bg-[#FFFFFF] rounded-2xl p-8 shadow-sm border border-gray-100 transform transition-all duration-300 hover:-translate-y-2">
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-[#222831]">Business</h3>
                 <div className="mt-4">
