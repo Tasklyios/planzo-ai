@@ -94,7 +94,7 @@ export default function ContentPlanner() {
   const onDragEnd = async (result: DropResult) => {
     setIsDragging(false);
     
-    const { source, destination, type } = result;
+    const { source, destination, type, draggableId } = result;
     
     // If there's no destination, do nothing
     if (!destination) return;
@@ -102,7 +102,7 @@ export default function ContentPlanner() {
     // Handle dropping in delete bin
     if (destination.droppableId === 'delete-bin') {
       if (type === 'column') {
-        const columnId = result.draggableId.replace('column-', '');
+        const columnId = draggableId.replace('column-', '');
         const column = columns.find(col => col.id === columnId);
         
         if (column) {
@@ -113,8 +113,9 @@ export default function ContentPlanner() {
           });
           setDeleteDialogOpen(true);
         }
+        return;
       } else if (type === 'task') {
-        const ideaId = result.draggableId;
+        const ideaId = draggableId;
         const sourceColumn = columns.find(col => col.id === source.droppableId);
         const item = sourceColumn?.items.find(item => item.id === ideaId);
         
@@ -126,8 +127,8 @@ export default function ContentPlanner() {
           });
           setDeleteDialogOpen(true);
         }
+        return;
       }
-      return;
     }
     
     // Handle regular card dragging

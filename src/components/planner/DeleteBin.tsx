@@ -20,7 +20,7 @@ export function DeleteBin({ isDragging }: DeleteBinProps) {
   }
   
   return (
-    <Droppable droppableId="delete-bin" type={["column", "task"]}>
+    <Droppable droppableId="delete-bin" type={["task", "column"]}>
       {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
         <div
           ref={provided.innerRef}
