@@ -1,5 +1,5 @@
 
-import { DragDropContext, Droppable } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ export default function ContentPlanner() {
     { id: 'editing', title: 'To Edit', items: [] },
     { id: 'ready', title: 'Ready to Post', items: [] },
   ]);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     fetchIdeas();
@@ -71,7 +72,13 @@ export default function ContentPlanner() {
     }
   };
 
-  const onDragEnd = async (result: any) => {
+  const onDragStart = () => {
+    setIsDragging(true);
+  };
+
+  const onDragEnd = async (result: DropResult) => {
+    setIsDragging(false);
+    
     const { source, destination, type } = result;
     
     if (!destination) return;
@@ -219,7 +226,7 @@ export default function ContentPlanner() {
         </Button>
       </div>
 
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <Droppable droppableId="columns" direction="horizontal" type="column">
           {(provided) => (
             <div 
@@ -252,7 +259,7 @@ export default function ContentPlanner() {
           )}
         </Droppable>
         
-        <DeleteBin />
+        <DeleteBin isDragging={isDragging} />
       </DragDropContext>
     </div>
   );
