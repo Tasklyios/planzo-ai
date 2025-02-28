@@ -28,14 +28,6 @@ interface PlannerColumn {
   items: PlannerItem[];
 }
 
-interface DeleteConfirmationProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  itemType: 'column' | 'idea' | null;
-  itemName: string;
-}
-
 export default function ContentPlanner() {
   const { toast } = useToast();
   const [columns, setColumns] = useState<PlannerColumn[]>([
@@ -103,6 +95,7 @@ export default function ContentPlanner() {
     
     const { source, destination, type } = result;
     
+    // If there's no destination or it's the same place, do nothing
     if (!destination) return;
 
     // Handle dropping in delete bin
