@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import AuthGuard from "@/components/AuthGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -66,6 +67,7 @@ export default function Account() {
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<Profile>({});
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [email, setEmail] = useState<string>("");
   const [newEmail, setNewEmail] = useState<string>("");
   const [currentPassword, setCurrentPassword] = useState<string>("");
@@ -81,18 +83,35 @@ export default function Account() {
 
   const fetchProfile = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      setLoading(true);
+      setFetchError(null);
+      
+      // Get the current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        throw sessionError;
+      }
+      
+      if (!session?.user) {
+        setFetchError("No authenticated user found. Please log in again.");
+        return;
+      }
 
       setEmail(session.user.email || "");
 
+      // Fetch profile data
       const { data, error } = await supabase
         .from('profiles')
         .select('content_personality, content_style, account_type, content_niche, target_audience, posting_platforms, business_niche, product_niche')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
+      
       if (data) {
         setProfile(data);
         // Update localStorage with the fetched values
@@ -101,14 +120,27 @@ export default function Account() {
         if (data.posting_platforms && data.posting_platforms.length > 0) {
           localStorage.setItem("platform", data.posting_platforms[0]);
         }
+      } else {
+        // If no profile found, we'll create default values
+        setProfile({
+          account_type: 'personal',
+          content_personality: '',
+          content_style: '',
+          content_niche: '',
+          target_audience: '',
+          posting_platforms: [],
+        });
       }
     } catch (error: any) {
-      console.error('Error fetching profile:', error);
+      console.error('Error in fetchProfile:', error);
+      setFetchError(error.message || "Failed to load profile data");
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to load profile data",
+        description: error.message || "Failed to load profile data",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -163,7 +195,7 @@ export default function Account() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: error.message || "Failed to update profile. Please try again.",
       });
       console.error('Error updating profile:', error);
     } finally {
@@ -269,6 +301,30 @@ export default function Account() {
       setLoading(false);
     }
   };
+
+  const handleRetry = () => {
+    fetchProfile();
+  };
+
+  if (fetchError) {
+    return (
+      <AuthGuard>
+        <div className="container mx-auto py-20">
+          <div className="max-w-2xl mx-auto space-y-8">
+            <Alert variant="destructive">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{fetchError}</AlertDescription>
+            </Alert>
+            <div className="text-center">
+              <Button onClick={handleRetry} disabled={loading}>
+                {loading ? "Retrying..." : "Retry"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard>
