@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlannerColumn } from "@/components/planner/PlannerColumn";
 import { PlannerCard } from "@/components/planner/PlannerCard";
+import { DeleteBin } from "@/components/planner/DeleteBin";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedIdea } from "@/types/idea";
@@ -71,63 +72,102 @@ export default function ContentPlanner() {
   };
 
   const onDragEnd = async (result: any) => {
-    if (!result.destination) return;
+    const { source, destination, type } = result;
+    
+    if (!destination) return;
 
-    const { source, destination } = result;
-
-    try {
-      // Update in Supabase first
-      const ideaId = result.draggableId;
-      const { error } = await supabase
-        .from('video_ideas')
-        .update({ status: destination.droppableId })
-        .eq('id', ideaId);
-
-      if (error) throw error;
-
-      // Then update local state
-      if (source.droppableId !== destination.droppableId) {
-        const sourceColumn = columns.find(col => col.id === source.droppableId);
-        const destColumn = columns.find(col => col.id === destination.droppableId);
+    // Handle column deletion
+    if (type === 'column' && destination.droppableId === 'delete-bin') {
+      const columnId = result.draggableId.replace('column-', '');
+      
+      try {
+        // Update status of all items in the column to be moved to 'ideas' column
+        const columnItems = columns.find(col => col.id === columnId)?.items || [];
         
-        if (!sourceColumn || !destColumn) return;
-
-        const sourceItems = [...sourceColumn.items];
-        const destItems = [...destColumn.items];
-        const [removed] = sourceItems.splice(source.index, 1);
-        destItems.splice(destination.index, 0, removed);
-
-        setColumns(columns.map(col => {
-          if (col.id === source.droppableId) {
-            return { ...col, items: sourceItems };
-          }
-          if (col.id === destination.droppableId) {
-            return { ...col, items: destItems };
-          }
-          return col;
-        }));
-      } else {
-        const column = columns.find(col => col.id === source.droppableId);
-        if (!column) return;
-
-        const copiedItems = [...column.items];
-        const [removed] = copiedItems.splice(source.index, 1);
-        copiedItems.splice(destination.index, 0, removed);
-
-        setColumns(columns.map(col => {
-          if (col.id === source.droppableId) {
-            return { ...col, items: copiedItems };
-          }
-          return col;
-        }));
+        for (const item of columnItems) {
+          await supabase
+            .from('video_ideas')
+            .update({ status: 'ideas' })
+            .eq('id', item.id);
+        }
+        
+        // Remove the column from the UI
+        const newColumns = columns.filter(col => col.id !== columnId);
+        setColumns(newColumns);
+        
+        toast({
+          title: "Column Deleted",
+          description: `Column "${columns.find(col => col.id === columnId)?.title}" has been deleted.`,
+        });
+        
+        return;
+      } catch (error: any) {
+        console.error('Error deleting column:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to delete column. Please try again."
+        });
+        return;
       }
-    } catch (error: any) {
-      console.error('Error updating idea status:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update idea status. Please try again."
-      });
+    }
+    
+    // Handle regular card dragging
+    if (type === 'task') {
+      try {
+        // Update in Supabase first
+        const ideaId = result.draggableId;
+        const { error } = await supabase
+          .from('video_ideas')
+          .update({ status: destination.droppableId })
+          .eq('id', ideaId);
+
+        if (error) throw error;
+
+        // Then update local state
+        if (source.droppableId !== destination.droppableId) {
+          const sourceColumn = columns.find(col => col.id === source.droppableId);
+          const destColumn = columns.find(col => col.id === destination.droppableId);
+          
+          if (!sourceColumn || !destColumn) return;
+
+          const sourceItems = [...sourceColumn.items];
+          const destItems = [...destColumn.items];
+          const [removed] = sourceItems.splice(source.index, 1);
+          destItems.splice(destination.index, 0, removed);
+
+          setColumns(columns.map(col => {
+            if (col.id === source.droppableId) {
+              return { ...col, items: sourceItems };
+            }
+            if (col.id === destination.droppableId) {
+              return { ...col, items: destItems };
+            }
+            return col;
+          }));
+        } else {
+          const column = columns.find(col => col.id === source.droppableId);
+          if (!column) return;
+
+          const copiedItems = [...column.items];
+          const [removed] = copiedItems.splice(source.index, 1);
+          copiedItems.splice(destination.index, 0, removed);
+
+          setColumns(columns.map(col => {
+            if (col.id === source.droppableId) {
+              return { ...col, items: copiedItems };
+            }
+            return col;
+          }));
+        }
+      } catch (error: any) {
+        console.error('Error updating idea status:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to update idea status. Please try again."
+        });
+      }
     }
   };
 
@@ -142,25 +182,39 @@ export default function ContentPlanner() {
       </div>
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {columns.map((column) => (
-            <div key={column.id} className="min-w-[320px]">
-              <PlannerColumn title={column.title} id={column.id}>
-                {column.items.map((item, index) => (
-                  <PlannerCard 
-                    key={item.id} 
-                    id={item.id}
-                    index={index}
-                    title={item.title}
-                    description={item.description}
-                    color={item.color}
-                    onEdit={fetchIdeas}
-                  />
-                ))}
-              </PlannerColumn>
+        <Droppable droppableId="columns" direction="horizontal" type="column">
+          {(provided) => (
+            <div 
+              className="flex gap-4 overflow-x-auto pb-4" 
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+            >
+              {columns.map((column, index) => (
+                <PlannerColumn 
+                  key={column.id} 
+                  title={column.title} 
+                  id={column.id}
+                  index={index}
+                >
+                  {column.items.map((item, itemIndex) => (
+                    <PlannerCard 
+                      key={item.id} 
+                      id={item.id}
+                      index={itemIndex}
+                      title={item.title}
+                      description={item.description}
+                      color={item.color}
+                      onEdit={fetchIdeas}
+                    />
+                  ))}
+                </PlannerColumn>
+              ))}
+              {provided.placeholder}
             </div>
-          ))}
-        </div>
+          )}
+        </Droppable>
+        
+        <DeleteBin />
       </DragDropContext>
     </div>
   );
