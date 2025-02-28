@@ -1,4 +1,3 @@
-
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
@@ -95,7 +94,7 @@ export default function ContentPlanner() {
     
     const { source, destination, type } = result;
     
-    // If there's no destination or it's the same place, do nothing
+    // If there's no destination, do nothing
     if (!destination) return;
 
     // Handle dropping in delete bin
@@ -112,10 +111,7 @@ export default function ContentPlanner() {
           });
           setDeleteDialogOpen(true);
         }
-        return;
-      }
-      
-      if (type === 'task') {
+      } else if (type === 'task') {
         const ideaId = result.draggableId;
         const sourceColumn = columns.find(col => col.id === source.droppableId);
         const item = sourceColumn?.items.find(item => item.id === ideaId);
@@ -128,8 +124,8 @@ export default function ContentPlanner() {
           });
           setDeleteDialogOpen(true);
         }
-        return;
       }
+      return;
     }
     
     // Handle regular card dragging

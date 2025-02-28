@@ -30,7 +30,7 @@ export function DeleteBin({ isDragging }: DeleteBinProps) {
             flex flex-col items-center justify-center gap-4
             transition-all duration-300 ease-in-out
             ${snapshot.isDraggingOver 
-              ? "bg-destructive/20 border-destructive scale-105" 
+              ? "bg-destructive/20 border-destructive scale-105 animate-pulse" 
               : "bg-muted/30 border-muted-foreground/30"}
           `}
           style={{
@@ -39,15 +39,15 @@ export function DeleteBin({ isDragging }: DeleteBinProps) {
         >
           <Trash2 
             className={`
-              h-10 w-10 mb-2
-              ${snapshot.isDraggingOver ? "text-destructive" : "text-muted-foreground"}
+              h-10 w-10 mb-2 transition-all duration-200
+              ${snapshot.isDraggingOver ? "text-destructive scale-110" : "text-muted-foreground"}
             `} 
           />
           <p className={`
-            text-sm font-medium text-center
+            text-sm font-medium text-center transition-colors duration-200
             ${snapshot.isDraggingOver ? "text-destructive" : "text-muted-foreground"}
           `}>
-            Drop column or idea here to delete
+            Drop here to delete
           </p>
           {provided.placeholder}
         </div>
