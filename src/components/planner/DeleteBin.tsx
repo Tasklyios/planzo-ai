@@ -8,7 +8,7 @@ interface DeleteBinProps {
 
 export function DeleteBin({ isOver }: DeleteBinProps) {
   return (
-    <Droppable droppableId="delete-bin" type="column">
+    <Droppable droppableId="delete-bin" type={["column", "task"]}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
@@ -27,7 +27,7 @@ export function DeleteBin({ isOver }: DeleteBinProps) {
               className={`h-8 w-8 ${snapshot.isDraggingOver ? "text-destructive" : "text-muted-foreground"}`} 
             />
             <p className={`text-sm font-medium ${snapshot.isDraggingOver ? "text-destructive" : "text-muted-foreground"}`}>
-              Drop column here to delete
+              Drop column or idea here to delete
             </p>
           </div>
           {provided.placeholder}

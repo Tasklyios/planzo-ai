@@ -112,6 +112,44 @@ export default function ContentPlanner() {
       }
     }
     
+    // Handle idea card deletion
+    if (type === 'task' && destination.droppableId === 'delete-bin') {
+      const ideaId = result.draggableId;
+      
+      try {
+        // Delete the idea from Supabase
+        const { error } = await supabase
+          .from('video_ideas')
+          .update({ is_saved: false }) // Mark as not saved instead of hard deleting
+          .eq('id', ideaId);
+
+        if (error) throw error;
+        
+        // Remove the idea from the local state
+        const newColumns = columns.map(col => ({
+          ...col,
+          items: col.items.filter(item => item.id !== ideaId)
+        }));
+        
+        setColumns(newColumns);
+        
+        toast({
+          title: "Idea Deleted",
+          description: "The idea has been removed from your planner."
+        });
+        
+        return;
+      } catch (error: any) {
+        console.error('Error deleting idea:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to delete idea. Please try again."
+        });
+        return;
+      }
+    }
+    
     // Handle regular card dragging
     if (type === 'task') {
       try {
