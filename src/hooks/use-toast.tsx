@@ -33,7 +33,31 @@ const initialState: ToastContextType = {
 
 const ToastContext = createContext(initialState);
 
-export const useToast = () => useContext(ToastContext);
+// Create toast function outside of the hook
+export const toast = {
+  default: (props: Omit<ToasterToast, "id" | "variant">) => {
+    const { addToast } = useToast();
+    return addToast({ ...props, variant: "default" });
+  },
+  destructive: (props: Omit<ToasterToast, "id" | "variant">) => {
+    const { addToast } = useToast();
+    return addToast({ ...props, variant: "destructive" });
+  },
+};
+
+// Modify useToast to return both context values and toast functions
+export const useToast = () => {
+  const context = useContext(ToastContext);
+  
+  if (!context) {
+    throw new Error("useToast must be used within a ToastProvider");
+  }
+  
+  return {
+    ...context,
+    toast,
+  };
+};
 
 export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [toasts, setToasts] = useState<ToasterToast[]>([]);
@@ -73,15 +97,4 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
     </ToastContext.Provider>
   );
-};
-
-export const toast = {
-  default: (props: Omit<ToasterToast, "id" | "variant">) => {
-    const { addToast } = useToast();
-    return addToast({ ...props, variant: "default" });
-  },
-  destructive: (props: Omit<ToasterToast, "id" | "variant">) => {
-    const { addToast } = useToast();
-    return addToast({ ...props, variant: "destructive" });
-  },
 };
