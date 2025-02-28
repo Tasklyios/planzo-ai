@@ -159,70 +159,81 @@ export const useIdeaGenerator = () => {
           title: "Usage Limit Reached",
           description: message,
         });
+        setLoading(false);
         return;
       }
 
       console.log("Calling generate-ideas function with:", { niche, audience, videoType, platform, customIdeas });
       
-      const { data, error } = await supabase.functions.invoke('generate-ideas', {
-        body: {
-          niche: niche.trim(),
-          audience: audience.trim(),
-          videoType: videoType.trim(),
-          platform: platform.toLowerCase(),
-          customIdeas: customIdeas.trim()
-        },
-      });
+      // Improved error handling for the Edge Function call
+      try {
+        const { data, error } = await supabase.functions.invoke('generate-ideas', {
+          body: {
+            niche: niche.trim(),
+            audience: audience.trim(),
+            videoType: videoType.trim(),
+            platform: platform.toLowerCase(),
+            customIdeas: customIdeas.trim()
+          },
+        });
 
-      console.log("Response from generate-ideas:", { data, error });
+        console.log("Response from generate-ideas:", { data, error });
 
-      if (error) throw error;
+        if (error) {
+          console.error("Edge function error:", error);
+          throw new Error(`Edge function error: ${error.message || 'Unknown error'}`);
+        }
 
-      if (!data?.ideas) {
-        throw new Error('Invalid response format from AI');
+        if (!data?.ideas) {
+          console.error("Invalid response format:", data);
+          throw new Error('Invalid response format from AI');
+        }
+
+        console.log("Saving ideas to database:", data.ideas);
+
+        const ideasToSave = data.ideas.map((idea: any) => ({
+          title: idea.title,
+          description: idea.description,
+          category: idea.category,
+          tags: idea.tags,
+          platform: platform,
+          user_id: userId,
+          color: 'blue',
+          is_saved: false,
+        }));
+
+        const { error: saveError } = await supabase
+          .from("video_ideas")
+          .insert(ideasToSave);
+
+        if (saveError) {
+          console.error("Error saving ideas:", saveError);
+          throw saveError;
+        }
+
+        const { data: savedIdeas, error: fetchError } = await supabase
+          .from("video_ideas")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (fetchError) {
+          console.error("Error fetching saved ideas:", fetchError);
+          throw fetchError;
+        }
+
+        const transformedIdeas = (savedIdeas || []).map(transformSupabaseIdea);
+        setIdeas(transformedIdeas);
+
+        toast({
+          title: "Success!",
+          description: "Your video ideas have been generated and saved.",
+        });
+      } catch (functionError: any) {
+        console.error('Error in generate-ideas function:', functionError);
+        throw new Error(`Generate Ideas function error: ${functionError.message || 'Unknown error'}`);
       }
-
-      console.log("Saving ideas to database:", data.ideas);
-
-      const ideasToSave = data.ideas.map((idea: any) => ({
-        title: idea.title,
-        description: idea.description,
-        category: idea.category,
-        tags: idea.tags,
-        platform: platform,
-        user_id: userId,
-        color: 'blue',
-        is_saved: false,
-      }));
-
-      const { error: saveError } = await supabase
-        .from("video_ideas")
-        .insert(ideasToSave);
-
-      if (saveError) {
-        console.error("Error saving ideas:", saveError);
-        throw saveError;
-      }
-
-      const { data: savedIdeas, error: fetchError } = await supabase
-        .from("video_ideas")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (fetchError) {
-        console.error("Error fetching saved ideas:", fetchError);
-        throw fetchError;
-      }
-
-      const transformedIdeas = (savedIdeas || []).map(transformSupabaseIdea);
-      setIdeas(transformedIdeas);
-
-      toast({
-        title: "Success!",
-        description: "Your video ideas have been generated and saved.",
-      });
     } catch (error: any) {
       console.error('Error generating ideas:', error);
       toast({

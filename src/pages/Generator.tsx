@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -55,7 +56,12 @@ const Generator = () => {
         user_id: userId,
         color: addingToCalendar.idea.color || 'blue'
       });
-      if (scheduleError) throw scheduleError;
+      
+      if (scheduleError) {
+        console.error("Error adding to calendar:", scheduleError);
+        throw scheduleError;
+      }
+      
       toast({
         title: "Success",
         description: "Idea added to calendar successfully"
@@ -84,17 +90,29 @@ const Generator = () => {
     try {
       const ideaToUpdate = ideas.find(idea => idea.id === ideaId);
       if (!ideaToUpdate) return;
+      
       const newSavedState = !ideaToUpdate.is_saved;
+      
       const {
         error
       } = await supabase.from("video_ideas").update({
         is_saved: newSavedState
       }).eq("id", ideaId);
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Bookmark update error:", error);
+        throw error;
+      }
+      
       setIdeas(prevIdeas => prevIdeas.map(idea => idea.id === ideaId ? {
         ...idea,
         is_saved: newSavedState
       } : idea));
+      
+      toast({
+        title: newSavedState ? "Idea saved" : "Idea unsaved",
+        description: newSavedState ? "Idea added to saved ideas" : "Idea removed from saved ideas"
+      });
     } catch (error: any) {
       console.error("Error updating bookmark:", error);
       toast({
@@ -123,7 +141,11 @@ const Generator = () => {
           />
 
           <div className="flex justify-center mb-8">
-            <button onClick={generateIdeas} disabled={loading} className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md">
+            <button 
+              onClick={generateIdeas} 
+              disabled={loading} 
+              className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
               {loading ? <>
                   <span className="animate-spin">⚡</span>
                   Generating...
