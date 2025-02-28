@@ -1,3 +1,4 @@
+
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
@@ -43,6 +44,7 @@ export default function ContentPlanner() {
     name: string;
   } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchIdeas();
@@ -191,17 +193,25 @@ export default function ContentPlanner() {
     if (!pendingDelete) return;
     
     try {
+      setIsDeleting(true);
+      
       if (pendingDelete.type === 'column') {
         const columnId = pendingDelete.id;
         
-        // Update status of all items in the column to be moved to 'ideas' column
+        // Get items that need to be moved to 'ideas' column
         const columnItems = columns.find(col => col.id === columnId)?.items || [];
         
+        // Update each item in the database
         for (const item of columnItems) {
-          await supabase
+          const { error: updateError } = await supabase
             .from('video_ideas')
             .update({ status: 'ideas' })
             .eq('id', item.id);
+          
+          if (updateError) {
+            console.error('Error moving items from deleted column:', updateError);
+            throw updateError;
+          }
         }
         
         // Remove the column from the UI
@@ -210,20 +220,23 @@ export default function ContentPlanner() {
         
         toast({
           title: "Column Deleted",
-          description: `Column "${pendingDelete.name}" has been deleted.`,
+          description: `Column "${pendingDelete.name}" has been deleted and items moved to Ideas.`,
         });
       } else if (pendingDelete.type === 'task') {
         const ideaId = pendingDelete.id;
         
-        // Delete the idea from Supabase
+        // Mark the idea as not saved in Supabase (soft delete)
         const { error } = await supabase
           .from('video_ideas')
-          .update({ is_saved: false }) // Mark as not saved instead of hard deleting
+          .update({ is_saved: false })
           .eq('id', ideaId);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error deleting idea from database:', error);
+          throw error;
+        }
         
-        // Remove the idea from the local state
+        // Update local state
         const newColumns = columns.map(col => ({
           ...col,
           items: col.items.filter(item => item.id !== ideaId)
@@ -244,6 +257,7 @@ export default function ContentPlanner() {
         description: "Failed to delete item. Please try again."
       });
     } finally {
+      setIsDeleting(false);
       setDeleteDialogOpen(false);
       setPendingDelete(null);
     }
@@ -311,11 +325,23 @@ export default function ContentPlanner() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 sm:justify-end">
-            <Button variant="outline" onClick={handleDeleteCancel}>
+            <Button variant="outline" onClick={handleDeleteCancel} disabled={isDeleting}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Delete
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteConfirm} 
+              disabled={isDeleting}
+              className={isDeleting ? "opacity-70 cursor-not-allowed" : ""}
+            >
+              {isDeleting ? (
+                <>
+                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
