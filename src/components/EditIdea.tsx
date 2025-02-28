@@ -68,9 +68,11 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     
     try {
       setDeleting(true);
+      
+      // Instead of deleting, update is_saved to false
       const { error } = await supabase
         .from("video_ideas")
-        .delete()
+        .update({ is_saved: false })
         .eq("id", idea.id);
 
       if (error) throw error;
@@ -81,6 +83,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       });
       onClose();
     } catch (error: any) {
+      console.error("Delete error:", error);
       toast({
         variant: "destructive",
         title: "Error",

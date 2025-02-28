@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -61,7 +60,7 @@ export default function Ideas() {
         .eq("id", ideaId);
 
       if (error) {
-        await fetchSavedIdeas();
+        await fetchSavedIdeas(); // Reload ideas on error
         throw error;
       }
 
@@ -72,6 +71,7 @@ export default function Ideas() {
     } catch (error: any) {
       console.error("Error updating bookmark:", error);
       toast({
+        variant: "destructive",
         title: "Error",
         description: "Failed to update bookmark status",
         variant: "destructive",
