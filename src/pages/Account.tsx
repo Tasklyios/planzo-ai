@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun } from "lucide-react";
@@ -65,6 +66,13 @@ export default function Account() {
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<Profile>({});
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState<string>("");
+  const [newEmail, setNewEmail] = useState<string>("");
+  const [currentPassword, setCurrentPassword] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -75,6 +83,8 @@ export default function Account() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
+
+      setEmail(session.user.email || "");
 
       const { data, error } = await supabase
         .from('profiles')
@@ -161,6 +171,105 @@ export default function Account() {
     }
   };
 
+  const handleChangeEmail = async () => {
+    try {
+      setLoading(true);
+      
+      if (!newEmail) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please enter a new email address.",
+        });
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Verification email sent",
+        description: "Please check your inbox to verify your new email address.",
+      });
+      
+      setIsChangingEmail(false);
+      setNewEmail("");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to change email. Please try again.",
+      });
+      console.error('Error changing email:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    try {
+      setLoading(true);
+      
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please fill in all password fields.",
+        });
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "New passwords do not match.",
+        });
+        return;
+      }
+
+      // First, verify the current password by signing in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Current password is incorrect.",
+        });
+        return;
+      }
+
+      // Then update the password
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Password updated",
+        description: "Your password has been changed successfully.",
+      });
+      
+      setIsChangingPassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to change password. Please try again.",
+      });
+      console.error('Error changing password:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthGuard>
       <div className="container mx-auto py-20">
@@ -194,31 +303,98 @@ export default function Account() {
           {activeTab === 'settings' ? (
             <div className="space-y-6">
               <div className="widget-box p-6">
-                <h2 className="text-xl font-semibold mb-6">Account Type</h2>
-                <RadioGroup
-                  value={profile.account_type || 'personal'}
-                  onValueChange={(value) => setProfile(prev => ({ ...prev, account_type: value }))}
-                  className="grid gap-4"
-                >
-                  {accountTypes.map((type) => (
-                    <div key={type.value} className="relative">
-                      <RadioGroupItem
-                        value={type.value}
-                        id={`account-${type.value}`}
-                        className="peer sr-only"
-                      />
-                      <Label
-                        htmlFor={`account-${type.value}`}
-                        className="flex flex-col p-4 rounded-lg border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                <h2 className="text-xl font-semibold mb-6">Email and Password</h2>
+                
+                <div className="space-y-6">
+                  {/* Email display */}
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <div className="flex gap-2">
+                      <Input id="email" value={email} disabled className="flex-1" />
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setIsChangingEmail(!isChangingEmail)}
                       >
-                        <span className="font-semibold">{type.title}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {type.description}
-                        </span>
-                      </Label>
+                        {isChangingEmail ? "Cancel" : "Change"}
+                      </Button>
                     </div>
-                  ))}
-                </RadioGroup>
+                  </div>
+                  
+                  {/* Email change form */}
+                  {isChangingEmail && (
+                    <div className="flex flex-col space-y-4 p-4 border rounded-md bg-accent/10">
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="newEmail">New Email</Label>
+                        <Input 
+                          id="newEmail" 
+                          type="email" 
+                          value={newEmail}
+                          onChange={(e) => setNewEmail(e.target.value)}
+                          placeholder="Enter new email address"
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleChangeEmail} 
+                        disabled={loading}
+                      >
+                        {loading ? "Processing..." : "Update Email"}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Password change button */}
+                  <div className="flex flex-col space-y-2">
+                    <Label>Password</Label>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsChangingPassword(!isChangingPassword)}
+                    >
+                      {isChangingPassword ? "Cancel" : "Change Password"}
+                    </Button>
+                  </div>
+                  
+                  {/* Password change form */}
+                  {isChangingPassword && (
+                    <div className="flex flex-col space-y-4 p-4 border rounded-md bg-accent/10">
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="currentPassword">Current Password</Label>
+                        <Input 
+                          id="currentPassword" 
+                          type="password" 
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="Enter current password"
+                        />
+                      </div>
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="newPassword">New Password</Label>
+                        <Input 
+                          id="newPassword" 
+                          type="password" 
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Enter new password"
+                        />
+                      </div>
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                        <Input 
+                          id="confirmPassword" 
+                          type="password" 
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Confirm new password"
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleChangePassword} 
+                        disabled={loading}
+                      >
+                        {loading ? "Processing..." : "Update Password"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="widget-box p-6">
@@ -260,6 +436,34 @@ export default function Account() {
               <h2 className="text-xl font-semibold mb-6">Customize Experience</h2>
               <form onSubmit={(e) => { e.preventDefault(); handleUpdateProfile(); }} className="space-y-6">
                 <div className="space-y-4">
+                  <div className="widget-box p-6 mb-6">
+                    <h3 className="text-lg font-semibold mb-6">Account Type</h3>
+                    <RadioGroup
+                      value={profile.account_type || 'personal'}
+                      onValueChange={(value) => setProfile(prev => ({ ...prev, account_type: value }))}
+                      className="grid gap-4"
+                    >
+                      {accountTypes.map((type) => (
+                        <div key={type.value} className="relative">
+                          <RadioGroupItem
+                            value={type.value}
+                            id={`account-${type.value}`}
+                            className="peer sr-only"
+                          />
+                          <Label
+                            htmlFor={`account-${type.value}`}
+                            className="flex flex-col p-4 rounded-lg border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                          >
+                            <span className="font-semibold">{type.title}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {type.description}
+                            </span>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
                   {profile.account_type === 'business' && (
                     <div className="flex flex-col space-y-2">
                       <Label htmlFor="business_niche">Business Niche</Label>
