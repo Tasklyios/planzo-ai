@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/carousel";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import ChatWidget from "@/components/ChatWidget";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -271,6 +273,14 @@ export default function Script() {
     }
   };
 
+  const handleScriptUpdate = (updatedScript: string) => {
+    setGeneratedScript(updatedScript);
+    toast({
+      title: "Script Updated",
+      description: "The AI coach has suggested improvements to your script.",
+    });
+  };
+
   const { parsedLines, isVisual } = parseScript(generatedScript, showVisuals);
 
   return (
@@ -482,6 +492,9 @@ export default function Script() {
           )}
         </div>
       </div>
+      
+      {/* Chat Widget */}
+      {generatedScript && <ChatWidget script={generatedScript} onScriptUpdate={handleScriptUpdate} />}
     </div>
   );
 }
