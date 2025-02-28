@@ -35,7 +35,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ script = '', onScriptUpdate }) 
       setMessages([
         {
           id: 'welcome',
-          content: 'Hi there! I'm your AI script coach. I can help you improve your script by providing feedback and suggestions. What would you like help with?',
+          content: "Hi there! I'm your AI script coach. I can help you improve your script by providing feedback and suggestions. What would you like help with?",
           role: 'assistant',
           timestamp: new Date()
         }
