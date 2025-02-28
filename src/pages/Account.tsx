@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun } from "lucide-react";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import AuthGuard from "@/components/AuthGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const themeOptions = [
   {
@@ -65,6 +67,8 @@ export default function Account() {
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<Profile>({});
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -73,17 +77,40 @@ export default function Account() {
 
   const fetchProfile = async () => {
     try {
+      setInitialLoading(true);
+      setError(null);
+      
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      if (!session?.user) {
+        setInitialLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('profiles')
         .select('content_personality, content_style, account_type, content_niche, target_audience, posting_platforms, business_niche, product_niche')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      if (data) {
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (!data) {
+        // Profile doesn't exist, create it
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({ 
+            id: session.user.id,
+            account_type: 'personal' 
+          });
+        
+        if (insertError) throw insertError;
+        
+        // Set default profile
+        setProfile({ account_type: 'personal' });
+      } else {
+        // Profile exists, set it
         setProfile(data);
         // Update localStorage with the fetched values
         if (data.content_niche) localStorage.setItem("niche", data.content_niche);
@@ -94,17 +121,22 @@ export default function Account() {
       }
     } catch (error: any) {
       console.error('Error fetching profile:', error);
+      setError("Failed to load profile data. Please try again later.");
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to load profile data",
       });
+    } finally {
+      setInitialLoading(false);
     }
   };
 
   const handleUpdateProfile = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
         toast({
@@ -150,12 +182,13 @@ export default function Account() {
         description: "Your changes have been saved successfully.",
       });
     } catch (error: any) {
+      console.error('Error updating profile:', error);
+      setError("Failed to update profile. Please try again later.");
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to update profile. Please try again.",
       });
-      console.error('Error updating profile:', error);
     } finally {
       setLoading(false);
     }
@@ -191,159 +224,173 @@ export default function Account() {
             </div>
           </div>
 
-          {activeTab === 'settings' ? (
-            <div className="space-y-6">
-              <div className="widget-box p-6">
-                <h2 className="text-xl font-semibold mb-6">Account Type</h2>
-                <RadioGroup
-                  value={profile.account_type || 'personal'}
-                  onValueChange={(value) => setProfile(prev => ({ ...prev, account_type: value }))}
-                  className="grid gap-4"
-                >
-                  {accountTypes.map((type) => (
-                    <div key={type.value} className="relative">
-                      <RadioGroupItem
-                        value={type.value}
-                        id={`account-${type.value}`}
-                        className="peer sr-only"
-                      />
-                      <Label
-                        htmlFor={`account-${type.value}`}
-                        className="flex flex-col p-4 rounded-lg border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                      >
-                        <span className="font-semibold">{type.title}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {type.description}
-                        </span>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-              <div className="widget-box p-6">
-                <h2 className="text-xl font-semibold mb-6">Theme Settings</h2>
-                <RadioGroup
-                  value={theme}
-                  onValueChange={(value: "light" | "dark" | "system") => setTheme(value)}
-                  className="grid gap-4"
-                >
-                  {themeOptions.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <div key={option.value} className="relative">
-                        <RadioGroupItem
-                          value={option.value}
-                          id={`theme-${option.value}`}
-                          className="peer sr-only"
-                        />
-                        <Label
-                          htmlFor={`theme-${option.value}`}
-                          className="flex items-center gap-4 p-4 rounded-lg border-2 border-muted bg-accent hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                        >
-                          <Icon className="h-5 w-5" />
-                          <div>
-                            <div className="font-semibold">{option.title}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {option.description}
-                            </div>
-                          </div>
-                        </Label>
-                      </div>
-                    );
-                  })}
-                </RadioGroup>
-              </div>
+          {initialLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <div className="widget-box p-6">
-              <h2 className="text-xl font-semibold mb-6">Customize Experience</h2>
-              <form onSubmit={(e) => { e.preventDefault(); handleUpdateProfile(); }} className="space-y-6">
-                <div className="space-y-4">
-                  {profile.account_type === 'business' && (
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="business_niche">Business Niche</Label>
-                      <Input
-                        id="business_niche"
-                        placeholder="E.g., Technology, Services, Retail..."
-                        value={profile.business_niche || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, business_niche: e.target.value }))}
-                      />
-                    </div>
-                  )}
-
-                  {profile.account_type === 'ecommerce' && (
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="product_niche">Product Niche</Label>
-                      <Input
-                        id="product_niche"
-                        placeholder="E.g., Fashion, Electronics, Home Decor..."
-                        value={profile.product_niche || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, product_niche: e.target.value }))}
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="content_niche">Content Niche</Label>
-                    <Input
-                      id="content_niche"
-                      placeholder="E.g., Technology, Fitness, Personal Development..."
-                      value={profile.content_niche || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
-                    />
+            <>
+              {activeTab === 'settings' ? (
+                <div className="space-y-6">
+                  <div className="widget-box p-6">
+                    <h2 className="text-xl font-semibold mb-6">Account Type</h2>
+                    <RadioGroup
+                      value={profile.account_type || 'personal'}
+                      onValueChange={(value) => setProfile(prev => ({ ...prev, account_type: value }))}
+                      className="grid gap-4"
+                    >
+                      {accountTypes.map((type) => (
+                        <div key={type.value} className="relative">
+                          <RadioGroupItem
+                            value={type.value}
+                            id={`account-${type.value}`}
+                            className="peer sr-only"
+                          />
+                          <Label
+                            htmlFor={`account-${type.value}`}
+                            className="flex flex-col p-4 rounded-lg border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                          >
+                            <span className="font-semibold">{type.title}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {type.description}
+                            </span>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
                   </div>
 
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="target_audience">Target Audience</Label>
-                    <Input
-                      id="target_audience"
-                      placeholder="E.g., Entrepreneurs, Students, Fitness Enthusiasts..."
-                      value={profile.target_audience || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="posting_platforms">Preferred Platforms (comma-separated)</Label>
-                    <Input
-                      id="posting_platforms"
-                      placeholder="E.g., TikTok, Instagram, YouTube..."
-                      value={profile.posting_platforms?.join(', ') || ''}
-                      onChange={(e) => setProfile(prev => ({ 
-                        ...prev, 
-                        posting_platforms: e.target.value.split(',').map(p => p.trim()).filter(Boolean)
-                      }))}
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="personality">Content Personality</Label>
-                    <Textarea
-                      id="personality"
-                      placeholder="E.g., Energetic and funny, Professional and educational, Casual and relatable..."
-                      value={profile.content_personality || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
-                      className="min-h-[100px]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="style">Content Style</Label>
-                    <Textarea
-                      id="style"
-                      placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences..."
-                      value={profile.content_style || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
-                      className="min-h-[100px]"
-                    />
+                  <div className="widget-box p-6">
+                    <h2 className="text-xl font-semibold mb-6">Theme Settings</h2>
+                    <RadioGroup
+                      value={theme}
+                      onValueChange={(value: "light" | "dark" | "system") => setTheme(value)}
+                      className="grid gap-4"
+                    >
+                      {themeOptions.map((option) => {
+                        const Icon = option.icon;
+                        return (
+                          <div key={option.value} className="relative">
+                            <RadioGroupItem
+                              value={option.value}
+                              id={`theme-${option.value}`}
+                              className="peer sr-only"
+                            />
+                            <Label
+                              htmlFor={`theme-${option.value}`}
+                              className="flex items-center gap-4 p-4 rounded-lg border-2 border-muted bg-accent hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                            >
+                              <Icon className="h-5 w-5" />
+                              <div>
+                                <div className="font-semibold">{option.title}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {option.description}
+                                </div>
+                              </div>
+                            </Label>
+                          </div>
+                        );
+                      })}
+                    </RadioGroup>
                   </div>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Saving..." : "Save Changes"}
-                </Button>
-              </form>
-            </div>
+              ) : (
+                <div className="widget-box p-6">
+                  <h2 className="text-xl font-semibold mb-6">Customize Experience</h2>
+                  <form onSubmit={(e) => { e.preventDefault(); handleUpdateProfile(); }} className="space-y-6">
+                    <div className="space-y-4">
+                      {profile.account_type === 'business' && (
+                        <div className="flex flex-col space-y-2">
+                          <Label htmlFor="business_niche">Business Niche</Label>
+                          <Input
+                            id="business_niche"
+                            placeholder="E.g., Technology, Services, Retail..."
+                            value={profile.business_niche || ''}
+                            onChange={(e) => setProfile(prev => ({ ...prev, business_niche: e.target.value }))}
+                          />
+                        </div>
+                      )}
+
+                      {profile.account_type === 'ecommerce' && (
+                        <div className="flex flex-col space-y-2">
+                          <Label htmlFor="product_niche">Product Niche</Label>
+                          <Input
+                            id="product_niche"
+                            placeholder="E.g., Fashion, Electronics, Home Decor..."
+                            value={profile.product_niche || ''}
+                            onChange={(e) => setProfile(prev => ({ ...prev, product_niche: e.target.value }))}
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="content_niche">Content Niche</Label>
+                        <Input
+                          id="content_niche"
+                          placeholder="E.g., Technology, Fitness, Personal Development..."
+                          value={profile.content_niche || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="target_audience">Target Audience</Label>
+                        <Input
+                          id="target_audience"
+                          placeholder="E.g., Entrepreneurs, Students, Fitness Enthusiasts..."
+                          value={profile.target_audience || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="posting_platforms">Preferred Platforms (comma-separated)</Label>
+                        <Input
+                          id="posting_platforms"
+                          placeholder="E.g., TikTok, Instagram, YouTube..."
+                          value={profile.posting_platforms?.join(', ') || ''}
+                          onChange={(e) => setProfile(prev => ({ 
+                            ...prev, 
+                            posting_platforms: e.target.value.split(',').map(p => p.trim()).filter(Boolean)
+                          }))}
+                        />
+                      </div>
+
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="personality">Content Personality</Label>
+                        <Textarea
+                          id="personality"
+                          placeholder="E.g., Energetic and funny, Professional and educational, Casual and relatable..."
+                          value={profile.content_personality || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
+                          className="min-h-[100px]"
+                        />
+                      </div>
+
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="style">Content Style</Label>
+                        <Textarea
+                          id="style"
+                          placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences..."
+                          value={profile.content_style || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
+                          className="min-h-[100px]"
+                        />
+                      </div>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </form>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
