@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, getDay } from "date-fns";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -122,7 +121,6 @@ export default function Calendar() {
         return;
       }
 
-      // IMPORTANT: Modified this query to only fetch ideas that have a non-null scheduled_for date
       const { data: scheduledData, error: scheduledError } = await supabase
         .from("video_ideas")
         .select(`
@@ -219,6 +217,8 @@ export default function Calendar() {
     start: startOfMonth(currentDate),
     end: endOfMonth(currentDate),
   });
+
+  const startingDayOfMonth = getDay(startOfMonth(currentDate));
 
   const getPostsForDate = (date: Date) => {
     return scheduledPosts.filter(
@@ -385,6 +385,10 @@ export default function Calendar() {
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: startingDayOfMonth }).map((_, index) => (
+                  <div key={`empty-start-${index}`} className="aspect-square" />
+                ))}
+                
                 {daysInMonth.map((date) => (
                   <div
                     key={date.toString()}
@@ -469,6 +473,10 @@ export default function Calendar() {
             </div>
 
             <div className="grid grid-cols-7 divide-x divide-y divide-border">
+              {Array.from({ length: startingDayOfMonth }).map((_, index) => (
+                <div key={`empty-start-${index}`} className="min-h-[120px] bg-muted/30" />
+              ))}
+              
               {daysInMonth.map((date) => {
                 const dateStr = format(date, "yyyy-MM-dd");
                 const posts = getPostsForDate(date);
