@@ -1,411 +1,265 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.2.1";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.36.0";
 
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { CreateCompletionRequest } from "https://esm.sh/openai@4.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+
+// Define the correct CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
-  // Handle CORS preflight request
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        ...corsHeaders,
-      },
-    });
+    return new Response(null, { headers: corsHeaders });
   }
-
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-  if (!apiKey) {
-    return new Response(
-      JSON.stringify({
-        error: "Missing OPENAI_API_KEY",
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
-  }
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    return new Response(
-      JSON.stringify({
-        error: "Missing Supabase configuration",
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
-  }
-
-  const configuration = new Configuration({ apiKey });
-  const openai = new OpenAIApi(configuration);
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    // Get the request body
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY") || "";
+
+    if (!openaiApiKey) {
+      throw new Error("OPENAI_API_KEY is not set");
+    }
+
+    // Get the authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("Missing Authorization header");
+    }
+
+    // Get the user from the JWT
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace("Bearer ", "")
+    );
+
+    if (authError || !user) {
+      throw new Error("Invalid or expired token");
+    }
+
+    // Check the user's usage limits
+    const checkUsageResponse = await fetch(`${supabaseUrl}/functions/v1/check-usage-limits`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${authHeader.replace("Bearer ", "")}`,
+      },
+      body: JSON.stringify({
+        user_id: user.id,
+        action: "ideas"
+      }),
+    });
+
+    if (!checkUsageResponse.ok) {
+      const errorData = await checkUsageResponse.json();
+      throw new Error(`Usage limit check failed: ${errorData.error || "Unknown error"}`);
+    }
+
+    const usageData = await checkUsageResponse.json();
+    if (!usageData.canProceed) {
+      return new Response(
+        JSON.stringify({
+          error: "You have reached your daily limit for generating ideas. Please upgrade your plan for more.",
+          usage: usageData.usage
+        }),
+        { 
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    // Get the request parameters
     const requestData = await req.json();
-    const { type } = requestData;
+    const { 
+      type, 
+      niche, 
+      audience, 
+      videoType, 
+      platform, 
+      customIdeas,
+      contentStyle,
+      contentPersonality,
+      // Script generation specific fields
+      title,
+      description,
+      category,
+      tags,
+      toneOfVoice,
+      duration,
+      additionalNotes,
+      hook,
+      structure,
+      previousIdeasContext
+    } = requestData;
 
-    // Check API usage limits
-    const { data: authData } = await supabase.auth.getUser(
-      req.headers.get("Authorization")?.split("Bearer ")[1] || ""
-    );
+    // Determine if we're generating ideas or a script
+    if (type === "script") {
+      // Generate script logic
+      // Create prompt for script generation
+      const prompt = `
+      Create a ${duration}-second script for a ${platform} video with the following details:
+      
+      Title: ${title}
+      Description: ${description}
+      Category: ${category || "N/A"}
+      Tags: ${tags ? tags.join(", ") : "N/A"}
+      
+      Tone of Voice: ${toneOfVoice || "conversational"}
+      
+      ${additionalNotes ? `Additional Notes: ${additionalNotes}` : ""}
+      
+      ${hook ? `Use this hook style: ${hook}` : ""}
+      ${structure ? `Follow this structure: ${structure}` : ""}
+      
+      The script should include timing markers, visual direction in [VISUAL_GUIDE] tags, and clear hooks and CTAs.
+      `;
 
-    if (!authData.user) {
+      // Call OpenAI for script generation
+      const scriptResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${openaiApiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert video script writer who specializes in creating engaging, high-converting scripts for short-form video content."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          max_tokens: 1000
+        })
+      });
+
+      if (!scriptResponse.ok) {
+        const errorData = await scriptResponse.json();
+        throw new Error(`OpenAI API error: ${JSON.stringify(errorData)}`);
+      }
+
+      const scriptData = await scriptResponse.json();
+      const generatedScript = scriptData.choices[0].message.content;
+
       return new Response(
-        JSON.stringify({
-          error: "Unauthorized",
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 401,
-        }
+        JSON.stringify({ script: generatedScript }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
-    }
-
-    // Call check_and_increment_usage function
-    const { data: usageData, error: usageError } = await supabase.rpc(
-      "check_and_increment_usage",
-      {
-        feature_name: type === "script" ? "script_generation" : "idea_generation",
-      }
-    );
-
-    if (usageError) {
-      return new Response(
-        JSON.stringify({
-          error: usageError.message,
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
-      );
-    }
-
-    if (!usageData.allowed) {
-      return new Response(
-        JSON.stringify({
-          error: "Usage limit exceeded",
-          message: usageData.message,
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 429,
-        }
-      );
-    }
-
-    // Handle different types of requests
-    if (type === "ideas") {
-      // Handle idea generation
-      const {
-        count = 5,
-        niche,
-        audience,
-        videoType,
-        platform,
-        isAd = false,
-      } = requestData;
-
-      if (!niche || !audience || !videoType || !platform) {
-        return new Response(
-          JSON.stringify({
-            error: "Missing required fields",
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 400,
-          }
-        );
-      }
-
-      // Generate ideas
-      const systemPrompt = getIdeasSystemPrompt();
-      const userPrompt = getIdeasUserPrompt({
-        niche,
-        audience,
-        videoType,
-        platform,
-        count,
-        isAd,
-      });
-
-      // Generate completions from OpenAI
-      const response = await openai.createChatCompletion({
-        model: "gpt-4-0613",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 2500,
-      });
-
-      if (
-        !response.data.choices ||
-        !response.data.choices[0] ||
-        !response.data.choices[0].message
-      ) {
-        throw new Error("Failed to generate ideas");
-      }
-
-      let ideas = [];
-      try {
-        ideas = JSON.parse(response.data.choices[0].message.content);
-      } catch (error) {
-        console.log(
-          "Error parsing ideas:",
-          response.data.choices[0].message.content
-        );
-        return new Response(
-          JSON.stringify({
-            error: "Failed to parse generated ideas",
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 500,
-          }
-        );
-      }
-
-      return new Response(JSON.stringify({ ideas }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    } else if (type === "script") {
-      // Handle script generation
-      const {
-        title,
-        description,
-        category,
-        tags,
-        toneOfVoice,
-        duration,
-        additionalNotes,
-        hook,
-        structure,
-        niche,
-        audience,
-        videoType,
-        platform,
-      } = requestData;
-
-      // Basic validation - require these fields
-      if (!title || !description || !toneOfVoice || !duration) {
-        return new Response(
-          JSON.stringify({
-            error: "Missing required fields in script request",
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 400,
-          }
-        );
-      }
-
-      // Require niche, audience, and videoType
-      if (!niche || !audience || !videoType) {
-        return new Response(
-          JSON.stringify({
-            error: "Missing required fields: niche, audience, or videoType",
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 400,
-          }
-        );
-      }
-
-      // Generate script
-      const systemPrompt = getScriptSystemPrompt();
-      const userPrompt = getScriptUserPrompt({
-        title,
-        description,
-        category,
-        tags,
-        toneOfVoice,
-        duration,
-        additionalNotes,
-        hook,
-        structure,
-        niche,
-        audience,
-        videoType,
-        platform,
-      });
-
-      console.log("Generating script with prompt:", userPrompt);
-
-      // Generate completions from OpenAI
-      const response = await openai.createChatCompletion({
-        model: "gpt-4-0613",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 2500,
-      });
-
-      if (
-        !response.data.choices ||
-        !response.data.choices[0] ||
-        !response.data.choices[0].message
-      ) {
-        throw new Error("Failed to generate script");
-      }
-
-      const script = response.data.choices[0].message.content;
-
-      return new Response(JSON.stringify({ script }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     } else {
-      return new Response(
-        JSON.stringify({
-          error: "Invalid request type",
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
+      // Generate ideas logic
+      // Create the prompt for idea generation
+      const promptParts = [
+        `Generate 10 viral video ideas for ${platform}.`,
+        `The content creator focuses on ${niche || "general content"}.`,
+        `The target audience is ${audience || "general audience"}.`,
+        `The video type preference is ${videoType || "any type"}.`,
+        customIdeas ? `The creator has these specific ideas in mind: ${customIdeas}` : "",
+        contentStyle ? `Content style: ${contentStyle}` : "",
+        contentPersonality ? `Content personality: ${contentPersonality}` : "",
+      ];
+      
+      // Filter out empty strings
+      const filteredPromptParts = promptParts.filter(part => part.trim() !== "");
+      
+      // Join with newlines
+      const prompt = filteredPromptParts.join("\n");
+
+      // Avoid repetition by providing context of previous ideas
+      let contextPart = "";
+      if (previousIdeasContext && previousIdeasContext.count > 0) {
+        contextPart = `
+        Previously generated video titles: ${previousIdeasContext.titles.join(", ")}
+        Previously generated categories: ${previousIdeasContext.categories.join(", ")}
+        Please avoid generating similar ideas to these.
+        `;
+      }
+
+      // Call OpenAI for idea generation
+      const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${openaiApiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are a viral video idea generator for content creators. Generate unique, trending, and engaging ideas that have high potential for virality on ${platform}. Each idea should include a catchy title, category (like Tutorial, Entertainment, Educational, etc.), a description (2-3 sentences), and 3-5 relevant hashtags. Format the response as a valid JSON array.`
+            },
+            {
+              role: "user",
+              content: prompt + contextPart
+            }
+          ],
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (!openaiResponse.ok) {
+        const errorData = await openaiResponse.json();
+        throw new Error(`OpenAI API error: ${JSON.stringify(errorData)}`);
+      }
+
+      const openaiData = await openaiResponse.json();
+      const ideasText = openaiData.choices[0].message.content;
+      
+      // Parse the JSON response
+      const ideasObject = JSON.parse(ideasText);
+      const ideas = ideasObject.ideas || [];
+
+      // Store ideas in the database
+      const ideaPromises = ideas.map(async (idea) => {
+        const { data, error } = await supabase
+          .from("video_ideas")
+          .insert({
+            user_id: user.id,
+            title: idea.title,
+            description: idea.description,
+            category: idea.category,
+            tags: idea.hashtags || [],
+            platform: platform,
+            color: ["blue", "green", "red", "yellow", "purple", "pink", "orange", "indigo"][
+              Math.floor(Math.random() * 8)
+            ],
+            is_saved: false
+          })
+          .select();
+
+        if (error) {
+          console.error("Error storing idea:", error);
+          return null;
         }
+
+        return data[0];
+      });
+
+      // Wait for all database operations to complete
+      const storedIdeas = await Promise.all(ideaPromises);
+      const validIdeas = storedIdeas.filter(idea => idea !== null);
+
+      return new Response(
+        JSON.stringify({ ideas: validIdeas }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
   } catch (error) {
     console.error("Error in generate-ideas function:", error);
     return new Response(
-      JSON.stringify({
-        error: error.message || "Internal Server Error",
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
   }
 });
-
-// Helper functions for system prompts
-function getIdeasSystemPrompt() {
-  return `You are an expert content strategist for social media, specializing in generating engaging video content ideas. 
-  Your task is to create unique, creative, and engaging video ideas that are tailored to specific niches and audiences.
-  
-  Always provide responses in a consistent JSON format that can be parsed by the application.
-  
-  Format each idea as:
-  {
-    "title": "Attention-grabbing video title",
-    "description": "Detailed description of the video concept",
-    "category": "Category like Tutorial, Lifestyle, Entertainment, etc.",
-    "tags": ["relevant", "hashtags", "for", "this", "content"]
-  }
-  
-  Create ideas that:
-  1. Are specific and actionable
-  2. Have viral potential
-  3. Incorporate trends relevant to the platform
-  4. Consider the target audience's interests
-  5. Are appropriately formatted for the platform
-  
-  Your output will be directly used by content creators, so ensure ideas are practical to execute.`;
-}
-
-function getIdeasUserPrompt({
-  niche,
-  audience,
-  videoType,
-  platform,
-  count,
-  isAd,
-}) {
-  let prompt = `Please generate ${count} unique video ${
-    isAd ? "ad" : "content"
-  } ideas with the following parameters:
-  
-  Content Niche: ${niche}
-  Target Audience: ${audience}
-  Content Type: ${videoType}
-  Platform: ${platform}
-  
-  ${
-    isAd
-      ? "These should be compelling ad ideas that promote products or services while providing value to viewers."
-      : "These should be engaging content ideas that provide value to viewers and encourage engagement."
-  }
-
-  ${
-    isAd
-      ? "Each ad should have a clear value proposition and call to action."
-      : ""
-  }
-  
-  Return the ideas as a JSON array of objects with the format specified in your instructions.`;
-
-  return prompt;
-}
-
-function getScriptSystemPrompt() {
-  return `You are an expert script writer for social media video content. Your task is to create engaging, well-structured scripts that are tailored to specific platforms and audiences.
-
-  When writing scripts:
-  
-  1. Create attention-grabbing hooks
-  2. Maintain a conversational, authentic tone
-  3. Incorporate visual direction using [VISUAL_GUIDE] tags
-  4. Keep sentences short and impactful
-  5. Include timestamps where appropriate using [TIMESTAMP] tags
-  6. End with clear calls-to-action
-  7. Optimize for the target platform
-  8. Ensure the content provides value to the audience
-  
-  Structure scripts with visual guidance for filming/editing, using [VISUAL_GUIDE] tags for scenes/shots/transitions and [TIMESTAMP] for key moments.
-  
-  Your scripts should be ready to use for recording without further editing.`;
-}
-
-function getScriptUserPrompt({
-  title,
-  description,
-  category,
-  tags,
-  toneOfVoice,
-  duration,
-  additionalNotes,
-  hook,
-  structure,
-  niche,
-  audience,
-  videoType,
-  platform,
-}) {
-  let prompt = `Please write a complete script for a ${duration}-second video with the following details:
-  
-  Title: ${title}
-  Description: ${description}
-  Category: ${category || videoType}
-  Tags: ${tags ? tags.join(", ") : ""}
-  Tone of Voice: ${toneOfVoice}
-  Content Niche: ${niche}
-  Target Audience: ${audience}
-  Platform: ${platform}
-  
-  ${additionalNotes ? `Additional Notes: ${additionalNotes}` : ""}
-  ${hook ? `Use this hook: ${hook}` : ""}
-  ${structure ? `Follow this structure: ${structure}` : ""}
-  
-  Include [VISUAL_GUIDE] tags for visual directions and [TIMESTAMP] tags for key timing points.
-  
-  The script should have a strong hook at the beginning, provide value through the middle sections, and end with an effective call-to-action.
-  
-  Make the content engaging and optimized for the ${platform} platform, maintaining a ${toneOfVoice} tone throughout.`;
-
-  return prompt;
-}
