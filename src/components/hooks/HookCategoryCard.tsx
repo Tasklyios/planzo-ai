@@ -20,6 +20,12 @@ const HookCategoryCard = ({
   isSaving,
   getHookText
 }: HookCategoryCardProps) => {
+  // Function to check if a hook is saved (already bookmarked)
+  const isHookSaved = (hook: HookType | SavedHook): boolean => {
+    // If it has 'hook' property and not 'hook_text', it's a SavedHook
+    return !('hook_text' in hook);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -33,9 +39,13 @@ const HookCategoryCard = ({
               variant="ghost" 
               size="icon" 
               onClick={() => 'hook_text' in hook ? onSaveHook(hook as HookType) : null}
-              disabled={isSaving}
+              disabled={isSaving || isHookSaved(hook)}
+              className={isHookSaved(hook) ? "text-primary" : ""}
             >
-              <BookmarkIcon className="h-4 w-4" />
+              <BookmarkIcon 
+                className="h-4 w-4" 
+                fill={isHookSaved(hook) ? "currentColor" : "none"} 
+              />
             </Button>
           </div>
         ))}
