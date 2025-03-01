@@ -1,8 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
-import AuthGuard from "@/components/AuthGuard";
 import IdeasGrid from "@/components/idea-generator/IdeasGrid";
 import { GeneratedIdea } from "@/types/idea";
 import EditIdea from "@/components/EditIdea";
@@ -129,7 +127,7 @@ export default function Ideas() {
     <main className="container mx-auto px-4 pt-8 pb-12">
       <section className="mb-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Saved Ideas</h1>
+          <h1 className="text-3xl font-bold text-[#9b87f5]">Saved Ideas</h1>
           <p className="text-muted-foreground mt-2">Browse and manage your bookmarked video ideas</p>
         </div>
 

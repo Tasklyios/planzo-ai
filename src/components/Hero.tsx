@@ -1,7 +1,7 @@
 
 const Hero = () => {
   return (
-    <section className="bg-gradient-to-b from-light-bg to-light-bg-2 pt-24">
+    <section className="bg-gradient-to-b from-[#E5DEFF] to-[#D6BCFA]/30 pt-24">
       <div className="container mx-auto px-4 py-16">
         <div className="flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1 space-y-8 fade-up">
@@ -9,18 +9,18 @@ const Hero = () => {
               AI-Powered Video Creation Made Easy
             </h1>
             <p className="text-xl text-dark/80">
-              Generate viral video ideas & scripts in seconds with AI
+              Generate viral video ideas & scripts in seconds with Planzo AI
             </p>
             <div className="flex gap-4">
-              <button className="btn-primary">Try for Free</button>
-              <button className="btn-secondary">Watch Demo</button>
+              <button className="px-6 py-3 bg-[#9b87f5] hover:bg-[#7E69AB] text-white rounded-lg transition-colors">Try for Free</button>
+              <button className="px-6 py-3 border border-[#9b87f5] text-[#9b87f5] hover:bg-[#E5DEFF] rounded-lg transition-colors">Watch Demo</button>
             </div>
           </div>
           <div className="flex-1 fade-up">
             <img
               className="rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300"
               src="https://storage.googleapis.com/uxpilot-auth.appspot.com/3516410965-89c7ff372bd4166625c6.png"
-              alt="TrendAI Dashboard"
+              alt="Planzo AI Dashboard"
               loading="lazy"
             />
           </div>
