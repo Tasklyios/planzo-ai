@@ -141,16 +141,31 @@ export default function Account() {
         // Trigger a storage event to notify other tabs
         triggerStorageEvents();
       } else {
-        // If no profile found, we'll create default values
-        console.log("No profile found, setting defaults");
-        setProfile({
+        // If no profile found, insert a default profile
+        console.log("No profile found, creating default profile");
+        const defaultProfile: Profile = {
           account_type: 'personal',
           content_personality: '',
           content_style: '',
           content_niche: '',
           target_audience: '',
           posting_platforms: [],
-        });
+        };
+        
+        setProfile(defaultProfile);
+        
+        // Insert the default profile
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            ...defaultProfile
+          });
+          
+        if (insertError) {
+          console.error("Error creating default profile:", insertError);
+          // We'll continue anyway since we set the state locally
+        }
       }
     } catch (error: any) {
       console.error('Error in fetchProfile:', error);
@@ -201,17 +216,20 @@ export default function Account() {
         account_type: profile.account_type,
         content_niche: profile.content_niche,
         target_audience: profile.target_audience,
-        posting_platforms: profile.posting_platforms,
+        posting_platforms: profile.posting_platforms || [],
         business_niche: profile.business_niche,
         product_niche: profile.product_niche,
       };
 
       console.log("Updating profile with:", updateData);
 
+      // Try upsert instead of update to handle missing profile records
       const { error } = await supabase
         .from('profiles')
-        .update(updateData)
-        .eq('id', session.user.id);
+        .upsert({
+          id: session.user.id,
+          ...updateData
+        });
 
       if (error) {
         console.error("Update error:", error);
@@ -251,6 +269,9 @@ export default function Account() {
         title: "Profile updated",
         description: "Your changes have been saved successfully.",
       });
+      
+      // Refresh profile data from the server to confirm the update
+      fetchProfile();
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast({
