@@ -25,7 +25,7 @@ const SidebarItem = ({ href, icon, label, onClick }: SidebarItemProps) => {
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
         isActive
-          ? "bg-[#002AFF] text-white"
+          ? "bg-[#0073FF] text-white"
           : "hover:bg-[#E5F0FF] dark:hover:bg-accent"
       )}
     >
@@ -60,8 +60,8 @@ const AppSidebar = () => {
     <div className="w-64 border-r h-screen flex flex-col fixed">
       <div className="px-4 py-4">
         <h1 className="text-xl font-bold flex items-center">
-          <Sparkles className="w-5 h-5 mr-2 text-[#002AFF]" />
-          Planzo AI
+          <Sparkles className="w-5 h-5 mr-2 text-[#0073FF]" />
+          <span className="text-[#0073FF]">Planzo AI</span>
         </h1>
       </div>
       <Separator />
