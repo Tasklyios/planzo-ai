@@ -1,4 +1,3 @@
-
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
@@ -602,6 +601,7 @@ export default function ContentPlanner() {
                   id={column.id}
                   index={index}
                   isDeletable={column.id !== IDEAS_COLUMN_ID}
+                  onIdeaAdded={fetchColumnsAndIdeas} // Pass the refresh function
                 >
                   {column.items.map((item, itemIndex) => (
                     <PlannerCard 

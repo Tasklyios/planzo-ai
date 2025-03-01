@@ -19,13 +19,15 @@ interface SearchIdeasDialogProps {
   onOpenChange: (open: boolean) => void;
   columnId: string;
   columnTitle: string;
+  onIdeaAdded?: () => void; // Add callback for when an idea is added
 }
 
 export function SearchIdeasDialog({ 
   open, 
   onOpenChange, 
   columnId, 
-  columnTitle 
+  columnTitle,
+  onIdeaAdded
 }: SearchIdeasDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
@@ -93,6 +95,11 @@ export function SearchIdeasDialog({
 
       // Remove the idea from the search results
       setIdeas(ideas.filter(i => i.id !== idea.id));
+
+      // Notify parent component that an idea was added
+      if (onIdeaAdded) {
+        onIdeaAdded();
+      }
 
       // Close the dialog if there are no more results
       if (ideas.length <= 1) {

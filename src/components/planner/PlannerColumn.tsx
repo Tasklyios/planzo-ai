@@ -11,9 +11,17 @@ interface PlannerColumnProps {
   index: number;
   children: React.ReactNode;
   isDeletable?: boolean;
+  onIdeaAdded?: () => void; // Add callback for when an idea is added
 }
 
-export function PlannerColumn({ title, id, index, children, isDeletable = true }: PlannerColumnProps) {
+export function PlannerColumn({ 
+  title, 
+  id, 
+  index, 
+  children, 
+  isDeletable = true,
+  onIdeaAdded
+}: PlannerColumnProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
@@ -65,6 +73,7 @@ export function PlannerColumn({ title, id, index, children, isDeletable = true }
             onOpenChange={setIsSearchOpen}
             columnId={id}
             columnTitle={title}
+            onIdeaAdded={onIdeaAdded}
           />
         </div>
       )}
