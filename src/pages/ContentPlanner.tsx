@@ -43,6 +43,9 @@ const columnFormSchema = z.object({
   title: z.string().min(1, "Column title is required").max(50, "Column title must be less than 50 characters"),
 });
 
+// Fixed "ideas" column ID
+const IDEAS_COLUMN_ID = "ideas";
+
 export default function ContentPlanner() {
   const { toast } = useToast();
   const [columns, setColumns] = useState<PlannerColumnWithItems[]>([]);
@@ -81,15 +84,41 @@ export default function ContentPlanner() {
 
       if (columnsError) throw columnsError;
 
-      // If no columns exist, create default columns
-      if (!columnsData || columnsData.length === 0) {
-        const defaultColumns = [
-          { id: 'ideas', title: 'Ideas', order: 0 },
-          { id: 'planning', title: 'Planning', order: 1 },
-          { id: 'filming', title: 'Ready to Film', order: 2 },
-          { id: 'editing', title: 'To Edit', order: 3 },
-          { id: 'ready', title: 'Ready to Post', order: 4 },
-        ];
+      // Check if Ideas column exists, if not add it
+      let hasIdeasColumn = false;
+      
+      if (columnsData && columnsData.length > 0) {
+        hasIdeasColumn = columnsData.some(col => col.id === IDEAS_COLUMN_ID);
+      }
+
+      // If no columns exist or no Ideas column, create default columns
+      if (!columnsData || columnsData.length === 0 || !hasIdeasColumn) {
+        let defaultColumns = [];
+        
+        if (!columnsData || columnsData.length === 0) {
+          // Create all default columns if none exist
+          defaultColumns = [
+            { id: IDEAS_COLUMN_ID, title: 'Ideas', order: 0 },
+            { id: 'planning', title: 'Planning', order: 1 },
+            { id: 'filming', title: 'Ready to Film', order: 2 },
+            { id: 'editing', title: 'To Edit', order: 3 },
+            { id: 'ready', title: 'Ready to Post', order: 4 },
+          ];
+        } else if (!hasIdeasColumn) {
+          // Just add the Ideas column if it doesn't exist
+          defaultColumns = [
+            { id: IDEAS_COLUMN_ID, title: 'Ideas', order: 0 }
+          ];
+          
+          // Need to reorder existing columns
+          for (let i = 0; i < columnsData.length; i++) {
+            await supabase
+              .from('planner_columns')
+              .update({ order: i + 1 })
+              .eq('id', columnsData[i].id)
+              .eq('user_id', session.user.id);
+          }
+        }
 
         for (const column of defaultColumns) {
           await supabase
@@ -140,7 +169,7 @@ export default function ContentPlanner() {
       if (ideas) {
         // Group ideas by status
         const groupedIdeas = ideas.reduce((acc: { [key: string]: PlannerItem[] }, idea) => {
-          const status = idea.status || 'ideas';
+          const status = idea.status || IDEAS_COLUMN_ID;
           if (!acc[status]) acc[status] = [];
           acc[status].push(idea as PlannerItem);
           return acc;
@@ -180,6 +209,16 @@ export default function ContentPlanner() {
     if (destination.droppableId === 'delete-bin') {
       if (type === 'column') {
         const columnId = draggableId.replace('column-', '');
+        // Don't allow deletion of the Ideas column
+        if (columnId === IDEAS_COLUMN_ID) {
+          toast({
+            title: "Cannot Delete",
+            description: "The Ideas column cannot be deleted as it's required.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
         const column = columns.find(col => col.id === columnId);
         
         if (column) {
@@ -216,7 +255,29 @@ export default function ContentPlanner() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
 
+        // Prevent moving the Ideas column from being first
+        if (destination.index === 0 && columns[source.index].id !== IDEAS_COLUMN_ID) {
+          toast({
+            title: "Cannot Reorder",
+            description: "The Ideas column must remain first.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Ensure Ideas column stays as the first column
         const newColumns = [...columns];
+        
+        // If moving Ideas column, restrict its position to index 0
+        if (newColumns[source.index].id === IDEAS_COLUMN_ID && destination.index !== 0) {
+          toast({
+            title: "Cannot Reorder",
+            description: "The Ideas column must remain first.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
         const [removed] = newColumns.splice(source.index, 1);
         newColumns.splice(destination.index, 0, removed);
 
@@ -252,9 +313,14 @@ export default function ContentPlanner() {
       try {
         // Update in Supabase first
         const ideaId = result.draggableId;
+        
+        // Ensure is_saved is true when moving ideas between columns
         const { error } = await supabase
           .from('video_ideas')
-          .update({ status: destination.droppableId })
+          .update({ 
+            status: destination.droppableId,
+            is_saved: true // Auto-bookmark when added to any column
+          })
           .eq('id', ideaId);
 
         if (error) throw error;
@@ -269,6 +335,8 @@ export default function ContentPlanner() {
           const sourceItems = [...sourceColumn.items];
           const destItems = [...destColumn.items];
           const [removed] = sourceItems.splice(source.index, 1);
+          // Ensure the item is marked as saved in the UI
+          removed.is_saved = true;
           destItems.splice(destination.index, 0, removed);
 
           setColumns(columns.map(col => {
@@ -315,6 +383,19 @@ export default function ContentPlanner() {
       if (pendingDelete.type === 'column') {
         const columnId = pendingDelete.id;
         
+        // Double-check we're not deleting the Ideas column
+        if (columnId === IDEAS_COLUMN_ID) {
+          toast({
+            title: "Cannot Delete",
+            description: "The Ideas column cannot be deleted as it's required.",
+            variant: "destructive"
+          });
+          setIsDeleting(false);
+          setDeleteDialogOpen(false);
+          setPendingDelete(null);
+          return;
+        }
+        
         // Get items that need to be moved to 'ideas' column
         const columnItems = columns.find(col => col.id === columnId)?.items || [];
         
@@ -322,7 +403,7 @@ export default function ContentPlanner() {
         for (const item of columnItems) {
           const { error: updateError } = await supabase
             .from('video_ideas')
-            .update({ status: 'ideas' })
+            .update({ status: IDEAS_COLUMN_ID })
             .eq('id', item.id);
           
           if (updateError) {
@@ -503,6 +584,7 @@ export default function ContentPlanner() {
                   title={column.title} 
                   id={column.id}
                   index={index}
+                  isDeletable={column.id !== IDEAS_COLUMN_ID}
                 >
                   {column.items.map((item, itemIndex) => (
                     <PlannerCard 

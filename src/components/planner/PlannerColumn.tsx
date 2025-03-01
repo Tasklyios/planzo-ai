@@ -7,11 +7,12 @@ interface PlannerColumnProps {
   id: string;
   index: number;
   children: React.ReactNode;
+  isDeletable?: boolean;
 }
 
-export function PlannerColumn({ title, id, index, children }: PlannerColumnProps) {
+export function PlannerColumn({ title, id, index, children, isDeletable = true }: PlannerColumnProps) {
   return (
-    <Draggable draggableId={`column-${id}`} index={index}>
+    <Draggable draggableId={`column-${id}`} index={index} isDragDisabled={!isDeletable}>
       {(provided) => (
         <div
           ref={provided.innerRef}
@@ -24,11 +25,12 @@ export function PlannerColumn({ title, id, index, children }: PlannerColumnProps
             <div className="flex items-center gap-2">
               <div 
                 {...provided.dragHandleProps}
-                className="cursor-grab hover:text-primary"
+                className={`cursor-grab hover:text-primary ${!isDeletable ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <GripVertical className="h-5 w-5" />
               </div>
               <h3 className="font-semibold text-lg">{title}</h3>
+              {!isDeletable && <span className="text-xs text-muted-foreground ml-2">(Default)</span>}
             </div>
           </div>
           <Droppable droppableId={id} type="task">

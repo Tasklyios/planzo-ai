@@ -53,6 +53,9 @@ const AddToCalendarDialog = ({
               required
             />
           </div>
+          <p className="text-sm text-muted-foreground mt-2">
+            Note: Adding to calendar will automatically save this idea to your Ideas column.
+          </p>
           <DialogFooter>
             <Button type="submit">Add to Calendar</Button>
           </DialogFooter>
