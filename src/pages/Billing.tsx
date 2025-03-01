@@ -54,10 +54,29 @@ const Billing = () => {
       if (subError) throw subError;
       
       console.log("Fetched subscription data:", data);
-      setSubscription(data);
+      
+      // If we have valid subscription data, use it
+      if (data && data.tier) {
+        setSubscription(data);
+      } else {
+        // Default to free tier if no subscription is found
+        setSubscription({
+          tier: 'free',
+          current_period_end: null,
+          stripe_customer_id: null,
+          stripe_subscription_id: null
+        });
+      }
     } catch (err: any) {
       console.error("Error fetching subscription:", err);
       setError(err.message);
+      // In case of error, default to free plan to avoid UI issues
+      setSubscription({
+        tier: 'free',
+        current_period_end: null,
+        stripe_customer_id: null,
+        stripe_subscription_id: null
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -260,3 +279,4 @@ const Billing = () => {
 };
 
 export default Billing;
+
