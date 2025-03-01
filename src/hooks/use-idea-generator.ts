@@ -13,6 +13,7 @@ export const useIdeaGenerator = () => {
   const [loading, setLoading] = useState(false);
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
   const [customIdeas, setCustomIdeas] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [previousIdeasContext, setPreviousIdeasContext] = useState<PreviousIdeasContext>({
     count: 0,
     titles: [],
@@ -263,6 +264,7 @@ export const useIdeaGenerator = () => {
     }
 
     setLoading(true);
+    setError(null);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -289,7 +291,8 @@ export const useIdeaGenerator = () => {
 
       if (usageError) {
         console.error("Usage check error:", usageError);
-        throw new Error(`Usage check error: ${usageError.message}`);
+        setError(`Usage check error: ${usageError.message}`);
+        return;
       }
 
       // Check if we can proceed or not
@@ -318,7 +321,7 @@ export const useIdeaGenerator = () => {
           title: "Usage Limit Reached",
           description: message,
         });
-        setLoading(false);
+        setError(message);
         return;
       }
 
@@ -353,17 +356,20 @@ export const useIdeaGenerator = () => {
 
         if (error) {
           console.error("Edge function error:", error);
-          throw new Error(`Edge function error: ${error.message || 'Unknown error'}`);
+          setError(`Edge function error: ${error.message || 'Unknown error'}`);
+          return;
         }
 
         if (!data) {
           console.error("Empty response from function");
-          throw new Error('Empty response from AI service');
+          setError('Empty response from AI service. Please try again.');
+          return;
         }
 
         if (data.error) {
           console.error("Error in function response:", data.error);
-          throw new Error(`Error from AI service: ${data.error}`);
+          setError(`Error from AI service: ${data.error}`);
+          return;
         }
 
         if (!data.ideas || !Array.isArray(data.ideas)) {
@@ -372,10 +378,12 @@ export const useIdeaGenerator = () => {
           // If we have a raw response, it means the AI returned something but it wasn't JSON
           if (data.rawResponse) {
             console.log("Raw AI response:", data.rawResponse);
-            throw new Error('The AI returned an invalid format. Please try again.');
+            setError('The AI returned an invalid format. Please try again.');
+            return;
           }
           
-          throw new Error('Invalid response format from AI: ideas array is missing');
+          setError('Invalid response format from AI: ideas array is missing');
+          return;
         }
 
         console.log("Ideas generated successfully:", data.ideas);
@@ -398,7 +406,8 @@ export const useIdeaGenerator = () => {
 
         if (saveError) {
           console.error("Error saving ideas:", saveError);
-          throw new Error(`Error saving ideas: ${saveError.message}`);
+          setError(`Error saving ideas: ${saveError.message}`);
+          return;
         }
 
         const { data: savedIdeas, error: fetchError } = await supabase
@@ -410,7 +419,8 @@ export const useIdeaGenerator = () => {
 
         if (fetchError) {
           console.error("Error fetching saved ideas:", fetchError);
-          throw new Error(`Error fetching saved ideas: ${fetchError.message}`);
+          setError(`Error fetching saved ideas: ${fetchError.message}`);
+          return;
         }
 
         const transformedIdeas = (savedIdeas || []).map(transformSupabaseIdea);
@@ -427,10 +437,11 @@ export const useIdeaGenerator = () => {
         });
       } catch (functionError: any) {
         console.error('Error in generate-ideas function:', functionError);
-        throw new Error(`Generate Ideas function error: ${functionError.message || 'Unknown error'}`);
+        setError(`Generate Ideas function error: ${functionError.message || 'Unknown error'}`);
       }
     } catch (error: any) {
       console.error('Error generating ideas:', error);
+      setError(error.message || 'An unexpected error occurred. Please try again.');
       toast({
         variant: "destructive",
         title: "Failed to Generate Ideas",
@@ -456,6 +467,8 @@ export const useIdeaGenerator = () => {
     generateIdeas,
     customIdeas,
     setCustomIdeas,
+    error,
+    setError,
     previousIdeasContext,
     setPreviousIdeasContext
   };

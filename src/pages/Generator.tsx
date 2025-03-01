@@ -9,6 +9,8 @@ import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
 import InputForm from "@/components/idea-generator/InputForm";
 import IdeasGrid from "@/components/idea-generator/IdeasGrid";
 import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { AddToCalendarIdea, PreviousIdeasContext } from "@/types/idea";
 
 const Generator = () => {
@@ -28,7 +30,9 @@ const Generator = () => {
     customIdeas,
     setCustomIdeas,
     previousIdeasContext,
-    setPreviousIdeasContext
+    setPreviousIdeasContext,
+    error,
+    setError
   } = useIdeaGenerator();
 
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
@@ -144,6 +148,11 @@ const Generator = () => {
     }
   };
 
+  const handleRetryGenerate = () => {
+    setError(null);
+    generateIdeas();
+  };
+
   return <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 pt-8 pb-12 py-0">
         <section className="mb-8">
@@ -161,6 +170,23 @@ const Generator = () => {
             setCustomIdeas={setCustomIdeas}
           />
 
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error generating ideas</AlertTitle>
+              <AlertDescription>
+                {error}
+                <div className="mt-2">
+                  <button 
+                    onClick={handleRetryGenerate}
+                    className="bg-destructive/20 hover:bg-destructive/30 text-destructive px-3 py-1 rounded text-sm"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex justify-center mb-8">
             <button 
               onClick={generateIdeas} 
@@ -168,8 +194,8 @@ const Generator = () => {
               className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
             >
               {loading ? <>
-                  <span className="animate-spin">⚡</span>
-                  Generating...
+                  <Spinner size="sm" className="text-primary-foreground" />
+                  <span>Generating...</span>
                 </> : <>
                   ⚡ Generate Viral Ideas
                 </>}
