@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -417,7 +416,7 @@ export const useIdeaGenerator = () => {
           color: 'blue',
           is_saved: false,
           is_ad: isAdRequest
-          // IMPORTANT: Removed scheduled_for completely to ensure ideas aren't automatically added to calendar
+          // IMPORTANT: No scheduled_for field here at all
         }));
 
         const { error: saveError } = await supabase

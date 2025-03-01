@@ -1,3 +1,4 @@
+
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -28,7 +29,7 @@ export interface GeneratedIdea {
   platform?: string;
   color?: string;
   is_saved?: boolean;
-  scheduled_for?: string;
+  scheduled_for?: string;  // Make sure this is marked as optional
 }
 
 export interface PreviousIdeasContext {

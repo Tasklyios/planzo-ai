@@ -122,6 +122,7 @@ export default function Calendar() {
         return;
       }
 
+      // IMPORTANT: Modified this query to only fetch ideas that have a non-null scheduled_for date
       const { data: scheduledData, error: scheduledError } = await supabase
         .from("video_ideas")
         .select(`
@@ -138,7 +139,8 @@ export default function Calendar() {
           user_id,
           scheduled_for
         `)
-        .eq("user_id", sessionData.session.user.id);
+        .eq("user_id", sessionData.session.user.id)
+        .not("scheduled_for", "is", null);  // Only get ideas with a scheduled_for date
 
       if (scheduledError) throw scheduledError;
 
