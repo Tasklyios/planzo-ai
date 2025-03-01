@@ -36,9 +36,14 @@ serve(async (req) => {
     const body = await req.text();
     let event;
 
-    // Verify the signature
+    // Verify the signature using the asynchronous method
     try {
-      event = stripe.webhooks.constructEvent(body, signature, STRIPE_WEBHOOK_SECRET);
+      // Use constructEventAsync instead of constructEvent
+      event = await stripe.webhooks.constructEventAsync(
+        body, 
+        signature, 
+        STRIPE_WEBHOOK_SECRET
+      );
     } catch (err) {
       console.error(`⚠️ Webhook signature verification failed:`, err.message);
       return new Response(`Webhook Error: ${err.message}`, { status: 400, headers: corsHeaders });
@@ -202,9 +207,9 @@ serve(async (req) => {
         
         // Get the user id by email
         const { data: userData, error: userError } = await supabase
-          .from("auth")
-          .select("users.id")
-          .eq("users.email", customerEmail)
+          .from("users")
+          .select("id")
+          .eq("email", customerEmail)
           .single();
         
         if (userError || !userData) {
