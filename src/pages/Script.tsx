@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -926,12 +925,12 @@ export default function Script() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="selectedHook">Opening Hook (Optional)</Label>
-                <Select value={selectedHook || ""} onValueChange={setSelectedHook}>
+                <Select value={selectedHook || "none"} onValueChange={setSelectedHook}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a hook" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No hook</SelectItem>
+                    <SelectItem value="none">No hook</SelectItem>
                     {hooks.map((hook) => (
                       <SelectItem key={hook.id} value={hook.id || ""}>
                         {hook.category}: {hook.hook.substring(0, 30)}...
@@ -943,12 +942,12 @@ export default function Script() {
               
               <div>
                 <Label htmlFor="selectedStructure">Script Structure (Optional)</Label>
-                <Select value={selectedStructure || ""} onValueChange={setSelectedStructure}>
+                <Select value={selectedStructure || "none"} onValueChange={setSelectedStructure}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a structure" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Default structure</SelectItem>
+                    <SelectItem value="none">Default structure</SelectItem>
                     {structures.map((structure) => (
                       <SelectItem key={structure.id} value={structure.id || ""}>
                         {structure.name}
