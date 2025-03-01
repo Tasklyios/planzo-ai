@@ -125,21 +125,17 @@ export const useIdeaGenerator = () => {
       if (profile) {
         // Determine which niche to use based on account type
         let nicheValue = "";
-        let videoTypeValue = "";
         
         if (profile.account_type === 'business' && profile.business_niche) {
           nicheValue = profile.business_niche;
-          videoTypeValue = profile.business_niche || "Business Promotion";
         } else if (profile.account_type === 'ecommerce' && profile.product_niche) {
+          // For ecommerce, use product_niche for the main niche field
           nicheValue = profile.product_niche;
-          videoTypeValue = profile.content_niche || "Product Showcase";
         } else {
           nicheValue = profile.content_niche || "";
-          videoTypeValue = profile.content_niche || "";
         }
 
         console.log(`Setting niche based on account type (${profile.account_type}):`, nicheValue);
-        console.log(`Setting videoType based on account type:`, videoTypeValue);
 
         // Update localStorage and state
         if (nicheValue && nicheValue !== niche) {
@@ -160,11 +156,12 @@ export const useIdeaGenerator = () => {
           localStorage.setItem("platform", profile.posting_platforms[0]);
         }
 
-        // Set videoType based on account type
-        if (videoTypeValue && videoTypeValue !== videoType) {
-          console.log(`Updating videoType from ${videoType} to ${videoTypeValue}`);
-          setVideoType(videoTypeValue);
-          localStorage.setItem("videoType", videoTypeValue);
+        // Don't auto-fill videoType from profile, leave it to be manually entered
+        if (!videoType) {
+          // Only set a default value if it's empty
+          const defaultVideoType = profile.account_type === 'ecommerce' ? 'Product Showcase' : 'Tutorial';
+          setVideoType(defaultVideoType);
+          localStorage.setItem("videoType", defaultVideoType);
         }
       }
 

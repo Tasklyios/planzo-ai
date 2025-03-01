@@ -39,6 +39,8 @@ const InputForm = ({
   const [accountType, setAccountType] = useState<AccountType>('personal');
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [productNiche, setProductNiche] = useState("");
+  const [contentNiche, setContentNiche] = useState("");
 
   useEffect(() => {
     getAccountType();
@@ -51,14 +53,20 @@ const InputForm = ({
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('account_type')
+        .select('account_type, product_niche, content_niche, business_niche')
         .eq('id', session.user.id)
         .single();
 
       if (error) throw error;
       
-      if (profile?.account_type) {
+      if (profile) {
         setAccountType(profile.account_type as AccountType);
+        
+        // Store product niche and content niche for ecommerce accounts
+        if (profile.account_type === 'ecommerce') {
+          setProductNiche(profile.product_niche || "");
+          setContentNiche(profile.content_niche || "");
+        }
       }
     } catch (error) {
       console.error("Error fetching account type:", error);
@@ -136,15 +144,16 @@ const InputForm = ({
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
+                  <Package2 className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Product Niche</label>
                 </div>
                 <input
                   type="text"
                   value={niche}
                   onChange={(e) => setNiche(e.target.value)}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Your content niche"
+                  placeholder="Your product niche"
+                  title="This is synced from your account settings"
                 />
               </div>
             </div>
@@ -152,15 +161,17 @@ const InputForm = ({
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <Users className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Target Audience</label>
+                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
                 </div>
                 <input
                   type="text"
-                  value={audience}
-                  onChange={(e) => setAudience(e.target.value)}
+                  value={contentNiche}
+                  onChange={(e) => setContentNiche(e.target.value)}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Your target audience"
+                  placeholder="Your content niche"
+                  disabled
+                  title="This is synced from your account settings"
                 />
               </div>
             </div>
