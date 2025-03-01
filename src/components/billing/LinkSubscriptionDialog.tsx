@@ -1,7 +1,7 @@
-
 import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { 
   Dialog,
   DialogContent,
@@ -26,7 +26,7 @@ const LinkSubscriptionDialog = ({ onSuccess }: LinkSubscriptionDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const { toast } = useToast();
+  const { toasts } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

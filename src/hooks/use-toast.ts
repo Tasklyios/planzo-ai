@@ -22,6 +22,7 @@ interface ToastContextValue extends ToastState {
   addToast: (props: Omit<ToastProps, "id">) => void;
   updateToast: (id: string, props: Partial<ToastProps>) => void;
   dismissToast: (id: string) => void;
+  toast: (props: Omit<ToastProps, "id">) => void; // Add toast function directly to the context
 }
 
 const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
@@ -77,14 +78,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "DISMISS_TOAST", id });
   }, []);
 
+  // Add toast function directly to context value
+  const toast = React.useCallback((props: Omit<ToastProps, "id">) => {
+    addToast(props);
+  }, [addToast]);
+
   const value = React.useMemo(
     () => ({
       ...state,
       addToast,
       updateToast,
       dismissToast,
+      toast, // Include toast in the context value
     }),
-    [state, addToast, updateToast, dismissToast]
+    [state, addToast, updateToast, dismissToast, toast]
   );
 
   // Use React.createElement instead of JSX
@@ -95,8 +102,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Helper function to create toast
+// Helper function to create toast - now just a wrapper around the context's toast
 export function toast({ title, description, variant = "default", action }: Omit<ToastProps, "id">) {
   const context = useToast();
-  context.addToast({ title, description, variant, action });
+  context.toast({ title, description, variant, action });
 }
