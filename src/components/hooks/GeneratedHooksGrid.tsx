@@ -7,7 +7,7 @@ interface GeneratedHooksGridProps {
   hooks: (HookType | SavedHook)[];
   onSaveHook: (hook: HookType) => void;
   isSaving: boolean;
-  filterHooksByCategory: (hooks: (HookType[] | SavedHook[]), category: string) => (HookType | SavedHook)[];
+  filterHooksByCategory: (hooks: (HookType | SavedHook)[], category: string) => (HookType | SavedHook)[];
   getHookText: (hook: HookType | SavedHook) => string;
 }
 
