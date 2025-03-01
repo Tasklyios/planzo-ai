@@ -17,7 +17,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GeneratedIdea, ScriptHook, ScriptStructure, StyleProfile } from "@/types/idea";
-import { Save, Search, Upload, Sparkles, Plus, Check, Trash2, Paintbrush } from "lucide-react";
+import { Save, Search, Upload, Sparkles, Plus, Check, Trash2, Paintbrush, AlertTriangle } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import ChatWidget from "@/components/ChatWidget";
 import SpreadsheetUploader from "@/components/SpreadsheetUploader";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import {
   Accordion,
@@ -80,6 +81,7 @@ export default function Script() {
   const [showVisuals, setShowVisuals] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   
   // Add new state for custom hook and structure data
@@ -415,9 +417,79 @@ export default function Script() {
     idea.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Check if the user has enough usage left for script generation
+  const checkUsageLimits = async () => {
+    try {
+      // Use the check-usage-limits edge function
+      const { data: usageResponse, error: usageError } = await supabase.functions.invoke('check-usage-limits', {
+        body: { action: 'scripts' }
+      });
+
+      if (usageError) {
+        console.error("Usage check error:", usageError);
+        setError(`Usage check error: ${usageError.message}`);
+        return false;
+      }
+
+      // If we can't proceed, show an appropriate message
+      if (!usageResponse.canProceed) {
+        console.error("Usage limit reached:", usageResponse.message);
+        
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user.id;
+        
+        if (!userId) {
+          setError("Authentication required. Please log in.");
+          return false;
+        }
+        
+        const { data: subscription } = await supabase
+          .from('user_subscriptions')
+          .select('tier')
+          .eq('user_id', userId)
+          .single();
+
+        // Prepare upgrade message based on current tier
+        let message = usageResponse.message || "You've reached your daily limit for generating scripts. ";
+        
+        if (subscription?.tier === 'free') {
+          message += " Upgrade to Pro or Plus for more generations!";
+        } else if (subscription?.tier === 'pro') {
+          message += " Upgrade to Plus or Business for more generations!";
+        } else if (subscription?.tier === 'plus') {
+          message += " Upgrade to Business for unlimited generations!";
+        }
+
+        setError(message);
+        toast({
+          variant: "destructive",
+          title: "Usage Limit Reached",
+          description: message,
+        });
+        return false;
+      }
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error checking usage limits:", error);
+      setError(`Error checking usage limits: ${error.message}`);
+      return false;
+    }
+  };
+
   const generateScript = async () => {
     setLoading(true);
+    setError(null);
+    setGeneratedScript("");
+    
     try {
+      // Check if user can generate more scripts
+      const canProceed = await checkUsageLimits();
+      if (!canProceed) {
+        setLoading(false);
+        return;
+      }
+
       const ideaToUse = scriptType === "existing" ? selectedIdea : {
         title: customTitle,
         description: customDescription,
@@ -438,7 +510,7 @@ export default function Script() {
       const audience = userProfile?.target_audience || "";
       const platform = Array.isArray(userProfile?.posting_platforms) && userProfile?.posting_platforms.length > 0 
         ? userProfile?.posting_platforms[0] 
-        : "";
+        : "Instagram";
       const videoType = ideaToUse.category || "Tutorial";
       
       console.log("Sending script generation request with profile data:", {
@@ -468,10 +540,25 @@ export default function Script() {
 
       if (error) {
         console.error("Edge function error:", error);
-        throw new Error(`Failed to generate script: ${error.message}`);
+        throw new Error(`Failed to generate script: ${error.message || "Unknown error"}`);
       }
       
-      if (!data?.script) {
+      if (!data) {
+        throw new Error("No data received from script generation function");
+      }
+      
+      if (data.error) {
+        console.error("Error in function response:", data.error);
+        throw new Error(`Error from AI service: ${data.error}`);
+      }
+      
+      if (!data.script) {
+        // If we have a raw response, it means the AI returned something but it wasn't JSON
+        if (data.rawResponse) {
+          console.log("Raw AI response:", data.rawResponse);
+          throw new Error("The AI returned an invalid format. Please try again.");
+        }
+        
         throw new Error("Failed to generate script. Please try again.");
       }
       
@@ -507,6 +594,7 @@ export default function Script() {
       }
     } catch (error: any) {
       console.error("Error generating script:", error);
+      setError(error.message || "Failed to generate script");
       toast({
         variant: "destructive",
         title: "Error",
@@ -627,6 +715,14 @@ export default function Script() {
             Create engaging video scripts from your saved ideas or start fresh with a custom concept.
           </p>
         </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         <div className="space-y-6">
           {/* Style Profile Section - Updated to match Generator.tsx */}
@@ -801,7 +897,17 @@ export default function Script() {
             disabled={loading}
             className="w-full"
           >
-            {loading ? "Generating..." : "Generate Script"}
+            {loading ? (
+              <>
+                <span className="mr-2">Generating...</span>
+                <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full"></div>
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate Script
+              </>
+            )}
           </Button>
 
           {generatedScript && (
