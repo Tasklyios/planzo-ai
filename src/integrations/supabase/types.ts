@@ -87,6 +87,66 @@ export type Database = {
         }
         Relationships: []
       }
+      script_hooks: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          hook: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          hook: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          hook?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      script_structures: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          structure: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          structure: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          structure?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scripts: {
         Row: {
           content: string
@@ -238,6 +298,34 @@ export type Database = {
           p_action: string
         }
         Returns: boolean
+      }
+      get_hooks: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: {
+          category: string
+          created_at: string
+          description: string | null
+          hook: string
+          id: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      get_structures: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          structure: string
+          updated_at: string
+          user_id: string
+        }[]
       }
       link_stripe_customer: {
         Args: {
