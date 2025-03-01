@@ -10,19 +10,10 @@ import { Spinner } from "@/components/ui/spinner";
 
 interface SpreadsheetUploaderProps {
   type: "hooks" | "structures";
-  functionName?: string; // Make this optional
-  additionalParams?: Record<string, any>; // Add this prop
-  accept?: string; // Add this prop
   onUploadComplete?: (data: any[]) => void;
 }
 
-const SpreadsheetUploader = ({ 
-  type, 
-  functionName = "process-spreadsheet", // Default value
-  additionalParams = {}, 
-  accept = ".csv,.xlsx,.xls",
-  onUploadComplete 
-}: SpreadsheetUploaderProps) => {
+const SpreadsheetUploader = ({ type, onUploadComplete }: SpreadsheetUploaderProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
