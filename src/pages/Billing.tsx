@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { CreditCard, AlertCircle, RefreshCw } from "lucide-react";
+import { CreditCard, AlertCircle, RefreshCw, LinkIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import PricingSheet from "@/components/pricing/PricingSheet";
@@ -14,6 +14,16 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Subscription = {
   tier: 'free' | 'pro' | 'plus' | 'business';
@@ -27,6 +37,9 @@ const Billing = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [linkingSubscription, setLinkingSubscription] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -52,6 +65,11 @@ const Billing = () => {
       
       console.log("Fetched subscription data:", data);
       setSubscription(data);
+
+      // Pre-fill email if we have a session
+      if (session.user?.email && !email) {
+        setEmail(session.user.email);
+      }
     } catch (err: any) {
       console.error("Error fetching subscription:", err);
       setError(err.message);
@@ -81,6 +99,55 @@ const Billing = () => {
       description: "Getting your latest subscription information",
     });
     fetchSubscription();
+  };
+
+  const handleLinkSubscription = async () => {
+    try {
+      setLinkingSubscription(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to link a subscription",
+        });
+        return;
+      }
+      
+      // Call our new edge function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/link-subscription`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to link subscription");
+      }
+      
+      toast({
+        title: "Success!",
+        description: "Your subscription has been linked to your account",
+      });
+      
+      setLinkDialogOpen(false);
+      handleRefresh();
+    } catch (err: any) {
+      console.error("Error linking subscription:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || "Failed to link subscription",
+      });
+    } finally {
+      setLinkingSubscription(false);
+    }
   };
 
   const formatDate = (dateString: string | null) => {
@@ -145,16 +212,27 @@ const Billing = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Billing</h1>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleRefresh} 
-          disabled={refreshing}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setLinkDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <LinkIcon className="h-4 w-4" />
+            Link Existing Subscription
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh} 
+            disabled={refreshing}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -230,6 +308,47 @@ const Billing = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Link your existing subscription</DialogTitle>
+            <DialogDescription>
+              If you've purchased a subscription but it's not showing up in your account,
+              you can link it here using the email you used for payment.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email used for subscription</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter the email you used for payment"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setLinkDialogOpen(false)}
+              disabled={linkingSubscription}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleLinkSubscription}
+              disabled={!email || linkingSubscription}
+            >
+              {linkingSubscription ? 'Linking...' : 'Link Subscription'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
