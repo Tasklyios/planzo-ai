@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -136,20 +135,26 @@ export default function Script() {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session?.user.id) return;
 
-      // Fetch hooks
+      // Fetch hooks using a raw query since the table is not in TypeScript types yet
       const { data: hooksData, error: hooksError } = await supabase
-        .from("script_hooks")
-        .select("*")
-        .eq("user_id", sessionData.session.user.id);
+        .from('script_hooks')
+        .select('*')
+        .eq('user_id', sessionData.session.user.id) as unknown as { 
+          data: HookData[] | null; 
+          error: any 
+        };
 
       if (hooksError) throw hooksError;
       setHooks(hooksData || []);
 
-      // Fetch structures
+      // Fetch structures using a raw query
       const { data: structuresData, error: structuresError } = await supabase
-        .from("script_structures")
-        .select("*")
-        .eq("user_id", sessionData.session.user.id);
+        .from('script_structures')
+        .select('*')
+        .eq('user_id', sessionData.session.user.id) as unknown as {
+          data: StructureData[] | null;
+          error: any
+        };
 
       if (structuresError) throw structuresError;
       setStructures(structuresData || []);
