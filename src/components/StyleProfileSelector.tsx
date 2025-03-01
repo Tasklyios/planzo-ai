@@ -20,10 +20,10 @@ const StyleProfileSelector: React.FC<StyleProfileSelectorProps> = ({ contentStyl
       <div>
         <h2 className="text-xl font-semibold">Your Content Style</h2>
         <p className="text-muted-foreground mt-1">
-          {contentStyle || "No style set"}
+          {contentStyle || "No style set (using default)"}
         </p>
         <p className="text-sm text-muted-foreground mt-2">
-          Personality: {contentPersonality || "Not specified"}
+          Personality: {contentPersonality || "Not specified (using default)"}
         </p>
       </div>
       <Button 

@@ -76,6 +76,8 @@ export default function Script() {
     }
   };
 
+  // Modified condition to not require contentStyle and contentPersonality
+  // This allows the script generation to work as long as basic profile info is set
   if (!niche || !audience || !platform || !videoType) {
     return (
       <AuthGuard>
