@@ -13,7 +13,7 @@ const Hero = () => {
             </p>
             <div className="flex gap-4">
               <button className="px-6 py-3 blue-gradient rounded-lg transition-colors">Try for Free</button>
-              <button className="px-6 py-3 border border-[#0051FF] text-[#0051FF] hover:bg-[#E5F0FF] rounded-lg transition-colors">Watch Demo</button>
+              <button className="px-6 py-3 border border-[#0073FF] text-[#0073FF] hover:bg-[#E5F0FF] rounded-lg transition-colors">Watch Demo</button>
             </div>
           </div>
           <div className="flex-1 fade-up">

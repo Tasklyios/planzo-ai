@@ -2,7 +2,7 @@
 import { 
   MessageSquare,
   Mic, 
-  BookOpen, // Changed from Reddit to BookOpen for Reddit stories
+  BookOpen, 
   Split,
   Image,
   Download,
@@ -13,37 +13,37 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 const Features = () => {
   const features = [
     {
-      icon: <MessageSquare className="text-primary" size={24} />,
+      icon: <MessageSquare className="text-[#0073FF]" size={24} />,
       title: "Fake Texts Videos",
       description: "Have an idea for a convo that would go viral? Make it into a full video in just a few clicks.",
       image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/messages-screenshot.png"
     },
     {
-      icon: <Mic className="text-primary" size={24} />,
+      icon: <Mic className="text-[#0073FF]" size={24} />,
       title: "Generate AI Voiceovers",
       description: "It's never been easier to make the AI-narrated videos you see on your timeline.",
       image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/voiceover-interface.png"
     },
     {
-      icon: <BookOpen className="text-primary" size={24} />, // Changed icon here
+      icon: <BookOpen className="text-[#0073FF]" size={24} />,
       title: "Create Reddit Story Videos",
       description: "Write your own script or generate one auto-magically from a Reddit link.",
       image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/reddit-interface.png"
     },
     {
-      icon: <Split className="text-primary" size={24} />,
+      icon: <Split className="text-[#0073FF]" size={24} />,
       title: "Create Split-Screen Videos",
       description: "Make your clips more engaging by showing them beside premium gameplay.",
       image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/split-screen.png"
     },
     {
-      icon: <Image className="text-primary" size={24} />,
+      icon: <Image className="text-[#0073FF]" size={24} />,
       title: "Text-to-Image Videos",
       description: "Generate images for your videos with text prompts.",
       image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/text-to-image.png"
     },
     {
-      icon: <Download className="text-primary" size={24} />,
+      icon: <Download className="text-[#0073FF]" size={24} />,
       title: "Download TikTok & Youtube Videos",
       description: "Avoid sketchy sites and get content for your next video.",
       image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/download-interface.png"

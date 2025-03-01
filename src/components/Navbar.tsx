@@ -53,7 +53,7 @@ const Navbar = () => {
     <header className="fixed w-full bg-card/80 backdrop-blur-sm border-b border-border z-50">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
-          <div className="text-2xl font-bold text-[#002AFF]">Planzo AI</div>
+          <div className="text-2xl font-bold text-[#0073FF]">Planzo AI</div>
         </div>
         
         {/* Desktop Navigation */}
@@ -64,7 +64,7 @@ const Navbar = () => {
               to={item.path}
               className={`${
                 currentPath === item.path
-                  ? "text-[#002AFF] font-medium"
+                  ? "text-[#0073FF] font-medium"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -127,7 +127,7 @@ const Navbar = () => {
                     to={item.path}
                     className={`${
                       currentPath === item.path
-                        ? "text-[#002AFF] font-medium"
+                        ? "text-[#0073FF] font-medium"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                     onClick={closeSheet}
