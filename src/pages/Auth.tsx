@@ -169,30 +169,30 @@ const Auth = () => {
 
   if (isResetPassword) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-light-bg to-light-bg-2 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-light-bg to-light-bg-2 dark:from-background dark:to-background/80 flex items-center justify-center p-4">
         <div className="max-w-md w-full glass rounded-2xl p-8 shadow-xl fade-up">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-dark mb-2">
+            <h1 className="text-2xl font-bold text-dark dark:text-white mb-2">
               Reset Your Password
             </h1>
-            <p className="text-dark/70">
+            <p className="text-dark/70 dark:text-white/70">
               Please enter your new password below
             </p>
           </div>
 
           <form onSubmit={handleResetPassword} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-dark" htmlFor="new-password">
+              <label className="text-sm font-medium text-dark dark:text-white" htmlFor="new-password">
                 New Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40" size={20} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40 dark:text-white/40" size={20} />
                 <input
                   id="new-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="Enter your new password"
                   required
                 />
@@ -200,17 +200,17 @@ const Auth = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-dark" htmlFor="confirm-password">
+              <label className="text-sm font-medium text-dark dark:text-white" htmlFor="confirm-password">
                 Confirm Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40" size={20} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40 dark:text-white/40" size={20} />
                 <input
                   id="confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="Confirm your new password"
                   required
                 />
@@ -236,17 +236,17 @@ const Auth = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-b from-light-bg to-light-bg-2 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-light-bg to-light-bg-2 dark:from-background dark:to-background/80 flex items-center justify-center p-4">
         <div className="max-w-md w-full glass rounded-2xl p-8 shadow-xl fade-up">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-dark mb-2">
+            <h1 className="text-2xl font-bold text-dark dark:text-white mb-2">
               {isForgotPassword 
                 ? "Reset Your Password" 
                 : isSignUp 
                   ? "Create an Account" 
                   : "Welcome Back"}
             </h1>
-            <p className="text-dark/70">
+            <p className="text-dark/70 dark:text-white/70">
               {isForgotPassword
                 ? "Enter your email to receive a password reset link"
                 : isSignUp
@@ -259,10 +259,10 @@ const Auth = () => {
             <div className="space-y-4 mb-6">
               <button
                 onClick={handleGoogleSignIn}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <FcGoogle size={20} />
-                <span className="text-dark">Continue with Google</span>
+                <span className="text-dark dark:text-white">Continue with Google</span>
               </button>
             </div>
           )}
@@ -270,10 +270,10 @@ const Auth = () => {
           {!isForgotPassword && (
             <div className="relative mb-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
+                <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-dark/60">Or continue with</span>
+                <span className="px-2 bg-white dark:bg-gray-800 text-dark/60 dark:text-white/60">Or continue with</span>
               </div>
             </div>
           )}
@@ -284,7 +284,7 @@ const Auth = () => {
                 <p className="text-green-600">
                   A password reset link has been sent to your email.
                 </p>
-                <p className="text-dark/70">
+                <p className="text-dark/70 dark:text-white/70">
                   Please check your inbox and follow the instructions to reset your password.
                 </p>
                 <Button 
@@ -300,17 +300,17 @@ const Auth = () => {
             ) : (
               <form onSubmit={handleForgotPassword} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-dark" htmlFor="reset-email">
+                  <label className="text-sm font-medium text-dark dark:text-white" htmlFor="reset-email">
                     Email
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40" size={20} />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40 dark:text-white/40" size={20} />
                     <input
                       id="reset-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                       placeholder="Enter your email"
                       required
                     />
@@ -343,17 +343,17 @@ const Auth = () => {
           ) : (
             <form onSubmit={handleAuth} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-dark" htmlFor="email">
+                <label className="text-sm font-medium text-dark dark:text-white" htmlFor="email">
                   Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40" size={20} />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40 dark:text-white/40" size={20} />
                   <input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="Enter your email"
                     required
                   />
@@ -362,7 +362,7 @@ const Auth = () => {
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium text-dark" htmlFor="password">
+                  <label className="text-sm font-medium text-dark dark:text-white" htmlFor="password">
                     Password
                   </label>
                   {!isSignUp && (
@@ -372,20 +372,20 @@ const Auth = () => {
                         e.preventDefault();
                         setIsForgotPassword(true);
                       }}
-                      className="text-sm text-primary hover:underline"
+                      className="text-sm text-[#0073FF] hover:underline"
                     >
                       Forgot password?
                     </button>
                   )}
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40" size={20} />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40 dark:text-white/40" size={20} />
                   <input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="Enter your password"
                     required
                   />
@@ -408,11 +408,11 @@ const Auth = () => {
 
           {!isForgotPassword && (
             <div className="mt-6 text-center">
-              <p className="text-dark/70">
+              <p className="text-dark/70 dark:text-white/70">
                 {isSignUp ? "Already have an account?" : "Don't have an account?"}
                 <button
                   onClick={() => setIsSignUp(!isSignUp)}
-                  className="ml-1 text-primary hover:underline"
+                  className="ml-1 text-[#0073FF] hover:underline"
                 >
                   {isSignUp ? "Sign In" : "Sign Up"}
                 </button>
