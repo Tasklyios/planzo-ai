@@ -26,7 +26,7 @@ interface ToastContextValue extends ToastState {
 
 const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
 
-function useToast() {
+export function useToast() {
   const context = React.useContext(ToastContext);
 
   if (!context) {
@@ -37,7 +37,7 @@ function useToast() {
 }
 
 // We need to use a functional approach without JSX in a .ts file
-function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = React.useReducer(
     (state: ToastState, action: any) => {
       switch (action.type) {
@@ -96,9 +96,7 @@ function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 // Helper function to create toast
-function toast({ title, description, variant = "default", action }: Omit<ToastProps, "id">) {
+export function toast({ title, description, variant = "default", action }: Omit<ToastProps, "id">) {
   const context = useToast();
   context.addToast({ title, description, variant, action });
 }
-
-export { ToastProvider, useToast, toast };

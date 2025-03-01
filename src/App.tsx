@@ -16,31 +16,34 @@ import { Toaster } from "@/components/ui/toaster";
 import AuthGuard from "@/components/AuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { ToastProvider } from "@/hooks/use-toast";
 
 function App() {
   return (
     <ThemeProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route element={<AuthGuard><Outlet /></AuthGuard>}>
-            <Route element={<AppLayout><Outlet /></AppLayout>}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/generator" element={<Generator />} />
-              <Route path="/script" element={<Script />} />
-              <Route path="/planner" element={<ContentPlanner />} />
-              <Route path="/find-your-style" element={<FindYourStyle />} />
-              <Route path="/ideas" element={<Ideas />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/account" element={<Account />} />
-              <Route path="/billing" element={<Billing />} />
+      <ToastProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route element={<AuthGuard><Outlet /></AuthGuard>}>
+              <Route element={<AppLayout><Outlet /></AppLayout>}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/generator" element={<Generator />} />
+                <Route path="/script" element={<Script />} />
+                <Route path="/planner" element={<ContentPlanner />} />
+                <Route path="/find-your-style" element={<FindYourStyle />} />
+                <Route path="/ideas" element={<Ideas />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/billing" element={<Billing />} />
+              </Route>
             </Route>
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
-      </Router>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+        </Router>
+      </ToastProvider>
     </ThemeProvider>
   );
 }
