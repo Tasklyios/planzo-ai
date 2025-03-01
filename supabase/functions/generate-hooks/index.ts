@@ -28,11 +28,22 @@ serve(async (req) => {
   }
 
   try {
-    // Get the current user
-    const supabaseClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
-    const authHeader = req.headers.get("Authorization")!;
-    supabaseClient.auth.setAuth(authHeader);
+    // Get the authorization header from the request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("No authorization header");
+    }
 
+    // Create a Supabase client
+    const supabaseClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
+    
+    // Verify the user is authenticated
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     
     if (authError || !user) {
@@ -96,7 +107,7 @@ serve(async (req) => {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4-turbo",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
