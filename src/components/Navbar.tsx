@@ -9,13 +9,13 @@ import {
   LogOut,
   Menu,
   Grid3X3,
-  Zap,
   Film,
   Calendar,
   BookCopy,
-  PenTool,
   Palette,
-  BookOpen
+  LightbulbIcon,
+  BookOpen,
+  Hook
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,16 +60,16 @@ const Navbar = () => {
     {
       title: "Create",
       items: [
-        { path: '/generator', label: 'Generate Ideas', icon: <Zap className="h-5 w-5 mr-2" /> },
-        { path: '/script', label: 'Generate Scripts', icon: <PenTool className="h-5 w-5 mr-2" /> },
-        { path: '/hooks', label: 'Generate Hooks', icon: <BookOpen className="h-5 w-5 mr-2" /> },
+        { path: '/generator', label: 'Generate Ideas', icon: <LightbulbIcon className="h-5 w-5 mr-2" /> },
+        { path: '/script', label: 'Generate Scripts', icon: <BookOpen className="h-5 w-5 mr-2" /> },
+        { path: '/hooks', label: 'Generate Hooks', icon: <Hook className="h-5 w-5 mr-2" /> },
       ]
     },
     {
       title: "Library",
       items: [
         { path: '/ideas', label: 'Saved Ideas', icon: <Film className="h-5 w-5 mr-2" /> },
-        { path: '/find-your-style', label: 'Saved Styles', icon: <Palette className="h-5 w-5 mr-2" /> },
+        { path: '/find-your-style', label: 'Content Style', icon: <Palette className="h-5 w-5 mr-2" /> },
       ]
     }
   ];

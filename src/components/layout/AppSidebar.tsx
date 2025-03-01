@@ -1,22 +1,20 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { 
   Sparkles, 
   BookCopy, 
-  Zap, 
   Calendar, 
   Film, 
-  PenTool, 
   Grid3X3, 
   UserCircle, 
   CreditCard, 
-  Palette, 
   LogOut,
   ChevronDown,
   ChevronUp,
-  Folder,
-  BookOpen
+  LightbulbIcon,
+  BookOpen,
+  Hook,
+  Palette
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -137,17 +135,17 @@ const AppSidebar = () => {
         <SidebarCategory title="Create" defaultOpen={true}>
           <SidebarItem
             href="/generator"
-            icon={<Zap className="w-5 h-5" />}
+            icon={<LightbulbIcon className="w-5 h-5" />}
             label="Generate Ideas"
           />
           <SidebarItem
             href="/script"
-            icon={<PenTool className="w-5 h-5" />}
+            icon={<BookOpen className="w-5 h-5" />}
             label="Generate Scripts"
           />
           <SidebarItem
             href="/hooks"
-            icon={<BookOpen className="w-5 h-5" />}
+            icon={<Hook className="w-5 h-5" />}
             label="Generate Hooks"
           />
         </SidebarCategory>
@@ -161,7 +159,7 @@ const AppSidebar = () => {
           <SidebarItem
             href="/find-your-style"
             icon={<Palette className="w-5 h-5" />}
-            label="Saved Styles"
+            label="Content Style"
           />
         </SidebarCategory>
       </div>
