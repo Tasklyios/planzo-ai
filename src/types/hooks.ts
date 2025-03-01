@@ -1,4 +1,3 @@
-
 export interface HookType {
   id?: string;
   hook_text: string;
