@@ -1,6 +1,7 @@
 
 import React from "react";
 import AppSidebar from "./AppSidebar";
+import { SearchBar } from "@/components/SearchBar";
 import { Toaster } from "@/components/ui/toaster";
 
 interface AppLayoutProps {
@@ -14,6 +15,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         <AppSidebar />
       </div>
       <div className="flex-1 overflow-auto ml-64">
+        <div className="p-4 border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+          <SearchBar />
+        </div>
         <main className="container mx-auto p-4">
           {children}
         </main>
