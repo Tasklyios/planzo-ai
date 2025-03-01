@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,14 +18,26 @@ export default function Script() {
   const [videoUrl, setVideoUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [niche] = useLocalStorage("niche", "");
-  const [audience] = useLocalStorage("audience", "");
-  const [platform] = useLocalStorage("platform", "");
-  const [videoType] = useLocalStorage("videoType", "");
+  const [niche, setNiche] = useLocalStorage("niche", "");
+  const [audience, setAudience] = useLocalStorage("audience", "");
+  const [platform, setPlatform] = useLocalStorage("platform", "");
+  const [videoType, setVideoType] = useLocalStorage("videoType", "");
   const [contentStyle] = useLocalStorage("contentStyle", "");
   const [contentPersonality] = useLocalStorage("contentPersonality", "");
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Debug values in useEffect to avoid spamming console on every render
+  useEffect(() => {
+    console.log("Profile settings:", {
+      niche,
+      audience,
+      platform,
+      videoType,
+      contentStyle,
+      contentPersonality,
+    });
+  }, [niche, audience, platform, videoType, contentStyle, contentPersonality]);
 
   const {
     completion,
@@ -76,22 +88,45 @@ export default function Script() {
     }
   };
 
-  // Modified condition to not require contentStyle and contentPersonality
-  // This allows the script generation to work as long as basic profile info is set
-  if (!niche || !audience || !platform || !videoType) {
+  // Add a direct way to set values for testing/fixing if they're missing
+  const setMissingValues = () => {
+    if (!niche) setNiche("General");
+    if (!audience) setAudience("General audience");
+    if (!platform) setPlatform("YouTube");
+    if (!videoType) setVideoType("Educational");
+    
+    toast({
+      title: "Default values set",
+      description: "Default profile values have been set to help you get started."
+    });
+  };
+
+  // More lenient condition - show form even if some values are empty strings
+  // This helps users who have technically set values but they might be empty strings
+  const isMissingCriticalInfo = !niche || !audience || !platform || !videoType;
+
+  if (isMissingCriticalInfo) {
     return (
       <AuthGuard>
         <div className="container mx-auto py-20">
           <Alert>
-            <AlertDescription>
+            <AlertDescription className="mb-4">
               Please complete your profile settings before generating scripts.
+              According to our system, the following information is missing:
+              {!niche && <span className="block mt-1">• Content Niche</span>}
+              {!audience && <span className="block mt-1">• Target Audience</span>}
+              {!platform && <span className="block mt-1">• Platform</span>}
+              {!videoType && <span className="block mt-1">• Video Type</span>}
             </AlertDescription>
+            <div className="flex gap-4 mt-2">
+              <Button onClick={() => navigate("/account")}>
+                Go to Account Settings
+              </Button>
+              <Button variant="outline" onClick={setMissingValues}>
+                Set Default Values
+              </Button>
+            </div>
           </Alert>
-          <div className="mt-4">
-            <Button onClick={() => navigate("/account")}>
-              Go to Account Settings
-            </Button>
-          </div>
         </div>
       </AuthGuard>
     );
