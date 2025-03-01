@@ -2,7 +2,6 @@
 import React from "react";
 import AppSidebar from "./AppSidebar";
 import { SearchBar } from "@/components/SearchBar";
-import { Toaster } from "@/components/ui/toaster";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -22,7 +21,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           {children}
         </main>
       </div>
-      <Toaster />
     </div>
   );
 };
