@@ -49,7 +49,6 @@ export function SearchIdeasDialog({
           .from('video_ideas')
           .select('*')
           .ilike('title', `%${searchQuery}%`)
-          .eq('is_saved', true)
           .not('status', 'eq', columnId)
           .order('created_at', { ascending: false })
           .limit(10);
@@ -83,7 +82,10 @@ export function SearchIdeasDialog({
     try {
       const { error } = await supabase
         .from('video_ideas')
-        .update({ status: columnId })
+        .update({ 
+          status: columnId,
+          is_saved: true // Always mark as saved
+        })
         .eq('id', idea.id);
 
       if (error) throw error;
@@ -121,7 +123,7 @@ export function SearchIdeasDialog({
         <DialogHeader>
           <DialogTitle>Add idea to {columnTitle}</DialogTitle>
           <DialogDescription>
-            Search for saved ideas to add to this column.
+            Search for ideas to add to this column.
           </DialogDescription>
         </DialogHeader>
         

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -415,7 +414,7 @@ export const useIdeaGenerator = () => {
           platform: platform,
           user_id: userId,
           color: 'blue',
-          is_saved: false, // Initially not saved
+          is_saved: true, // Always save ideas (changed from false to true)
           is_ad: isAdRequest,
           status: "ideas" // Always set the initial status to "ideas"
         }));

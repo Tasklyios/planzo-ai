@@ -105,9 +105,10 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     if (!idea) return;
 
     try {
-      console.log("Saving idea with status:", idea.status, "is_saved:", idea.is_saved);
+      console.log("Saving idea with status:", idea.status, "is_saved:", true);
       
       // Important: Ensure we preserve the status - this is critical to keep the idea in its current column
+      // Always set is_saved to true to ensure the idea shows in content planner
       const { error } = await supabase
         .from("video_ideas")
         .update({
@@ -119,7 +120,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           color: idea.color || 'blue',
           script: idea.script,
           scheduled_for: idea.scheduled_for,
-          is_saved: idea.is_saved !== false, // Ensure it stays saved when in the planner
+          is_saved: true, // Always set is_saved to true
           status: idea.status || "ideas" // Preserve the status or default to "ideas"
         })
         .eq("id", idea.id);
@@ -207,20 +208,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     setIdea({ ...idea, scheduled_for: newDate.toISOString() });
   };
 
-  // When Bookmark checkbox changes, ensure the status is also updated appropriately
-  const handleBookmarkChange = (checked: boolean) => {
-    setIdea(prev => {
-      if (!prev) return null;
-      return { 
-        ...prev, 
-        is_saved: checked,
-        // IMPORTANT: Only update status if it's being saved and doesn't already have a status
-        // This preserves the column position
-        status: checked && !prev.status ? "ideas" : prev.status 
-      };
-    });
-  };
-
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
@@ -246,20 +233,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                   </div>
                 </Button>
               ))}
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <label>Bookmark</label>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="is_saved"
-                checked={idea.is_saved || false}
-                onChange={(e) => handleBookmarkChange(e.target.checked)}
-                className="mr-2"
-              />
-              <label htmlFor="is_saved">Save this idea to the Ideas column</label>
             </div>
           </div>
 
