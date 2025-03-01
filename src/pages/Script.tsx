@@ -17,7 +17,7 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GeneratedIdea, ScriptHook, ScriptStructure, StyleProfile } from "@/types/idea";
-import { Save, Search, Upload, Sparkles, Plus, Check, Trash2, Paintbrush, AlertTriangle } from "lucide-react";
+import { Save, Search, Upload, Sparkles, Plus, Check, Trash2, Paintbrush, AlertTriangle, Eye } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -944,4 +944,4 @@ export default function Script() {
                     <SelectItem value="none">Default structure</SelectItem>
                     {structures.map((structure) => (
                       <SelectItem key={structure.id} value={structure.id || ""}>
-                        {structure
+                        
