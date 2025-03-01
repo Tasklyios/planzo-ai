@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -69,17 +68,23 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     try {
       setDeleting(true);
       
-      // Instead of deleting, update is_saved to false
+      // If on calendar page, we want to remove the scheduled_for date
+      // but keep the idea in the database
       const { error } = await supabase
         .from("video_ideas")
-        .update({ is_saved: false })
+        .update({ 
+          scheduled_for: null,
+          is_saved: window.location.pathname !== "/calendar" // Only mark as not saved if not on calendar
+        })
         .eq("id", idea.id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Idea deleted successfully",
+        description: window.location.pathname === "/calendar" 
+          ? "Idea removed from calendar" 
+          : "Idea deleted successfully",
       });
       onClose();
     } catch (error: any) {
@@ -310,7 +315,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
               disabled={deleting}
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              {deleting ? "Deleting..." : "Delete"}
+              {deleting ? "Deleting..." : (window.location.pathname === "/calendar" ? "Remove" : "Delete")}
             </Button>
           </div>
           <div className="flex gap-2">
