@@ -1,0 +1,23 @@
+
+project_id = "hhkabxkelgabcsczsljf"
+
+[check-usage-limits]
+verify_jwt = true
+
+[create-checkout-session]
+verify_jwt = true
+
+[generate-ideas]
+verify_jwt = true
+
+[get-stripe-key]
+verify_jwt = true
+
+[link-subscription]
+verify_jwt = true
+
+[process-spreadsheet]
+verify_jwt = true
+
+[webhook-stripe]
+verify_jwt = false

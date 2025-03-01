@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { GeneratedIdea } from "@/types/idea";
+import { GeneratedIdea, ScriptHook, ScriptStructure } from "@/types/idea";
 import { Save, Search, Upload, Sparkles } from "lucide-react";
 import {
   Carousel,
@@ -155,6 +156,22 @@ export default function Script() {
     } catch (error: any) {
       console.error("Error fetching hooks and structures:", error);
     }
+  };
+
+  const handleHookUploadComplete = () => {
+    fetchHooksAndStructures();
+    toast({
+      title: "Success",
+      description: "Hook data uploaded successfully",
+    });
+  };
+
+  const handleStructureUploadComplete = () => {
+    fetchHooksAndStructures();
+    toast({
+      title: "Success",
+      description: "Structure data uploaded successfully",
+    });
   };
 
   const filteredIdeas = savedIdeas.filter(idea =>
