@@ -12,7 +12,7 @@ import AuthGuard from "@/components/AuthGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { StyleProfile } from "@/types/idea";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const themeOptions = [
   {
@@ -67,7 +67,6 @@ interface Profile {
 }
 
 export default function Account() {
-  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'settings' | 'customize' | 'styles'>('settings');
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<Profile>({account_type: 'personal'});
@@ -90,14 +89,7 @@ export default function Account() {
     console.log("Account component mounted, fetching profile");
     fetchProfile();
     fetchStyleProfiles();
-    
-    // Check URL search params for tab selection
-    const params = new URLSearchParams(location.search);
-    const tab = params.get('tab');
-    if (tab === 'styles') {
-      setActiveTab('styles');
-    }
-  }, [location.search]); // Added location.search as a dependency
+  }, []);
 
   const fetchProfile = async () => {
     try {
@@ -981,7 +973,7 @@ export default function Account() {
                     <Label htmlFor="content_niche">Content Niche</Label>
                     <Input
                       id="content_niche"
-                      placeholder="E.g., Fitness, Tech, Fashion..."
+                      placeholder="E.g., Fitness, Technology, Art..."
                       value={profile.content_niche || ''}
                       onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
                     />
@@ -991,29 +983,57 @@ export default function Account() {
                     <Label htmlFor="target_audience">Target Audience</Label>
                     <Input
                       id="target_audience"
-                      placeholder="E.g., Young professionals, Parents, Fitness enthusiasts..."
+                      placeholder="E.g., Millennials, Working Professionals, Students..."
                       value={profile.target_audience || ''}
                       onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
                     />
                   </div>
 
                   <div className="flex flex-col space-y-2">
-                    <Label htmlFor="platforms">Posting Platforms</Label>
+                    <Label htmlFor="posting_platforms">Posting Platforms</Label>
                     <Input
-                      id="platforms"
+                      id="posting_platforms"
                       placeholder="E.g., TikTok, Instagram, YouTube..."
-                      value={profile.posting_platforms ? profile.posting_platforms[0] || '' : ''}
+                      value={profile.posting_platforms?.[0] || ''}
                       onChange={(e) => setProfile(prev => ({ ...prev, posting_platforms: [e.target.value] }))}
                     />
+                    <p className="text-xs text-muted-foreground">Enter your primary posting platform</p>
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="content_style">Content Style</Label>
+                    <Textarea
+                      id="content_style"
+                      placeholder="How would you describe your content style?"
+                      value={profile.content_style || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
+                      className="min-h-[100px]"
+                    />
                     <p className="text-xs text-muted-foreground">
-                      Enter the primary platform you post on. We'll add multiple platform support soon.
+                      Use Find Your Style to automatically analyze your content style
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="content_personality">Content Personality</Label>
+                    <Textarea
+                      id="content_personality"
+                      placeholder="Describe your content personality or tone..."
+                      value={profile.content_personality || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
+                      className="min-h-[100px]"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Use Find Your Style to automatically analyze your content personality
                     </p>
                   </div>
                 </div>
 
-                <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? "Saving..." : "Save Changes"}
-                </Button>
+                <div className="flex justify-end pt-4">
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
               </form>
             </div>
           )}
