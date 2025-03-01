@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button"; // Add Button import
+import { Button } from "@/components/ui/button";
 import EditIdea from "@/components/EditIdea";
 import { useIdeaGenerator } from "@/hooks/use-idea-generator";
 import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
@@ -14,7 +13,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { AddToCalendarIdea, PreviousIdeasContext, StyleProfile } from "@/types/idea";
 import { Badge } from "@/components/ui/badge";
-import { Paintbrush } from "lucide-react";
+import { Paintbrush, AlertCircle } from "lucide-react";
 
 const Generator = () => {
   const {
@@ -44,7 +43,6 @@ const Generator = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Load previous ideas context from localStorage on component mount
   useEffect(() => {
     const savedContext = localStorage.getItem('previousIdeasContext');
     if (savedContext) {
@@ -55,7 +53,6 @@ const Generator = () => {
       }
     }
     
-    // Fetch active style profile
     fetchActiveStyleProfile();
   }, [setPreviousIdeasContext]);
 
@@ -105,7 +102,6 @@ const Generator = () => {
         return;
       }
 
-      // Update only the specific idea that was selected
       const {
         error: updateError
       } = await supabase.from("video_ideas")
@@ -119,7 +115,6 @@ const Generator = () => {
         throw new Error(`Error adding to calendar: ${updateError.message}`);
       }
       
-      // Update the local state to reflect the change
       setIdeas(prevIdeas => prevIdeas.map(idea => 
         idea.id === addingToCalendar.idea.id 
           ? { ...idea, scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString() } 
@@ -194,8 +189,11 @@ const Generator = () => {
 
   const navigateToStyleProfiles = () => {
     navigate('/account');
-    // Set the active tab to 'styles' in localStorage so Account component opens it
     localStorage.setItem('accountActiveTab', 'styles');
+  };
+
+  const navigateToBilling = () => {
+    navigate('/billing');
   };
 
   return <div className="min-h-screen bg-background">
@@ -236,17 +234,37 @@ const Generator = () => {
 
           {error && (
             <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4 mr-2" />
               <AlertTitle>Error generating ideas</AlertTitle>
-              <AlertDescription>
-                {error}
-                <div className="mt-2">
-                  <button 
-                    onClick={handleRetryGenerate}
-                    className="bg-destructive/20 hover:bg-destructive/30 text-destructive px-3 py-1 rounded text-sm"
-                  >
-                    Try Again
-                  </button>
-                </div>
+              <AlertDescription className="space-y-2">
+                <p>{error}</p>
+                {error.includes("daily limit") && (
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <Button 
+                      variant="outline" 
+                      onClick={navigateToBilling}
+                      className="bg-destructive/10 hover:bg-destructive/20 text-destructive border-destructive/20"
+                    >
+                      Upgrade Plan
+                    </Button>
+                    <Button 
+                      onClick={handleRetryGenerate}
+                      className="bg-destructive/20 hover:bg-destructive/30 text-destructive"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+                {!error.includes("daily limit") && (
+                  <div className="mt-2">
+                    <Button 
+                      onClick={handleRetryGenerate}
+                      className="bg-destructive/20 hover:bg-destructive/30 text-destructive"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -266,7 +284,7 @@ const Generator = () => {
             </button>
           </div>
 
-          {ideas.length > 0 && (
+          {ideas.length > 0 && !error && (
             <IdeasGrid 
               ideas={ideas} 
               onAddToCalendar={idea => setAddingToCalendar({

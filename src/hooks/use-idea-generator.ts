@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -358,24 +357,18 @@ export const useIdeaGenerator = () => {
         return;
       }
 
-      // Check if this is an ad-related request
-      const isAdRequest = videoType.toLowerCase().includes('ad') || 
-                         videoType.toLowerCase().includes('advertisement') ||
-                         videoType.toLowerCase().includes('promotional');
-
-      // Get content style information from localStorage if available
-      const contentStyle = localStorage.getItem("contentStyle") || "";
-      const contentPersonality = localStorage.getItem("contentPersonality") || "";
-
+      // Only continue with idea generation if usage limits check passed
       console.log("Calling generate-ideas function with:", { 
         niche, 
         audience, 
         videoType, 
         platform, 
         customIdeas, 
-        contentStyle,
-        contentPersonality,
-        isAdRequest,
+        contentStyle: localStorage.getItem("contentStyle") || "",
+        contentPersonality: localStorage.getItem("contentPersonality") || "",
+        isAdRequest: videoType.toLowerCase().includes('ad') || 
+                    videoType.toLowerCase().includes('advertisement') ||
+                    videoType.toLowerCase().includes('promotional'),
         previousIdeasContext 
       });
       
@@ -387,9 +380,9 @@ export const useIdeaGenerator = () => {
             videoType: videoType.trim(),
             platform: platform,
             customIdeas: customIdeas.trim(),
-            contentStyle: contentStyle,
-            contentPersonality: contentPersonality,
-            previousIdeas: previousIdeasContext // Pass the context to avoid repeating ideas
+            contentStyle: localStorage.getItem("contentStyle") || "",
+            contentPersonality: localStorage.getItem("contentPersonality") || "",
+            previousIdeas: previousIdeasContext
           },
         });
 
@@ -419,7 +412,6 @@ export const useIdeaGenerator = () => {
         if (!data.ideas || !Array.isArray(data.ideas)) {
           console.error("Invalid response format:", data);
           
-          // If we have a raw response, it means the AI returned something but it wasn't JSON
           if (data.rawResponse) {
             console.log("Raw AI response:", data.rawResponse);
             setError('The AI returned an invalid format. Please try again.');
@@ -434,6 +426,10 @@ export const useIdeaGenerator = () => {
 
         console.log("Ideas generated successfully:", data.ideas);
 
+        const isAdRequest = videoType.toLowerCase().includes('ad') || 
+                           videoType.toLowerCase().includes('advertisement') ||
+                           videoType.toLowerCase().includes('promotional');
+
         const ideasToSave = data.ideas.map((idea: any) => ({
           title: idea.title,
           description: idea.description,
@@ -442,7 +438,7 @@ export const useIdeaGenerator = () => {
           platform: platform,
           user_id: userId,
           color: 'blue',
-          is_saved: true, // Always save ideas (changed from false to true)
+          is_saved: true, // Always save ideas
           is_ad: isAdRequest,
           status: "ideas" // Always set the initial status to "ideas"
         }));
@@ -458,6 +454,7 @@ export const useIdeaGenerator = () => {
           return;
         }
 
+        // Fetch ONLY the newly created ideas to display
         const { data: savedIdeas, error: fetchError } = await supabase
           .from("video_ideas")
           .select("*")
