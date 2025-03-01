@@ -20,6 +20,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface HookSelectorProps {
   onSelectHook: (hookText: string) => void;
+  selectedHook?: string;
 }
 
 // Helper function to normalize hook data structure
@@ -33,8 +34,7 @@ const normalizeHook = (hook: any): HookType => {
   };
 };
 
-const HookSelector = ({ onSelectHook }: HookSelectorProps) => {
-  // ... keep existing code (state variables, handlers, etc.)
+const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('saved');

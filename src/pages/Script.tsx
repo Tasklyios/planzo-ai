@@ -1,322 +1,254 @@
 
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { GeneratedIdea } from '@/types/idea';
-import { getSavedHooks, generateHooks } from '@/services/hookService';
-import HookSelector from '@/components/script/HookSelector';
-import VideoIdeaSelector from '@/components/script/VideoIdeaSelector';
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Loader2, RefreshCw, Undo2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, FileText, Bookmark, Anchor } from "lucide-react";
+import VideoIdeaSelector from "@/components/script/VideoIdeaSelector";
+import HookSelector from "@/components/script/HookSelector";
+import { supabase } from "@/integrations/supabase/client";
 
 const Script = () => {
-  const [scriptContent, setScriptContent] = useState('');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [details, setDetails] = useState('');
-  const [selectedIdea, setSelectedIdea] = useState<GeneratedIdea | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [useExistingIdea, setUseExistingIdea] = useState(false);
+  const [title, setTitle] = useState("");
+  const [savedIdea, setSavedIdea] = useState<any | null>(null);
+  const [description, setDescription] = useState("");
+  const [script, setScript] = useState("");
+  const [contentStyle, setContentStyle] = useState("educational");
+  const [selectedHook, setSelectedHook] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [useSavedIdea, setUseSavedIdea] = useState(false);
   const { toast } = useToast();
 
-  // Function to handle hook selection
-  const handleSelectHook = (hookText: string) => {
-    // Insert the hook at the beginning of the script content
-    setScriptContent(prevContent => `${hookText}\n\n${prevContent || ''}`);
-    
-    // Show toast notification
-    toast({
-      title: "Hook added",
-      description: "The hook has been added to your script.",
-    });
-  };
-
-  // Function to handle idea selection
-  const handleSelectIdea = (idea: GeneratedIdea) => {
-    setSelectedIdea(idea);
-    setTitle(idea.title);
-    setDescription(idea.description);
-    
-    // Extract tags if available and add to details
-    if (idea.tags && idea.tags.length > 0) {
-      setDetails(`Tags: ${idea.tags.join(', ')}\nCategory: ${idea.category || 'General'}`);
-    }
-  };
-
-  // Function to save the script
-  const handleSaveScript = async () => {
-    if (!scriptContent.trim()) {
+  const generateScript = async () => {
+    if (useSavedIdea && !savedIdea) {
       toast({
         variant: "destructive",
-        title: "Cannot save empty script",
-        description: "Please generate or write a script before saving.",
+        title: "Missing information",
+        description: "Please select a saved idea.",
       });
       return;
     }
 
-    setLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
-        toast({
-          variant: "destructive",
-          title: "Authentication required",
-          description: "Please log in to save your script.",
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from('scripts')
-        .insert({
-          content: scriptContent,
-          title: title,
-          user_id: session.user.id,
-          idea_id: selectedIdea?.id || null,
-        });
-
-      if (error) throw error;
-
-      // If selected idea exists, update its script field
-      if (selectedIdea?.id) {
-        const { error: updateError } = await supabase
-          .from('video_ideas')
-          .update({ script: scriptContent })
-          .eq('id', selectedIdea.id);
-
-        if (updateError) throw updateError;
-      }
-
-      toast({
-        title: "Script saved successfully",
-        description: "Your script has been saved to your account.",
-      });
-    } catch (error: any) {
-      console.error('Error saving script:', error);
+    if (!useSavedIdea && !title) {
       toast({
         variant: "destructive",
-        title: "Error saving script",
-        description: error.message || "Failed to save your script. Please try again.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Function to generate a script using AI
-  const handleGenerateScript = async () => {
-    if (!title.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Title required",
-        description: "Please enter a title or select an idea for your script.",
+        title: "Missing information",
+        description: "Please enter a title for your script.",
       });
       return;
     }
 
-    setLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
-        toast({
-          variant: "destructive",
-          title: "Authentication required",
-          description: "Please log in to generate a script.",
-        });
-        setLoading(false);
-        return;
-      }
+    setIsGenerating(true);
 
-      // Call the edge function to generate a script
-      const { data, error } = await supabase.functions.invoke("generate-script", {
-        body: { 
-          title, 
-          description, 
-          details,
-          ideaId: selectedIdea?.id 
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+
+      // Use the actual video idea title and description if using a saved idea
+      const scriptTitle = useSavedIdea ? savedIdea.title : title;
+      const scriptDescription = useSavedIdea ? savedIdea.description : description;
+
+      const { data, error } = await supabase.functions.invoke('generate-script', {
+        body: {
+          title: scriptTitle,
+          description: scriptDescription,
+          contentStyle,
+          hook: selectedHook,
+          userId,
         },
       });
 
       if (error) {
-        console.error("Edge function error:", error);
-        throw new Error(error.message || "Failed to generate script");
+        console.error('Error generating script:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `Failed to generate script: ${error.message}`,
+        });
+        return;
       }
-      
-      // If edge function isn't implemented yet, use a placeholder script
-      if (!data || !data.script) {
-        console.log("Using placeholder script as edge function might not be implemented");
-        const placeholderScript = `# ${title}\n\n## Introduction\nHook: [Insert your hook here]\n\n## Main Content\n1. First key point about ${title}\n2. Second key point with supporting details\n3. Third key point with examples\n\n## Conclusion\nSummarize the main points and include a call to action.\n\n[Generated script for demonstration purposes]`;
-        setScriptContent(placeholderScript);
-      } else {
-        setScriptContent(data.script);
+
+      if (data.error) {
+        console.error('Error in function response:', data.error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `Error from AI service: ${data.error}`,
+        });
+        return;
       }
+
+      setScript(data.script);
       
       toast({
-        title: "Script generated",
-        description: "Your script has been generated. Feel free to edit it before saving.",
+        title: "Success",
+        description: "Script generated successfully!",
       });
     } catch (error: any) {
-      console.error("Error generating script:", error);
+      console.error('Error:', error);
       toast({
         variant: "destructive",
-        title: "Error generating script",
-        description: error.message || "Failed to generate script. Please try again.",
+        title: "Error",
+        description: error.message || "Something went wrong. Please try again.",
       });
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
   };
 
-  // Toggle between custom title and selecting from ideas
-  const handleToggleIdeaSource = (checked: boolean) => {
-    setUseExistingIdea(checked);
-    if (!checked) {
-      // If switching to custom title, clear the selected idea
-      setSelectedIdea(null);
-    }
+  const handleSelectHook = (hookText: string) => {
+    setSelectedHook(hookText);
+  };
+
+  const handleSelectIdea = (idea: any) => {
+    setSavedIdea(idea);
+    // If they select an idea, automatically switch to saved idea mode
+    setUseSavedIdea(true);
+  };
+
+  const clearScript = () => {
+    setScript("");
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold">Generate Scripts</h1>
-        <p className="text-muted-foreground">Create engaging scripts for your content</p>
+    <div className="container py-6 space-y-8 max-w-full">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Script Generator</h1>
+        <div className="flex gap-2">
+          {script && (
+            <Button variant="outline" onClick={clearScript}>
+              <Undo2 className="h-4 w-4 mr-2" />
+              Clear Script
+            </Button>
+          )}
+          <Button variant="outline" onClick={generateScript} disabled={isGenerating}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
+            Regenerate
+          </Button>
+          <Button onClick={generateScript} disabled={isGenerating}>
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              "Generate Script"
+            )}
+          </Button>
+        </div>
       </div>
 
-      {/* Script Generator - Full width with two columns */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Script Generator</CardTitle>
-          <CardDescription>Enter your content details to generate a script</CardDescription>
-          <div className="flex items-center space-x-2 pt-2">
-            <span className="text-sm">Custom Title</span>
-            <Switch 
-              checked={useExistingIdea}
-              onCheckedChange={handleToggleIdeaSource} 
-              id="use-existing-idea"
-            />
-            <span className="text-sm">Use Saved Idea</span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left side: Title/Description or Video Idea Selector */}
-            <div className="space-y-4">
-              {useExistingIdea ? (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column: Video Details */}
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="use-saved-idea" 
+                  checked={useSavedIdea}
+                  onCheckedChange={setUseSavedIdea}
+                />
+                <Label htmlFor="use-saved-idea">Use a saved idea</Label>
+              </div>
+              
+              {useSavedIdea ? (
                 <div className="space-y-4">
-                  <Label>Select from your saved ideas</Label>
-                  <VideoIdeaSelector onSelectIdea={handleSelectIdea} />
+                  <div className="space-y-2">
+                    <Label>Select a saved idea</Label>
+                    <VideoIdeaSelector onSelectIdea={handleSelectIdea} />
+                  </div>
+                  
+                  {savedIdea && (
+                    <div className="space-y-2 p-4 bg-muted rounded-md">
+                      <p className="font-medium">{savedIdea.title}</p>
+                      <p className="text-sm text-muted-foreground">{savedIdea.description}</p>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <>
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input 
-                      id="title" 
-                      placeholder="e.g., How to meditate effectively" 
+                    <Label htmlFor="title">Video Title</Label>
+                    <Input
+                      id="title"
+                      placeholder="Enter a title for your video"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                     />
                   </div>
+                  
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea 
-                      id="description" 
-                      placeholder="e.g., A step-by-step guide to meditation"
+                    <Label htmlFor="description">Description (Optional)</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Describe what your video is about"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
+                      rows={4}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="details">Additional details</Label>
-                    <Textarea 
-                      id="details" 
-                      placeholder="Add any specific details or requirements for your script"
-                      value={details}
-                      onChange={(e) => setDetails(e.target.value)}
-                    />
-                  </div>
-                </>
+                </div>
               )}
-            </div>
-            
-            {/* Right side: Hook Selector */}
-            <div className="space-y-4">
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Content Style & Hook */}
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="pt-6 space-y-4">
               <div className="space-y-2">
-                <Label>Add a Hook to Your Script</Label>
-                <HookSelector onSelectHook={handleSelectHook} />
+                <Label htmlFor="content-style">Content Style</Label>
+                <Select
+                  value={contentStyle}
+                  onValueChange={setContentStyle}
+                >
+                  <SelectTrigger id="content-style">
+                    <SelectValue placeholder="Select a content style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="educational">Educational</SelectItem>
+                    <SelectItem value="entertaining">Entertaining</SelectItem>
+                    <SelectItem value="informative">Informative</SelectItem>
+                    <SelectItem value="inspirational">Inspirational</SelectItem>
+                    <SelectItem value="controversial">Controversial</SelectItem>
+                    <SelectItem value="storytelling">Storytelling</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
-              {/* Additional content style options could go here */}
-
-              <div className="pt-6">
-                <Button 
-                  onClick={handleGenerateScript} 
-                  className="w-full"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Generate Script
-                    </>
-                  )}
-                </Button>
+              <div className="space-y-2">
+                <Label>Add a Hook to Your Script</Label>
+                <HookSelector onSelectHook={handleSelectHook} selectedHook={selectedHook} />
+                
+                {selectedHook && (
+                  <div className="mt-2 p-3 bg-muted rounded-md">
+                    <p className="text-sm">{selectedHook}</p>
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
-      {/* Script Content Area (Bottom) */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Script Content</CardTitle>
-          <CardDescription>
-            {selectedIdea ? `Script for: ${selectedIdea.title}` : "Write or generate your script here"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea 
-            value={scriptContent}
-            onChange={(e) => setScriptContent(e.target.value)}
-            placeholder="Your script will appear here" 
-            className="min-h-[300px]"
-          />
-        </CardContent>
-        <CardFooter>
-          <Button
-            onClick={handleSaveScript}
-            disabled={loading || !scriptContent.trim()}
-            className="w-full"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Bookmark className="mr-2 h-4 w-4" />
-                Save Script
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
+      {/* Script Output Section */}
+      {script && (
+        <Card className="mt-8">
+          <CardContent className="pt-6">
+            <h2 className="text-xl font-semibold mb-4">Generated Script</h2>
+            <div className="whitespace-pre-wrap bg-muted p-4 rounded-md">
+              {script}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
