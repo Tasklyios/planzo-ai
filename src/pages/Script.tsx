@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -636,11 +635,10 @@ export default function Script() {
 
       if (line.includes('[VISUAL_GUIDE]')) {
         const visualContent = line.replace('[VISUAL_GUIDE]', '').replace('[/VISUAL_GUIDE]', '').trim();
+        // Only add visual guides if showVisuals is true
         if (showVisuals) {
           parsedLines.push(visualContent);
           isVisual.push(true);
-        } else {
-          continue; // Skip adding the line if showVisuals is false
         }
       } else if (!line.includes('[/VISUAL_GUIDE]')) {
         // Add regular script lines (remove any other markers)
@@ -716,6 +714,7 @@ export default function Script() {
     }
   };
 
+  // Update this to recalculate when showVisuals changes
   const { parsedLines, isVisual } = parseScript(generatedScript, showVisuals);
 
   return (
@@ -945,78 +944,3 @@ export default function Script() {
                     {structures.map((structure) => (
                       <SelectItem key={structure.id} value={structure.id || ""}>
                         {structure.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <Button 
-            onClick={generateScript} 
-            disabled={loading || 
-              (scriptType === "existing" && !selectedIdea) || 
-              (scriptType === "custom" && (!customTitle || !customDescription))}
-            className="w-full"
-          >
-            {loading ? (
-              <>
-                <span className="mr-2">Generating...</span>
-                <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full"></div>
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate Script
-              </>
-            )}
-          </Button>
-
-          {generatedScript && (
-            <div className="space-y-6">
-              <div className="rounded-lg border p-6 bg-card">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Generated Script</h2>
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor="show-visuals" className="text-sm">Show Visual Guides</Label>
-                    <Switch
-                      id="show-visuals"
-                      checked={showVisuals}
-                      onCheckedChange={setShowVisuals}
-                    />
-                  </div>
-                </div>
-                <div className="whitespace-pre-wrap font-mono text-sm space-y-2">
-                  {parsedLines.map((line, index) => (
-                    <div 
-                      key={index}
-                      className={cn(
-                        "py-2",
-                        isVisual[index] ? 
-                          "pl-4 text-blue-500 dark:text-blue-400 italic border-l-2 border-blue-500 dark:border-blue-400 bg-blue-500/5 rounded-r-lg" :
-                          "text-foreground"
-                      )}
-                    >
-                      {isVisual[index] ? `→ Visual: ${line}` : line}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <Button
-                    onClick={handleSaveScript}
-                    variant="outline"
-                    className="gap-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    Save Script
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
