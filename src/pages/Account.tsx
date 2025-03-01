@@ -53,7 +53,7 @@ const accountTypes = [
 interface Profile {
   content_personality?: string | null;
   content_style?: string | null;
-  account_type?: string;
+  account_type: string; // Making this required to fix the TypeScript error
   content_niche?: string | null;
   target_audience?: string | null;
   posting_platforms?: string[] | null;
@@ -64,7 +64,7 @@ interface Profile {
 export default function Account() {
   const [activeTab, setActiveTab] = useState<'settings' | 'customize'>('settings');
   const { theme, setTheme } = useTheme();
-  const [profile, setProfile] = useState<Profile>({});
+  const [profile, setProfile] = useState<Profile>({account_type: 'personal'});
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [email, setEmail] = useState<string>("");
@@ -118,7 +118,7 @@ export default function Account() {
       console.log("Profile data fetched:", data);
       
       if (data) {
-        setProfile(data);
+        setProfile(data as Profile);
         
         // Update localStorage with the fetched values
         if (data.content_niche) localStorage.setItem("niche", data.content_niche);
@@ -144,7 +144,7 @@ export default function Account() {
         // If no profile found, insert a default profile
         console.log("No profile found, creating default profile");
         const defaultProfile: Profile = {
-          account_type: 'personal',
+          account_type: 'personal', // This is required
           content_personality: '',
           content_style: '',
           content_niche: '',
@@ -154,12 +154,17 @@ export default function Account() {
         
         setProfile(defaultProfile);
         
-        // Insert the default profile
+        // Insert the default profile - explicitly setting account_type as required
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({
             id: session.user.id,
-            ...defaultProfile
+            account_type: defaultProfile.account_type,
+            content_personality: defaultProfile.content_personality,
+            content_style: defaultProfile.content_style,
+            content_niche: defaultProfile.content_niche,
+            target_audience: defaultProfile.target_audience,
+            posting_platforms: defaultProfile.posting_platforms
           });
           
         if (insertError) {
@@ -209,16 +214,22 @@ export default function Account() {
         return;
       }
 
-      // Prepare the update data based on account type
-      const updateData: Profile = {
-        content_personality: profile.content_personality,
-        content_style: profile.content_style,
+      // Ensure account_type is always defined for the update
+      if (!profile.account_type) {
+        profile.account_type = 'personal'; // Default value if somehow undefined
+      }
+
+      // Prepare the update data based on account type - explicitly type as required by Supabase
+      const updateData: any = {
+        id: session.user.id,
         account_type: profile.account_type,
-        content_niche: profile.content_niche,
-        target_audience: profile.target_audience,
+        content_personality: profile.content_personality || null,
+        content_style: profile.content_style || null,
+        content_niche: profile.content_niche || null,
+        target_audience: profile.target_audience || null,
         posting_platforms: profile.posting_platforms || [],
-        business_niche: profile.business_niche,
-        product_niche: profile.product_niche,
+        business_niche: profile.business_niche || null,
+        product_niche: profile.product_niche || null
       };
 
       console.log("Updating profile with:", updateData);
@@ -228,7 +239,14 @@ export default function Account() {
         .from('profiles')
         .upsert({
           id: session.user.id,
-          ...updateData
+          account_type: profile.account_type, // This is required
+          content_personality: profile.content_personality,
+          content_style: profile.content_style,
+          content_niche: profile.content_niche,
+          target_audience: profile.target_audience,
+          posting_platforms: profile.posting_platforms || [],
+          business_niche: profile.business_niche,
+          product_niche: profile.product_niche
         });
 
       if (error) {
