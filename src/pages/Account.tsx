@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun, Plus, Trash2, Check } from "lucide-react";
@@ -969,4 +970,55 @@ export default function Account() {
                       <Label htmlFor="product_niche">Product Niche</Label>
                       <Input
                         id="product_niche"
-                        placeholder="E.g., Fashion, Electronics, Home Decor
+                        placeholder="E.g., Fashion, Electronics, Home Decor..."
+                        value={profile.product_niche || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, product_niche: e.target.value }))}
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="content_niche">Content Niche</Label>
+                    <Input
+                      id="content_niche"
+                      placeholder="E.g., Fitness, Tech, Fashion..."
+                      value={profile.content_niche || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="target_audience">Target Audience</Label>
+                    <Input
+                      id="target_audience"
+                      placeholder="E.g., Young professionals, Parents, Fitness enthusiasts..."
+                      value={profile.target_audience || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="platforms">Posting Platforms</Label>
+                    <Input
+                      id="platforms"
+                      placeholder="E.g., TikTok, Instagram, YouTube..."
+                      value={profile.posting_platforms ? profile.posting_platforms[0] || '' : ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, posting_platforms: [e.target.value] }))}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter the primary platform you post on. We'll add multiple platform support soon.
+                    </p>
+                  </div>
+                </div>
+
+                <Button type="submit" disabled={loading} className="w-full">
+                  {loading ? "Saving..." : "Save Changes"}
+                </Button>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+    </AuthGuard>
+  );
+}
