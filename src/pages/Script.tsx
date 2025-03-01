@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +16,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GeneratedIdea } from "@/types/idea";
-import { Save, Search } from "lucide-react";
+import { Save, Search, Upload, Sparkles } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -28,6 +27,14 @@ import {
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import ChatWidget from "@/components/ChatWidget";
+import SpreadsheetUploader from "@/components/SpreadsheetUploader";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -42,6 +49,20 @@ const colorClasses: { [key: string]: string } = {
   purple: "border-purple-500",
   pink: "border-pink-500"
 };
+
+interface HookData {
+  id?: string;
+  hook: string;
+  category: string;
+  description?: string;
+}
+
+interface StructureData {
+  id?: string;
+  name: string;
+  structure: string;
+  description?: string;
+}
 
 export default function Script() {
   const [loading, setLoading] = useState(false);
@@ -59,6 +80,12 @@ export default function Script() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Add new state for custom hook and structure data
+  const [hooks, setHooks] = useState<HookData[]>([]);
+  const [structures, setStructures] = useState<StructureData[]>([]);
+  const [selectedHook, setSelectedHook] = useState<string | null>(null);
+  const [selectedStructure, setSelectedStructure] = useState<string | null>(null);
 
   const statuses = [
     { id: 'all', label: 'All Ideas' },
@@ -100,7 +127,35 @@ export default function Script() {
 
   useEffect(() => {
     fetchSavedIdeas();
+    fetchHooksAndStructures();
   }, [selectedStatus]);
+
+  const fetchHooksAndStructures = async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) return;
+
+      // Fetch hooks
+      const { data: hooksData, error: hooksError } = await supabase
+        .from("script_hooks")
+        .select("*")
+        .eq("user_id", sessionData.session.user.id);
+
+      if (hooksError) throw hooksError;
+      setHooks(hooksData || []);
+
+      // Fetch structures
+      const { data: structuresData, error: structuresError } = await supabase
+        .from("script_structures")
+        .select("*")
+        .eq("user_id", sessionData.session.user.id);
+
+      if (structuresError) throw structuresError;
+      setStructures(structuresData || []);
+    } catch (error: any) {
+      console.error("Error fetching hooks and structures:", error);
+    }
+  };
 
   const filteredIdeas = savedIdeas.filter(idea =>
     idea.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -121,6 +176,10 @@ export default function Script() {
         throw new Error("Please provide all required information");
       }
 
+      // Find the selected hook and structure objects
+      const selectedHookData = hooks.find(h => h.id === selectedHook);
+      const selectedStructureData = structures.find(s => s.id === selectedStructure);
+
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: {
           type: 'script',
@@ -131,6 +190,9 @@ export default function Script() {
           toneOfVoice,
           duration: parseInt(duration),
           additionalNotes,
+          // Include hook and structure if selected
+          hook: selectedHookData?.hook,
+          structure: selectedStructureData?.structure,
         },
       });
 
@@ -294,6 +356,82 @@ export default function Script() {
         </div>
 
         <div className="space-y-6">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="hooks-structures">
+              <AccordionTrigger className="text-primary">
+                <span className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Upload Hooks & Structures
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="space-y-6 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="p-4 border rounded-lg bg-card">
+                    <SpreadsheetUploader 
+                      type="hooks" 
+                      onUploadComplete={handleHookUploadComplete} 
+                    />
+                    
+                    {hooks.length > 0 && (
+                      <div className="mt-4">
+                        <Label htmlFor="hook-select" className="mb-2 block">Select Hook</Label>
+                        <Select value={selectedHook || ""} onValueChange={setSelectedHook}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose a hook" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {hooks.map((hook) => (
+                              <SelectItem key={hook.id} value={hook.id || ""}>
+                                {hook.hook.substring(0, 30)}...
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="p-4 border rounded-lg bg-card">
+                    <SpreadsheetUploader 
+                      type="structures" 
+                      onUploadComplete={handleStructureUploadComplete} 
+                    />
+                    
+                    {structures.length > 0 && (
+                      <div className="mt-4">
+                        <Label htmlFor="structure-select" className="mb-2 block">Select Structure</Label>
+                        <Select value={selectedStructure || ""} onValueChange={setSelectedStructure}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose a structure" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {structures.map((structure) => (
+                              <SelectItem key={structure.id} value={structure.id || ""}>
+                                {structure.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="bg-muted p-4 rounded-lg text-sm">
+                  <p className="font-medium mb-2">Expected Spreadsheet Format:</p>
+                  <p className="mb-2">
+                    <strong>Hooks:</strong> Columns should include "hook" (required), "category", and "description".
+                  </p>
+                  <p>
+                    <strong>Structures:</strong> Columns should include "name" (required), "structure" (required), and "description".
+                  </p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
           <div className="space-y-4">
             <Label>Choose your starting point</Label>
             <RadioGroup
@@ -312,70 +450,70 @@ export default function Script() {
             </RadioGroup>
           </div>
 
-        {scriptType === "existing" ? (
-          <div className="space-y-6">
-            <div className="flex flex-wrap gap-2">
-              {statuses.map((status) => (
-                <Button
-                  key={status.id}
-                  variant={selectedStatus === status.id ? "default" : "outline"}
-                  onClick={() => setSelectedStatus(status.id)}
-                  className="text-sm"
-                >
-                  {status.label}
-                </Button>
-              ))}
-            </div>
+          {scriptType === "existing" ? (
+            <div className="space-y-6">
+              <div className="flex flex-wrap gap-2">
+                {statuses.map((status) => (
+                  <Button
+                    key={status.id}
+                    variant={selectedStatus === status.id ? "default" : "outline"}
+                    onClick={() => setSelectedStatus(status.id)}
+                    className="text-sm"
+                  >
+                    {status.label}
+                  </Button>
+                ))}
+              </div>
 
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search ideas..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search ideas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
 
-            <ScrollArea className="h-[200px] rounded-lg border p-4">
-              <Carousel className="w-full">
-                <CarouselContent className="-ml-2 md:-ml-4">
-                  {filteredIdeas.map((idea) => (
-                    <CarouselItem 
-                      key={idea.id} 
-                      className="pl-2 md:pl-4 pt-2 pb-2 md:basis-1/2 lg:basis-1/3"
-                    >
-                      <div className="p-1">
-                        <Card 
-                          className={cn(
-                            "p-3 cursor-pointer transition-all border-l-4 relative overflow-visible",
-                            colorClasses[idea.color || 'blue'] || colorClasses.blue,
-                            selectedIdea?.id === idea.id 
-                              ? 'ring-2 ring-primary shadow-lg scale-[1.02] bg-primary/5' 
-                              : 'hover:border-primary hover:shadow-md hover:scale-[1.01]'
-                          )}
-                          onClick={() => setSelectedIdea(idea)}
-                        >
-                          {selectedIdea?.id === idea.id && (
-                            <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs z-20">
-                              ✓
-                            </div>
-                          )}
-                          <h4 className="font-medium mb-2 pr-8">{idea.title}</h4>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {idea.description}
-                          </p>
-                        </Card>
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="-left-12 md:-left-16" />
-                <CarouselNext className="-right-12 md:-right-16" />
-              </Carousel>
-            </ScrollArea>
-          </div>
-        ) : (
+              <ScrollArea className="h-[200px] rounded-lg border p-4">
+                <Carousel className="w-full">
+                  <CarouselContent className="-ml-2 md:-ml-4">
+                    {filteredIdeas.map((idea) => (
+                      <CarouselItem 
+                        key={idea.id} 
+                        className="pl-2 md:pl-4 pt-2 pb-2 md:basis-1/2 lg:basis-1/3"
+                      >
+                        <div className="p-1">
+                          <Card 
+                            className={cn(
+                              "p-3 cursor-pointer transition-all border-l-4 relative overflow-visible",
+                              colorClasses[idea.color || 'blue'] || colorClasses.blue,
+                              selectedIdea?.id === idea.id 
+                                ? 'ring-2 ring-primary shadow-lg scale-[1.02] bg-primary/5' 
+                                : 'hover:border-primary hover:shadow-md hover:scale-[1.01]'
+                            )}
+                            onClick={() => setSelectedIdea(idea)}
+                          >
+                            {selectedIdea?.id === idea.id && (
+                              <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs z-20">
+                                ✓
+                              </div>
+                            )}
+                            <h4 className="font-medium mb-2 pr-8">{idea.title}</h4>
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {idea.description}
+                            </p>
+                          </Card>
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="-left-12 md:-left-16" />
+                  <CarouselNext className="-right-12 md:-right-16" />
+                </Carousel>
+              </ScrollArea>
+            </div>
+          ) : (
             <div className="space-y-4">
               <div>
                 <Label htmlFor="customTitle">Title</Label>

@@ -36,3 +36,19 @@ export interface AddToCalendarIdea {
   title: string;
   scheduledFor: string;
 }
+
+export interface ScriptHook {
+  id?: string;
+  hook: string;
+  category: string;
+  description?: string;
+  user_id?: string;
+}
+
+export interface ScriptStructure {
+  id?: string;
+  name: string;
+  structure: string;
+  description?: string;
+  user_id?: string;
+}
