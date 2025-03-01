@@ -1,7 +1,6 @@
 
 import { Draggable, Droppable } from "react-beautiful-dnd";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { GripVertical } from "lucide-react";
 
 interface PlannerColumnProps {
   title: string;
@@ -21,12 +20,16 @@ export function PlannerColumn({ title, id, index, children }: PlannerColumnProps
         >
           <div 
             className="flex justify-between items-center mb-4"
-            {...provided.dragHandleProps}
           >
-            <h3 className="font-semibold text-lg">{title}</h3>
-            <Button variant="ghost" size="sm">
-              <Plus className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <div 
+                {...provided.dragHandleProps}
+                className="cursor-grab hover:text-primary"
+              >
+                <GripVertical className="h-5 w-5" />
+              </div>
+              <h3 className="font-semibold text-lg">{title}</h3>
+            </div>
           </div>
           <Droppable droppableId={id} type="task">
             {(provided) => (

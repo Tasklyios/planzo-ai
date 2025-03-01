@@ -1,3 +1,4 @@
+
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
@@ -7,7 +8,7 @@ import { PlannerCard } from "@/components/planner/PlannerCard";
 import { DeleteBin } from "@/components/planner/DeleteBin";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { GeneratedIdea } from "@/types/idea";
+import { GeneratedIdea, PlannerColumn as PlannerColumnType } from "@/types/idea";
 import {
   Dialog,
   DialogContent,
@@ -15,27 +16,36 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 interface PlannerItem extends GeneratedIdea {
   status: string;
 }
 
-interface PlannerColumn {
-  id: string;
-  title: string;
+interface PlannerColumnWithItems extends PlannerColumnType {
   items: PlannerItem[];
 }
 
+const columnFormSchema = z.object({
+  title: z.string().min(1, "Column title is required").max(50, "Column title must be less than 50 characters"),
+});
+
 export default function ContentPlanner() {
   const { toast } = useToast();
-  const [columns, setColumns] = useState<PlannerColumn[]>([
-    { id: 'ideas', title: 'Ideas', items: [] },
-    { id: 'planning', title: 'Planning', items: [] },
-    { id: 'filming', title: 'Ready to Film', items: [] },
-    { id: 'editing', title: 'To Edit', items: [] },
-    { id: 'ready', title: 'Ready to Post', items: [] },
-  ]);
+  const [columns, setColumns] = useState<PlannerColumnWithItems[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{
     type: 'column' | 'task';
@@ -44,44 +54,112 @@ export default function ContentPlanner() {
   } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [addColumnDialogOpen, setAddColumnDialogOpen] = useState(false);
+
+  const form = useForm<z.infer<typeof columnFormSchema>>({
+    resolver: zodResolver(columnFormSchema),
+    defaultValues: {
+      title: "",
+    },
+  });
 
   useEffect(() => {
-    fetchIdeas();
+    fetchColumnsAndIdeas();
   }, []);
 
-  const fetchIdeas = async () => {
+  const fetchColumnsAndIdeas = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
-      const { data: ideas, error } = await supabase
+      // Fetch user's columns
+      const { data: columnsData, error: columnsError } = await supabase
+        .from('planner_columns')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('order', { ascending: true });
+
+      if (columnsError) throw columnsError;
+
+      // If no columns exist, create default columns
+      if (!columnsData || columnsData.length === 0) {
+        const defaultColumns = [
+          { id: 'ideas', title: 'Ideas', order: 0 },
+          { id: 'planning', title: 'Planning', order: 1 },
+          { id: 'filming', title: 'Ready to Film', order: 2 },
+          { id: 'editing', title: 'To Edit', order: 3 },
+          { id: 'ready', title: 'Ready to Post', order: 4 },
+        ];
+
+        for (const column of defaultColumns) {
+          await supabase
+            .from('planner_columns')
+            .insert({
+              id: column.id,
+              title: column.title,
+              user_id: session.user.id,
+              order: column.order
+            });
+        }
+
+        // Fetch columns again after creating defaults
+        const { data: newColumnsData, error: newColumnsError } = await supabase
+          .from('planner_columns')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('order', { ascending: true });
+
+        if (newColumnsError) throw newColumnsError;
+        
+        if (newColumnsData) {
+          // Initialize columns with empty items arrays
+          const columnsWithItems = newColumnsData.map(col => ({
+            ...col,
+            items: []
+          }));
+          setColumns(columnsWithItems);
+        }
+      } else {
+        // Initialize columns with empty items arrays
+        const columnsWithItems = columnsData.map(col => ({
+          ...col,
+          items: []
+        }));
+        setColumns(columnsWithItems);
+      }
+
+      // Fetch ideas
+      const { data: ideas, error: ideasError } = await supabase
         .from('video_ideas')
         .select('*')
         .eq('user_id', session.user.id)
-        .eq('is_saved', true); // Only fetch saved ideas
+        .eq('is_saved', true);
 
-      if (error) throw error;
+      if (ideasError) throw ideasError;
 
-      // Group ideas by status
-      const groupedIdeas = ideas.reduce((acc: { [key: string]: PlannerItem[] }, idea) => {
-        const status = idea.status || 'ideas';
-        if (!acc[status]) acc[status] = [];
-        acc[status].push(idea as PlannerItem);
-        return acc;
-      }, {});
+      if (ideas) {
+        // Group ideas by status
+        const groupedIdeas = ideas.reduce((acc: { [key: string]: PlannerItem[] }, idea) => {
+          const status = idea.status || 'ideas';
+          if (!acc[status]) acc[status] = [];
+          acc[status].push(idea as PlannerItem);
+          return acc;
+        }, {});
 
-      // Update columns with fetched ideas
-      setColumns(columns.map(col => ({
-        ...col,
-        items: groupedIdeas[col.id] || []
-      })));
-
+        // Update columns with fetched ideas
+        setColumns(prevColumns => 
+          prevColumns.map(col => ({
+            ...col,
+            items: groupedIdeas[col.id] || []
+          }))
+        );
+      }
     } catch (error: any) {
-      console.error('Error fetching ideas:', error);
+      console.error('Error fetching data:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to load ideas. Please try again."
+        description: "Failed to load data. Please try again."
       });
     }
   };
@@ -128,6 +206,45 @@ export default function ContentPlanner() {
         }
         return;
       }
+    }
+    
+    // Handle column reordering
+    if (type === 'column') {
+      if (source.index === destination.index) return;
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return;
+
+        const newColumns = [...columns];
+        const [removed] = newColumns.splice(source.index, 1);
+        newColumns.splice(destination.index, 0, removed);
+
+        // Update the order property for each column
+        const updatedColumns = newColumns.map((col, index) => ({
+          ...col,
+          order: index
+        }));
+
+        setColumns(updatedColumns);
+
+        // Update the order in the database
+        for (const column of updatedColumns) {
+          await supabase
+            .from('planner_columns')
+            .update({ order: column.order })
+            .eq('id', column.id)
+            .eq('user_id', session.user.id);
+        }
+      } catch (error: any) {
+        console.error('Error reordering columns:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to reorder columns. Please try again."
+        });
+      }
+      return;
     }
     
     // Handle regular card dragging
@@ -214,6 +331,17 @@ export default function ContentPlanner() {
           }
         }
         
+        // Delete the column from the database
+        const { error: deleteError } = await supabase
+          .from('planner_columns')
+          .delete()
+          .eq('id', columnId);
+          
+        if (deleteError) {
+          console.error('Error deleting column from database:', deleteError);
+          throw deleteError;
+        }
+        
         // Remove the column from the UI
         const newColumns = columns.filter(col => col.id !== columnId);
         setColumns(newColumns);
@@ -268,14 +396,97 @@ export default function ContentPlanner() {
     setPendingDelete(null);
   };
 
+  const handleAddColumn = async (data: z.infer<typeof columnFormSchema>) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const newColumnId = crypto.randomUUID();
+      const newColumnOrder = columns.length;
+
+      // Add column to database
+      const { error } = await supabase
+        .from('planner_columns')
+        .insert({
+          id: newColumnId,
+          title: data.title,
+          user_id: session.user.id,
+          order: newColumnOrder
+        });
+
+      if (error) throw error;
+
+      // Add column to local state
+      const newColumn: PlannerColumnWithItems = {
+        id: newColumnId,
+        title: data.title,
+        user_id: session.user.id,
+        order: newColumnOrder,
+        items: []
+      };
+
+      setColumns([...columns, newColumn]);
+      
+      toast({
+        title: "Column Added",
+        description: `Column "${data.title}" has been added.`
+      });
+
+      form.reset();
+      setAddColumnDialogOpen(false);
+    } catch (error: any) {
+      console.error('Error adding column:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add column. Please try again."
+      });
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Content Planner</h1>
-        <Button>
-          <Plus className="mr-2" />
-          Add Column
-        </Button>
+        <Dialog open={addColumnDialogOpen} onOpenChange={setAddColumnDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2" />
+              Add Column
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Column</DialogTitle>
+              <DialogDescription>
+                Create a new column to organize your content workflow.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleAddColumn)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Column Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter column title..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setAddColumnDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Add Column</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
@@ -301,7 +512,7 @@ export default function ContentPlanner() {
                       title={item.title}
                       description={item.description}
                       color={item.color}
-                      onEdit={fetchIdeas}
+                      onEdit={fetchColumnsAndIdeas}
                     />
                   ))}
                 </PlannerColumn>

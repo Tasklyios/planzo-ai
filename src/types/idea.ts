@@ -1,4 +1,3 @@
-
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -59,4 +58,12 @@ export interface ScriptStructure {
   structure: string;
   description?: string;
   user_id?: string;
+}
+
+export interface PlannerColumn {
+  id: string;
+  title: string;
+  user_id?: string;
+  created_at?: string;
+  order?: number;
 }
