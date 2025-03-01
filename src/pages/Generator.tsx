@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -71,20 +70,18 @@ const Generator = () => {
         return;
       }
 
-      // Create a new scheduled content entry
+      // Instead of creating a new scheduled_content entry, update the video_ideas table
       const {
-        error: scheduleError
-      } = await supabase.from("scheduled_content").insert({
-        title: addingToCalendar.title,
-        platform: addingToCalendar.idea.platform || platform,
-        scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
-        user_id: userId,
-        color: addingToCalendar.idea.color || 'blue'
-      });
+        error: updateError
+      } = await supabase.from("video_ideas")
+        .update({
+          scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString()
+        })
+        .eq("id", addingToCalendar.idea.id);
       
-      if (scheduleError) {
-        console.error("Error adding to calendar:", scheduleError);
-        throw new Error(`Error adding to calendar: ${scheduleError.message}`);
+      if (updateError) {
+        console.error("Error adding to calendar:", updateError);
+        throw new Error(`Error adding to calendar: ${updateError.message}`);
       }
       
       toast({

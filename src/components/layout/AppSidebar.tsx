@@ -57,7 +57,7 @@ const AppSidebar = () => {
   };
 
   return (
-    <div className="w-64 border-r h-screen flex flex-col">
+    <div className="w-64 border-r h-screen flex flex-col fixed">
       <div className="px-4 py-4">
         <h1 className="text-xl font-bold flex items-center">
           <Sparkles className="w-5 h-5 mr-2" />
@@ -66,8 +66,8 @@ const AppSidebar = () => {
       </div>
       <Separator />
       
-      {/* Main navigation - no overflow */}
-      <div className="flex-1 px-4 py-4 space-y-1">
+      {/* Main navigation - scrollable area */}
+      <div className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
         <SidebarItem
           href="/dashboard"
           icon={<Grid3X3 className="w-5 h-5" />}
