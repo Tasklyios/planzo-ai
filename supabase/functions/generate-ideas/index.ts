@@ -1,7 +1,8 @@
 
+// Import the necessary Deno modules
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.9";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -26,7 +27,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Server configuration error: missing Supabase credentials" }),
         { 
-          status: 500,
+          status: 200, // Return 200 to client even with error
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
@@ -37,7 +38,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "OpenAI API key is not configured. Please set the OPENAI_API_KEY in your Supabase project." }),
         {
-          status: 500,
+          status: 200, // Return 200 to client even with error
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
@@ -52,7 +53,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Missing required parameters: niche, audience, and videoType are required" }),
         {
-          status: 400,
+          status: 200, // Return 200 to client even with error
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );

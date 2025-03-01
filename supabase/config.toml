@@ -8,4 +8,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.webhook-stripe]
 verify_jwt = false
-
+[functions.check-usage-limits]
+verify_jwt = false
