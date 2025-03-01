@@ -103,6 +103,11 @@ const Hooks = () => {
     return hooks.filter(hook => hook.category === category);
   };
 
+  // Function to get the hook text regardless of whether it's a HookType or SavedHook
+  const getHookText = (hook: HookType | SavedHook): string => {
+    return 'hook_text' in hook ? hook.hook_text : hook.hook;
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex flex-col gap-2">
@@ -216,11 +221,11 @@ const Hooks = () => {
                     <CardContent className="space-y-4">
                       {filterHooksByCategory(generatedHooks, 'question').map((hook, index) => (
                         <div key={index} className="p-3 border rounded-md flex justify-between items-start gap-2">
-                          <p>{hook.hook_text}</p>
+                          <p>{getHookText(hook)}</p>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            onClick={() => handleSaveHook(hook)}
+                            onClick={() => 'hook_text' in hook ? handleSaveHook(hook as HookType) : null}
                             disabled={saveHookMutation.isPending}
                           >
                             <BookmarkIcon className="h-4 w-4" />
@@ -237,11 +242,11 @@ const Hooks = () => {
                     <CardContent className="space-y-4">
                       {filterHooksByCategory(generatedHooks, 'statistic').map((hook, index) => (
                         <div key={index} className="p-3 border rounded-md flex justify-between items-start gap-2">
-                          <p>{hook.hook_text}</p>
+                          <p>{getHookText(hook)}</p>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            onClick={() => handleSaveHook(hook)}
+                            onClick={() => 'hook_text' in hook ? handleSaveHook(hook as HookType) : null}
                             disabled={saveHookMutation.isPending}
                           >
                             <BookmarkIcon className="h-4 w-4" />
@@ -260,11 +265,11 @@ const Hooks = () => {
                     <CardContent className="space-y-4">
                       {filterHooksByCategory(generatedHooks, 'story').map((hook, index) => (
                         <div key={index} className="p-3 border rounded-md flex justify-between items-start gap-2">
-                          <p>{hook.hook_text}</p>
+                          <p>{getHookText(hook)}</p>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            onClick={() => handleSaveHook(hook)}
+                            onClick={() => 'hook_text' in hook ? handleSaveHook(hook as HookType) : null}
                             disabled={saveHookMutation.isPending}
                           >
                             <BookmarkIcon className="h-4 w-4" />
@@ -281,11 +286,11 @@ const Hooks = () => {
                     <CardContent className="space-y-4">
                       {filterHooksByCategory(generatedHooks, 'challenge').map((hook, index) => (
                         <div key={index} className="p-3 border rounded-md flex justify-between items-start gap-2">
-                          <p>{hook.hook_text}</p>
+                          <p>{getHookText(hook)}</p>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            onClick={() => handleSaveHook(hook)}
+                            onClick={() => 'hook_text' in hook ? handleSaveHook(hook as HookType) : null}
                             disabled={saveHookMutation.isPending}
                           >
                             <BookmarkIcon className="h-4 w-4" />
@@ -327,14 +332,14 @@ const Hooks = () => {
                         <div className="space-y-2">
                           {hooksInCategory.map(hook => (
                             <div 
-                              key={hook.id} 
+                              key={(hook as SavedHook).id} 
                               className="p-3 border rounded-md flex justify-between items-start"
                             >
-                              <p>{hook.hook_text}</p>
+                              <p>{getHookText(hook)}</p>
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                onClick={() => handleDeleteHook(hook.id)}
+                                onClick={() => handleDeleteHook((hook as SavedHook).id)}
                                 disabled={deleteHookMutation.isPending}
                               >
                                 <Bookmark className="h-4 w-4 text-blue-500" />

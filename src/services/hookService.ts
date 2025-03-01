@@ -50,12 +50,20 @@ export const getSavedHooks = async (): Promise<SavedHook[]> => {
 
 export const saveHook = async (hook: HookType): Promise<SavedHook> => {
   try {
+    // Get the current user ID first
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+    
     const { data, error } = await supabase
       .from("script_hooks")
       .insert({
         hook: hook.hook_text,
         category: hook.category || "general",
-        user_id: supabase.auth.getUser().then(response => response.data.user?.id) // Get current user ID
+        user_id: userId
       })
       .select()
       .single();
