@@ -1,109 +1,89 @@
 
-import * as React from "react";
+// src/hooks/use-toast.ts
+import { createContext, useContext, useState } from "react";
 
-export interface ToastActionElement {
-  altText: string;
-  action: React.ReactNode;
-}
-
-export interface ToastProps {
+export type ToastProps = {
   id: string;
   title?: string;
-  description?: React.ReactNode;
-  action?: ToastActionElement;
+  description?: string;
+  action?: {
+    label: string;
+    action: JSX.Element;
+  };
   variant?: "default" | "destructive";
-}
+};
 
-interface ToastState {
+type ToastContextProps = {
   toasts: ToastProps[];
-}
+  addToast: (toast: Omit<ToastProps, "id">) => void;
+  removeToast: (id: string) => void;
+};
 
-interface ToastContextValue extends ToastState {
-  addToast: (props: Omit<ToastProps, "id">) => void;
-  updateToast: (id: string, props: Partial<ToastProps>) => void;
-  dismissToast: (id: string) => void;
-  toast: (props: Omit<ToastProps, "id">) => void; // Add toast function directly to the context
-}
-
-const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
+const ToastContext = createContext<ToastContextProps>({
+  toasts: [],
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  addToast: () => {},
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  removeToast: () => {},
+});
 
 export function useToast() {
-  const context = React.useContext(ToastContext);
-
+  const context = useContext(ToastContext);
   if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
+    throw new Error('useToast must be used within a ToastProvider');
   }
-
   return context;
 }
 
-// We need to use a functional approach without JSX in a .ts file
+// External accessor for adding toasts
+export const toast = {
+  default(props: Omit<ToastProps, "id" | "variant">) {
+    const context = useToast();
+    context.addToast({ ...props, variant: "default" });
+  },
+  destructive(props: Omit<ToastProps, "id" | "variant">) {
+    const context = useToast();
+    context.addToast({ ...props, variant: "destructive" });
+  },
+};
+
+// Export the provider
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = React.useReducer(
-    (state: ToastState, action: any) => {
-      switch (action.type) {
-        case "ADD_TOAST":
-          return {
-            ...state,
-            toasts: [...state.toasts, { id: crypto.randomUUID(), ...action.toast }],
-          };
-        case "UPDATE_TOAST":
-          return {
-            ...state,
-            toasts: state.toasts.map((t) =>
-              t.id === action.id ? { ...t, ...action.toast } : t
-            ),
-          };
-        case "DISMISS_TOAST":
-          return {
-            ...state,
-            toasts: state.toasts.filter((t) => t.id !== action.id),
-          };
-        default:
-          return state;
-      }
-    },
-    { toasts: [] }
-  );
+  const [toasts, setToasts] = useState<ToastProps[]>([]);
 
-  const addToast = React.useCallback((toast: Omit<ToastProps, "id">) => {
-    dispatch({ type: "ADD_TOAST", toast });
-  }, []);
+  const addToast = (toast: Omit<ToastProps, "id">) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { id, ...toast }]);
 
-  const updateToast = React.useCallback((id: string, toast: Partial<ToastProps>) => {
-    dispatch({ type: "UPDATE_TOAST", id, toast });
-  }, []);
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5000);
+  };
 
-  const dismissToast = React.useCallback((id: string) => {
-    dispatch({ type: "DISMISS_TOAST", id });
-  }, []);
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
 
-  // Add toast function directly to context value
-  const toast = React.useCallback((props: Omit<ToastProps, "id">) => {
-    addToast(props);
-  }, [addToast]);
-
-  const value = React.useMemo(
-    () => ({
-      ...state,
-      addToast,
-      updateToast,
-      dismissToast,
-      toast, // Include toast in the context value
-    }),
-    [state, addToast, updateToast, dismissToast, toast]
-  );
-
-  // Use React.createElement instead of JSX
-  return React.createElement(
-    ToastContext.Provider,
-    { value },
-    children
+  return (
+    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+      {children}
+    </ToastContext.Provider>
   );
 }
 
-// Helper function to create toast - now just a wrapper around the context's toast
-export function toast({ title, description, variant = "default", action }: Omit<ToastProps, "id">) {
+// Shorthand toast functions
+toast.success = (description: string, title = "Success") => {
   const context = useToast();
-  context.toast({ title, description, variant, action });
-}
+  context.addToast({ title, description, variant: "default" });
+};
+
+toast.error = (description: string, title = "Error") => {
+  const context = useToast();
+  context.addToast({ title, description, variant: "destructive" });
+};
+
+toast.info = (description: string, title = "Information") => {
+  const context = useToast();
+  context.addToast({ title, description, variant: "default" });
+};

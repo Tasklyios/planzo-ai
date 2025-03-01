@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -942,4 +943,138 @@ export default function Script() {
                         {hook.category}: {hook.hook.substring(0, 30)}...
                       </SelectItem>
                     ))}
-                  </Select
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="selectedStructure">Script Structure (Optional)</Label>
+                <Select value={selectedStructure || "none"} onValueChange={setSelectedStructure}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a structure" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No structure</SelectItem>
+                    {structures.map((structure) => (
+                      <SelectItem key={structure.id} value={structure.id || ""}>
+                        {structure.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Upload hooks and structures section */}
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="upload-resources">
+                <AccordionTrigger>
+                  <div className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    <span>Upload Hooks & Structures</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Upload Hooks</h4>
+                      <SpreadsheetUploader 
+                        functionName="process-spreadsheet"
+                        onUploadComplete={handleHookUploadComplete}
+                        additionalParams={{ type: 'hook' }}
+                        accept=".csv,.xlsx,.xls"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Upload Structures</h4>
+                      <SpreadsheetUploader 
+                        functionName="process-spreadsheet"
+                        onUploadComplete={handleStructureUploadComplete}
+                        additionalParams={{ type: 'structure' }}
+                        accept=".csv,.xlsx,.xls"
+                      />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
+          <div className="pt-4">
+            <Button 
+              onClick={generateScript} 
+              disabled={loading || (scriptType === "existing" && !selectedIdea) || (scriptType === "custom" && (!customTitle || !customDescription))}
+              className="w-full"
+            >
+              {loading ? (
+                <>Generating...</>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate Script
+                </>
+              )}
+            </Button>
+          </div>
+
+          {generatedScript && (
+            <div className="pt-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold">Generated Script</h2>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="showVisuals" className="cursor-pointer">
+                    {showVisuals ? (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Label>
+                  <Switch
+                    id="showVisuals"
+                    checked={showVisuals}
+                    onCheckedChange={setShowVisuals}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {showVisuals ? "Hide Visual Guides" : "Show Visual Guides"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="border rounded-md p-4 bg-card text-card-foreground">
+                {parsedLines.length > 0 ? (
+                  parsedLines.map((line, i) => (
+                    <p
+                      key={i}
+                      className={cn(
+                        "mb-2 leading-relaxed",
+                        isVisual[i]
+                          ? "bg-primary/10 p-2 rounded-md text-sm italic border-l-2 border-primary"
+                          : ""
+                      )}
+                    >
+                      {isVisual[i] && <span className="font-bold mr-2">VISUAL:</span>}
+                      {line}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">No script generated yet.</p>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2">
+                <Button 
+                  onClick={handleSaveScript} 
+                  variant="default"
+                  disabled={!generatedScript}
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Script
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
