@@ -1,7 +1,7 @@
 
 const Hero = () => {
   return (
-    <section className="bg-gradient-to-b from-[#E5DEFF] to-[#D6BCFA]/30 pt-24">
+    <section className="bg-gradient-to-b from-[#D3E4FD] to-[#33C3F0]/30 pt-24">
       <div className="container mx-auto px-4 py-16">
         <div className="flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1 space-y-8 fade-up">
@@ -12,8 +12,8 @@ const Hero = () => {
               Generate viral video ideas & scripts in seconds with Planzo AI
             </p>
             <div className="flex gap-4">
-              <button className="px-6 py-3 bg-[#9b87f5] hover:bg-[#7E69AB] text-white rounded-lg transition-colors">Try for Free</button>
-              <button className="px-6 py-3 border border-[#9b87f5] text-[#9b87f5] hover:bg-[#E5DEFF] rounded-lg transition-colors">Watch Demo</button>
+              <button className="px-6 py-3 bg-[#1EAEDB] hover:bg-[#0FA0CE] text-white rounded-lg transition-colors">Try for Free</button>
+              <button className="px-6 py-3 border border-[#1EAEDB] text-[#1EAEDB] hover:bg-[#D3E4FD] rounded-lg transition-colors">Watch Demo</button>
             </div>
           </div>
           <div className="flex-1 fade-up">
