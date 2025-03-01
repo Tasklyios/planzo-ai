@@ -34,30 +34,33 @@ const LinkSubscriptionDialog = ({ onSuccess }: LinkSubscriptionDialogProps) => {
     setError(null);
 
     try {
+      // Validate email format
+      if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+        throw new Error("Please enter a valid email address");
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
         throw new Error("You must be logged in to link a subscription");
       }
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/link-subscription`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ email }),
+      console.log("Sending link subscription request with email:", email);
+
+      // Call the Supabase Edge Function directly
+      const response = await supabase.functions.invoke('link-subscription', {
+        body: { email },
       });
 
-      const result = await response.json();
+      console.log("Response from link-subscription:", response);
       
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to link subscription");
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to link subscription");
       }
 
       toast({
         title: "Subscription linked successfully",
-        description: `Your ${result.subscription.tier} subscription has been linked to your account.`,
+        description: `Your ${response.data.subscription.tier} subscription has been linked to your account.`,
       });
       
       setOpen(false);

@@ -13,94 +13,120 @@ const stripe = new Stripe(STRIPE_SECRET_KEY, {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// CORS headers for browser compatibility
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json",
+};
+
 serve(async (req) => {
+  console.log("Received request to link-subscription");
+  
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS request");
     return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
+      headers: corsHeaders,
       status: 204,
     });
   }
 
-  // Authentication check
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      headers: { "Content-Type": "application/json" },
-      status: 401,
-    });
-  }
-
   try {
-    const token = authHeader.split(" ")[1];
+    // Get the JWT token from the Authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.log("No Authorization header provided");
+      return new Response(
+        JSON.stringify({ error: "Missing authorization header" }),
+        { headers: corsHeaders, status: 401 }
+      );
+    }
+
+    // Validate the JWT and get the user
+    const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        headers: { "Content-Type": "application/json" },
-        status: 401,
-      });
+      console.log("Authentication error:", authError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { headers: corsHeaders, status: 401 }
+      );
     }
 
+    // Get the request body
     const requestData = await req.json();
     const { email } = requestData;
 
+    console.log("Processing link request for email:", email);
+
     if (!email) {
-      return new Response(JSON.stringify({ error: "Email is required" }), {
-        headers: { "Content-Type": "application/json" },
-        status: 400,
-      });
+      console.log("No email provided in request");
+      return new Response(
+        JSON.stringify({ error: "Email is required" }),
+        { headers: corsHeaders, status: 400 }
+      );
     }
 
-    // Verify email matches authenticated user
-    if (user.email !== email) {
-      return new Response(JSON.stringify({ error: "Email mismatch" }), {
-        headers: { "Content-Type": "application/json" },
-        status: 403,
-      });
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.log("Invalid email format:", email);
+      return new Response(
+        JSON.stringify({ error: "Invalid email format" }),
+        { headers: corsHeaders, status: 400 }
+      );
     }
 
     // Find customer by email
+    console.log("Looking up Stripe customer with email:", email);
     const customers = await stripe.customers.list({ email });
     
     if (!customers.data.length) {
-      return new Response(JSON.stringify({ error: "No Stripe customer found with this email" }), {
-        headers: { "Content-Type": "application/json" },
-        status: 404,
-      });
+      console.log("No Stripe customer found with email:", email);
+      return new Response(
+        JSON.stringify({ error: "No Stripe customer found with this email" }),
+        { headers: corsHeaders, status: 404 }
+      );
     }
 
     const customer = customers.data[0];
+    console.log("Found Stripe customer:", customer.id);
     
     // Find active subscriptions
+    console.log("Checking for active subscriptions for customer:", customer.id);
     const subscriptions = await stripe.subscriptions.list({
       customer: customer.id,
       status: "active",
     });
     
     if (!subscriptions.data.length) {
-      return new Response(JSON.stringify({ error: "No active subscription found" }), {
-        headers: { "Content-Type": "application/json" },
-        status: 404,
-      });
+      console.log("No active subscription found for customer:", customer.id);
+      return new Response(
+        JSON.stringify({ error: "No active subscription found" }),
+        { headers: corsHeaders, status: 404 }
+      );
     }
 
     const subscription = subscriptions.data[0];
+    console.log("Found active subscription:", subscription.id);
     
     // Determine tier from product
-    const productId = subscription.items.data[0]?.price.product;
+    const productId = subscription.items.data[0]?.price.product as string;
     let tier = "free";
     
     if (productId) {
+      console.log("Getting product details for product:", productId);
       const product = await stripe.products.retrieve(productId);
       const metadata = product.metadata || {};
       tier = metadata.tier || "free";
+      console.log("Subscription tier:", tier);
     }
     
     // Link subscription to user account
+    console.log("Linking subscription to user:", user.id, "with customer:", customer.id);
     const { error } = await supabase.rpc("link_stripe_customer", {
       p_email: email,
       p_stripe_customer_id: customer.id,
@@ -111,36 +137,31 @@ serve(async (req) => {
 
     if (error) {
       console.error("Error linking subscription:", error);
-      return new Response(JSON.stringify({ error: "Failed to link subscription" }), {
-        headers: { "Content-Type": "application/json" },
-        status: 500,
-      });
+      return new Response(
+        JSON.stringify({ error: "Failed to link subscription: " + error.message }),
+        { headers: corsHeaders, status: 500 }
+      );
     }
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: "Subscription linked successfully",
-      subscription: {
-        customer_id: customer.id,
-        subscription_id: subscription.id,
-        tier: tier,
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      }
-    }), {
-      headers: { 
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      status: 200,
-    });
+    console.log("Successfully linked subscription");
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: "Subscription linked successfully",
+        subscription: {
+          customer_id: customer.id,
+          subscription_id: subscription.id,
+          tier: tier,
+          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        }
+      }),
+      { headers: corsHeaders, status: 200 }
+    );
   } catch (error) {
     console.error("Unexpected error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { 
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: error.message || "An unknown error occurred" }),
+      { headers: corsHeaders, status: 500 }
+    );
   }
 });
