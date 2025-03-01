@@ -46,7 +46,7 @@ serve(async (req) => {
 
     console.log('Creating checkout session with price ID:', priceId);
 
-    // Create Checkout Session
+    // Create Checkout Session - now with allow_promotion_codes set to true
     const session = await stripe.checkout.sessions.create({
       line_items: [{
         price: priceId,
@@ -56,6 +56,7 @@ serve(async (req) => {
       success_url: returnUrl,
       cancel_url: returnUrl,
       client_reference_id: userId,
+      allow_promotion_codes: true, // Enable promotional codes
     });
 
     console.log('Checkout session created:', session.url);

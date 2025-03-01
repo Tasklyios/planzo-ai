@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/use-toast";
 
 type Subscription = {
   tier: 'free' | 'pro' | 'plus' | 'business';
@@ -25,6 +26,7 @@ const Billing = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchSubscription = async () => {
@@ -73,6 +75,36 @@ const Billing = () => {
     return plans[tier as keyof typeof plans] || plans.free;
   };
 
+  const handleManageSubscription = async () => {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+      
+      // If the user already has a Stripe customer ID, redirect to customer portal
+      if (subscription?.stripe_customer_id) {
+        toast({
+          title: "Redirecting to billing portal",
+          description: "You'll be redirected to manage your subscription",
+        });
+        // Logic to redirect to Stripe customer portal would go here
+        // This would typically involve calling a serverless function
+      }
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || "Something went wrong.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -112,13 +144,24 @@ const Billing = () => {
                   {getPlanDetails(subscription?.tier || 'free').price}
                 </p>
               </div>
-              <PricingSheet 
-                trigger={
-                  <Button>
-                    Upgrade Plan
+              <div className="flex gap-2">
+                {subscription?.stripe_customer_id && (
+                  <Button 
+                    variant="outline" 
+                    onClick={handleManageSubscription}
+                    disabled={loading}
+                  >
+                    Manage Subscription
                   </Button>
-                }
-              />
+                )}
+                <PricingSheet 
+                  trigger={
+                    <Button>
+                      {subscription?.tier === 'free' ? 'Upgrade Plan' : 'Change Plan'}
+                    </Button>
+                  }
+                />
+              </div>
             </div>
 
             {subscription?.current_period_end && (
