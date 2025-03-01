@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -296,6 +297,8 @@ export const useIdeaGenerator = () => {
 
     setLoading(true);
     setError(null);
+    // Clear previous ideas when generating new ones
+    setIdeas([]);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -470,6 +473,8 @@ export const useIdeaGenerator = () => {
         }
 
         const transformedIdeas = (savedIdeas || []).map(transformSupabaseIdea);
+        
+        // Set the ideas state with the newly generated ideas only
         setIdeas(transformedIdeas);
         
         // Update the previous ideas context with new ideas

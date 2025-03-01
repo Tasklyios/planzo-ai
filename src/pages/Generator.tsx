@@ -266,16 +266,18 @@ const Generator = () => {
             </button>
           </div>
 
-          <IdeasGrid 
-            ideas={ideas} 
-            onAddToCalendar={idea => setAddingToCalendar({
-              idea,
-              title: idea.title,
-              scheduledFor: new Date().toISOString().split('T')[0]
-            })} 
-            onEdit={ideaId => setEditingIdeaId(ideaId)} 
-            onBookmarkToggle={handleBookmarkToggle} 
-          />
+          {ideas.length > 0 && (
+            <IdeasGrid 
+              ideas={ideas} 
+              onAddToCalendar={idea => setAddingToCalendar({
+                idea,
+                title: idea.title,
+                scheduledFor: new Date().toISOString().split('T')[0]
+              })} 
+              onEdit={ideaId => setEditingIdeaId(ideaId)} 
+              onBookmarkToggle={handleBookmarkToggle} 
+            />
+          )}
         </section>
 
         {editingIdeaId && <EditIdea ideaId={editingIdeaId} onClose={() => setEditingIdeaId(null)} />}
