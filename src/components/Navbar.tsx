@@ -53,7 +53,7 @@ const Navbar = () => {
     <header className="fixed w-full bg-card/80 backdrop-blur-sm border-b border-border z-50">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
-          <div className="text-2xl font-bold text-[#9b87f5]">Planzo AI</div>
+          <div className="text-2xl font-bold text-[#002AFF]">Planzo AI</div>
         </div>
         
         {/* Desktop Navigation */}
@@ -64,7 +64,7 @@ const Navbar = () => {
               to={item.path}
               className={`${
                 currentPath === item.path
-                  ? "text-[#9b87f5] font-medium"
+                  ? "text-[#002AFF] font-medium"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -73,7 +73,7 @@ const Navbar = () => {
           ))}
           <PricingSheet 
             trigger={
-              <Button variant="default" size="sm" className="bg-[#9b87f5] hover:bg-[#7E69AB]">
+              <Button variant="default" size="sm" className="blue-gradient">
                 Upgrade
               </Button>
             }
@@ -127,7 +127,7 @@ const Navbar = () => {
                     to={item.path}
                     className={`${
                       currentPath === item.path
-                        ? "text-[#9b87f5] font-medium"
+                        ? "text-[#002AFF] font-medium"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                     onClick={closeSheet}
@@ -137,7 +137,7 @@ const Navbar = () => {
                 ))}
                 <PricingSheet 
                   trigger={
-                    <Button variant="default" size="sm" className="w-full bg-[#9b87f5] hover:bg-[#7E69AB]">
+                    <Button variant="default" size="sm" className="w-full blue-gradient">
                       Upgrade
                     </Button>
                   }

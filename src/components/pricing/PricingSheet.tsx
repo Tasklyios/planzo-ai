@@ -139,7 +139,7 @@ const PricingSheet = ({ trigger, className }: PricingSheetProps) => {
             <div
               key={tier.name}
               className={`p-6 rounded-lg border ${
-                tier.color === 'primary' ? 'bg-primary text-white' : 'bg-background'
+                tier.color === 'primary' ? 'bg-gradient-to-r from-[#002AFF] to-[#0084FF] text-white' : 'bg-background'
               }`}
             >
               <div className="flex justify-between items-start">
@@ -164,7 +164,7 @@ const PricingSheet = ({ trigger, className }: PricingSheetProps) => {
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex items-center text-sm">
                     <Check className={`mr-2 h-4 w-4 ${
-                      tier.color === 'primary' ? 'text-white' : 'text-primary'
+                      tier.color === 'primary' ? 'text-white' : 'text-[#002AFF]'
                     }`} />
                     {feature}
                   </li>
@@ -174,8 +174,8 @@ const PricingSheet = ({ trigger, className }: PricingSheetProps) => {
                 type="button"
                 className={`mt-6 w-full px-4 py-2 rounded-md font-medium transition-colors ${
                   tier.color === 'primary'
-                    ? 'bg-white text-primary hover:bg-white/90 border border-white'
-                    : 'bg-primary text-white hover:bg-primary/90'
+                    ? 'bg-white text-[#002AFF] hover:bg-white/90 border border-white'
+                    : 'blue-gradient'
                 } ${loading === tier.name ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={(e) => handleUpgradeClick(e, tier.name)}
                 disabled={loading === tier.name}
