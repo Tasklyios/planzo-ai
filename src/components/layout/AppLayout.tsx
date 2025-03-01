@@ -15,7 +15,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         <AppSidebar />
       </div>
       <div className="flex-1 overflow-auto ml-64">
-        <div className="p-4 border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+        <div className="p-4 h-16 border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-10 flex items-center">
           <SearchBar />
         </div>
         <main className="container mx-auto p-4">
