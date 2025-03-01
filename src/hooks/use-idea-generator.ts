@@ -129,7 +129,7 @@ export const useIdeaGenerator = () => {
         return;
       }
 
-      // Use the check-usage-limits edge function instead of rpc call
+      // Use the check-usage-limits edge function
       const { data: usageResponse, error: usageError } = await supabase.functions.invoke('check-usage-limits', {
         body: {
           user_id: userId,
@@ -190,7 +190,7 @@ export const useIdeaGenerator = () => {
           },
         });
 
-        console.log("Response from generate-ideas:", { data, error });
+        console.log("Response from generate-ideas:", data, error);
 
         if (error) {
           console.error("Edge function error:", error);
@@ -209,6 +209,13 @@ export const useIdeaGenerator = () => {
 
         if (!data.ideas || !Array.isArray(data.ideas)) {
           console.error("Invalid response format:", data);
+          
+          // If we have a raw response, it means the AI returned something but it wasn't JSON
+          if (data.rawResponse) {
+            console.log("Raw AI response:", data.rawResponse);
+            throw new Error('The AI returned an invalid format. Please try again.');
+          }
+          
           throw new Error('Invalid response format from AI: ideas array is missing');
         }
 
