@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -235,7 +234,7 @@ export const useIdeaGenerator = () => {
       platform: idea.platform,
       color: idea.color,
       is_saved: idea.is_saved || false,
-      scheduled_for: idea.scheduled_for // Make sure to include scheduled_for if it exists
+      scheduled_for: idea.scheduled_for
     };
   };
 
