@@ -106,8 +106,11 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     if (!idea) return;
 
     try {
-      // Always ensure saved ideas have "ideas" as status if there's no status
-      const status = idea.is_saved && !idea.status ? "ideas" : idea.status;
+      // When an idea is saved (bookmarked), ensure it has "ideas" as status
+      // This is critical for showing the idea in the Ideas column
+      const status = idea.is_saved ? "ideas" : idea.status;
+      
+      console.log("Saving idea with status:", status, "is_saved:", idea.is_saved);
 
       const { error } = await supabase
         .from("video_ideas")
@@ -208,6 +211,19 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     setIdea({ ...idea, scheduled_for: newDate.toISOString() });
   };
 
+  // When Bookmark checkbox changes, ensure the status is also updated appropriately
+  const handleBookmarkChange = (checked: boolean) => {
+    setIdea(prev => {
+      if (!prev) return null;
+      return { 
+        ...prev, 
+        is_saved: checked,
+        // If it's being saved, set status to "ideas" to ensure it shows in the Ideas column
+        status: checked ? "ideas" : prev.status 
+      };
+    });
+  };
+
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
@@ -243,7 +259,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                 type="checkbox"
                 id="is_saved"
                 checked={idea.is_saved || false}
-                onChange={(e) => setIdea({ ...idea, is_saved: e.target.checked })}
+                onChange={(e) => handleBookmarkChange(e.target.checked)}
                 className="mr-2"
               />
               <label htmlFor="is_saved">Save this idea to the Ideas column</label>
