@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -76,17 +75,15 @@ export const useIdeaGenerator = () => {
       if (error) throw error;
 
       if (profile) {
+        // Determine which niche to use based on account type
         let nicheValue = "";
-        switch (profile.account_type) {
-          case 'business':
-            nicheValue = profile.business_niche || profile.content_niche || "";
-            break;
-          case 'ecommerce':
-            nicheValue = profile.product_niche || profile.content_niche || "";
-            break;
-          default:
-            nicheValue = profile.content_niche || "";
-            break;
+        
+        if (profile.account_type === 'business' && profile.business_niche) {
+          nicheValue = profile.business_niche;
+        } else if (profile.account_type === 'ecommerce' && profile.product_niche) {
+          nicheValue = profile.product_niche;
+        } else {
+          nicheValue = profile.content_niche || "";
         }
 
         // Only update state if values actually changed to prevent unnecessary re-renders
