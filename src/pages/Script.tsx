@@ -135,29 +135,40 @@ export default function Script() {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session?.user.id) return;
 
-      // Fetch hooks using a raw query since the table is not in TypeScript types yet
+      // Use the generic query method instead of the type-safe approach
+      // since these tables aren't in the generated TypeScript types yet
       const { data: hooksData, error: hooksError } = await supabase
-        .from('script_hooks')
-        .select('*')
-        .eq('user_id', sessionData.session.user.id) as unknown as { 
-          data: HookData[] | null; 
-          error: any 
-        };
+        .rpc('get_hooks', { user_id_param: sessionData.session.user.id })
+        .catch(() => {
+          // Fallback to direct SQL query if RPC method isn't available
+          return supabase
+            .from('script_hooks')
+            .select('*')
+            .eq('user_id', sessionData.session.user.id) as unknown as { 
+              data: HookData[] | null; 
+              error: any 
+            };
+        });
 
       if (hooksError) throw hooksError;
-      setHooks(hooksData || []);
+      setHooks((hooksData || []) as HookData[]);
 
-      // Fetch structures using a raw query
+      // Same approach for structures
       const { data: structuresData, error: structuresError } = await supabase
-        .from('script_structures')
-        .select('*')
-        .eq('user_id', sessionData.session.user.id) as unknown as {
-          data: StructureData[] | null;
-          error: any
-        };
+        .rpc('get_structures', { user_id_param: sessionData.session.user.id })
+        .catch(() => {
+          // Fallback to direct SQL query if RPC method isn't available
+          return supabase
+            .from('script_structures')
+            .select('*')
+            .eq('user_id', sessionData.session.user.id) as unknown as {
+              data: StructureData[] | null;
+              error: any
+            };
+        });
 
       if (structuresError) throw structuresError;
-      setStructures(structuresData || []);
+      setStructures((structuresData || []) as StructureData[]);
     } catch (error: any) {
       console.error("Error fetching hooks and structures:", error);
     }
