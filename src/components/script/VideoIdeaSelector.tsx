@@ -5,7 +5,7 @@ import { GeneratedIdea } from "@/types/idea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface VideoIdeaSelectorProps {
@@ -40,7 +40,7 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
         .from("video_ideas")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(10); // Increased from 5 to 10 to show more ideas
+        .limit(20); // Increased from 10 to 20 to show more ideas
 
       if (error) throw error;
       setIdeas(data || []);
@@ -64,12 +64,17 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
         .select("*")
         .ilike("title", `%${searchQuery}%`)
         .order("created_at", { ascending: false })
-        .limit(10); // Increased from 5 to 10
+        .limit(20); // Increased limit
 
       if (error) throw error;
       setIdeas(data || []);
     } catch (error: any) {
       console.error("Error searching ideas:", error.message);
+      toast({
+        variant: "destructive",
+        title: "Search Error",
+        description: "Failed to search for ideas. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -103,7 +108,7 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : ideas.length > 0 ? (
-        <div className="space-y-2 max-h-[450px] overflow-y-auto"> {/* Increased from 300px to 450px */}
+        <div className="space-y-2 max-h-[500px] overflow-y-auto"> {/* Increased from 450px to 500px */}
           {ideas.map((idea) => (
             <Card
               key={idea.id}
@@ -113,29 +118,36 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
               onClick={() => handleSelectIdea(idea)}
             >
               <CardContent className="p-3">
-                <h4 className="font-medium">{idea.title}</h4>
-                <p className="text-sm text-muted-foreground truncate mt-1">
-                  {idea.description}
-                </p>
-                {idea.tags && idea.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {idea.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="bg-muted text-xs px-2 py-0.5 rounded-full"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-medium">{idea.title}</h4>
+                    <p className="text-sm text-muted-foreground truncate mt-1">
+                      {idea.description}
+                    </p>
+                    {idea.tags && idea.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {idea.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="bg-muted text-xs px-2 py-0.5 rounded-full"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
+                  {selectedIdea?.id === idea.id && (
+                    <CheckCircle className="h-5 w-5 text-primary ml-2 flex-shrink-0" />
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
         <div className="text-center py-6 text-muted-foreground">
-          {searchQuery ? "No ideas found matching your search" : "No ideas found"}
+          {searchQuery ? "No ideas found matching your search" : "No ideas found. Generate some ideas first."}
         </div>
       )}
     </div>
