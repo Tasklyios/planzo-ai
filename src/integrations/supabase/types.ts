@@ -180,6 +180,7 @@ export type Database = {
           created_at: string | null
           description: string
           id: string
+          is_ad: boolean | null
           is_saved: boolean | null
           platform: string | null
           scheduled_for: string | null
@@ -196,6 +197,7 @@ export type Database = {
           created_at?: string | null
           description: string
           id?: string
+          is_ad?: boolean | null
           is_saved?: boolean | null
           platform?: string | null
           scheduled_for?: string | null
@@ -212,6 +214,7 @@ export type Database = {
           created_at?: string | null
           description?: string
           id?: string
+          is_ad?: boolean | null
           is_saved?: boolean | null
           platform?: string | null
           scheduled_for?: string | null

@@ -230,7 +230,7 @@ export const useIdeaGenerator = () => {
           user_id: userId,
           color: 'blue',
           is_saved: false,
-          is_ad: isAdRequest, // Add this field to flag ad ideas
+          is_ad: isAdRequest // Now the column exists in the database
         }));
 
         const { error: saveError } = await supabase
