@@ -1,293 +1,401 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button"; // Add Button import
-import EditIdea from "@/components/EditIdea";
-import { useIdeaGenerator } from "@/hooks/use-idea-generator";
-import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
-import InputForm from "@/components/idea-generator/InputForm";
-import IdeasGrid from "@/components/idea-generator/IdeasGrid";
-import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Spinner } from "@/components/ui/spinner";
-import { AddToCalendarIdea, PreviousIdeasContext, StyleProfile } from "@/types/idea";
-import { Badge } from "@/components/ui/badge";
-import { Paintbrush } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useIdeaGenerator } from '@/hooks/use-idea-generator';
+import { useStyleProfiles } from '@/hooks/use-style-profiles';
+import StyleProfileSelector from '@/components/style-profiles/StyleProfileSelector';
+import ChatWidget from '@/components/ChatWidget';
+import AuthGuard from '@/components/AuthGuard';
 
-const Generator = () => {
-  const {
-    niche,
-    setNiche,
-    audience,
-    setAudience,
-    videoType,
-    setVideoType,
-    platform,
-    setPlatform,
-    loading,
-    ideas,
-    setIdeas,
-    generateIdeas,
-    customIdeas,
-    setCustomIdeas,
-    previousIdeasContext,
-    setPreviousIdeasContext,
-    error,
-    setError
-  } = useIdeaGenerator();
-
-  const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
-  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
-  const [activeStyleProfile, setActiveStyleProfile] = useState<StyleProfile | null>(null);
+const Generator: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [script, setScript] = useState('');
+  const [scriptTitle, setScriptTitle] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasUserEditedScript, setHasUserEditedScript] = useState(false);
+  const ideaGenerator = useIdeaGenerator();
+  
+  // Import style profiles hook
+  const { 
+    styleProfiles,
+    activeProfile,
+    loading: loadingProfiles,
+    activateStyleProfile
+  } = useStyleProfiles();
 
-  // Load previous ideas context from localStorage on component mount
-  useEffect(() => {
-    const savedContext = localStorage.getItem('previousIdeasContext');
-    if (savedContext) {
-      try {
-        setPreviousIdeasContext(JSON.parse(savedContext));
-      } catch (error) {
-        console.error("Error parsing previous ideas context:", error);
-      }
-    }
-    
-    // Fetch active style profile
-    fetchActiveStyleProfile();
-  }, [setPreviousIdeasContext]);
-
-  const fetchActiveStyleProfile = async () => {
+  const generateInitialScript = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      if (!ideaGenerator.niche || !ideaGenerator.audience || !ideaGenerator.videoType) {
+        toast({
+          variant: "destructive",
+          title: "Missing Information",
+          description: "Please fill in the niche, audience, and video type before generating a script.",
+        });
+        return;
+      }
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('active_style_profile_id')
-        .eq('id', session.user.id)
-        .maybeSingle();
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please log in to generate scripts.",
+        });
+        navigate("/auth");
+        return;
+      }
+      
+      const userId = sessionData.session.user.id;
 
-      if (profileError || !profile?.active_style_profile_id) return;
+      // Use the check-usage-limits edge function
+      const { data: usageResponse, error: usageError } = await supabase.functions.invoke('check-usage-limits', {
+        body: {
+          user_id: userId,
+          action: 'script'
+        }
+      });
 
-      const { data: styleProfile, error: styleError } = await supabase
-        .from('style_profiles')
-        .select('*')
-        .eq('id', profile.active_style_profile_id)
-        .maybeSingle();
+      if (usageError) {
+        console.error("Usage check error:", usageError);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `Usage check error: ${usageError.message}`,
+        });
+        return;
+      }
 
-      if (styleError || !styleProfile) return;
+      // Check if we can proceed or not
+      if (!usageResponse.canProceed) {
+        console.error("Usage limit reached:", usageResponse.message);
+        
+        const { data: subscription } = await supabase
+          .from('user_subscriptions')
+          .select('tier')
+          .eq('user_id', userId)
+          .single();
 
-      setActiveStyleProfile(styleProfile);
-    } catch (error) {
-      console.error("Error fetching active style profile:", error);
+        // Prepare upgrade message based on current tier
+        let message = usageResponse.message || "You've reached your daily limit for generating scripts. ";
+        
+        if (subscription?.tier === 'free') {
+          message += " Upgrade to Pro or Plus for more generations!";
+        } else if (subscription?.tier === 'pro') {
+          message += " Upgrade to Plus or Business for more generations!";
+        } else if (subscription?.tier === 'plus') {
+          message += " Upgrade to Business for unlimited generations!";
+        }
+
+        toast({
+          variant: "destructive",
+          title: "Usage Limit Reached",
+          description: message,
+        });
+        return;
+      }
+
+      setIsSaving(true);
+
+      const contentStyle = localStorage.getItem("contentStyle") || "";
+      const contentPersonality = localStorage.getItem("contentPersonality") || "";
+
+      const { data, error } = await supabase.functions.invoke('generate-ideas', {
+        body: {
+          type: 'script',
+          niche: ideaGenerator.niche.trim(),
+          audience: ideaGenerator.audience.trim(),
+          videoType: ideaGenerator.videoType.trim(),
+          platform: ideaGenerator.platform,
+          contentStyle: contentStyle,
+          contentPersonality: contentPersonality
+        },
+      });
+
+      if (error) {
+        console.error("Error generating script:", error);
+        toast({
+          variant: "destructive",
+          title: "Failed to Generate Script",
+          description: error.message || 'An unexpected error occurred. Please try again.',
+        });
+        return;
+      }
+
+      if (!data || !data.script) {
+        console.error("Empty or invalid response from function");
+        toast({
+          variant: "destructive",
+          title: "Failed to Generate Script",
+          description: 'The script generation service returned an invalid response. Please try again.',
+        });
+        return;
+      }
+
+      setScript(data.script);
+      setScriptTitle(data.title || `${ideaGenerator.videoType} Script for ${ideaGenerator.niche}`);
+      setHasUserEditedScript(false);
+
+      toast({
+        title: "Script Generated!",
+        description: "Your script has been generated successfully.",
+      });
+    } catch (error: any) {
+      console.error("Script generation error:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to Generate Script",
+        description: error.message || 'An unexpected error occurred. Please try again.',
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleAddToCalendar = async () => {
-    if (!addingToCalendar?.idea) return;
+  const handleScriptUpdate = (updatedScript: string) => {
+    setScript(updatedScript);
+    setHasUserEditedScript(true);
+  };
+
+  const saveScript = async () => {
     try {
-      const {
-        data: sessionData,
-        error: sessionError
-      } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Session error:", sessionError);
-        throw new Error(`Authentication error: ${sessionError.message}`);
+      if (!script.trim() || !scriptTitle.trim()) {
+        toast({
+          variant: "destructive",
+          title: "Missing Information",
+          description: "Please ensure your script and title are not empty.",
+        });
+        return;
       }
-      
-      const userId = sessionData.session?.user.id;
-      if (!userId) {
+
+      setIsSaving(true);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please log in to save scripts.",
+        });
         navigate("/auth");
         return;
       }
 
-      // Update only the specific idea that was selected
-      const {
-        error: updateError
-      } = await supabase.from("video_ideas")
-        .update({
-          scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString()
+      const { data, error } = await supabase
+        .from('scripts')
+        .insert({
+          title: scriptTitle,
+          content: script,
+          user_id: session.user.id,
+          video_type: ideaGenerator.videoType,
+          niche: ideaGenerator.niche,
+          target_audience: ideaGenerator.audience,
+          platform: ideaGenerator.platform,
         })
-        .eq("id", addingToCalendar.idea.id);
-      
-      if (updateError) {
-        console.error("Error adding to calendar:", updateError);
-        throw new Error(`Error adding to calendar: ${updateError.message}`);
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error saving script:", error);
+        throw error;
       }
-      
-      // Update the local state to reflect the change
-      setIdeas(prevIdeas => prevIdeas.map(idea => 
-        idea.id === addingToCalendar.idea.id 
-          ? { ...idea, scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString() } 
-          : idea
-      ));
-      
+
       toast({
-        title: "Success",
-        description: "Idea added to calendar successfully"
+        title: "Script Saved",
+        description: "Your script has been saved successfully.",
       });
-      setAddingToCalendar(null);
-      navigate("/calendar");
+
+      // Optional: Navigate to script detail/edit page
+      // navigate(`/scripts/${data.id}`);
     } catch (error: any) {
-      console.error("Error adding to calendar:", error);
+      console.error("Error saving script:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to add idea to calendar. Please try again."
+        title: "Failed to Save Script",
+        description: error.message || 'An unexpected error occurred. Please try again.',
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const updateCalendarIdea = (field: keyof AddToCalendarIdea, value: string) => {
-    if (!addingToCalendar) return;
-    setAddingToCalendar(prev => prev ? {
-      ...prev,
-      [field]: value
-    } : null);
-  };
-
-  const handleBookmarkToggle = async (ideaId: string) => {
-    try {
-      const ideaToUpdate = ideas.find(idea => idea.id === ideaId);
-      if (!ideaToUpdate) return;
-      
-      const newSavedState = !ideaToUpdate.is_saved;
-      
-      const {
-        error
-      } = await supabase.from("video_ideas").update({
-        is_saved: newSavedState
-      }).eq("id", ideaId);
-      
-      if (error) {
-        console.error("Bookmark update error:", error);
-        throw new Error(`Error updating bookmark: ${error.message}`);
-      }
-      
-      setIdeas(prevIdeas => prevIdeas.map(idea => idea.id === ideaId ? {
-        ...idea,
-        is_saved: newSavedState
-      } : idea));
-      
-      toast({
-        title: newSavedState ? "Idea saved" : "Idea unsaved",
-        description: newSavedState ? "Idea added to saved ideas" : "Idea removed from saved ideas"
-      });
-    } catch (error: any) {
-      console.error("Error updating bookmark:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update bookmark status",
-        variant: "destructive"
-      });
+  useEffect(() => {
+    // This will update the generated script if these values change
+    if (script && !hasUserEditedScript) {
+      generateInitialScript();
     }
-  };
+  }, [activeProfile]);
 
-  const handleRetryGenerate = () => {
-    setError(null);
-    generateIdeas();
-  };
+  return (
+    <AuthGuard>
+      <div className="container py-6">
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Script Generator</h1>
+          <p className="text-muted-foreground">Create engaging video scripts based on your preferences</p>
+        </div>
 
-  const navigateToStyleProfiles = () => {
-    navigate('/account');
-    // Set the active tab to 'styles' in localStorage so Account component opens it
-    localStorage.setItem('accountActiveTab', 'styles');
-  };
-
-  return <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 pt-8 pb-12 py-0">
-        <section className="mb-8">
-          <GeneratorHeader />
-          
-          {activeStyleProfile && (
-            <div className="mb-6 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-primary/10 hover:bg-primary/15">
-                  <Paintbrush className="h-3.5 w-3.5 mr-1.5" />
-                  Style: {activeStyleProfile.name}
-                </Badge>
-              </div>
-              <Button 
-                variant="link" 
-                onClick={navigateToStyleProfiles}
-                className="text-sm"
-              >
-                Change Style Profile
-              </Button>
-            </div>
-          )}
-          
-          <InputForm 
-            niche={niche} 
-            audience={audience} 
-            videoType={videoType} 
-            platform={platform}
-            customIdeas={customIdeas}
-            setNiche={setNiche} 
-            setAudience={setAudience} 
-            setVideoType={setVideoType} 
-            setPlatform={setPlatform}
-            setCustomIdeas={setCustomIdeas}
-          />
-
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTitle>Error generating ideas</AlertTitle>
-              <AlertDescription>
-                {error}
-                <div className="mt-2">
-                  <button 
-                    onClick={handleRetryGenerate}
-                    className="bg-destructive/20 hover:bg-destructive/30 text-destructive px-3 py-1 rounded text-sm"
-                  >
-                    Try Again
-                  </button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left sidebar with inputs */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Content Information</CardTitle>
+                <CardDescription>Define your content type and audience</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="niche">Content Niche</Label>
+                  <Input
+                    id="niche"
+                    value={ideaGenerator.niche}
+                    onChange={(e) => {
+                      ideaGenerator.setNiche(e.target.value);
+                      localStorage.setItem("niche", e.target.value);
+                    }}
+                    placeholder="e.g., Fitness, Fashion, Technology"
+                  />
                 </div>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="flex justify-center mb-8">
-            <button 
-              onClick={generateIdeas} 
-              disabled={loading} 
-              className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white dark:text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
-            >
-              {loading ? <>
-                  <Spinner size="sm" className="text-white dark:text-white" />
-                  <span>Generating...</span>
-                </> : <>
-                  ⚡ Generate Viral Ideas
-                </>}
-            </button>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="audience">Target Audience</Label>
+                  <Input
+                    id="audience"
+                    value={ideaGenerator.audience}
+                    onChange={(e) => {
+                      ideaGenerator.setAudience(e.target.value);
+                      localStorage.setItem("audience", e.target.value);
+                    }}
+                    placeholder="e.g., Young adults, Parents, Professionals"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="videoType">Video Type</Label>
+                  <Input
+                    id="videoType"
+                    value={ideaGenerator.videoType}
+                    onChange={(e) => {
+                      ideaGenerator.setVideoType(e.target.value);
+                      localStorage.setItem("videoType", e.target.value);
+                    }}
+                    placeholder="e.g., Tutorial, Vlog, Review"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="platform">Platform</Label>
+                  <Input
+                    id="platform"
+                    value={ideaGenerator.platform}
+                    onChange={(e) => {
+                      ideaGenerator.setPlatform(e.target.value);
+                      localStorage.setItem("platform", e.target.value);
+                    }}
+                    placeholder="e.g., TikTok, YouTube, Instagram"
+                  />
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  onClick={generateInitialScript} 
+                  disabled={isSaving || !ideaGenerator.niche || !ideaGenerator.audience || !ideaGenerator.videoType}
+                  className="w-full"
+                >
+                  {isSaving ? "Generating..." : "Generate Script"}
+                </Button>
+              </CardFooter>
+            </Card>
+            
+            {/* Add Style Profile Selector component */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Style Profiles</CardTitle>
+                <CardDescription>Select a style for your content</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <StyleProfileSelector 
+                  profiles={styleProfiles}
+                  activeProfile={activeProfile}
+                  loading={loadingProfiles}
+                  onActivate={activateStyleProfile}
+                />
+              </CardContent>
+            </Card>
           </div>
 
-          <IdeasGrid 
-            ideas={ideas} 
-            onAddToCalendar={idea => setAddingToCalendar({
-              idea,
-              title: idea.title,
-              scheduledFor: new Date().toISOString().split('T')[0]
-            })} 
-            onEdit={ideaId => setEditingIdeaId(ideaId)} 
-            onBookmarkToggle={handleBookmarkToggle} 
-          />
-        </section>
+          {/* Main script area */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="space-y-2">
+                  <Label htmlFor="scriptTitle">Script Title</Label>
+                  <Input
+                    id="scriptTitle"
+                    value={scriptTitle}
+                    onChange={(e) => setScriptTitle(e.target.value)}
+                    placeholder="Enter a title for your script"
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="edit">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="edit">Edit</TabsTrigger>
+                    <TabsTrigger value="preview">Preview</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="edit" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="script">Script Content</Label>
+                      <Textarea
+                        id="script"
+                        value={script}
+                        onChange={(e) => {
+                          setScript(e.target.value);
+                          setHasUserEditedScript(true);
+                        }}
+                        placeholder="Your script will appear here..."
+                        className="min-h-[300px]"
+                      />
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="preview">
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <div className="border rounded-md p-4 min-h-[300px] whitespace-pre-line">
+                        {script || "Generate a script to see the preview here..."}
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button variant="outline" onClick={() => navigate("/ideas")}>
+                  Back to Ideas
+                </Button>
+                <Button 
+                  onClick={saveScript} 
+                  disabled={isSaving || !script.trim() || !scriptTitle.trim()}
+                >
+                  {isSaving ? "Saving..." : "Save Script"}
+                </Button>
+              </CardFooter>
+            </Card>
 
-        {editingIdeaId && <EditIdea ideaId={editingIdeaId} onClose={() => setEditingIdeaId(null)} />}
-
-        <AddToCalendarDialog 
-          idea={addingToCalendar} 
-          onOpenChange={() => setAddingToCalendar(null)} 
-          onAddToCalendar={handleAddToCalendar} 
-          onUpdate={updateCalendarIdea} 
-        />
-      </main>
-    </div>;
+            {/* Script Coach */}
+            <ChatWidget script={script} onScriptUpdate={handleScriptUpdate} />
+          </div>
+        </div>
+      </div>
+    </AuthGuard>
+  );
 };
 
 export default Generator;
