@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun } from "lucide-react";
@@ -180,11 +179,23 @@ export default function Account() {
 
       if (error) throw error;
 
-      // Update localStorage after successful save
-      if (profile.content_niche) localStorage.setItem("niche", profile.content_niche);
-      if (profile.target_audience) localStorage.setItem("audience", profile.target_audience);
+      // Update localStorage with correct values based on account type
+      let nicheToStore = profile.content_niche || "";
+      if (profile.account_type === 'business' && profile.business_niche) {
+        nicheToStore = profile.business_niche;
+      } else if (profile.account_type === 'ecommerce' && profile.product_niche) {
+        nicheToStore = profile.product_niche;
+      }
+      
+      // Use the updateLocalStorage helper to ensure cross-tab updates
+      updateLocalStorage("niche", nicheToStore);
+      
+      if (profile.target_audience) {
+        updateLocalStorage("audience", profile.target_audience);
+      }
+      
       if (profile.posting_platforms && profile.posting_platforms.length > 0) {
-        localStorage.setItem("platform", profile.posting_platforms[0]);
+        updateLocalStorage("platform", profile.posting_platforms[0]);
       }
 
       toast({
@@ -200,6 +211,29 @@ export default function Account() {
       console.error('Error updating profile:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Helper function to update localStorage and trigger storage event for cross-tab communication
+  const updateLocalStorage = (key: string, value: string) => {
+    const oldValue = localStorage.getItem(key);
+    if (oldValue !== value) {
+      localStorage.setItem(key, value);
+      
+      // Dispatch a storage event to notify other tabs
+      try {
+        const event = new StorageEvent('storage', {
+          key: key,
+          oldValue: oldValue || '',
+          newValue: value,
+          storageArea: localStorage,
+        });
+        window.dispatchEvent(event);
+      } catch (e) {
+        // Some browsers may not support the StorageEvent constructor
+        // If it fails, we're still setting localStorage correctly
+        console.warn('Could not dispatch storage event', e);
+      }
     }
   };
 

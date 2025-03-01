@@ -16,6 +16,24 @@ export const useIdeaGenerator = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Set up a listener for localStorage changes
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "niche" && e.newValue !== null) {
+        setNiche(e.newValue);
+      } else if (e.key === "audience" && e.newValue !== null) {
+        setAudience(e.newValue);
+      } else if (e.key === "platform" && e.newValue !== null) {
+        setPlatform(e.newValue);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   useEffect(() => {
     fetchUserPreferences();
 
@@ -71,18 +89,38 @@ export const useIdeaGenerator = () => {
             break;
         }
 
-        setNiche(nicheValue);
-        localStorage.setItem("niche", nicheValue);
+        // Only update state if values actually changed to prevent unnecessary re-renders
+        if (nicheValue !== niche) {
+          setNiche(nicheValue);
+          localStorage.setItem("niche", nicheValue);
+        }
 
-        if (profile.target_audience) {
+        if (profile.target_audience && profile.target_audience !== audience) {
           setAudience(profile.target_audience);
           localStorage.setItem("audience", profile.target_audience);
         }
         
-        if (profile.posting_platforms && profile.posting_platforms.length > 0) {
+        if (profile.posting_platforms && profile.posting_platforms.length > 0 && profile.posting_platforms[0] !== platform) {
           setPlatform(profile.posting_platforms[0]);
           localStorage.setItem("platform", profile.posting_platforms[0]);
         }
+      }
+
+      // Update from localStorage as well (in case user updated another tab)
+      const localStorageNiche = localStorage.getItem("niche");
+      const localStorageAudience = localStorage.getItem("audience");
+      const localStoragePlatform = localStorage.getItem("platform");
+      
+      if (localStorageNiche && localStorageNiche !== niche) {
+        setNiche(localStorageNiche);
+      }
+      
+      if (localStorageAudience && localStorageAudience !== audience) {
+        setAudience(localStorageAudience);
+      }
+      
+      if (localStoragePlatform && localStoragePlatform !== platform) {
+        setPlatform(localStoragePlatform);
       }
     } catch (error) {
       console.error("Error fetching user preferences:", error);
