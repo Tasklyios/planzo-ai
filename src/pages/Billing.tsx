@@ -235,8 +235,11 @@ const Billing = () => {
             <CardContent>
               <div className="flex flex-col space-y-3">
                 <PricingSheet 
-                  buttonText={subscription?.tier !== 'free' ? "Change Plan" : "Upgrade"} 
-                  className="w-full"
+                  trigger={
+                    <Button className="w-full">
+                      {subscription?.tier !== 'free' ? "Change Plan" : "Upgrade"}
+                    </Button>
+                  }
                 />
                 
                 {!subscription?.stripe_subscription_id && (

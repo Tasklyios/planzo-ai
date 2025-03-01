@@ -13,10 +13,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PricingSheetProps {
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
+  className?: string;
 }
 
-const PricingSheet = ({ trigger }: PricingSheetProps) => {
+const PricingSheet = ({ trigger, className }: PricingSheetProps) => {
   const [loading, setLoading] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
