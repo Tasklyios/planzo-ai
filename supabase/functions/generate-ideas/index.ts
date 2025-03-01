@@ -1,7 +1,8 @@
 
-// Follow CORS headers setup from previous handlers
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,176 +16,270 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
+    // Parse the request body
+    const requestData = await req.json();
+    console.log("Request data:", JSON.stringify(requestData));
 
-    // Get the current user session
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabaseClient.auth.getSession();
-
-    if (sessionError || !session) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check if user has reached their usage limit
-    const userId = session.user.id;
-    const actionType = req.url.includes('type=script') ? 'scripts' : 'ideas';
-    
-    const { data: usageCheck, error: usageError } = await supabaseClient.rpc(
-      'check_and_increment_usage',
-      { p_user_id: userId, p_action: actionType }
-    );
-
-    if (usageError || usageCheck === false) {
-      return new Response(
-        JSON.stringify({
-          error: 'Daily usage limit reached. Please upgrade your plan for more generations.',
-        }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Parse request body
-    const { type, ...requestData } = await req.json();
-
-    // Create OpenAI API request
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiApiKey) {
-      throw new Error('OPENAI_API_KEY is not set');
-    }
-
-    let prompt = '';
-    let systemMessage = '';
-
-    if (type === 'ideas') {
-      const { niche, audience, videoType, platform, previousIdeas } = requestData;
-      
-      systemMessage = 'You are a creative content strategist specializing in viral video ideas.';
-      
-      prompt = `Generate 5 creative video ideas for ${platform} with the following criteria:
-- Niche: ${niche}
-- Target Audience: ${audience}
-- Video Type: ${videoType}
-
-${previousIdeas ? `Please avoid similar ideas to these previous ones: ${JSON.stringify(previousIdeas)}` : ''}
-
-For each idea, provide:
-1. A catchy title (max 60 chars)
-2. A brief description explaining the video concept (2-3 sentences)
-3. An appropriate category for the content
-4. 3-5 relevant tags (without # symbols)
-
-Format the response as a JSON object with an "ideas" array containing objects with title, description, category, and tags fields.`;
-    } else if (type === 'script') {
-      const { 
-        title, 
-        description, 
-        category, 
-        tags, 
-        toneOfVoice, 
-        duration, 
-        additionalNotes,
-        hook,
-        structure 
-      } = requestData;
-      
-      systemMessage = 'You are an expert video script writer specializing in engaging, high-performing social media content.';
-      
-      prompt = `Create a script for a video titled "${title}" based on this description: "${description}"
-      
-Category: ${category || 'No specific category'}
-Tags: ${tags ? tags.join(', ') : 'No specific tags'}
-Tone of Voice: ${toneOfVoice || 'Conversational'}
-Target Duration: ${duration || '60'} seconds
-Additional Notes: ${additionalNotes || 'None provided'}
-${hook ? `Use this hook at the beginning: "${hook}"` : ''}
-${structure ? `Follow this structure: "${structure}"` : ''}
-
-Guidelines:
-- For TikTok/Instagram Reels/YouTube Shorts, create vertical video-based content that is 15-60 seconds. For Feed posts, create content that encourages engagement.
-- Include [VISUAL_GUIDE] sections with specific instructions for visuals/b-roll/shots/transitions
-- Mark key moments with [TIMESTAMP] markers
-- Include [HOOK] at the beginning to grab attention in first 3 seconds
-- Include [CTA] near the end for viewer engagement
-- Make the script conversational and engaging
-- For longer videos (>30s), include multiple points/sections
-- Format the entire response as a plain text script with line breaks for pauses
-- The script should be timed to fit within the target duration`;
+    // Handle different request types
+    if (requestData.type === 'script_coach') {
+      return await handleScriptCoach(requestData);
     } else {
-      return new Response(
-        JSON.stringify({ error: 'Invalid request type' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      // Default: Generate content ideas
+      return await generateContentIdeas(requestData);
     }
-
-    // Call OpenAI API
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemMessage },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-      }),
-    });
-
-    if (!openAIResponse.ok) {
-      const errorData = await openAIResponse.json();
-      console.error('OpenAI API Error:', errorData);
-      throw new Error(`OpenAI API Error: ${errorData.error?.message || 'Unknown error'}`);
-    }
-
-    const openAIData = await openAIResponse.json();
-    const responseContent = openAIData.choices[0].message.content;
-
-    // Process the response based on request type
-    let formattedResponse;
-    if (type === 'ideas') {
-      try {
-        // Try to parse as JSON first
-        formattedResponse = JSON.parse(responseContent);
-      } catch (e) {
-        // If parsing fails, try to extract JSON part
-        const jsonMatch = responseContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          formattedResponse = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error('Failed to parse OpenAI response as JSON');
-        }
-      }
-    } else if (type === 'script') {
-      formattedResponse = {
-        script: responseContent
-      };
-    }
-
-    return new Response(
-      JSON.stringify(formattedResponse),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error("Error in generate-ideas function:", error);
     return new Response(
-      JSON.stringify({ error: error.message || 'An unexpected error occurred' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        error: `Function error: ${error.message}`,
+        stack: error.stack 
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     );
   }
 });
+
+async function handleScriptCoach(data) {
+  const { message, script, conversation } = data;
+  
+  try {
+    // Format the conversation history
+    const messages = [
+      {
+        role: "system",
+        content: "You are an expert script coach that helps content creators improve their scripts. Provide constructive feedback and suggestions to make their content more engaging and effective."
+      }
+    ];
+
+    // Add conversation history
+    if (Array.isArray(conversation)) {
+      conversation.forEach(msg => {
+        messages.push({ role: msg.role, content: msg.content });
+      });
+    }
+
+    // Add current message and script
+    messages.push({
+      role: "user",
+      content: `My script is: """${script}"""\n\nMy question/request: ${message}`
+    });
+
+    // Call OpenAI API
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openAIApiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages,
+        temperature: 0.7,
+        max_tokens: 1500
+      })
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error("OpenAI API error:", result);
+      throw new Error(`OpenAI API error: ${result.error?.message || 'Unknown error'}`);
+    }
+
+    let updatedScript = null;
+    let aiResponse = result.choices[0].message.content;
+
+    // Check if response contains a script suggestion
+    if (aiResponse.includes("```") && aiResponse.includes("UPDATED_SCRIPT")) {
+      const scriptMatches = aiResponse.match(/```(?:UPDATED_SCRIPT)?\n([\s\S]*?)```/);
+      if (scriptMatches && scriptMatches[1]) {
+        updatedScript = scriptMatches[1].trim();
+        // Remove the script part from the response
+        aiResponse = aiResponse.replace(/```(?:UPDATED_SCRIPT)?\n[\s\S]*?```/, "[Script suggestions applied]");
+      }
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        response: aiResponse, 
+        updatedScript 
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  } catch (error) {
+    console.error("Error in script coach handler:", error);
+    return new Response(
+      JSON.stringify({ error: `Script coach error: ${error.message}` }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+}
+
+async function generateContentIdeas(data) {
+  const { 
+    niche, 
+    audience, 
+    videoType, 
+    platform = 'TikTok', 
+    customIdeas = '', 
+    previousIdeas = null 
+  } = data;
+
+  if (!niche || !audience || !videoType) {
+    return new Response(
+      JSON.stringify({ error: 'Missing required fields: niche, audience, or videoType' }),
+      { 
+        status: 400, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+
+  try {
+    console.log(`Generating content ideas for: ${niche}, ${audience}, ${videoType}, ${platform}`);
+
+    // Construct the prompt
+    let prompt = `Generate 5 creative and viral content ideas for ${platform} with the following criteria:
+- Niche: ${niche}
+- Target Audience: ${audience}
+- Content Type: ${videoType}
+
+Each idea should be:
+1. Original and attention-grabbing
+2. Aligned with current trends on ${platform}
+3. Designed to maximize engagement (comments, shares)
+4. Formatted to work well on ${platform}`;
+
+    // Add platform-specific guidance
+    if (platform === 'TikTok') {
+      prompt += `\n\nFor TikTok, focus on short-form content that's 15-60 seconds. Create content that encourages user participation, leverages trending sounds, and has a hook in the first 3 seconds.`;
+    } else if (platform === 'Instagram') {
+      prompt += `\n\nFor Instagram, consider both Reels (short-form) and regular posts. Focus on visually appealing content, storytelling elements, and content that fits the aesthetic preferences of Instagram users.`;
+    } else if (platform === 'YouTube') {
+      prompt += `\n\nFor YouTube, consider both long-form content and Shorts. Focus on searchable topics, in-depth value, and clear thumbnails/titles that drive clicks.`;
+    }
+
+    // Add custom ideas as context if provided
+    if (customIdeas && customIdeas.trim()) {
+      prompt += `\n\nHere are some specific ideas I'm interested in exploring further. Use these as inspiration:\n${customIdeas}`;
+    }
+
+    // Add previous ideas context to avoid repetition
+    if (previousIdeas && previousIdeas.count > 0) {
+      prompt += `\n\nPlease avoid these previously generated ideas:\n`;
+      
+      const maxExamplesToShow = Math.min(previousIdeas.titles.length, 10);
+      for (let i = 0; i < maxExamplesToShow; i++) {
+        prompt += `- ${previousIdeas.titles[i]}\n`;
+      }
+    }
+
+    prompt += `\n\nFor each idea, provide:
+- A catchy title (make it compelling and click-worthy)
+- A clear description explaining the content concept
+- Category (e.g., Educational, Entertainment, Tutorial)
+- 3-5 relevant hashtags (without the # symbol)
+
+Format the response as JSON with this structure:
+{
+  "ideas": [
+    {
+      "title": "string",
+      "description": "string",
+      "category": "string",
+      "tags": ["string"]
+    }
+  ]
+}`;
+
+    // Call OpenAI API
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'You are a social media content strategist who helps creators make viral content. Provide creative, trendy, and platform-appropriate content ideas.'
+          },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.8,
+      }),
+    });
+
+    // Parse the response
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error("OpenAI API error:", result);
+      throw new Error(`OpenAI API error: ${result.error?.message || 'Unknown error'}`);
+    }
+
+    let ideas;
+    try {
+      // Try to parse the response content as JSON
+      const content = result.choices[0].message.content;
+      console.log("Raw AI response:", content);
+      
+      // Handle cases where the model directly returns JSON or when it wraps it in markdown
+      let jsonContent = content;
+      
+      // Check if the response is wrapped in markdown code blocks
+      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch && jsonMatch[1]) {
+        jsonContent = jsonMatch[1].trim();
+      }
+      
+      ideas = JSON.parse(jsonContent);
+      
+      // Validate the response structure
+      if (!ideas.ideas || !Array.isArray(ideas.ideas)) {
+        throw new Error("Invalid response format: missing ideas array");
+      }
+    } catch (parseError) {
+      console.error("Error parsing AI response:", parseError);
+      // Return the raw response for debugging
+      return new Response(
+        JSON.stringify({ 
+          error: `Failed to parse AI response: ${parseError.message}`,
+          rawResponse: result.choices[0].message.content
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    return new Response(
+      JSON.stringify(ideas),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  } catch (error) {
+    console.error("Error generating content ideas:", error);
+    return new Response(
+      JSON.stringify({ error: `Error generating ideas: ${error.message}` }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+}
