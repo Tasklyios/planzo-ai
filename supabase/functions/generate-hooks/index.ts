@@ -81,6 +81,8 @@ serve(async (req) => {
       3. Story hooks: Short narrative or anecdote openings
       4. Challenge hooks: Phrases that challenge common misconceptions
       
+      Each hook should be concise, engaging, and directly relevant to the topic.
+      
       Format your response as a JSON array with objects containing:
       - hook_text: The actual hook text
       - category: One of "question", "statistic", "story", or "challenge"
@@ -100,7 +102,7 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'You are a professional content creator assistant that generates attention-grabbing hooks for videos. Respond only with the requested JSON format.' 
+            content: 'You are a professional content creator assistant that generates attention-grabbing hooks for videos. Respond ONLY with a valid JSON array containing objects with hook_text and category fields. Do not include any explanations or text outside of the JSON.'
           },
           { role: 'user', content: prompt }
         ],
@@ -117,27 +119,57 @@ serve(async (req) => {
 
     const data = await response.json();
     console.log('OpenAI response received');
+    console.log('Response content:', data.choices[0].message.content);
 
     // Extract the generated hooks from the OpenAI response
     let hooks = [];
     try {
-      const content = data.choices[0].message.content;
-      // Try to parse the response as JSON
-      hooks = JSON.parse(content);
-      // If the response isn't a proper array, try to extract JSON from the text
-      if (!Array.isArray(hooks)) {
-        const jsonMatch = content.match(/\[[\s\S]*\]/);
+      const content = data.choices[0].message.content.trim();
+      
+      // First try to parse the response directly as JSON
+      try {
+        hooks = JSON.parse(content);
+        console.log('Parsed JSON directly:', hooks);
+      } catch (parseError) {
+        console.log('Direct JSON parsing failed, trying to extract JSON from text');
+        
+        // If direct parsing fails, try to extract JSON from the text
+        const jsonRegex = /\[\s*\{.*\}\s*\]/s;
+        const jsonMatch = content.match(jsonRegex);
+        
         if (jsonMatch) {
-          hooks = JSON.parse(jsonMatch[0]);
+          try {
+            hooks = JSON.parse(jsonMatch[0]);
+            console.log('Extracted and parsed JSON from text:', hooks);
+          } catch (extractError) {
+            console.error('Failed to parse extracted JSON:', extractError);
+            throw new Error('Failed to parse hooks from AI response');
+          }
+        } else {
+          console.error('No JSON array found in response');
+          throw new Error('Invalid response format from AI');
         }
       }
+      
+      // Validate that hooks is an array
+      if (!Array.isArray(hooks)) {
+        console.error('Parsed content is not an array:', hooks);
+        throw new Error('AI response is not in the expected array format');
+      }
+      
     } catch (e) {
       console.error('Error parsing OpenAI response:', e);
-      // Fallback if parsing fails
-      const content = data.choices[0].message.content;
-      hooks = [
-        { hook_text: "Failed to parse hooks. Please try again.", category: "question" }
-      ];
+      // Fallback with clear error message
+      return new Response(
+        JSON.stringify({ 
+          error: "Failed to parse AI response. Please try again.",
+          details: e.message 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     // Validate and format hooks
@@ -148,7 +180,9 @@ serve(async (req) => {
         : 'question'
     }));
 
-    console.log('Returning hooks to client');
+    console.log(`Returning ${formattedHooks.length} hooks to client`);
+    console.log('Formatted hooks:', JSON.stringify(formattedHooks));
+    
     return new Response(
       JSON.stringify({ hooks: formattedHooks }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -29,6 +29,12 @@ export const generateHooks = async (
       throw new Error(error.message || "Failed to generate hooks");
     }
     
+    if (!data || !data.hooks) {
+      console.error("No hooks returned from the edge function:", data);
+      throw new Error("No hooks were returned. Please try again.");
+    }
+    
+    console.log("Hooks generated successfully:", data.hooks);
     return data.hooks || [];
   } catch (error: any) {
     console.error("Error generating hooks:", error);
