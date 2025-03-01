@@ -30,6 +30,7 @@ const Billing = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -81,6 +82,8 @@ const Billing = () => {
           stripe_subscription_id: null
         });
       }
+      
+      setLastUpdated(new Date());
     } catch (err: any) {
       console.error("Error fetching subscription:", err);
       setError(err.message);
@@ -104,9 +107,30 @@ const Billing = () => {
     const { data: authListener } = supabase.auth.onAuthStateChange(() => {
       fetchSubscription();
     });
+    
+    // Set up a subscription to subscription changes
+    const channel = supabase
+      .channel('public:user_subscriptions')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'user_subscriptions',
+      }, () => {
+        console.log('Subscription data changed, refreshing...');
+        fetchSubscription();
+      })
+      .subscribe();
+
+    // Poll for changes every 30 seconds in case webhook fails
+    const interval = setInterval(() => {
+      console.log('Polling for subscription changes...');
+      fetchSubscription();
+    }, 30000);
 
     return () => {
       authListener.subscription.unsubscribe();
+      supabase.removeChannel(channel);
+      clearInterval(interval);
     };
   }, [navigate]);
 
@@ -251,7 +275,7 @@ const Billing = () => {
               <div className="mt-4 pt-4 border-t text-xs text-muted-foreground">
                 <p>Subscription ID: {subscription.stripe_subscription_id || 'N/A'}</p>
                 <p>Customer ID: {subscription.stripe_customer_id || 'N/A'}</p>
-                <p>Last updated: {new Date().toLocaleTimeString()}</p>
+                <p>Last updated: {lastUpdated.toLocaleTimeString()}</p>
               </div>
             )}
           </CardContent>

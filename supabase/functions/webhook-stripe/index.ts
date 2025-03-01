@@ -8,6 +8,12 @@ const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
+// CORS headers for the function
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 const stripe = new Stripe(STRIPE_SECRET_KEY, {
   apiVersion: "2023-10-16",
 });
@@ -15,10 +21,16 @@ const stripe = new Stripe(STRIPE_SECRET_KEY, {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     const signature = req.headers.get("stripe-signature");
     if (!signature) {
-      return new Response("Missing stripe-signature header", { status: 400 });
+      console.error("Missing stripe-signature header");
+      return new Response("Missing stripe-signature header", { status: 400, headers: corsHeaders });
     }
 
     const body = await req.text();
@@ -29,7 +41,7 @@ serve(async (req) => {
       event = stripe.webhooks.constructEvent(body, signature, STRIPE_WEBHOOK_SECRET);
     } catch (err) {
       console.error(`⚠️ Webhook signature verification failed:`, err.message);
-      return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+      return new Response(`Webhook Error: ${err.message}`, { status: 400, headers: corsHeaders });
     }
 
     console.log(`Event received: ${event.type}`);
@@ -55,12 +67,34 @@ serve(async (req) => {
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
         const productId = subscription.items.data[0]?.price.product;
         
-        let tier = "free";
-        if (productId) {
-          const product = await stripe.products.retrieve(productId);
-          const metadata = product.metadata || {};
-          tier = metadata.tier || "free";
+        if (!productId) {
+          console.error("Product ID not found in subscription");
+          break;
         }
+        
+        const product = await stripe.products.retrieve(productId);
+        console.log("Product details:", product);
+        
+        // Determine tier from product name or metadata
+        let tier = "free";
+        if (product) {
+          const productName = product.name.toLowerCase();
+          // Check name first
+          if (productName.includes("pro")) {
+            tier = "pro";
+          } else if (productName.includes("plus")) {
+            tier = "plus";
+          } else if (productName.includes("business")) {
+            tier = "business";
+          }
+          
+          // Fallback to metadata if available
+          if (product.metadata && product.metadata.tier) {
+            tier = product.metadata.tier;
+          }
+        }
+        
+        console.log(`Determined tier: ${tier} for product: ${product.name}`);
         
         // Link the subscription to the user
         const { error } = await supabase.rpc("link_stripe_customer", {
@@ -72,8 +106,11 @@ serve(async (req) => {
         });
 
         if (error) {
-          console.error("Error updating subscription:", error);
+          console.error("Error linking customer:", error);
+          break;
         }
+        
+        console.log(`Successfully linked customer ${customerEmail} to ${tier} subscription`);
         break;
       }
       
@@ -82,32 +119,55 @@ serve(async (req) => {
         console.log(`Subscription updated: ${subscription.id}`);
         
         // Get the customer information
-        const customer = await stripe.customers.retrieve(subscription.customer);
+        const customerId = subscription.customer;
+        const customer = await stripe.customers.retrieve(customerId);
+        
         if (!customer || customer.deleted) {
           console.error("Customer not found or deleted");
           break;
         }
         
-        const customerEmail = customer.email;
+        const customerEmail = typeof customer === 'object' ? customer.email : null;
         if (!customerEmail) {
           console.error("Customer email not found");
           break;
         }
         
-        // Determine subscription tier
+        // Determine subscription tier from product
         const productId = subscription.items.data[0]?.price.product;
-        let tier = "free";
-        
-        if (productId) {
-          const product = await stripe.products.retrieve(productId);
-          const metadata = product.metadata || {};
-          tier = metadata.tier || "free";
+        if (!productId) {
+          console.error("Product ID not found in subscription");
+          break;
         }
         
-        // Update subscription status in database
+        const product = await stripe.products.retrieve(productId);
+        console.log("Product details for updated subscription:", product);
+        
+        // Determine tier from product name or metadata
+        let tier = "free";
+        if (product) {
+          const productName = product.name.toLowerCase();
+          // Check name first
+          if (productName.includes("pro")) {
+            tier = "pro";
+          } else if (productName.includes("plus")) {
+            tier = "plus";
+          } else if (productName.includes("business")) {
+            tier = "business";
+          }
+          
+          // Fallback to metadata if available
+          if (product.metadata && product.metadata.tier) {
+            tier = product.metadata.tier;
+          }
+        }
+        
+        console.log(`Determined tier: ${tier} for product: ${product.name}`);
+        
+        // Update subscription in database
         const { error } = await supabase.rpc("link_stripe_customer", {
           p_email: customerEmail,
-          p_stripe_customer_id: subscription.customer,
+          p_stripe_customer_id: customerId,
           p_stripe_subscription_id: subscription.id,
           p_tier: tier,
           p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
@@ -115,6 +175,8 @@ serve(async (req) => {
 
         if (error) {
           console.error("Error updating subscription:", error);
+        } else {
+          console.log(`Successfully updated ${customerEmail} to ${tier} tier`);
         }
         break;
       }
@@ -124,19 +186,21 @@ serve(async (req) => {
         console.log(`Subscription deleted: ${subscription.id}`);
         
         // Get the customer to find the email
-        const customer = await stripe.customers.retrieve(subscription.customer);
+        const customerId = subscription.customer;
+        const customer = await stripe.customers.retrieve(customerId);
+        
         if (!customer || customer.deleted) {
           console.error("Customer not found or deleted");
           break;
         }
         
-        const customerEmail = customer.email;
+        const customerEmail = typeof customer === 'object' ? customer.email : null;
         if (!customerEmail) {
           console.error("Customer email not found");
           break;
         }
         
-        // Find user by email and update to free tier
+        // Get the user id by email
         const { data: userData, error: userError } = await supabase
           .from("auth")
           .select("users.id")
@@ -148,10 +212,10 @@ serve(async (req) => {
           break;
         }
         
-        // Reset to free tier
+        // Reset subscription to free tier
         const { error } = await supabase
           .from("user_subscriptions")
-          .update({ 
+          .update({
             tier: "free",
             current_period_end: null,
           })
@@ -159,19 +223,21 @@ serve(async (req) => {
         
         if (error) {
           console.error("Error resetting subscription:", error);
+        } else {
+          console.log(`Successfully reset ${customerEmail} to free tier`);
         }
         break;
       }
     }
 
     return new Response(JSON.stringify({ received: true }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
     console.error("Unexpected error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }
