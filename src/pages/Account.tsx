@@ -1,7 +1,7 @@
-
+<lov-code>
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
-import { Monitor, Moon, Sun, Plus, Trash2, Check } from "lucide-react";
+import { Monitor, Moon, Sun, Plus, Trash2, Check, Palette } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { StyleProfile } from "@/types/idea";
 import { useNavigate } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const themeOptions = [
   {
@@ -83,7 +91,12 @@ export default function Account() {
   const [newProfileName, setNewProfileName] = useState("");
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const { toast } = useToast();
-  const navigate = useNavigate(); // Initialize useNavigate hook
+  const navigate = useNavigate();
+  
+  // Add new state variables for the style profile creation dialog
+  const [isNewProfileDialogOpen, setIsNewProfileDialogOpen] = useState(false);
+  const [newProfileContentStyle, setNewProfileContentStyle] = useState("");
+  const [newProfileContentPersonality, setNewProfileContentPersonality] = useState("");
 
   useEffect(() => {
     console.log("Account component mounted, fetching profile");
@@ -228,7 +241,6 @@ export default function Account() {
     }
   };
 
-  // Helper function to trigger storage events
   const triggerStorageEvents = () => {
     try {
       window.dispatchEvent(new Event('storage'));
@@ -345,7 +357,6 @@ export default function Account() {
     }
   };
 
-  // Helper function to update localStorage and trigger storage event for cross-tab communication
   const updateLocalStorage = (key: string, value: string) => {
     const oldValue = localStorage.getItem(key);
     console.log(`Updating localStorage: ${key} = ${value} (was: ${oldValue})`);
@@ -475,6 +486,7 @@ export default function Account() {
     fetchProfile();
   };
 
+  // Update createNewStyleProfile to use the dialog data
   const createNewStyleProfile = async () => {
     try {
       if (!newProfileName.trim()) {
@@ -498,14 +510,14 @@ export default function Account() {
         return;
       }
 
-      // Create new style profile
+      // Create new style profile with content style and personality from the dialog
       const { data, error } = await supabase
         .from('style_profiles')
         .insert({
           user_id: session.user.id,
           name: newProfileName.trim(),
-          content_style: "",
-          content_personality: "",
+          content_style: newProfileContentStyle.trim(),
+          content_personality: newProfileContentPersonality.trim(),
           is_active: false
         })
         .select('*')
@@ -515,15 +527,14 @@ export default function Account() {
 
       toast({
         title: "Style Profile Created",
-        description: "Your new style profile has been created. You can now customize it.",
+        description: "Your new style profile has been created successfully.",
       });
 
       setStyleProfiles([data, ...styleProfiles]);
       setNewProfileName("");
-      
-      // Navigate to the find your style page to populate it
-      navigate("/find-your-style");
-
+      setNewProfileContentStyle("");
+      setNewProfileContentPersonality("");
+      setIsNewProfileDialogOpen(false);
     } catch (error: any) {
       console.error('Error creating style profile:', error);
       toast({
@@ -838,20 +849,14 @@ export default function Account() {
               </p>
               
               <div className="space-y-6">
-                {/* Create new style profile */}
+                {/* Create new style profile button */}
                 <div className="flex gap-2 mb-4">
-                  <Input 
-                    placeholder="New style profile name" 
-                    value={newProfileName}
-                    onChange={(e) => setNewProfileName(e.target.value)}
-                    className="flex-1"
-                  />
                   <Button 
-                    onClick={createNewStyleProfile}
-                    disabled={loading || !newProfileName.trim()}
+                    onClick={() => setIsNewProfileDialogOpen(true)}
+                    className="w-full"
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    Create
+                    Create New Style Profile
                   </Button>
                 </div>
                 
@@ -877,13 +882,18 @@ export default function Account() {
                           </div>
                         )}
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="flex-1 pr-20">
                             <h3 className="font-medium">{profile.name}</h3>
                             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                               {profile.content_personality || "No personality set"}
                             </p>
+                            {profile.content_style && (
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                <span className="font-medium">Style:</span> {profile.content_style}
+                              </p>
+                            )}
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex flex-col gap-2">
                             {activeProfileId !== profile.id && (
                               <Button 
                                 variant="outline" 
@@ -897,7 +907,7 @@ export default function Account() {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                              className="text-destructive hover:text-destructive/90 hover:bg-destructive/10 mt-2"
                               onClick={() => deleteStyleProfile(profile.id)}
                               disabled={loading}
                             >
@@ -957,88 +967,4 @@ export default function Account() {
                     </div>
                   )}
 
-                  {profile.account_type === 'ecommerce' && (
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="product_niche">Product Niche</Label>
-                      <Input
-                        id="product_niche"
-                        placeholder="E.g., Fashion, Electronics, Home Decor..."
-                        value={profile.product_niche || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, product_niche: e.target.value }))}
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="content_niche">Content Niche</Label>
-                    <Input
-                      id="content_niche"
-                      placeholder="E.g., Fitness, Technology, Art..."
-                      value={profile.content_niche || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="target_audience">Target Audience</Label>
-                    <Input
-                      id="target_audience"
-                      placeholder="E.g., Millennials, Working Professionals, Students..."
-                      value={profile.target_audience || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="posting_platforms">Posting Platforms</Label>
-                    <Input
-                      id="posting_platforms"
-                      placeholder="E.g., TikTok, Instagram, YouTube..."
-                      value={profile.posting_platforms?.[0] || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, posting_platforms: [e.target.value] }))}
-                    />
-                    <p className="text-xs text-muted-foreground">Enter your primary posting platform</p>
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="content_style">Content Style</Label>
-                    <Textarea
-                      id="content_style"
-                      placeholder="How would you describe your content style?"
-                      value={profile.content_style || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
-                      className="min-h-[100px]"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Use Find Your Style to automatically analyze your content style
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="content_personality">Content Personality</Label>
-                    <Textarea
-                      id="content_personality"
-                      placeholder="Describe your content personality or tone..."
-                      value={profile.content_personality || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
-                      className="min-h-[100px]"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Use Find Your Style to automatically analyze your content personality
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button type="submit" disabled={loading}>
-                    {loading ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          )}
-        </div>
-      </div>
-    </AuthGuard>
-  );
-}
+                  {profile.account_type === '
