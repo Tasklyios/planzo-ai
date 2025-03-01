@@ -157,7 +157,7 @@ export default function ContentPlanner() {
         setColumns(columnsWithItems);
       }
 
-      // Fetch ideas
+      // Fetch ideas - Important change: get ALL saved ideas regardless of status
       const { data: ideas, error: ideasError } = await supabase
         .from('video_ideas')
         .select('*')
@@ -166,14 +166,29 @@ export default function ContentPlanner() {
 
       if (ideasError) throw ideasError;
 
-      if (ideas) {
+      if (ideas && ideas.length > 0) {
+        console.log("Fetched saved ideas:", ideas);
+        
         // Group ideas by status
         const groupedIdeas = ideas.reduce((acc: { [key: string]: PlannerItem[] }, idea) => {
+          // If idea has no status or status doesn't match an existing column, 
+          // put it in the Ideas column
           const status = idea.status || IDEAS_COLUMN_ID;
-          if (!acc[status]) acc[status] = [];
-          acc[status].push(idea as PlannerItem);
+          // Check if the status corresponds to an actual column
+          const columnExists = columnsData?.some(col => col.id === status) || status === IDEAS_COLUMN_ID;
+          
+          const targetStatus = columnExists ? status : IDEAS_COLUMN_ID;
+          
+          if (!acc[targetStatus]) acc[targetStatus] = [];
+          acc[targetStatus].push({
+            ...idea,
+            status: targetStatus
+          } as PlannerItem);
+          
           return acc;
         }, {});
+
+        console.log("Grouped ideas:", groupedIdeas);
 
         // Update columns with fetched ideas
         setColumns(prevColumns => 
@@ -182,6 +197,8 @@ export default function ContentPlanner() {
             items: groupedIdeas[col.id] || []
           }))
         );
+      } else {
+        console.log("No saved ideas found");
       }
     } catch (error: any) {
       console.error('Error fetching data:', error);
