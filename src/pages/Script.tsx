@@ -1,4 +1,4 @@
-<lov-code>
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -944,4 +944,78 @@ export default function Script() {
                     <SelectItem value="none">Default structure</SelectItem>
                     {structures.map((structure) => (
                       <SelectItem key={structure.id} value={structure.id || ""}>
-                        
+                        {structure.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <Button 
+            disabled={loading || (!selectedIdea && scriptType === "existing") || (scriptType === "custom" && (!customTitle || !customDescription))} 
+            onClick={generateScript} 
+            className="w-full"
+          >
+            {loading ? (
+              <>Generating...</>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Generate Script
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Generated Script Section with Visual Toggle */}
+        {generatedScript && (
+          <div className="mt-8 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Your Script</h2>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="visual-guide"
+                    checked={showVisuals}
+                    onCheckedChange={setShowVisuals}
+                  />
+                  <Label htmlFor="visual-guide" className="flex items-center">
+                    <Eye className="h-4 w-4 mr-1.5" />
+                    Show Visual Guides
+                  </Label>
+                </div>
+                <Button 
+                  onClick={handleSaveScript} 
+                  variant="outline" 
+                  size="sm"
+                >
+                  <Save className="h-4 w-4 mr-1.5" />
+                  Save Script
+                </Button>
+              </div>
+            </div>
+            <div className="bg-muted p-4 rounded-lg relative overflow-y-auto max-h-[600px]">
+              <pre className="whitespace-pre-wrap font-mono text-sm">
+                {parsedLines.map((line, index) => (
+                  <div 
+                    key={index} 
+                    className={cn(
+                      "py-1", 
+                      isVisual[index] ? 
+                        "bg-green-100 dark:bg-green-900/20 border-l-4 border-green-500 pl-3 my-2 italic" : 
+                        ""
+                    )}
+                  >
+                    {line}
+                  </div>
+                ))}
+              </pre>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
