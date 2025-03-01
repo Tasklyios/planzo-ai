@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,8 +15,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { GeneratedIdea, ScriptHook, ScriptStructure } from "@/types/idea";
-import { Save, Search, Upload, Sparkles } from "lucide-react";
+import { GeneratedIdea, ScriptHook, ScriptStructure, StyleProfile } from "@/types/idea";
+import { Save, Search, Upload, Sparkles, Plus, Check, Trash2 } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -87,6 +86,12 @@ export default function Script() {
   const [structures, setStructures] = useState<StructureData[]>([]);
   const [selectedHook, setSelectedHook] = useState<string | null>(null);
   const [selectedStructure, setSelectedStructure] = useState<string | null>(null);
+  
+  // Add style profile state
+  const [styleProfiles, setStyleProfiles] = useState<StyleProfile[]>([]);
+  const [activeStyleProfile, setActiveStyleProfile] = useState<StyleProfile | null>(null);
+  const [newStyleProfileName, setNewStyleProfileName] = useState("");
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
   const statuses = [
     { id: 'all', label: 'All Ideas' },
@@ -126,9 +131,210 @@ export default function Script() {
     }
   };
 
+  // Add fetch style profiles function
+  const fetchStyleProfiles = async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) return;
+
+      // Fetch all style profiles for the user
+      const { data: profiles, error } = await supabase
+        .from('style_profiles')
+        .select('*')
+        .eq('user_id', sessionData.session.user.id)
+        .order('is_active', { ascending: false });
+
+      if (error) throw error;
+      
+      setStyleProfiles(profiles || []);
+      
+      // Find and set the active style profile
+      const active = profiles?.find(profile => profile.is_active);
+      if (active) {
+        setActiveStyleProfile(active);
+      }
+      
+      // Also check the user's profile for an active style profile ID
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('active_style_profile_id')
+        .eq('id', sessionData.session.user.id)
+        .single();
+        
+      if (!profileError && userProfile?.active_style_profile_id) {
+        const activeProfileById = profiles?.find(
+          profile => profile.id === userProfile.active_style_profile_id
+        );
+        if (activeProfileById) {
+          setActiveStyleProfile(activeProfileById);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching style profiles:', error);
+    }
+  };
+
+  // Create a new style profile
+  const createStyleProfile = async () => {
+    if (!newStyleProfileName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a name for your style profile",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) {
+        toast({
+          title: "Authentication Required",
+          description: "You must be logged in to create a style profile",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create a new style profile
+      const { data: profile, error } = await supabase
+        .from('style_profiles')
+        .insert({
+          user_id: sessionData.session.user.id,
+          name: newStyleProfileName,
+          content_style: "",
+          content_personality: "",
+          is_active: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setStyleProfiles(prev => [...prev, profile]);
+      setNewStyleProfileName("");
+      setIsCreatingProfile(false);
+      
+      toast({
+        title: "Success",
+        description: "Style profile created successfully",
+      });
+    } catch (error: any) {
+      console.error("Error creating style profile:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to create style profile",
+      });
+    }
+  };
+
+  // Set a style profile as active
+  const setActiveProfile = async (profileId: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) return;
+
+      // Update the user's active style profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ active_style_profile_id: profileId })
+        .eq('id', sessionData.session.user.id);
+
+      if (updateError) throw updateError;
+      
+      // Update the style profile itself
+      await supabase
+        .from('style_profiles')
+        .update({ is_active: false })
+        .eq('user_id', sessionData.session.user.id);
+        
+      await supabase
+        .from('style_profiles')
+        .update({ is_active: true })
+        .eq('id', profileId);
+
+      // Update local state
+      const selected = styleProfiles.find(profile => profile.id === profileId) || null;
+      setActiveStyleProfile(selected);
+      
+      // Update all profiles' is_active property
+      setStyleProfiles(prev => 
+        prev.map(profile => ({
+          ...profile,
+          is_active: profile.id === profileId
+        }))
+      );
+      
+      // Update localStorage with the active style's content_style and content_personality
+      if (selected?.content_style) {
+        localStorage.setItem("contentStyle", selected.content_style);
+      }
+      
+      if (selected?.content_personality) {
+        localStorage.setItem("contentPersonality", selected.content_personality);
+      }
+      
+      toast({
+        title: "Success",
+        description: `${selected?.name} is now your active style profile`,
+      });
+    } catch (error: any) {
+      console.error("Error setting active profile:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to set active profile",
+      });
+    }
+  };
+
+  // Delete a style profile
+  const deleteStyleProfile = async (profileId: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) return;
+      
+      // Don't allow deleting the active profile
+      if (activeStyleProfile?.id === profileId) {
+        toast({
+          variant: "destructive",
+          title: "Cannot Delete Active Profile",
+          description: "Please select a different profile before deleting this one.",
+        });
+        return;
+      }
+
+      // Delete the style profile
+      const { error } = await supabase
+        .from('style_profiles')
+        .delete()
+        .eq('id', profileId)
+        .eq('user_id', sessionData.session.user.id);
+
+      if (error) throw error;
+      
+      // Update local state
+      setStyleProfiles(prev => prev.filter(profile => profile.id !== profileId));
+      
+      toast({
+        title: "Success",
+        description: "Style profile deleted successfully",
+      });
+    } catch (error: any) {
+      console.error("Error deleting style profile:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to delete style profile",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchSavedIdeas();
     fetchHooksAndStructures();
+    fetchStyleProfiles();
   }, [selectedStatus]);
 
   const fetchHooksAndStructures = async () => {
@@ -392,77 +598,117 @@ export default function Script() {
         </div>
 
         <div className="space-y-6">
+          {/* Style Profile Section */}
           <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="hooks-structures">
+            <AccordionItem value="style-profile">
               <AccordionTrigger className="text-primary">
                 <span className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  Upload Hooks & Structures
+                  Style Profile
                 </span>
               </AccordionTrigger>
               <AccordionContent className="space-y-6 pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-4 border rounded-lg bg-card">
-                    <SpreadsheetUploader 
-                      type="hooks" 
-                      onUploadComplete={handleHookUploadComplete} 
-                    />
-                    
-                    {hooks.length > 0 && (
-                      <div className="mt-4">
-                        <Label htmlFor="hook-select" className="mb-2 block">Select Hook</Label>
-                        <Select value={selectedHook || ""} onValueChange={setSelectedHook}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose a hook" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {hooks.map((hook) => (
-                              <SelectItem key={hook.id} value={hook.id || ""}>
-                                {hook.hook.substring(0, 30)}...
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                <div className="space-y-4">
+                  {activeStyleProfile ? (
+                    <div className="p-4 bg-muted rounded-lg">
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-medium">{activeStyleProfile.name}</h3>
+                        <div className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
+                          Active
+                        </div>
                       </div>
-                    )}
-                  </div>
+                      
+                      {activeStyleProfile.content_style && (
+                        <div className="mt-3">
+                          <h4 className="text-sm font-medium mb-1">Content Style</h4>
+                          <p className="text-sm text-muted-foreground">{activeStyleProfile.content_style}</p>
+                        </div>
+                      )}
+                      
+                      {activeStyleProfile.content_personality && (
+                        <div className="mt-3">
+                          <h4 className="text-sm font-medium mb-1">Content Personality</h4>
+                          <p className="text-sm text-muted-foreground">{activeStyleProfile.content_personality}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center p-4 border border-dashed rounded-lg">
+                      <p className="text-muted-foreground">No active style profile selected</p>
+                    </div>
+                  )}
                   
-                  <div className="p-4 border rounded-lg bg-card">
-                    <SpreadsheetUploader 
-                      type="structures" 
-                      onUploadComplete={handleStructureUploadComplete} 
-                    />
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-medium">Your Style Profiles</h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsCreatingProfile(!isCreatingProfile)}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        New Profile
+                      </Button>
+                    </div>
                     
-                    {structures.length > 0 && (
-                      <div className="mt-4">
-                        <Label htmlFor="structure-select" className="mb-2 block">Select Structure</Label>
-                        <Select value={selectedStructure || ""} onValueChange={setSelectedStructure}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose a structure" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {structures.map((structure) => (
-                              <SelectItem key={structure.id} value={structure.id || ""}>
-                                {structure.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    {isCreatingProfile && (
+                      <div className="flex items-center gap-2 mb-4">
+                        <Input
+                          placeholder="Profile Name"
+                          value={newStyleProfileName}
+                          onChange={(e) => setNewStyleProfileName(e.target.value)}
+                        />
+                        <Button size="sm" onClick={createStyleProfile}>Create</Button>
                       </div>
                     )}
+                    
+                    <div className="grid gap-2 mt-2">
+                      {styleProfiles.map((profile) => (
+                        <div
+                          key={profile.id}
+                          className={cn(
+                            "flex justify-between items-center p-3 rounded-md",
+                            profile.is_active
+                              ? "bg-primary/10 border border-primary/20"
+                              : "bg-card hover:bg-accent/50 border"
+                          )}
+                        >
+                          <span className="font-medium">{profile.name}</span>
+                          <div className="flex items-center gap-2">
+                            {!profile.is_active && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setActiveProfile(profile.id)}
+                                  title="Set as active"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => deleteStyleProfile(profile.id)}
+                                  title="Delete profile"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {styleProfiles.length === 0 && !isCreatingProfile && (
+                        <div className="text-center p-4 border border-dashed rounded-lg">
+                          <p className="text-muted-foreground">No style profiles yet</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Create a profile to save your content style preferences
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="bg-muted p-4 rounded-lg text-sm">
-                  <p className="font-medium mb-2">Expected Spreadsheet Format:</p>
-                  <p className="mb-2">
-                    <strong>Hooks:</strong> Columns should include "hook" (required), "category", and "description".
-                  </p>
-                  <p>
-                    <strong>Structures:</strong> Columns should include "name" (required), "structure" (required), and "description".
-                  </p>
                 </div>
               </AccordionContent>
             </AccordionItem>
