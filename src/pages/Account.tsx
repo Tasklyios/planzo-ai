@@ -1,4 +1,4 @@
-<lov-code>
+
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun, Plus, Trash2, Check, Palette } from "lucide-react";
@@ -985,4 +985,189 @@ export default function Account() {
                       Cancel
                     </Button>
                     <Button onClick={createNewStyleProfile} disabled={loading}>
-                      {
+                      {loading ? "Creating..." : "Create Profile"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          ) : (
+            <div className="widget-box p-6">
+              <h2 className="text-xl font-semibold mb-6">Customize Content Settings</h2>
+              <p className="text-muted-foreground mb-6">
+                Customize your content settings to match your audience and niche. These settings will be used to generate content tailored to your needs.
+                <br />
+                <span className="mt-2 block font-medium text-primary">
+                  Note: Content style and personality are now managed through Style Profiles.
+                </span>
+              </p>
+              
+              <form className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Account Type</h3>
+                  <RadioGroup
+                    value={profile.account_type}
+                    onValueChange={(value) => setProfile(prev => ({ ...prev, account_type: value }))}
+                    className="grid gap-4"
+                  >
+                    {accountTypes.map((option) => (
+                      <div key={option.value} className="relative">
+                        <RadioGroupItem
+                          value={option.value}
+                          id={`account-${option.value}`}
+                          className="peer sr-only"
+                        />
+                        <Label
+                          htmlFor={`account-${option.value}`}
+                          className="flex flex-col space-y-1 p-4 rounded-lg border-2 border-muted bg-accent hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                        >
+                          <div className="font-semibold">{option.title}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {option.description}
+                          </div>
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+                
+                {profile.account_type === 'personal' && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Content Details</h3>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="contentNiche">Content Niche</Label>
+                      <Input
+                        id="contentNiche"
+                        value={profile.content_niche || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+                        placeholder="Enter your content niche (e.g., fitness, cooking, tech)"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="targetAudience">Target Audience</Label>
+                      <Input
+                        id="targetAudience"
+                        value={profile.target_audience || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                        placeholder="Describe your target audience"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="postingPlatform">Primary Posting Platform</Label>
+                      <Input
+                        id="postingPlatform"
+                        value={profile.posting_platforms?.[0] || ''}
+                        onChange={(e) => 
+                          setProfile(prev => ({ 
+                            ...prev, 
+                            posting_platforms: e.target.value ? [e.target.value] : [] 
+                          }))
+                        }
+                        placeholder="Which platform do you primarily post on?"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {profile.account_type === 'business' && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Business Details</h3>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="businessNiche">Business Niche</Label>
+                      <Input
+                        id="businessNiche"
+                        value={profile.business_niche || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, business_niche: e.target.value }))}
+                        placeholder="What industry is your business in? (e.g., consulting, education)"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="targetAudience">Target Audience</Label>
+                      <Input
+                        id="targetAudience"
+                        value={profile.target_audience || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                        placeholder="Describe your target audience"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="postingPlatform">Primary Posting Platform</Label>
+                      <Input
+                        id="postingPlatform"
+                        value={profile.posting_platforms?.[0] || ''}
+                        onChange={(e) => 
+                          setProfile(prev => ({ 
+                            ...prev, 
+                            posting_platforms: e.target.value ? [e.target.value] : [] 
+                          }))
+                        }
+                        placeholder="Which platform do you primarily post on?"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {profile.account_type === 'ecommerce' && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">E-commerce Details</h3>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="productNiche">Product Niche</Label>
+                      <Input
+                        id="productNiche"
+                        value={profile.product_niche || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, product_niche: e.target.value }))}
+                        placeholder="What products do you sell? (e.g., clothing, electronics)"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="targetAudience">Target Audience</Label>
+                      <Input
+                        id="targetAudience"
+                        value={profile.target_audience || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                        placeholder="Describe your target audience"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="postingPlatform">Primary Posting Platform</Label>
+                      <Input
+                        id="postingPlatform"
+                        value={profile.posting_platforms?.[0] || ''}
+                        onChange={(e) => 
+                          setProfile(prev => ({ 
+                            ...prev, 
+                            posting_platforms: e.target.value ? [e.target.value] : [] 
+                          }))
+                        }
+                        placeholder="Which platform do you primarily post on?"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex justify-end">
+                  <Button 
+                    type="button"
+                    onClick={handleUpdateProfile}
+                    disabled={loading}
+                  >
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+    </AuthGuard>
+  );
+}
