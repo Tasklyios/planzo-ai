@@ -11,10 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, FileText, Bookmark } from "lucide-react";
+import { Loader2, FileText, Bookmark, Anchor } from "lucide-react";
 
 const Script = () => {
   const [scriptContent, setScriptContent] = useState('');
@@ -192,147 +191,130 @@ const Script = () => {
         <p className="text-muted-foreground">Create engaging scripts for your content</p>
       </div>
 
-      <Tabs defaultValue="generator" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="generator">Script Generator</TabsTrigger>
-          <TabsTrigger value="ideas">Add Hooks & Ideas</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="generator" className="mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Script Generator</CardTitle>
-                <CardDescription>Enter your content details to generate a script</CardDescription>
-                <div className="flex items-center space-x-2 pt-2">
-                  <span className="text-sm">Custom Title</span>
-                  <Switch 
-                    checked={useExistingIdea}
-                    onCheckedChange={handleToggleIdeaSource} 
-                    id="use-existing-idea"
-                  />
-                  <span className="text-sm">Use Saved Idea</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {useExistingIdea ? (
-                  <div className="space-y-4">
-                    <Label>Select from your saved ideas</Label>
-                    <VideoIdeaSelector onSelectIdea={handleSelectIdea} />
-                  </div>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* Left side - Input area */}
+        <div className="md:col-span-5 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Script Content</CardTitle>
+              <CardDescription>
+                {selectedIdea ? `Script for: ${selectedIdea.title}` : "Write or generate your script here"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Textarea 
+                value={scriptContent}
+                onChange={(e) => setScriptContent(e.target.value)}
+                placeholder="Your script will appear here" 
+                className="min-h-[300px]"
+              />
+            </CardContent>
+            <CardFooter>
+              <Button
+                onClick={handleSaveScript}
+                disabled={loading || !scriptContent.trim()}
+                className="w-full"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
                 ) : (
                   <>
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Title</Label>
-                      <Input 
-                        id="title" 
-                        placeholder="e.g., How to meditate effectively" 
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea 
-                        id="description" 
-                        placeholder="e.g., A step-by-step guide to meditation"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="details">Additional details</Label>
-                      <Textarea 
-                        id="details" 
-                        placeholder="Add any specific details or requirements for your script"
-                        value={details}
-                        onChange={(e) => setDetails(e.target.value)}
-                      />
-                    </div>
+                    <Bookmark className="mr-2 h-4 w-4" />
+                    Save Script
                   </>
                 )}
-                <Button 
-                  onClick={handleGenerateScript} 
-                  className="w-full mt-2"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Generate Script
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Script Content</CardTitle>
-                <CardDescription>
-                  {selectedIdea ? `Script for: ${selectedIdea.title}` : "Your generated script will appear here"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Textarea 
-                  value={scriptContent}
-                  onChange={(e) => setScriptContent(e.target.value)}
-                  placeholder="Your script will be generated here" 
-                  className="min-h-[300px]"
-                />
-              </CardContent>
-              <CardFooter>
-                <Button
-                  onClick={handleSaveScript}
-                  disabled={loading || !scriptContent.trim()}
-                  className="w-full"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Bookmark className="mr-2 h-4 w-4" />
-                      Save Script
-                    </>
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        </TabsContent>
+              </Button>
+            </CardFooter>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Add a Hook</CardTitle>
+              <CardDescription>Select a hook to start your script</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <HookSelector onSelectHook={handleSelectHook} />
+            </CardContent>
+          </Card>
+        </div>
         
-        <TabsContent value="ideas" className="mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Select Video Idea</CardTitle>
-                <CardDescription>Choose from your existing video ideas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <VideoIdeaSelector onSelectIdea={handleSelectIdea} />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Add a Hook</CardTitle>
-                <CardDescription>Select a hook to start your script</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <HookSelector onSelectHook={handleSelectHook} />
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+        {/* Right side - Script generator */}
+        <div className="md:col-span-7 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Script Generator</CardTitle>
+              <CardDescription>Enter your content details to generate a script</CardDescription>
+              <div className="flex items-center space-x-2 pt-2">
+                <span className="text-sm">Custom Title</span>
+                <Switch 
+                  checked={useExistingIdea}
+                  onCheckedChange={handleToggleIdeaSource} 
+                  id="use-existing-idea"
+                />
+                <span className="text-sm">Use Saved Idea</span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {useExistingIdea ? (
+                <div className="space-y-4">
+                  <Label>Select from your saved ideas</Label>
+                  <VideoIdeaSelector onSelectIdea={handleSelectIdea} />
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input 
+                      id="title" 
+                      placeholder="e.g., How to meditate effectively" 
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea 
+                      id="description" 
+                      placeholder="e.g., A step-by-step guide to meditation"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="details">Additional details</Label>
+                    <Textarea 
+                      id="details" 
+                      placeholder="Add any specific details or requirements for your script"
+                      value={details}
+                      onChange={(e) => setDetails(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+              <Button 
+                onClick={handleGenerateScript} 
+                className="w-full mt-2"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Generate Script
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

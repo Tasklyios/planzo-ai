@@ -23,6 +23,17 @@ interface HookSelectorProps {
   onSelectHook: (hookText: string) => void;
 }
 
+// Helper function to normalize hook data structure
+const normalizeHook = (hook: any): HookType => {
+  return {
+    id: hook.id,
+    category: hook.category,
+    hook_text: hook.hook_text || hook.hook || '',
+    created_at: hook.created_at,
+    user_id: hook.user_id
+  };
+};
+
 const HookSelector = ({ onSelectHook }: HookSelectorProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
@@ -36,13 +47,16 @@ const HookSelector = ({ onSelectHook }: HookSelectorProps) => {
   
   // Fetch saved hooks
   const { 
-    data: savedHooks, 
+    data: savedHooksRaw, 
     isLoading: isLoadingSavedHooks,
     refetch: refetchSavedHooks
   } = useQuery({
     queryKey: ['savedHooks'],
     queryFn: getSavedHooks,
   });
+
+  // Normalize saved hooks to match HookType
+  const savedHooks = savedHooksRaw ? savedHooksRaw.map(normalizeHook) : [];
 
   // Clear generated hooks when the sheet is closed
   useEffect(() => {
@@ -57,12 +71,8 @@ const HookSelector = ({ onSelectHook }: HookSelectorProps) => {
     return hooks
       .filter(hook => 
         hook.category === category && 
-        (searchTerm === '' || getHookText(hook).toLowerCase().includes(searchTerm.toLowerCase()))
+        (searchTerm === '' || hook.hook_text.toLowerCase().includes(searchTerm.toLowerCase()))
       );
-  };
-
-  const getHookText = (hook: HookType): string => {
-    return hook.hook_text || hook.hook || '';
   };
 
   const handleSelectHook = (hookText: string) => {
@@ -82,11 +92,14 @@ const HookSelector = ({ onSelectHook }: HookSelectorProps) => {
 
     setGenerating(true);
     try {
-      const hooks = await generateHooks(topic, audience, details);
-      setGeneratedHooks(hooks);
+      const generatedRawHooks = await generateHooks(topic, audience, details);
+      // Normalize the generated hooks to match HookType
+      const normalizedHooks = generatedRawHooks.map(normalizeHook);
+      setGeneratedHooks(normalizedHooks);
+      
       toast({
         title: "Hooks generated",
-        description: `${hooks.length} hooks have been generated for your topic.`
+        description: `${normalizedHooks.length} hooks have been generated for your topic.`
       });
     } catch (error: any) {
       console.error("Error generating hooks:", error);
@@ -173,9 +186,9 @@ const HookSelector = ({ onSelectHook }: HookSelectorProps) => {
                             key={hook.id}
                             variant="ghost"
                             className="w-full justify-start text-left p-3 h-auto"
-                            onClick={() => handleSelectHook(getHookText(hook))}
+                            onClick={() => handleSelectHook(hook.hook_text)}
                           >
-                            {getHookText(hook)}
+                            {hook.hook_text}
                           </Button>
                         ))
                       )}
@@ -262,9 +275,9 @@ const HookSelector = ({ onSelectHook }: HookSelectorProps) => {
                               key={`generated-${category}-${index}`}
                               variant="ghost"
                               className="w-full justify-start text-left p-3 h-auto"
-                              onClick={() => handleSelectHook(getHookText(hook))}
+                              onClick={() => handleSelectHook(hook.hook_text)}
                             >
-                              {getHookText(hook)}
+                              {hook.hook_text}
                             </Button>
                           ))
                         )}
