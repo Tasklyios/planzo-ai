@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button"; // Add Button import
 import EditIdea from "@/components/EditIdea";
 import { useIdeaGenerator } from "@/hooks/use-idea-generator";
 import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
