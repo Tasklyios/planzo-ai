@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -195,10 +196,10 @@ const Generator = () => {
             <button 
               onClick={generateIdeas} 
               disabled={loading} 
-              className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
+              className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white dark:text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
             >
               {loading ? <>
-                  <Spinner size="sm" className="text-primary-foreground" />
+                  <Spinner size="sm" className="text-white dark:text-white" />
                   <span>Generating...</span>
                 </> : <>
                   ⚡ Generate Viral Ideas
