@@ -1,4 +1,4 @@
-<lov-code>
+
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun, Plus, Trash2, Check, Palette } from "lucide-react";
@@ -21,6 +21,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 const themeOptions = [
   {
@@ -907,7 +916,7 @@ export default function Account() {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              className="text-destructive hover:text-destructive/90 hover:bg-destructive/10 mt-2"
+                              className="text-destructive hover:text-destructive/90 hover:bg-destructive/10 mt-auto"
                               onClick={() => deleteStyleProfile(profile.id)}
                               disabled={loading}
                             >
@@ -967,4 +976,126 @@ export default function Account() {
                     </div>
                   )}
 
-                  {profile.account_type === '
+                  {profile.account_type === 'ecommerce' && (
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="product_niche">Product Niche</Label>
+                      <Input
+                        id="product_niche"
+                        placeholder="E.g., Fashion, Electronics, Home goods..."
+                        value={profile.product_niche || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, product_niche: e.target.value }))}
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="content_niche">Content Niche</Label>
+                    <Input
+                      id="content_niche"
+                      placeholder="E.g., Fitness, Technology, Cooking..."
+                      value={profile.content_niche || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="target_audience">Target Audience</Label>
+                    <Input
+                      id="target_audience"
+                      placeholder="E.g., Young adults, Professionals, Parents..."
+                      value={profile.target_audience || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="content_style">Content Style</Label>
+                    <Textarea
+                      id="content_style"
+                      placeholder="Describe the style of your content..."
+                      className="h-24"
+                      value={profile.content_style || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="content_personality">Content Personality</Label>
+                    <Textarea
+                      id="content_personality"
+                      placeholder="Describe the personality or tone of your content..."
+                      className="h-24"
+                      value={profile.content_personality || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Saving..." : "Save Changes"}
+                </Button>
+              </form>
+            </div>
+          )}
+
+          {/* Style Profile creation dialog */}
+          <Dialog open={isNewProfileDialogOpen} onOpenChange={setIsNewProfileDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Create New Style Profile</DialogTitle>
+                <DialogDescription>
+                  Create a new style profile to quickly switch between different content styles.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="profileName">Profile Name</Label>
+                  <Input
+                    id="profileName" 
+                    value={newProfileName}
+                    onChange={(e) => setNewProfileName(e.target.value)}
+                    placeholder="E.g., Professional, Casual, Energetic..."
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="contentStyle">Content Style</Label>
+                  <Textarea
+                    id="contentStyle"
+                    value={newProfileContentStyle}
+                    onChange={(e) => setNewProfileContentStyle(e.target.value)}
+                    placeholder="Describe the style of your content..."
+                    className="h-20"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="contentPersonality">Content Personality</Label>
+                  <Textarea
+                    id="contentPersonality"
+                    value={newProfileContentPersonality}
+                    onChange={(e) => setNewProfileContentPersonality(e.target.value)}
+                    placeholder="Describe the personality or tone of your content..."
+                    className="h-20"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsNewProfileDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={createNewStyleProfile}
+                  disabled={loading || !newProfileName.trim()}
+                >
+                  {loading ? "Creating..." : "Create Profile"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+    </AuthGuard>
+  );
+}
