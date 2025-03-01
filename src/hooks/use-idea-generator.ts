@@ -132,7 +132,7 @@ export const useIdeaGenerator = () => {
           videoTypeValue = profile.business_niche || "Business Promotion";
         } else if (profile.account_type === 'ecommerce' && profile.product_niche) {
           nicheValue = profile.product_niche;
-          videoTypeValue = profile.product_niche || "Product Showcase";
+          videoTypeValue = profile.content_niche || "Product Showcase";
         } else {
           nicheValue = profile.content_niche || "";
           videoTypeValue = profile.content_niche || "";
