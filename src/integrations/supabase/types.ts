@@ -236,9 +236,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      link_stripe_customer: {
+        Args: {
+          p_email: string
+          p_stripe_customer_id: string
+          p_stripe_subscription_id: string
+          p_tier: Database["public"]["Enums"]["subscription_tier"]
+          p_current_period_end: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
-      subscription_tier: "free" | "pro" | "business"
+      subscription_tier: "free" | "pro" | "business" | "plus"
     }
     CompositeTypes: {
       [_ in never]: never
