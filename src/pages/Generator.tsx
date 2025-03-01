@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -70,7 +71,7 @@ const Generator = () => {
         return;
       }
 
-      // Instead of creating a new scheduled_content entry, update the video_ideas table
+      // Update only the specific idea that was selected
       const {
         error: updateError
       } = await supabase.from("video_ideas")
@@ -83,6 +84,13 @@ const Generator = () => {
         console.error("Error adding to calendar:", updateError);
         throw new Error(`Error adding to calendar: ${updateError.message}`);
       }
+      
+      // Update the local state to reflect the change
+      setIdeas(prevIdeas => prevIdeas.map(idea => 
+        idea.id === addingToCalendar.idea.id 
+          ? { ...idea, scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString() } 
+          : idea
+      ));
       
       toast({
         title: "Success",

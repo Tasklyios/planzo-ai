@@ -231,10 +231,11 @@ export const useIdeaGenerator = () => {
       title: idea.title,
       category: idea.category,
       description: idea.description,
-      tags: idea.tags,
+      tags: idea.tags || [],
       platform: idea.platform,
       color: idea.color,
       is_saved: idea.is_saved || false,
+      scheduled_for: idea.scheduled_for // Make sure to include scheduled_for if it exists
     };
   };
 
@@ -415,7 +416,8 @@ export const useIdeaGenerator = () => {
           user_id: userId,
           color: 'blue',
           is_saved: false,
-          is_ad: isAdRequest
+          is_ad: isAdRequest,
+          // IMPORTANT: Don't add scheduled_for here - this was causing ideas to be auto-added to calendar
         }));
 
         const { error: saveError } = await supabase
