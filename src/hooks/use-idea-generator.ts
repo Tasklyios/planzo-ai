@@ -197,7 +197,17 @@ export const useIdeaGenerator = () => {
           throw new Error(`Edge function error: ${error.message || 'Unknown error'}`);
         }
 
-        if (!data?.ideas || !Array.isArray(data.ideas)) {
+        if (!data) {
+          console.error("Empty response from function");
+          throw new Error('Empty response from AI service');
+        }
+
+        if (data.error) {
+          console.error("Error in function response:", data.error);
+          throw new Error(`Error from AI service: ${data.error}`);
+        }
+
+        if (!data.ideas || !Array.isArray(data.ideas)) {
           console.error("Invalid response format:", data);
           throw new Error('Invalid response format from AI: ideas array is missing');
         }

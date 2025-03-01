@@ -83,6 +83,19 @@ serve(async (req) => {
 
     console.log("Using prompt:", promptContent);
 
+    if (!openAIApiKey) {
+      console.error("OpenAI API key is missing");
+      return new Response(
+        JSON.stringify({ 
+          error: "OpenAI API key is not configured. Please set the OPENAI_API_KEY in your Supabase project."
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // Make the request to OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -105,14 +118,23 @@ serve(async (req) => {
     });
 
     // Process the response
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("OpenAI API error:", errorData);
+      return new Response(
+        JSON.stringify({ 
+          error: `OpenAI API error: ${errorData.error?.message || 'Unknown error'}` 
+        }),
+        {
+          status: 502, // Bad Gateway to indicate upstream service error
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+    
     const data = await response.json();
     console.log("OpenAI response status:", response.status);
     
-    if (!response.ok) {
-      console.error("OpenAI API error:", data);
-      throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
-    }
-
     const aiResponse = data.choices[0].message.content;
     console.log("OpenAI response:", aiResponse);
 
@@ -125,14 +147,28 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (parseError) {
-      console.error("Error parsing OpenAI response:", parseError);
-      throw new Error(`Failed to parse OpenAI response: ${parseError.message}`);
+      console.error("Error parsing OpenAI response:", parseError, "Raw response:", aiResponse);
+      return new Response(
+        JSON.stringify({ 
+          error: `Failed to parse OpenAI response: ${parseError.message}`,
+          rawResponse: aiResponse 
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
   } catch (error) {
     console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message || 'An unknown error occurred' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: error.message || 'An unknown error occurred' 
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
