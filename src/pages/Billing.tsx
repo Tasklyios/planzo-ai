@@ -45,20 +45,34 @@ const Billing = () => {
         return;
       }
 
+      // Get the subscription data with detailed logging
       const { data, error: subError } = await supabase
         .from('user_subscriptions')
         .select('*')
         .eq('user_id', session.user.id)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors
+        .maybeSingle();
 
-      if (subError) throw subError;
+      if (subError) {
+        console.error("Error fetching subscription data:", subError);
+        throw subError;
+      }
       
-      console.log("Fetched subscription data:", data);
+      console.log("Raw subscription data from database:", data);
       
       // If we have valid subscription data, use it
-      if (data && data.tier) {
-        setSubscription(data);
+      if (data) {
+        // Make sure we're explicitly getting the tier as a string and logging it
+        const subscriptionTier = data.tier ? String(data.tier).toLowerCase() : 'free';
+        console.log("Subscription tier detected:", subscriptionTier);
+        
+        setSubscription({
+          tier: subscriptionTier as 'free' | 'pro' | 'plus' | 'business',
+          current_period_end: data.current_period_end,
+          stripe_customer_id: data.stripe_customer_id,
+          stripe_subscription_id: data.stripe_subscription_id
+        });
       } else {
+        console.log("No subscription data found, defaulting to free tier");
         // Default to free tier if no subscription is found
         setSubscription({
           tier: 'free',
@@ -279,4 +293,3 @@ const Billing = () => {
 };
 
 export default Billing;
-
