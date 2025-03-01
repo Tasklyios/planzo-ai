@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -96,7 +95,7 @@ const Hooks = () => {
     deleteHookMutation.mutate(id);
   };
 
-  const filterHooksByCategory = (hooks: HookType[] | SavedHook[], category: string) => {
+  const filterHooksByCategory = (hooks: (HookType[] | SavedHook[]), category: string): (HookType | SavedHook)[] => {
     return hooks.filter(hook => hook.category === category);
   };
 

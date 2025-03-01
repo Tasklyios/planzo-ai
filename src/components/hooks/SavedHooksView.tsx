@@ -3,15 +3,15 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bookmark, Loader2 } from "lucide-react";
-import { SavedHook } from "@/types/hooks";
+import { HookType, SavedHook } from "@/types/hooks";
 
 interface SavedHooksViewProps {
   savedHooks: SavedHook[] | undefined;
   isFetchingHooks: boolean;
   handleDeleteHook: (id: string) => void;
   isDeleting: boolean;
-  filterHooksByCategory: (hooks: SavedHook[], category: string) => SavedHook[];
-  getHookText: (hook: SavedHook) => string;
+  filterHooksByCategory: (hooks: (SavedHook[] | HookType[]), category: string) => (HookType | SavedHook)[];
+  getHookText: (hook: HookType | SavedHook) => string;
 }
 
 const SavedHooksView = ({
