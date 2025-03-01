@@ -1,12 +1,10 @@
 
 // This is a re-export from our main toast hook
-import { useToast as useToastHook, toast } from "@/hooks/use-toast";
+import { useToast as useToastHook, toast as toastFunction, ToastProps, ToastActionElement } from "@/hooks/use-toast";
+
+// Export types
+export type { ToastProps, ToastActionElement };
 
 // Export the hook and toast function
-export const useToast = () => {
-  return {
-    ...useToastHook()
-  };
-};
-
-export { toast };
+export const useToast = useToastHook;
+export const toast = toastFunction;

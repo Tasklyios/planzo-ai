@@ -18,11 +18,12 @@ interface ToastState {
   toasts: ToastProps[];
 }
 
-interface ToastContextValue extends ToastState {
+// Updated interface with the toast function
+export interface ToastContextValue extends ToastState {
   addToast: (props: Omit<ToastProps, "id">) => void;
   updateToast: (id: string, props: Partial<ToastProps>) => void;
   dismissToast: (id: string) => void;
-  toast: (props: Omit<ToastProps, "id">) => void; // Add toast function directly to the context
+  toast: (props: Omit<ToastProps, "id">) => void;
 }
 
 const ToastContext = React.createContext<ToastContextValue | undefined>(undefined);
@@ -37,7 +38,6 @@ export function useToast() {
   return context;
 }
 
-// We need to use a functional approach without JSX in a .ts file
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = React.useReducer(
     (state: ToastState, action: any) => {
@@ -89,12 +89,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       addToast,
       updateToast,
       dismissToast,
-      toast, // Include toast in the context value
+      toast,
     }),
     [state, addToast, updateToast, dismissToast, toast]
   );
 
-  // Use React.createElement instead of JSX
   return React.createElement(
     ToastContext.Provider,
     { value },
@@ -102,8 +101,41 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Helper function to create toast - now just a wrapper around the context's toast
-export function toast({ title, description, variant = "default", action }: Omit<ToastProps, "id">) {
+// Standalone toast function implementation
+type ToastFunction = {
+  (props: Omit<ToastProps, "id">): void;
+  default: (props: Omit<ToastProps, "id" | "variant">) => void;
+  destructive: (props: Omit<ToastProps, "id" | "variant">) => void;
+  success: (description: string, title?: string) => void;
+  error: (description: string, title?: string) => void;
+  info: (description: string, title?: string) => void;
+};
+
+// Create a properly callable toast function
+const toastFunction = ((props: Omit<ToastProps, "id">) => {
   const context = useToast();
-  context.toast({ title, description, variant, action });
-}
+  context.toast(props);
+}) as ToastFunction;
+
+// Add helper methods
+toastFunction.default = (props: Omit<ToastProps, "id" | "variant">) => {
+  toastFunction({ ...props, variant: "default" });
+};
+
+toastFunction.destructive = (props: Omit<ToastProps, "id" | "variant">) => {
+  toastFunction({ ...props, variant: "destructive" });
+};
+
+toastFunction.success = (description: string, title?: string) => {
+  toastFunction({ title: title || "Success", description, variant: "default" });
+};
+
+toastFunction.error = (description: string, title?: string) => {
+  toastFunction({ title: title || "Error", description, variant: "destructive" });
+};
+
+toastFunction.info = (description: string, title?: string) => {
+  toastFunction({ title: title || "Info", description, variant: "default" });
+};
+
+export const toast = toastFunction;
