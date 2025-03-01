@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -106,12 +105,9 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     if (!idea) return;
 
     try {
-      // When an idea is saved (bookmarked), ensure it has "ideas" as status
-      // This is critical for showing the idea in the Ideas column
-      const status = idea.is_saved ? "ideas" : idea.status;
+      console.log("Saving idea with status:", idea.status, "is_saved:", idea.is_saved);
       
-      console.log("Saving idea with status:", status, "is_saved:", idea.is_saved);
-
+      // Important: Ensure we preserve the status - this is critical to keep the idea in its current column
       const { error } = await supabase
         .from("video_ideas")
         .update({
@@ -123,8 +119,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           color: idea.color || 'blue',
           script: idea.script,
           scheduled_for: idea.scheduled_for,
-          is_saved: idea.is_saved,
-          status: status
+          is_saved: idea.is_saved !== false, // Ensure it stays saved when in the planner
+          status: idea.status || "ideas" // Preserve the status or default to "ideas"
         })
         .eq("id", idea.id);
 
@@ -218,8 +214,9 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       return { 
         ...prev, 
         is_saved: checked,
-        // If it's being saved, set status to "ideas" to ensure it shows in the Ideas column
-        status: checked ? "ideas" : prev.status 
+        // IMPORTANT: Only update status if it's being saved and doesn't already have a status
+        // This preserves the column position
+        status: checked && !prev.status ? "ideas" : prev.status 
       };
     });
   };
