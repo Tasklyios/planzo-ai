@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import AuthGuard from "@/components/AuthGuard";
 import { useCompletion } from "ai/react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import StyleProfileSelector from "@/components/StyleProfileSelector";
 
 export default function Script() {
   const [videoUrl, setVideoUrl] = useState("");
@@ -74,10 +76,6 @@ export default function Script() {
     }
   };
 
-  const handleStyleChange = () => {
-    navigate('/account?tab=styles');
-  };
-
   if (!niche || !audience || !platform || !videoType) {
     return (
       <AuthGuard>
@@ -110,24 +108,10 @@ export default function Script() {
           </div>
 
           <div className="widget-box p-6">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-xl font-semibold">Your Content Style</h2>
-                <p className="text-muted-foreground mt-1">
-                  {contentStyle || "No style set"}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Personality: {contentPersonality || "Not specified"}
-                </p>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleStyleChange}
-              >
-                Change Style Profile
-              </Button>
-            </div>
+            <StyleProfileSelector 
+              contentStyle={contentStyle} 
+              contentPersonality={contentPersonality} 
+            />
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
