@@ -36,6 +36,7 @@ function useToast() {
   return context;
 }
 
+// We need to use a functional approach without JSX in a .ts file
 function ToastProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = React.useReducer(
     (state: ToastState, action: any) => {
@@ -86,7 +87,12 @@ function ToastProvider({ children }: { children: React.ReactNode }) {
     [state, addToast, updateToast, dismissToast]
   );
 
-  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
+  // Use React.createElement instead of JSX
+  return React.createElement(
+    ToastContext.Provider,
+    { value },
+    children
+  );
 }
 
 // Helper function to create toast
