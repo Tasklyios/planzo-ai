@@ -16,7 +16,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GeneratedIdea, ScriptHook, ScriptStructure, StyleProfile } from "@/types/idea";
-import { Save, Search, Upload, Sparkles, Plus, Check, Trash2 } from "lucide-react";
+import { Save, Search, Upload, Sparkles, Plus, Check, Trash2, Paintbrush } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -28,6 +28,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import ChatWidget from "@/components/ChatWidget";
 import SpreadsheetUploader from "@/components/SpreadsheetUploader";
+import { Badge } from "@/components/ui/badge";
 
 import {
   Accordion,
@@ -331,6 +332,12 @@ export default function Script() {
     }
   };
 
+  const navigateToStyleProfiles = () => {
+    navigate('/account');
+    // Set the active tab to 'styles' in localStorage so Account component opens it
+    localStorage.setItem('accountActiveTab', 'styles');
+  };
+
   useEffect(() => {
     fetchSavedIdeas();
     fetchHooksAndStructures();
@@ -598,121 +605,24 @@ export default function Script() {
         </div>
 
         <div className="space-y-6">
-          {/* Style Profile Section */}
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="style-profile">
-              <AccordionTrigger className="text-primary">
-                <span className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Style Profile
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="space-y-6 pt-4">
-                <div className="space-y-4">
-                  {activeStyleProfile ? (
-                    <div className="p-4 bg-muted rounded-lg">
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-medium">{activeStyleProfile.name}</h3>
-                        <div className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
-                          Active
-                        </div>
-                      </div>
-                      
-                      {activeStyleProfile.content_style && (
-                        <div className="mt-3">
-                          <h4 className="text-sm font-medium mb-1">Content Style</h4>
-                          <p className="text-sm text-muted-foreground">{activeStyleProfile.content_style}</p>
-                        </div>
-                      )}
-                      
-                      {activeStyleProfile.content_personality && (
-                        <div className="mt-3">
-                          <h4 className="text-sm font-medium mb-1">Content Personality</h4>
-                          <p className="text-sm text-muted-foreground">{activeStyleProfile.content_personality}</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center p-4 border border-dashed rounded-lg">
-                      <p className="text-muted-foreground">No active style profile selected</p>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium">Your Style Profiles</h3>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsCreatingProfile(!isCreatingProfile)}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        New Profile
-                      </Button>
-                    </div>
-                    
-                    {isCreatingProfile && (
-                      <div className="flex items-center gap-2 mb-4">
-                        <Input
-                          placeholder="Profile Name"
-                          value={newStyleProfileName}
-                          onChange={(e) => setNewStyleProfileName(e.target.value)}
-                        />
-                        <Button size="sm" onClick={createStyleProfile}>Create</Button>
-                      </div>
-                    )}
-                    
-                    <div className="grid gap-2 mt-2">
-                      {styleProfiles.map((profile) => (
-                        <div
-                          key={profile.id}
-                          className={cn(
-                            "flex justify-between items-center p-3 rounded-md",
-                            profile.is_active
-                              ? "bg-primary/10 border border-primary/20"
-                              : "bg-card hover:bg-accent/50 border"
-                          )}
-                        >
-                          <span className="font-medium">{profile.name}</span>
-                          <div className="flex items-center gap-2">
-                            {!profile.is_active && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setActiveProfile(profile.id)}
-                                  title="Set as active"
-                                >
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => deleteStyleProfile(profile.id)}
-                                  title="Delete profile"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {styleProfiles.length === 0 && !isCreatingProfile && (
-                        <div className="text-center p-4 border border-dashed rounded-lg">
-                          <p className="text-muted-foreground">No style profiles yet</p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Create a profile to save your content style preferences
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          {/* Style Profile Section - Updated to match Generator.tsx */}
+          {activeStyleProfile && (
+            <div className="mb-6 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-primary/10 hover:bg-primary/15">
+                  <Paintbrush className="h-3.5 w-3.5 mr-1.5" />
+                  Style: {activeStyleProfile.name}
+                </Badge>
+              </div>
+              <Button 
+                variant="link" 
+                onClick={navigateToStyleProfiles}
+                className="text-sm"
+              >
+                Change Style Profile
+              </Button>
+            </div>
+          )}
 
           <div className="space-y-4">
             <Label>Choose your starting point</Label>
