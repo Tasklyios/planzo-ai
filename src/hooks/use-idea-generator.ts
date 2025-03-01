@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { GeneratedIdea } from "@/types/idea";
+import { GeneratedIdea, PreviousIdeasContext } from "@/types/idea";
 
 export const useIdeaGenerator = () => {
   const [niche, setNiche] = useState(() => localStorage.getItem("niche") || "");
@@ -12,6 +13,12 @@ export const useIdeaGenerator = () => {
   const [loading, setLoading] = useState(false);
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
   const [customIdeas, setCustomIdeas] = useState("");
+  const [previousIdeasContext, setPreviousIdeasContext] = useState<PreviousIdeasContext>({
+    count: 0,
+    titles: [],
+    categories: [],
+    descriptions: []
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -220,6 +227,31 @@ export const useIdeaGenerator = () => {
     };
   };
 
+  // Update previous ideas context with newly generated ideas
+  const updatePreviousIdeasContext = (newIdeas: GeneratedIdea[]) => {
+    // Limit the number of stored previous ideas to avoid excessive context
+    const maxStoredIdeas = 20;
+    
+    // Extract relevant information from new ideas
+    const newTitles = newIdeas.map(idea => idea.title);
+    const newCategories = newIdeas.map(idea => idea.category);
+    const newDescriptions = newIdeas.map(idea => idea.description);
+    
+    // Create updated context
+    const updatedContext: PreviousIdeasContext = {
+      count: previousIdeasContext.count + newIdeas.length,
+      titles: [...previousIdeasContext.titles, ...newTitles].slice(-maxStoredIdeas),
+      categories: [...previousIdeasContext.categories, ...newCategories].slice(-maxStoredIdeas),
+      descriptions: [...previousIdeasContext.descriptions, ...newDescriptions].slice(-maxStoredIdeas)
+    };
+    
+    // Update state and localStorage
+    setPreviousIdeasContext(updatedContext);
+    localStorage.setItem('previousIdeasContext', JSON.stringify(updatedContext));
+    
+    console.log("Updated previous ideas context:", updatedContext);
+  };
+
   const generateIdeas = async () => {
     if (!niche || !audience || !videoType) {
       toast({
@@ -295,7 +327,15 @@ export const useIdeaGenerator = () => {
                          videoType.toLowerCase().includes('advertisement') ||
                          videoType.toLowerCase().includes('promotional');
 
-      console.log("Calling generate-ideas function with:", { niche, audience, videoType, platform, customIdeas, isAdRequest });
+      console.log("Calling generate-ideas function with:", { 
+        niche, 
+        audience, 
+        videoType, 
+        platform, 
+        customIdeas, 
+        isAdRequest,
+        previousIdeasContext 
+      });
       
       try {
         const { data, error } = await supabase.functions.invoke('generate-ideas', {
@@ -304,7 +344,8 @@ export const useIdeaGenerator = () => {
             audience: audience.trim(),
             videoType: videoType.trim(),
             platform: platform,
-            customIdeas: customIdeas.trim()
+            customIdeas: customIdeas.trim(),
+            previousIdeas: previousIdeasContext // Pass the context to avoid repeating ideas
           },
         });
 
@@ -348,7 +389,7 @@ export const useIdeaGenerator = () => {
           user_id: userId,
           color: 'blue',
           is_saved: false,
-          is_ad: isAdRequest // Now the column exists in the database
+          is_ad: isAdRequest
         }));
 
         const { error: saveError } = await supabase
@@ -374,6 +415,9 @@ export const useIdeaGenerator = () => {
 
         const transformedIdeas = (savedIdeas || []).map(transformSupabaseIdea);
         setIdeas(transformedIdeas);
+        
+        // Update the previous ideas context with new ideas
+        updatePreviousIdeasContext(transformedIdeas);
 
         toast({
           title: "Success!",
@@ -411,6 +455,8 @@ export const useIdeaGenerator = () => {
     setIdeas,
     generateIdeas,
     customIdeas,
-    setCustomIdeas
+    setCustomIdeas,
+    previousIdeasContext,
+    setPreviousIdeasContext
   };
 };

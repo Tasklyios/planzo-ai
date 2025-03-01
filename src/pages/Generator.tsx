@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -9,7 +9,7 @@ import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
 import InputForm from "@/components/idea-generator/InputForm";
 import IdeasGrid from "@/components/idea-generator/IdeasGrid";
 import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
-import { AddToCalendarIdea } from "@/types/idea";
+import { AddToCalendarIdea, PreviousIdeasContext } from "@/types/idea";
 
 const Generator = () => {
   const {
@@ -26,13 +26,27 @@ const Generator = () => {
     setIdeas,
     generateIdeas,
     customIdeas,
-    setCustomIdeas
+    setCustomIdeas,
+    previousIdeasContext,
+    setPreviousIdeasContext
   } = useIdeaGenerator();
 
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Load previous ideas context from localStorage on component mount
+  useEffect(() => {
+    const savedContext = localStorage.getItem('previousIdeasContext');
+    if (savedContext) {
+      try {
+        setPreviousIdeasContext(JSON.parse(savedContext));
+      } catch (error) {
+        console.error("Error parsing previous ideas context:", error);
+      }
+    }
+  }, [setPreviousIdeasContext]);
 
   const handleAddToCalendar = async () => {
     if (!addingToCalendar?.idea) return;

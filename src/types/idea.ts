@@ -31,6 +31,13 @@ export interface GeneratedIdea {
   is_saved?: boolean;
 }
 
+export interface PreviousIdeasContext {
+  count: number;
+  titles: string[];
+  categories: string[];
+  descriptions: string[];
+}
+
 export interface AddToCalendarIdea {
   idea: GeneratedIdea;
   title: string;
