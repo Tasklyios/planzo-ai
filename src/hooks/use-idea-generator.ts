@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -129,30 +128,38 @@ export const useIdeaGenerator = () => {
         return;
       }
 
-      // Check usage limits
-      const { data: canGenerate, error: usageError } = await supabase
-        .rpc('check_and_increment_usage', {
-          p_user_id: userId,
-          p_action: 'ideas'
-        });
+      // Use the check-usage-limits edge function instead of rpc call
+      const { data: usageResponse, error: usageError } = await supabase.functions.invoke('check-usage-limits', {
+        body: {
+          user_id: userId,
+          action: 'ideas'
+        }
+      });
 
       if (usageError) {
         console.error("Usage check error:", usageError);
         throw new Error(`Usage check error: ${usageError.message}`);
       }
 
-      if (!canGenerate) {
+      // Check if we can proceed or not
+      if (!usageResponse.canProceed) {
+        console.error("Usage limit reached:", usageResponse.message);
+        
         const { data: subscription } = await supabase
           .from('user_subscriptions')
           .select('tier')
           .eq('user_id', userId)
           .single();
 
-        let message = "You've reached your daily limit for generating ideas. ";
+        // Prepare upgrade message based on current tier
+        let message = usageResponse.message || "You've reached your daily limit for generating ideas. ";
+        
         if (subscription?.tier === 'free') {
-          message += "Upgrade to Pro for more generations!";
+          message += " Upgrade to Pro or Plus for more generations!";
         } else if (subscription?.tier === 'pro') {
-          message += "Upgrade to Business for unlimited generations!";
+          message += " Upgrade to Plus or Business for more generations!";
+        } else if (subscription?.tier === 'plus') {
+          message += " Upgrade to Business for unlimited generations!";
         }
 
         toast({
