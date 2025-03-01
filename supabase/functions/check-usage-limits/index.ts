@@ -10,104 +10,81 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const { user_id, action } = await req.json();
-
-    // Skip database queries for non-authenticated requests
-    if (!user_id) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          canProceed: false, 
-          error: "User not authenticated" 
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Initialize Supabase client with service role key
+    // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get the user's subscription tier
-    const { data: subscriptionData, error: subscriptionError } = await supabase
-      .from("user_subscriptions")
-      .select("tier")
-      .eq("user_id", user_id)
-      .maybeSingle();
+    // Get request body
+    const { action } = await req.json();
 
-    if (subscriptionError) {
-      console.error("Error fetching subscription:", subscriptionError);
-    }
-
-    const tier = subscriptionData?.tier || "free";
-
-    // Call the database function to check and increment usage
-    const { data, error } = await supabase
-      .rpc("check_and_increment_usage", { feature_name: action });
-
-    if (error) {
-      console.error("Error checking usage limits:", error);
+    if (!action) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          canProceed: false, 
-          error: error.message 
-        }),
+        JSON.stringify({ error: "Missing required parameters" }),
         { 
-          status: 500, 
+          status: 400, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
     }
 
-    // Get current usage for reporting
-    const { data: usageData, error: usageError } = await supabase
-      .from("user_daily_usage")
-      .select(action === "ideas" ? "ideas_generated" : "scripts_generated")
-      .eq("user_id", user_id)
-      .eq("date", new Date().toISOString().split('T')[0])
-      .maybeSingle();
-
-    if (usageError) {
-      console.error("Error fetching usage data:", usageError);
+    // Get auth token from request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "No authorization header" }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
     }
 
-    // Determine max usage based on tier
-    let maxUsage = 5; // Default for free tier
-    if (tier === "plus") maxUsage = 50;
-    else if (tier === "pro") maxUsage = 200;
-    else if (tier === "business") maxUsage = 1000;
+    // Set the auth header for the supabase client
+    supabase.auth.setAuth(authHeader.replace("Bearer ", ""));
 
-    const currentUsage = action === "ideas" 
-      ? (usageData?.ideas_generated || 0)
-      : (usageData?.scripts_generated || 0);
+    // Call the check_and_increment_usage function
+    const { data, error } = await supabase.rpc('check_and_increment_usage', {
+      feature_name: action
+    });
 
-    console.log(`Can proceed: ${data} (${currentUsage}/${maxUsage})\n`);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        canProceed: data,
-        tier,
-        usage: {
-          current: currentUsage,
-          max: maxUsage
+    if (error) {
+      console.error("Error checking usage:", error);
+      return new Response(
+        JSON.stringify({ 
+          canProceed: false,
+          message: "Error checking usage limits",
+          error: error.message
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    console.error("Unexpected error:", err);
+      );
+    }
+
+    // Return the result
     return new Response(
       JSON.stringify({ 
-        success: false, 
+        canProceed: data, 
+        message: data ? "Usage limit check passed" : "You've reached your daily limit for this feature" 
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
+    );
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    return new Response(
+      JSON.stringify({ 
         canProceed: false, 
-        error: err.message 
+        message: "An unexpected error occurred", 
+        error: error.message 
       }),
       { 
         status: 500, 

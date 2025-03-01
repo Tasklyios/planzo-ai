@@ -357,13 +357,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_and_increment_usage: {
-        Args: {
-          p_user_id: string
-          p_action: string
-        }
-        Returns: boolean
-      }
+      check_and_increment_usage:
+        | {
+            Args: {
+              feature_name: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_user_id: string
+              p_action: string
+            }
+            Returns: boolean
+          }
       get_hooks: {
         Args: {
           user_id_param: string

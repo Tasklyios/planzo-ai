@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -315,15 +314,13 @@ export const useIdeaGenerator = () => {
 
       // Use the check-usage-limits edge function
       const { data: usageResponse, error: usageError } = await supabase.functions.invoke('check-usage-limits', {
-        body: {
-          user_id: userId,
-          action: 'ideas'
-        }
+        body: { action: 'ideas' }
       });
 
       if (usageError) {
         console.error("Usage check error:", usageError);
         setError(`Usage check error: ${usageError.message}`);
+        setLoading(false);
         return;
       }
 
@@ -354,6 +351,7 @@ export const useIdeaGenerator = () => {
           description: message,
         });
         setError(message);
+        setLoading(false);
         return;
       }
 
@@ -397,18 +395,21 @@ export const useIdeaGenerator = () => {
         if (error) {
           console.error("Edge function error:", error);
           setError(`Edge function error: ${error.message || 'Unknown error'}`);
+          setLoading(false);
           return;
         }
 
         if (!data) {
           console.error("Empty response from function");
           setError('Empty response from AI service. Please try again.');
+          setLoading(false);
           return;
         }
 
         if (data.error) {
           console.error("Error in function response:", data.error);
           setError(`Error from AI service: ${data.error}`);
+          setLoading(false);
           return;
         }
 
@@ -419,10 +420,12 @@ export const useIdeaGenerator = () => {
           if (data.rawResponse) {
             console.log("Raw AI response:", data.rawResponse);
             setError('The AI returned an invalid format. Please try again.');
+            setLoading(false);
             return;
           }
           
           setError('Invalid response format from AI: ideas array is missing');
+          setLoading(false);
           return;
         }
 
@@ -448,6 +451,7 @@ export const useIdeaGenerator = () => {
         if (saveError) {
           console.error("Error saving ideas:", saveError);
           setError(`Error saving ideas: ${saveError.message}`);
+          setLoading(false);
           return;
         }
 
@@ -461,6 +465,7 @@ export const useIdeaGenerator = () => {
         if (fetchError) {
           console.error("Error fetching saved ideas:", fetchError);
           setError(`Error fetching saved ideas: ${fetchError.message}`);
+          setLoading(false);
           return;
         }
 
