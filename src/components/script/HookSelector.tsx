@@ -35,7 +35,7 @@ const HookSelector = ({ onSelectHook }: HookSelectorProps) => {
     return savedHooks
       .filter(hook => 
         hook.category === category && 
-        (searchTerm === '' || hook.hook_text.toLowerCase().includes(searchTerm.toLowerCase()))
+        (searchTerm === '' || hook.hook.toLowerCase().includes(searchTerm.toLowerCase()))
       );
   };
 
@@ -98,9 +98,9 @@ const HookSelector = ({ onSelectHook }: HookSelectorProps) => {
                           key={hook.id}
                           variant="ghost"
                           className="w-full justify-start text-left p-3 h-auto"
-                          onClick={() => handleSelectHook(hook.hook_text)}
+                          onClick={() => handleSelectHook(hook.hook)}
                         >
-                          {hook.hook_text}
+                          {hook.hook}
                         </Button>
                       ))
                     )}

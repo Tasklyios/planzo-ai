@@ -36,7 +36,7 @@ export const generateHooks = async (
 export const getSavedHooks = async (): Promise<SavedHook[]> => {
   try {
     const { data, error } = await supabase
-      .from("saved_hooks")
+      .from("script_hooks")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -51,9 +51,9 @@ export const getSavedHooks = async (): Promise<SavedHook[]> => {
 export const saveHook = async (hook: HookType): Promise<SavedHook> => {
   try {
     const { data, error } = await supabase
-      .from("saved_hooks")
+      .from("script_hooks")
       .insert({
-        hook_text: hook.hook_text,
+        hook: hook.hook_text,
         category: hook.category || "general"
       })
       .select()
@@ -70,7 +70,7 @@ export const saveHook = async (hook: HookType): Promise<SavedHook> => {
 export const deleteSavedHook = async (id: string): Promise<void> => {
   try {
     const { error } = await supabase
-      .from("saved_hooks")
+      .from("script_hooks")
       .delete()
       .eq("id", id);
 

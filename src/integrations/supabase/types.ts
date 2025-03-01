@@ -86,6 +86,33 @@ export type Database = {
           },
         ]
       }
+      saved_hooks: {
+        Row: {
+          category: string
+          created_at: string
+          hook_text: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          hook_text: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          hook_text?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scheduled_content: {
         Row: {
           color: string | null
