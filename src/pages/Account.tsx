@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun, Plus, Trash2, Check, Palette } from "lucide-react";
@@ -934,6 +935,61 @@ export default function Account() {
                   )}
                 </div>
               </div>
+              
+              {/* Create new style profile dialog */}
+              <Dialog open={isNewProfileDialogOpen} onOpenChange={setIsNewProfileDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Create Style Profile</DialogTitle>
+                    <DialogDescription>
+                      Create a new style profile to save your content style and personality preferences.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="profileName">Name</Label>
+                      <Input
+                        id="profileName"
+                        placeholder="My Professional Style"
+                        value={newProfileName}
+                        onChange={(e) => setNewProfileName(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="contentStyle">Content Style</Label>
+                      <Textarea
+                        id="contentStyle"
+                        placeholder="Professional, concise, educational..."
+                        value={newProfileContentStyle}
+                        onChange={(e) => setNewProfileContentStyle(e.target.value)}
+                        className="min-h-[80px]"
+                      />
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="contentPersonality">Content Personality</Label>
+                      <Textarea
+                        id="contentPersonality"
+                        placeholder="Expert, friendly, approachable..."
+                        value={newProfileContentPersonality}
+                        onChange={(e) => setNewProfileContentPersonality(e.target.value)}
+                        className="min-h-[80px]"
+                      />
+                    </div>
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsNewProfileDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={createNewStyleProfile} disabled={loading}>
+                      {loading ? "Creating..." : "Create Profile"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           ) : (
             <div className="widget-box p-6">
@@ -968,8 +1024,151 @@ export default function Account() {
                     </RadioGroup>
                   </div>
 
+                  {/* Content details section - show different fields based on account type */}
+                  {/* Personal account fields */}
+                  {profile.account_type === 'personal' && (
+                    <div className="space-y-4">
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="content_niche">Content Niche</Label>
+                        <Input
+                          id="content_niche"
+                          placeholder="e.g., Fitness, Technology, Marketing"
+                          value={profile.content_niche || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="target_audience">Target Audience</Label>
+                        <Input
+                          id="target_audience"
+                          placeholder="e.g., Professionals aged 25-40"
+                          value={profile.target_audience || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="content_style">Content Style</Label>
+                        <Textarea
+                          id="content_style"
+                          placeholder="e.g., Educational, entertaining, inspirational"
+                          value={profile.content_style || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="content_personality">Content Personality</Label>
+                        <Textarea
+                          id="content_personality"
+                          placeholder="e.g., Friendly expert, funny coach, serious analyst"
+                          value={profile.content_personality || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Business account fields */}
                   {profile.account_type === 'business' && (
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="business_niche">Business Niche</Label>
-                      <Input
-                        id="business_niche"
+                    <div className="space-y-4">
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="business_niche">Business Niche</Label>
+                        <Input
+                          id="business_niche"
+                          placeholder="e.g., Software Development, Consulting"
+                          value={profile.business_niche || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, business_niche: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="target_audience">Target Audience</Label>
+                        <Input
+                          id="target_audience"
+                          placeholder="e.g., Small business owners, enterprise clients"
+                          value={profile.target_audience || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="content_style">Content Style</Label>
+                        <Textarea
+                          id="content_style"
+                          placeholder="e.g., Professional, authoritative, solutions-focused"
+                          value={profile.content_style || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="content_personality">Content Personality</Label>
+                        <Textarea
+                          id="content_personality"
+                          placeholder="e.g., Trusted advisor, industry leader"
+                          value={profile.content_personality || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* E-commerce account fields */}
+                  {profile.account_type === 'ecommerce' && (
+                    <div className="space-y-4">
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="product_niche">Product Niche</Label>
+                        <Input
+                          id="product_niche"
+                          placeholder="e.g., Fashion, Electronics, Home Goods"
+                          value={profile.product_niche || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, product_niche: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="target_audience">Target Customer</Label>
+                        <Input
+                          id="target_audience"
+                          placeholder="e.g., Young adults, budget shoppers, luxury consumers"
+                          value={profile.target_audience || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="content_style">Content Style</Label>
+                        <Textarea
+                          id="content_style"
+                          placeholder="e.g., Product-focused, lifestyle-oriented, promotional"
+                          value={profile.content_style || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col space-y-2">
+                        <Label htmlFor="content_personality">Content Personality</Label>
+                        <Textarea
+                          id="content_personality"
+                          placeholder="e.g., Helpful shopping assistant, trend expert"
+                          value={profile.content_personality || ''}
+                          onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Saving..." : "Save Changes"}
+                </Button>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+    </AuthGuard>
+  );
+}
