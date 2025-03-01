@@ -77,11 +77,13 @@ export default function Account() {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log("Account component mounted, fetching profile");
     fetchProfile();
   }, []);
 
   const fetchProfile = async () => {
     try {
+      console.log("Fetching profile data...");
       setLoading(true);
       setFetchError(null);
       
@@ -89,10 +91,12 @@ export default function Account() {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
+        console.error("Session error:", sessionError);
         throw sessionError;
       }
       
       if (!session?.user) {
+        console.error("No authenticated user found");
         setFetchError("No authenticated user found. Please log in again.");
         return;
       }
@@ -111,16 +115,34 @@ export default function Account() {
         throw error;
       }
       
+      console.log("Profile data fetched:", data);
+      
       if (data) {
         setProfile(data);
+        
         // Update localStorage with the fetched values
         if (data.content_niche) localStorage.setItem("niche", data.content_niche);
         if (data.target_audience) localStorage.setItem("audience", data.target_audience);
         if (data.posting_platforms && data.posting_platforms.length > 0) {
           localStorage.setItem("platform", data.posting_platforms[0]);
         }
+        
+        // Set videoType based on account type
+        if (data.account_type === 'ecommerce' && data.product_niche) {
+          localStorage.setItem("videoType", data.product_niche);
+          localStorage.setItem("niche", data.product_niche);
+        } else if (data.account_type === 'business' && data.business_niche) {
+          localStorage.setItem("videoType", data.business_niche);
+          localStorage.setItem("niche", data.business_niche);
+        } else if (data.content_niche) {
+          localStorage.setItem("videoType", data.content_niche);
+        }
+        
+        // Trigger a storage event to notify other tabs
+        triggerStorageEvents();
       } else {
         // If no profile found, we'll create default values
+        console.log("No profile found, setting defaults");
         setProfile({
           account_type: 'personal',
           content_personality: '',
@@ -143,8 +165,24 @@ export default function Account() {
     }
   };
 
+  // Helper function to trigger storage events
+  const triggerStorageEvents = () => {
+    try {
+      window.dispatchEvent(new Event('storage'));
+      
+      // Also dispatch a custom event as a fallback
+      const customEvent = new CustomEvent('localStorageChange');
+      window.dispatchEvent(customEvent);
+      
+      console.log("Storage events triggered");
+    } catch (e) {
+      console.warn('Could not dispatch storage event', e);
+    }
+  };
+
   const handleUpdateProfile = async () => {
     try {
+      console.log("Updating profile...");
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
@@ -164,14 +202,9 @@ export default function Account() {
         content_niche: profile.content_niche,
         target_audience: profile.target_audience,
         posting_platforms: profile.posting_platforms,
+        business_niche: profile.business_niche,
+        product_niche: profile.product_niche,
       };
-
-      // Add niche based on account type
-      if (profile.account_type === 'business') {
-        updateData.business_niche = profile.business_niche;
-      } else if (profile.account_type === 'ecommerce') {
-        updateData.product_niche = profile.product_niche;
-      }
 
       console.log("Updating profile with:", updateData);
 
@@ -180,20 +213,28 @@ export default function Account() {
         .update(updateData)
         .eq('id', session.user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Update error:", error);
+        throw error;
+      }
 
       console.log("Profile updated successfully");
 
       // Update localStorage with correct values based on account type
       let nicheToStore = profile.content_niche || "";
+      let videoTypeValue = profile.content_niche || "";
+      
       if (profile.account_type === 'business' && profile.business_niche) {
         nicheToStore = profile.business_niche;
+        videoTypeValue = profile.business_niche;
       } else if (profile.account_type === 'ecommerce' && profile.product_niche) {
         nicheToStore = profile.product_niche;
+        videoTypeValue = profile.product_niche;
       }
       
       // Use the updateLocalStorage helper to ensure cross-tab updates
       updateLocalStorage("niche", nicheToStore);
+      updateLocalStorage("videoType", videoTypeValue);
       
       if (profile.target_audience) {
         updateLocalStorage("audience", profile.target_audience);
@@ -203,20 +244,8 @@ export default function Account() {
         updateLocalStorage("platform", profile.posting_platforms[0]);
       }
 
-      // Set videoType based on account type
-      if (profile.account_type === 'ecommerce') {
-        // For ecommerce, use product_niche as videoType (e.g., "Product Showcase")
-        updateLocalStorage("videoType", profile.product_niche || "Product Showcase");
-      } else if (profile.account_type === 'business') {
-        // For business, potentially use business_niche or a default business video type
-        updateLocalStorage("videoType", profile.business_niche || "Business Promotion");
-      } else {
-        // For personal accounts, use content_niche or another appropriate default
-        updateLocalStorage("videoType", profile.content_niche || "");
-      }
-
       // Force a refresh of localStorage data to ensure consistency
-      window.dispatchEvent(new Event('storage'));
+      triggerStorageEvents();
 
       toast({
         title: "Profile updated",
@@ -239,29 +268,25 @@ export default function Account() {
     const oldValue = localStorage.getItem(key);
     console.log(`Updating localStorage: ${key} = ${value} (was: ${oldValue})`);
     
-    if (oldValue !== value) {
-      localStorage.setItem(key, value);
+    localStorage.setItem(key, value);
+    
+    // Dispatch a storage event to notify other tabs
+    try {
+      const event = new StorageEvent('storage', {
+        key: key,
+        oldValue: oldValue || '',
+        newValue: value,
+        storageArea: localStorage,
+      });
+      window.dispatchEvent(event);
+    } catch (e) {
+      console.warn('Could not dispatch storage event', e);
       
-      // Dispatch a storage event to notify other tabs
-      try {
-        const event = new StorageEvent('storage', {
-          key: key,
-          oldValue: oldValue || '',
-          newValue: value,
-          storageArea: localStorage,
-        });
-        window.dispatchEvent(event);
-      } catch (e) {
-        // Some browsers may not support the StorageEvent constructor
-        // If it fails, we're still setting localStorage correctly
-        console.warn('Could not dispatch storage event', e);
-        
-        // Fallback: dispatch a custom event
-        const customEvent = new CustomEvent('localStorageChange', { 
-          detail: { key, oldValue, newValue: value } 
-        });
-        window.dispatchEvent(customEvent);
-      }
+      // Fallback: dispatch a custom event
+      const customEvent = new CustomEvent('localStorageChange', { 
+        detail: { key, oldValue, newValue: value } 
+      });
+      window.dispatchEvent(customEvent);
     }
   };
 

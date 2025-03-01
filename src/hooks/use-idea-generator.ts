@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,24 +17,32 @@ export const useIdeaGenerator = () => {
 
   // Set up a listener for localStorage changes
   useEffect(() => {
+    console.log("Setting up localStorage change listeners");
+    
     const handleStorageChange = (e: StorageEvent) => {
+      if (!e.key) return;
+      
+      console.log(`Storage event detected: ${e.key} = ${e.newValue}`);
+      
       if (e.key === "niche" && e.newValue !== null) {
-        console.log(`Storage event: niche updated to ${e.newValue}`);
+        console.log(`Updating niche from ${niche} to ${e.newValue}`);
         setNiche(e.newValue);
       } else if (e.key === "audience" && e.newValue !== null) {
-        console.log(`Storage event: audience updated to ${e.newValue}`);
+        console.log(`Updating audience from ${audience} to ${e.newValue}`);
         setAudience(e.newValue);
       } else if (e.key === "videoType" && e.newValue !== null) {
-        console.log(`Storage event: videoType updated to ${e.newValue}`);
+        console.log(`Updating videoType from ${videoType} to ${e.newValue}`);
         setVideoType(e.newValue);
       } else if (e.key === "platform" && e.newValue !== null) {
-        console.log(`Storage event: platform updated to ${e.newValue}`);
+        console.log(`Updating platform from ${platform} to ${e.newValue}`);
         setPlatform(e.newValue);
       }
     };
 
     // Also listen for custom events as a fallback
     const handleCustomStorageChange = (e: CustomEvent<{key: string, newValue: string}>) => {
+      if (!e.detail) return;
+      
       const { key, newValue } = e.detail;
       console.log(`Custom storage event: ${key} updated to ${newValue}`);
       
@@ -50,17 +57,20 @@ export const useIdeaGenerator = () => {
       }
     };
 
+    // Listen for regular storage events
     window.addEventListener('storage', handleStorageChange);
+    
+    // Listen for our custom events as a fallback
     window.addEventListener('localStorageChange', handleCustomStorageChange as EventListener);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('localStorageChange', handleCustomStorageChange as EventListener);
     };
-  }, []);
+  }, [niche, audience, videoType, platform]);
 
   useEffect(() => {
-    console.log("Fetching user preferences on mount");
+    console.log("useIdeaGenerator: Fetching user preferences on mount");
     fetchUserPreferences();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
@@ -103,7 +113,7 @@ export const useIdeaGenerator = () => {
         .from('profiles')
         .select('account_type, content_niche, business_niche, product_niche, target_audience, posting_platforms')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching profile:", error);
@@ -131,8 +141,8 @@ export const useIdeaGenerator = () => {
         console.log(`Setting niche based on account type (${profile.account_type}):`, nicheValue);
         console.log(`Setting videoType based on account type:`, videoTypeValue);
 
-        // Only update state if values actually changed to prevent unnecessary re-renders
-        if (nicheValue !== niche) {
+        // Update localStorage and state
+        if (nicheValue && nicheValue !== niche) {
           console.log(`Updating niche from ${niche} to ${nicheValue}`);
           setNiche(nicheValue);
           localStorage.setItem("niche", nicheValue);
@@ -158,40 +168,45 @@ export const useIdeaGenerator = () => {
         }
       }
 
-      // Update from localStorage as well (in case user updated another tab)
-      const localStorageNiche = localStorage.getItem("niche");
-      const localStorageAudience = localStorage.getItem("audience");
-      const localStorageVideoType = localStorage.getItem("videoType");
-      const localStoragePlatform = localStorage.getItem("platform");
-      
-      console.log("LocalStorage values:", {
-        niche: localStorageNiche,
-        audience: localStorageAudience,
-        videoType: localStorageVideoType,
-        platform: localStoragePlatform
-      });
-      
-      if (localStorageNiche && localStorageNiche !== niche) {
-        console.log(`Updating niche from localStorage: ${localStorageNiche}`);
-        setNiche(localStorageNiche);
-      }
-      
-      if (localStorageAudience && localStorageAudience !== audience) {
-        console.log(`Updating audience from localStorage: ${localStorageAudience}`);
-        setAudience(localStorageAudience);
-      }
-
-      if (localStorageVideoType && localStorageVideoType !== videoType) {
-        console.log(`Updating videoType from localStorage: ${localStorageVideoType}`);
-        setVideoType(localStorageVideoType);
-      }
-      
-      if (localStoragePlatform && localStoragePlatform !== platform) {
-        console.log(`Updating platform from localStorage: ${localStoragePlatform}`);
-        setPlatform(localStoragePlatform);
-      }
+      // Also check localStorage for the latest values (in case they were updated in another tab)
+      refreshFromLocalStorage();
     } catch (error) {
       console.error("Error fetching user preferences:", error);
+    }
+  };
+  
+  // Helper to refresh state from localStorage
+  const refreshFromLocalStorage = () => {
+    const localStorageNiche = localStorage.getItem("niche");
+    const localStorageAudience = localStorage.getItem("audience");
+    const localStorageVideoType = localStorage.getItem("videoType");
+    const localStoragePlatform = localStorage.getItem("platform");
+    
+    console.log("LocalStorage values:", {
+      niche: localStorageNiche,
+      audience: localStorageAudience,
+      videoType: localStorageVideoType,
+      platform: localStoragePlatform
+    });
+    
+    if (localStorageNiche && localStorageNiche !== niche) {
+      console.log(`Updating niche from localStorage: ${localStorageNiche}`);
+      setNiche(localStorageNiche);
+    }
+    
+    if (localStorageAudience && localStorageAudience !== audience) {
+      console.log(`Updating audience from localStorage: ${localStorageAudience}`);
+      setAudience(localStorageAudience);
+    }
+
+    if (localStorageVideoType && localStorageVideoType !== videoType) {
+      console.log(`Updating videoType from localStorage: ${localStorageVideoType}`);
+      setVideoType(localStorageVideoType);
+    }
+    
+    if (localStoragePlatform && localStoragePlatform !== platform) {
+      console.log(`Updating platform from localStorage: ${localStoragePlatform}`);
+      setPlatform(localStoragePlatform);
     }
   };
 
