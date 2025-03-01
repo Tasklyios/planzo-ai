@@ -11,6 +11,7 @@ import Billing from "@/pages/Billing";
 import NotFound from "@/pages/NotFound";
 import Script from "@/pages/Script";
 import ContentPlanner from "@/pages/ContentPlanner";
+import FindYourStyle from "@/pages/FindYourStyle";
 import { Toaster } from "@/components/ui/toaster";
 import AuthGuard from "@/components/AuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
@@ -29,6 +30,7 @@ function App() {
               <Route path="/generator" element={<Generator />} />
               <Route path="/script" element={<Script />} />
               <Route path="/planner" element={<ContentPlanner />} />
+              <Route path="/find-your-style" element={<FindYourStyle />} />
               <Route path="/ideas" element={<Ideas />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/account" element={<Account />} />

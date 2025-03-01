@@ -119,7 +119,7 @@ export const useIdeaGenerator = () => {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('account_type, content_niche, business_niche, product_niche, target_audience, posting_platforms')
+        .select('account_type, content_niche, business_niche, product_niche, target_audience, posting_platforms, content_style, content_personality')
         .eq('id', session.user.id)
         .maybeSingle();
 
@@ -170,6 +170,16 @@ export const useIdeaGenerator = () => {
           const defaultVideoType = profile.account_type === 'ecommerce' ? 'Product Showcase' : 'Tutorial';
           setVideoType(defaultVideoType);
           localStorage.setItem("videoType", defaultVideoType);
+        }
+
+        // Store content style in localStorage if available
+        if (profile.content_style) {
+          localStorage.setItem("contentStyle", profile.content_style);
+        }
+        
+        // Store content personality in localStorage if available
+        if (profile.content_personality) {
+          localStorage.setItem("contentPersonality", profile.content_personality);
         }
       }
 
@@ -330,12 +340,18 @@ export const useIdeaGenerator = () => {
                          videoType.toLowerCase().includes('advertisement') ||
                          videoType.toLowerCase().includes('promotional');
 
+      // Get content style information from localStorage if available
+      const contentStyle = localStorage.getItem("contentStyle") || "";
+      const contentPersonality = localStorage.getItem("contentPersonality") || "";
+
       console.log("Calling generate-ideas function with:", { 
         niche, 
         audience, 
         videoType, 
         platform, 
         customIdeas, 
+        contentStyle,
+        contentPersonality,
         isAdRequest,
         previousIdeasContext 
       });
@@ -348,6 +364,8 @@ export const useIdeaGenerator = () => {
             videoType: videoType.trim(),
             platform: platform,
             customIdeas: customIdeas.trim(),
+            contentStyle: contentStyle,
+            contentPersonality: contentPersonality,
             previousIdeas: previousIdeasContext // Pass the context to avoid repeating ideas
           },
         });

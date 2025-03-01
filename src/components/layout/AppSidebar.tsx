@@ -1,177 +1,97 @@
 
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard,
-  CalendarIcon,
-  Lightbulb,
-  BookmarkIcon,
-  UserCircle,
-  CreditCard,
-  LogOut,
-  FileText,
-  Kanban,
-} from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-} from "@/components/ui/sidebar";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { Link, useLocation } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
+import { Sparkles, BookCopy, Zap, Calendar, Film, PenTool, Grid3X3, UserCircle, CreditCard, Palette } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const mainMenuItems = [
-  {
-    title: "Dashboard",
-    icon: LayoutDashboard,
-    path: "/dashboard",
-  },
-  {
-    title: "Generate Ideas",
-    icon: Lightbulb,
-    path: "/generator",
-  },
-  {
-    title: "Generate Script",
-    icon: FileText,
-    path: "/script",
-  },
-  {
-    title: "Content Planner",
-    icon: Kanban,
-    path: "/planner",
-  },
-  {
-    title: "Saved Ideas",
-    icon: BookmarkIcon,
-    path: "/ideas",
-  },
-  {
-    title: "Content Calendar",
-    icon: CalendarIcon,
-    path: "/calendar",
-  },
-];
+interface SidebarItemProps {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+}
 
-const accountMenuItems = [
-  {
-    title: "My Account",
-    icon: UserCircle,
-    path: "/account",
-  },
-  {
-    title: "Billing",
-    icon: CreditCard,
-    path: "/billing",
-  },
-];
-
-export function AppSidebar() {
+const SidebarItem = ({ href, icon, label }: SidebarItemProps) => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate("/auth");
-      toast({
-        title: "Logged out successfully",
-        description: "You have been logged out of your account.",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error logging out",
-        description: error.message,
-      });
-    }
-  };
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
+  const isActive = location.pathname === href;
 
   return (
-    <Sidebar className="border-r border-border bg-card">
-      <SidebarHeader className="p-4">
-        <h1 className="text-2xl font-bold text-primary">TrendAI</h1>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainMenuItems.map((item) => (
-                <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={item.title}
-                  >
-                    <Link 
-                      to={item.path}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-                        isActive(item.path) 
-                          ? "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent text-primary font-medium shadow-sm border border-primary/10" 
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                      }`}
-                    >
-                      <item.icon className={`h-4 w-4 transition-colors ${
-                        isActive(item.path) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-                      }`} />
-                      <span className="flex-1">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter className="border-t border-border">
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {accountMenuItems.map((item) => (
-                <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={item.title}
-                  >
-                    <Link 
-                      to={item.path}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
-                        isActive(item.path) 
-                          ? "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent text-primary font-medium shadow-sm border border-primary/10" 
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                      }`}
-                    >
-                      <item.icon className={`h-4 w-4 transition-colors ${
-                        isActive(item.path) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-                      }`} />
-                      <span className="flex-1">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={handleLogout}
-                  tooltip="Logout"
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent/50 w-full"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span className="flex-1">Logout</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarFooter>
-    </Sidebar>
+    <Link
+      to={href}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+        isActive
+          ? "bg-primary text-primary-foreground"
+          : "hover:bg-accent"
+      )}
+    >
+      {icon}
+      {label}
+    </Link>
   );
-}
+};
+
+const AppSidebar = () => {
+  return (
+    <div className="w-64 border-r h-full flex flex-col">
+      <div className="px-4 py-4">
+        <h1 className="text-xl font-bold flex items-center">
+          <Sparkles className="w-5 h-5 mr-2" />
+          ContentCraft
+        </h1>
+      </div>
+      <Separator />
+      <div className="flex-1 px-4 py-4 space-y-1">
+        <SidebarItem
+          href="/dashboard"
+          icon={<Grid3X3 className="w-5 h-5" />}
+          label="Dashboard"
+        />
+        <SidebarItem
+          href="/generator"
+          icon={<Zap className="w-5 h-5" />}
+          label="Generate Ideas"
+        />
+        <SidebarItem
+          href="/script"
+          icon={<PenTool className="w-5 h-5" />}
+          label="Script Creator"
+        />
+        <SidebarItem
+          href="/planner"
+          icon={<BookCopy className="w-5 h-5" />}
+          label="Content Planner"
+        />
+        <SidebarItem
+          href="/find-your-style"
+          icon={<Palette className="w-5 h-5" />}
+          label="Find Your Style"
+        />
+        <SidebarItem
+          href="/ideas"
+          icon={<Film className="w-5 h-5" />}
+          label="Saved Ideas"
+        />
+        <SidebarItem
+          href="/calendar"
+          icon={<Calendar className="w-5 h-5" />}
+          label="Calendar"
+        />
+      </div>
+      <Separator />
+      <div className="px-4 py-4 space-y-1">
+        <SidebarItem
+          href="/account"
+          icon={<UserCircle className="w-5 h-5" />}
+          label="Account"
+        />
+        <SidebarItem
+          href="/billing"
+          icon={<CreditCard className="w-5 h-5" />}
+          label="Billing"
+        />
+      </div>
+    </div>
+  );
+};
+
+export default AppSidebar;
