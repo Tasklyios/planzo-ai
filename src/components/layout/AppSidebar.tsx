@@ -1,11 +1,33 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-import { Sparkles, BookCopy, Zap, Calendar, Film, PenTool, Grid3X3, UserCircle, CreditCard, Palette, LogOut } from "lucide-react";
+import { 
+  Sparkles, 
+  BookCopy, 
+  Zap, 
+  Calendar, 
+  Film, 
+  PenTool, 
+  Grid3X3, 
+  UserCircle, 
+  CreditCard, 
+  Palette, 
+  LogOut,
+  ChevronDown,
+  ChevronUp,
+  Folder,
+  BookOpen
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from "@/components/ui/collapsible";
 
 interface SidebarItemProps {
   href: string;
@@ -32,6 +54,32 @@ const SidebarItem = ({ href, icon, label, onClick }: SidebarItemProps) => {
       {icon}
       {label}
     </Link>
+  );
+};
+
+interface SidebarCategoryProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+const SidebarCategory = ({ title, children, defaultOpen = false }: SidebarCategoryProps) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <Collapsible
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      className="w-full"
+    >
+      <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-xs uppercase font-medium text-muted-foreground hover:text-foreground">
+        <span>{title}</span>
+        {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+      </CollapsibleTrigger>
+      <CollapsibleContent className="px-2 py-1 space-y-1">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
 
@@ -67,42 +115,55 @@ const AppSidebar = () => {
       <Separator />
       
       {/* Main navigation - scrollable area */}
-      <div className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-        <SidebarItem
-          href="/dashboard"
-          icon={<Grid3X3 className="w-5 h-5" />}
-          label="Dashboard"
-        />
-        <SidebarItem
-          href="/generator"
-          icon={<Zap className="w-5 h-5" />}
-          label="Generate Ideas"
-        />
-        <SidebarItem
-          href="/script"
-          icon={<PenTool className="w-5 h-5" />}
-          label="Script Creator"
-        />
-        <SidebarItem
-          href="/planner"
-          icon={<BookCopy className="w-5 h-5" />}
-          label="Content Planner"
-        />
-        <SidebarItem
-          href="/find-your-style"
-          icon={<Palette className="w-5 h-5" />}
-          label="Find Your Style"
-        />
-        <SidebarItem
-          href="/ideas"
-          icon={<Film className="w-5 h-5" />}
-          label="Saved Ideas"
-        />
-        <SidebarItem
-          href="/calendar"
-          icon={<Calendar className="w-5 h-5" />}
-          label="Calendar"
-        />
+      <div className="flex-1 px-4 py-4 space-y-3 overflow-y-auto">
+        <SidebarCategory title="Overview" defaultOpen={true}>
+          <SidebarItem
+            href="/dashboard"
+            icon={<Grid3X3 className="w-5 h-5" />}
+            label="Dashboard"
+          />
+          <SidebarItem
+            href="/planner"
+            icon={<BookCopy className="w-5 h-5" />}
+            label="Content Planner"
+          />
+          <SidebarItem
+            href="/calendar"
+            icon={<Calendar className="w-5 h-5" />}
+            label="Calendar"
+          />
+        </SidebarCategory>
+        
+        <SidebarCategory title="Create" defaultOpen={true}>
+          <SidebarItem
+            href="/generator"
+            icon={<Zap className="w-5 h-5" />}
+            label="Generate Ideas"
+          />
+          <SidebarItem
+            href="/script"
+            icon={<PenTool className="w-5 h-5" />}
+            label="Generate Scripts"
+          />
+          <SidebarItem
+            href="/hooks"
+            icon={<BookOpen className="w-5 h-5" />}
+            label="Generate Hooks"
+          />
+        </SidebarCategory>
+        
+        <SidebarCategory title="Library" defaultOpen={true}>
+          <SidebarItem
+            href="/ideas"
+            icon={<Film className="w-5 h-5" />}
+            label="Saved Ideas"
+          />
+          <SidebarItem
+            href="/find-your-style"
+            icon={<Palette className="w-5 h-5" />}
+            label="Saved Styles"
+          />
+        </SidebarCategory>
       </div>
       
       {/* User account section - always visible at bottom */}

@@ -8,6 +8,14 @@ import {
   CreditCard,
   LogOut,
   Menu,
+  Grid3X3,
+  Zap,
+  Film,
+  Calendar,
+  BookCopy,
+  PenTool,
+  Palette,
+  BookOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +35,7 @@ import {
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import PricingSheet from "./pricing/PricingSheet";
+import { Separator } from "@/components/ui/separator";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -39,12 +48,31 @@ const Navbar = () => {
 
   const closeSheet = () => setIsOpen(false);
 
-  const MENU_ITEMS = [
-    { path: '/dashboard', label: 'Dashboard' },
-    { path: '/generator', label: 'Generator' },
-    { path: '/ideas', label: 'Ideas' },
-    { path: '/calendar', label: 'Calendar' },
-  ] as const;
+  const MENU_CATEGORIES = [
+    {
+      title: "Overview",
+      items: [
+        { path: '/dashboard', label: 'Dashboard', icon: <Grid3X3 className="h-5 w-5 mr-2" /> },
+        { path: '/planner', label: 'Content Planner', icon: <BookCopy className="h-5 w-5 mr-2" /> },
+        { path: '/calendar', label: 'Calendar', icon: <Calendar className="h-5 w-5 mr-2" /> },
+      ]
+    },
+    {
+      title: "Create",
+      items: [
+        { path: '/generator', label: 'Generate Ideas', icon: <Zap className="h-5 w-5 mr-2" /> },
+        { path: '/script', label: 'Generate Scripts', icon: <PenTool className="h-5 w-5 mr-2" /> },
+        { path: '/hooks', label: 'Generate Hooks', icon: <BookOpen className="h-5 w-5 mr-2" /> },
+      ]
+    },
+    {
+      title: "Library",
+      items: [
+        { path: '/ideas', label: 'Saved Ideas', icon: <Film className="h-5 w-5 mr-2" /> },
+        { path: '/find-your-style', label: 'Saved Styles', icon: <Palette className="h-5 w-5 mr-2" /> },
+      ]
+    }
+  ];
 
   const currentPath = window.location.pathname;
   const isIndexPage = currentPath === '/';
@@ -58,19 +86,54 @@ const Navbar = () => {
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
-          {MENU_ITEMS.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`${
-                currentPath === item.path
-                  ? "text-[#0073FF] font-medium"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost">Overview</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {MENU_CATEGORIES[0].items.map(item => (
+                <DropdownMenuItem key={item.path} onClick={() => navigate(item.path)}>
+                  <div className="flex items-center">
+                    {item.icon}
+                    {item.label}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost">Create</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {MENU_CATEGORIES[1].items.map(item => (
+                <DropdownMenuItem key={item.path} onClick={() => navigate(item.path)}>
+                  <div className="flex items-center">
+                    {item.icon}
+                    {item.label}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost">Library</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {MENU_CATEGORIES[2].items.map(item => (
+                <DropdownMenuItem key={item.path} onClick={() => navigate(item.path)}>
+                  <div className="flex items-center">
+                    {item.icon}
+                    {item.label}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <PricingSheet 
             trigger={
               <Button variant="default" size="sm" className="blue-gradient">
@@ -96,7 +159,7 @@ const Navbar = () => {
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/account')}>
+                <DropdownMenuItem onClick={() => navigate('/billing')}>
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Billing</span>
                 </DropdownMenuItem>
@@ -121,23 +184,31 @@ const Navbar = () => {
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-4 mt-4">
-                {MENU_ITEMS.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`${
-                      currentPath === item.path
-                        ? "text-[#0073FF] font-medium"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                    onClick={closeSheet}
-                  >
-                    {item.label}
-                  </Link>
+                {MENU_CATEGORIES.map((category, idx) => (
+                  <div key={category.title} className="space-y-2">
+                    <h3 className="text-xs uppercase font-medium text-muted-foreground">{category.title}</h3>
+                    {category.items.map(item => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center px-2 py-2 text-sm ${
+                          currentPath === item.path
+                            ? "text-[#0073FF] font-medium"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                        onClick={closeSheet}
+                      >
+                        {item.icon}
+                        {item.label}
+                      </Link>
+                    ))}
+                    {idx < MENU_CATEGORIES.length - 1 && <Separator className="my-2" />}
+                  </div>
                 ))}
+                
                 <PricingSheet 
                   trigger={
-                    <Button variant="default" size="sm" className="w-full blue-gradient">
+                    <Button variant="default" size="sm" className="w-full blue-gradient mt-2">
                       Upgrade
                     </Button>
                   }
