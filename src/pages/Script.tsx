@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,6 +94,7 @@ export default function Script() {
   const [activeStyleProfile, setActiveStyleProfile] = useState<StyleProfile | null>(null);
   const [newStyleProfileName, setNewStyleProfileName] = useState("");
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   const statuses = [
     { id: 'all', label: 'All Ideas' },
@@ -158,16 +160,19 @@ export default function Script() {
       // Also check the user's profile for an active style profile ID
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('active_style_profile_id')
+        .select('active_style_profile_id, content_niche, target_audience, posting_platforms, account_type, business_niche, product_niche')
         .eq('id', sessionData.session.user.id)
         .single();
         
-      if (!profileError && userProfile?.active_style_profile_id) {
-        const activeProfileById = profiles?.find(
-          profile => profile.id === userProfile.active_style_profile_id
-        );
-        if (activeProfileById) {
-          setActiveStyleProfile(activeProfileById);
+      if (!profileError && userProfile) {
+        setUserProfile(userProfile);
+        if (userProfile?.active_style_profile_id) {
+          const activeProfileById = profiles?.find(
+            profile => profile.id === userProfile.active_style_profile_id
+          );
+          if (activeProfileById) {
+            setActiveStyleProfile(activeProfileById);
+          }
         }
       }
     } catch (error) {
@@ -429,6 +434,18 @@ export default function Script() {
       const selectedHookData = hooks.find(h => h.id === selectedHook);
       const selectedStructureData = structures.find(s => s.id === selectedStructure);
 
+      // Construct required profile data for the API call
+      const niche = userProfile?.content_niche || userProfile?.business_niche || userProfile?.product_niche || "";
+      const audience = userProfile?.target_audience || "";
+      const platform = Array.isArray(userProfile?.posting_platforms) && userProfile?.posting_platforms.length > 0 
+        ? userProfile?.posting_platforms[0] 
+        : "";
+      const videoType = ideaToUse.category || "Tutorial";
+      
+      console.log("Sending script generation request with profile data:", {
+        niche, audience, platform, videoType
+      });
+
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: {
           type: 'script',
@@ -442,10 +459,18 @@ export default function Script() {
           // Include hook and structure if selected
           hook: selectedHookData?.hook,
           structure: selectedStructureData?.structure,
+          // Add required fields for the API
+          niche,
+          audience, 
+          videoType,
+          platform
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Edge function error:", error);
+        throw new Error(`Failed to generate script: ${error.message}`);
+      }
       
       if (!data?.script) {
         throw new Error("Failed to generate script. Please try again.");

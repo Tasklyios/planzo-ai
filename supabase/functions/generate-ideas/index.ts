@@ -1,285 +1,411 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.2.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.36.0";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  // Handle CORS preflight request
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: {
+        ...corsHeaders,
+      },
+    });
   }
 
-  try {
-    // Parse the request body
-    const requestData = await req.json();
-    console.log("Request data:", JSON.stringify(requestData));
+  const apiKey = Deno.env.get("OPENAI_API_KEY");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    // Handle different request types
-    if (requestData.type === 'script_coach') {
-      return await handleScriptCoach(requestData);
+  if (!apiKey) {
+    return new Response(
+      JSON.stringify({
+        error: "Missing OPENAI_API_KEY",
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
+  }
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return new Response(
+      JSON.stringify({
+        error: "Missing Supabase configuration",
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
+  }
+
+  const configuration = new Configuration({ apiKey });
+  const openai = new OpenAIApi(configuration);
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  try {
+    // Get the request body
+    const requestData = await req.json();
+    const { type } = requestData;
+
+    // Check API usage limits
+    const { data: authData } = await supabase.auth.getUser(
+      req.headers.get("Authorization")?.split("Bearer ")[1] || ""
+    );
+
+    if (!authData.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+        }
+      );
+    }
+
+    // Call check_and_increment_usage function
+    const { data: usageData, error: usageError } = await supabase.rpc(
+      "check_and_increment_usage",
+      {
+        feature_name: type === "script" ? "script_generation" : "idea_generation",
+      }
+    );
+
+    if (usageError) {
+      return new Response(
+        JSON.stringify({
+          error: usageError.message,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
+    }
+
+    if (!usageData.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: "Usage limit exceeded",
+          message: usageData.message,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429,
+        }
+      );
+    }
+
+    // Handle different types of requests
+    if (type === "ideas") {
+      // Handle idea generation
+      const {
+        count = 5,
+        niche,
+        audience,
+        videoType,
+        platform,
+        isAd = false,
+      } = requestData;
+
+      if (!niche || !audience || !videoType || !platform) {
+        return new Response(
+          JSON.stringify({
+            error: "Missing required fields",
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+          }
+        );
+      }
+
+      // Generate ideas
+      const systemPrompt = getIdeasSystemPrompt();
+      const userPrompt = getIdeasUserPrompt({
+        niche,
+        audience,
+        videoType,
+        platform,
+        count,
+        isAd,
+      });
+
+      // Generate completions from OpenAI
+      const response = await openai.createChatCompletion({
+        model: "gpt-4-0613",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 2500,
+      });
+
+      if (
+        !response.data.choices ||
+        !response.data.choices[0] ||
+        !response.data.choices[0].message
+      ) {
+        throw new Error("Failed to generate ideas");
+      }
+
+      let ideas = [];
+      try {
+        ideas = JSON.parse(response.data.choices[0].message.content);
+      } catch (error) {
+        console.log(
+          "Error parsing ideas:",
+          response.data.choices[0].message.content
+        );
+        return new Response(
+          JSON.stringify({
+            error: "Failed to parse generated ideas",
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 500,
+          }
+        );
+      }
+
+      return new Response(JSON.stringify({ ideas }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } else if (type === "script") {
+      // Handle script generation
+      const {
+        title,
+        description,
+        category,
+        tags,
+        toneOfVoice,
+        duration,
+        additionalNotes,
+        hook,
+        structure,
+        niche,
+        audience,
+        videoType,
+        platform,
+      } = requestData;
+
+      // Basic validation - require these fields
+      if (!title || !description || !toneOfVoice || !duration) {
+        return new Response(
+          JSON.stringify({
+            error: "Missing required fields in script request",
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+          }
+        );
+      }
+
+      // Require niche, audience, and videoType
+      if (!niche || !audience || !videoType) {
+        return new Response(
+          JSON.stringify({
+            error: "Missing required fields: niche, audience, or videoType",
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+          }
+        );
+      }
+
+      // Generate script
+      const systemPrompt = getScriptSystemPrompt();
+      const userPrompt = getScriptUserPrompt({
+        title,
+        description,
+        category,
+        tags,
+        toneOfVoice,
+        duration,
+        additionalNotes,
+        hook,
+        structure,
+        niche,
+        audience,
+        videoType,
+        platform,
+      });
+
+      console.log("Generating script with prompt:", userPrompt);
+
+      // Generate completions from OpenAI
+      const response = await openai.createChatCompletion({
+        model: "gpt-4-0613",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 2500,
+      });
+
+      if (
+        !response.data.choices ||
+        !response.data.choices[0] ||
+        !response.data.choices[0].message
+      ) {
+        throw new Error("Failed to generate script");
+      }
+
+      const script = response.data.choices[0].message.content;
+
+      return new Response(JSON.stringify({ script }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     } else {
-      // Default: Generate content ideas
-      return await generateContentIdeas(requestData);
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request type",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
     }
   } catch (error) {
     console.error("Error in generate-ideas function:", error);
     return new Response(
-      JSON.stringify({ 
-        error: `Function error: ${error.message}`,
-        stack: error.stack 
+      JSON.stringify({
+        error: error.message || "Internal Server Error",
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
       }
     );
   }
 });
 
-async function handleScriptCoach(data) {
-  const { message, script, conversation } = data;
+// Helper functions for system prompts
+function getIdeasSystemPrompt() {
+  return `You are an expert content strategist for social media, specializing in generating engaging video content ideas. 
+  Your task is to create unique, creative, and engaging video ideas that are tailored to specific niches and audiences.
   
-  try {
-    // Format the conversation history
-    const messages = [
-      {
-        role: "system",
-        content: "You are an expert script coach that helps content creators improve their scripts. Provide constructive feedback and suggestions to make their content more engaging and effective."
-      }
-    ];
-
-    // Add conversation history
-    if (Array.isArray(conversation)) {
-      conversation.forEach(msg => {
-        messages.push({ role: msg.role, content: msg.content });
-      });
-    }
-
-    // Add current message and script
-    messages.push({
-      role: "user",
-      content: `My script is: """${script}"""\n\nMy question/request: ${message}`
-    });
-
-    // Call OpenAI API
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${openAIApiKey}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages,
-        temperature: 0.7,
-        max_tokens: 1500
-      })
-    });
-
-    const result = await response.json();
-    
-    if (!response.ok) {
-      console.error("OpenAI API error:", result);
-      throw new Error(`OpenAI API error: ${result.error?.message || 'Unknown error'}`);
-    }
-
-    let updatedScript = null;
-    let aiResponse = result.choices[0].message.content;
-
-    // Check if response contains a script suggestion
-    if (aiResponse.includes("```") && aiResponse.includes("UPDATED_SCRIPT")) {
-      const scriptMatches = aiResponse.match(/```(?:UPDATED_SCRIPT)?\n([\s\S]*?)```/);
-      if (scriptMatches && scriptMatches[1]) {
-        updatedScript = scriptMatches[1].trim();
-        // Remove the script part from the response
-        aiResponse = aiResponse.replace(/```(?:UPDATED_SCRIPT)?\n[\s\S]*?```/, "[Script suggestions applied]");
-      }
-    }
-
-    return new Response(
-      JSON.stringify({ 
-        response: aiResponse, 
-        updatedScript 
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
-  } catch (error) {
-    console.error("Error in script coach handler:", error);
-    return new Response(
-      JSON.stringify({ error: `Script coach error: ${error.message}` }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+  Always provide responses in a consistent JSON format that can be parsed by the application.
+  
+  Format each idea as:
+  {
+    "title": "Attention-grabbing video title",
+    "description": "Detailed description of the video concept",
+    "category": "Category like Tutorial, Lifestyle, Entertainment, etc.",
+    "tags": ["relevant", "hashtags", "for", "this", "content"]
   }
+  
+  Create ideas that:
+  1. Are specific and actionable
+  2. Have viral potential
+  3. Incorporate trends relevant to the platform
+  4. Consider the target audience's interests
+  5. Are appropriately formatted for the platform
+  
+  Your output will be directly used by content creators, so ensure ideas are practical to execute.`;
 }
 
-async function generateContentIdeas(data) {
-  const { 
-    niche, 
-    audience, 
-    videoType, 
-    platform = 'TikTok', 
-    customIdeas = '', 
-    previousIdeas = null 
-  } = data;
-
-  if (!niche || !audience || !videoType) {
-    return new Response(
-      JSON.stringify({ error: 'Missing required fields: niche, audience, or videoType' }),
-      { 
-        status: 400, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+function getIdeasUserPrompt({
+  niche,
+  audience,
+  videoType,
+  platform,
+  count,
+  isAd,
+}) {
+  let prompt = `Please generate ${count} unique video ${
+    isAd ? "ad" : "content"
+  } ideas with the following parameters:
+  
+  Content Niche: ${niche}
+  Target Audience: ${audience}
+  Content Type: ${videoType}
+  Platform: ${platform}
+  
+  ${
+    isAd
+      ? "These should be compelling ad ideas that promote products or services while providing value to viewers."
+      : "These should be engaging content ideas that provide value to viewers and encourage engagement."
   }
 
-  try {
-    console.log(`Generating content ideas for: ${niche}, ${audience}, ${videoType}, ${platform}`);
-
-    // Construct the prompt
-    let prompt = `Generate 5 creative and viral content ideas for ${platform} with the following criteria:
-- Niche: ${niche}
-- Target Audience: ${audience}
-- Content Type: ${videoType}
-
-Each idea should be:
-1. Original and attention-grabbing
-2. Aligned with current trends on ${platform}
-3. Designed to maximize engagement (comments, shares)
-4. Formatted to work well on ${platform}`;
-
-    // Add platform-specific guidance
-    if (platform === 'TikTok') {
-      prompt += `\n\nFor TikTok, focus on short-form content that's 15-60 seconds. Create content that encourages user participation, leverages trending sounds, and has a hook in the first 3 seconds.`;
-    } else if (platform === 'Instagram') {
-      prompt += `\n\nFor Instagram, consider both Reels (short-form) and regular posts. Focus on visually appealing content, storytelling elements, and content that fits the aesthetic preferences of Instagram users.`;
-    } else if (platform === 'YouTube') {
-      prompt += `\n\nFor YouTube, consider both long-form content and Shorts. Focus on searchable topics, in-depth value, and clear thumbnails/titles that drive clicks.`;
-    }
-
-    // Add custom ideas as context if provided
-    if (customIdeas && customIdeas.trim()) {
-      prompt += `\n\nHere are some specific ideas I'm interested in exploring further. Use these as inspiration:\n${customIdeas}`;
-    }
-
-    // Add previous ideas context to avoid repetition
-    if (previousIdeas && previousIdeas.count > 0) {
-      prompt += `\n\nPlease avoid these previously generated ideas:\n`;
-      
-      const maxExamplesToShow = Math.min(previousIdeas.titles.length, 10);
-      for (let i = 0; i < maxExamplesToShow; i++) {
-        prompt += `- ${previousIdeas.titles[i]}\n`;
-      }
-    }
-
-    prompt += `\n\nFor each idea, provide:
-- A catchy title (make it compelling and click-worthy)
-- A clear description explaining the content concept
-- Category (e.g., Educational, Entertainment, Tutorial)
-- 3-5 relevant hashtags (without the # symbol)
-
-Format the response as JSON with this structure:
-{
-  "ideas": [
-    {
-      "title": "string",
-      "description": "string",
-      "category": "string",
-      "tags": ["string"]
-    }
-  ]
-}`;
-
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are a social media content strategist who helps creators make viral content. Provide creative, trendy, and platform-appropriate content ideas.'
-          },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.8,
-      }),
-    });
-
-    // Parse the response
-    const result = await response.json();
-    
-    if (!response.ok) {
-      console.error("OpenAI API error:", result);
-      throw new Error(`OpenAI API error: ${result.error?.message || 'Unknown error'}`);
-    }
-
-    let ideas;
-    try {
-      // Try to parse the response content as JSON
-      const content = result.choices[0].message.content;
-      console.log("Raw AI response:", content);
-      
-      // Handle cases where the model directly returns JSON or when it wraps it in markdown
-      let jsonContent = content;
-      
-      // Check if the response is wrapped in markdown code blocks
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (jsonMatch && jsonMatch[1]) {
-        jsonContent = jsonMatch[1].trim();
-      }
-      
-      ideas = JSON.parse(jsonContent);
-      
-      // Validate the response structure
-      if (!ideas.ideas || !Array.isArray(ideas.ideas)) {
-        throw new Error("Invalid response format: missing ideas array");
-      }
-    } catch (parseError) {
-      console.error("Error parsing AI response:", parseError);
-      // Return the raw response for debugging
-      return new Response(
-        JSON.stringify({ 
-          error: `Failed to parse AI response: ${parseError.message}`,
-          rawResponse: result.choices[0].message.content
-        }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    return new Response(
-      JSON.stringify(ideas),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
-  } catch (error) {
-    console.error("Error generating content ideas:", error);
-    return new Response(
-      JSON.stringify({ error: `Error generating ideas: ${error.message}` }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+  ${
+    isAd
+      ? "Each ad should have a clear value proposition and call to action."
+      : ""
   }
+  
+  Return the ideas as a JSON array of objects with the format specified in your instructions.`;
+
+  return prompt;
+}
+
+function getScriptSystemPrompt() {
+  return `You are an expert script writer for social media video content. Your task is to create engaging, well-structured scripts that are tailored to specific platforms and audiences.
+
+  When writing scripts:
+  
+  1. Create attention-grabbing hooks
+  2. Maintain a conversational, authentic tone
+  3. Incorporate visual direction using [VISUAL_GUIDE] tags
+  4. Keep sentences short and impactful
+  5. Include timestamps where appropriate using [TIMESTAMP] tags
+  6. End with clear calls-to-action
+  7. Optimize for the target platform
+  8. Ensure the content provides value to the audience
+  
+  Structure scripts with visual guidance for filming/editing, using [VISUAL_GUIDE] tags for scenes/shots/transitions and [TIMESTAMP] for key moments.
+  
+  Your scripts should be ready to use for recording without further editing.`;
+}
+
+function getScriptUserPrompt({
+  title,
+  description,
+  category,
+  tags,
+  toneOfVoice,
+  duration,
+  additionalNotes,
+  hook,
+  structure,
+  niche,
+  audience,
+  videoType,
+  platform,
+}) {
+  let prompt = `Please write a complete script for a ${duration}-second video with the following details:
+  
+  Title: ${title}
+  Description: ${description}
+  Category: ${category || videoType}
+  Tags: ${tags ? tags.join(", ") : ""}
+  Tone of Voice: ${toneOfVoice}
+  Content Niche: ${niche}
+  Target Audience: ${audience}
+  Platform: ${platform}
+  
+  ${additionalNotes ? `Additional Notes: ${additionalNotes}` : ""}
+  ${hook ? `Use this hook: ${hook}` : ""}
+  ${structure ? `Follow this structure: ${structure}` : ""}
+  
+  Include [VISUAL_GUIDE] tags for visual directions and [TIMESTAMP] tags for key timing points.
+  
+  The script should have a strong hook at the beginning, provide value through the middle sections, and end with an effective call-to-action.
+  
+  Make the content engaging and optimized for the ${platform} platform, maintaining a ${toneOfVoice} tone throughout.`;
+
+  return prompt;
 }
