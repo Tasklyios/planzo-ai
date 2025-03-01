@@ -418,6 +418,17 @@ export default function Script() {
   // Check if the user has enough usage left for script generation
   const checkUsageLimits = async () => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) {
+        setError("Authentication required. Please log in.");
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please log in to generate scripts.",
+        });
+        return false;
+      }
+
       // Use the check-usage-limits edge function
       const { data: usageResponse, error: usageError } = await supabase.functions.invoke('check-usage-limits', {
         body: { action: 'scripts' }
@@ -425,7 +436,12 @@ export default function Script() {
 
       if (usageError) {
         console.error("Usage check error:", usageError);
-        setError(`Usage check error: ${usageError.message}`);
+        setError(`Usage limit check failed: ${usageError.message || "Unknown error"}`);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `Failed to check usage limits: ${usageError.message || "Unknown error"}`,
+        });
         return false;
       }
 
@@ -433,18 +449,10 @@ export default function Script() {
       if (!usageResponse.canProceed) {
         console.error("Usage limit reached:", usageResponse.message);
         
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData.session?.user.id;
-        
-        if (!userId) {
-          setError("Authentication required. Please log in.");
-          return false;
-        }
-        
         const { data: subscription } = await supabase
           .from('user_subscriptions')
           .select('tier')
-          .eq('user_id', userId)
+          .eq('user_id', sessionData.session.user.id)
           .single();
 
         // Prepare upgrade message based on current tier
@@ -470,7 +478,12 @@ export default function Script() {
       return true;
     } catch (error: any) {
       console.error("Error checking usage limits:", error);
-      setError(`Error checking usage limits: ${error.message}`);
+      setError(`Error checking usage limits: ${error.message || "Unknown error"}`);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to check usage limits: ${error.message || "Unknown error"}`,
+      });
       return false;
     }
   };
@@ -930,92 +943,4 @@ export default function Script() {
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="selectedStructure">Script Structure (Optional)</Label>
-                <Select value={selectedStructure || "none"} onValueChange={setSelectedStructure}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a structure" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Default structure</SelectItem>
-                    {structures.map((structure) => (
-                      <SelectItem key={structure.id} value={structure.id || ""}>
-                        {structure.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <Button 
-            onClick={generateScript} 
-            disabled={loading || 
-              (scriptType === "existing" && !selectedIdea) || 
-              (scriptType === "custom" && (!customTitle || !customDescription))}
-            className="w-full"
-          >
-            {loading ? (
-              <>
-                <span className="mr-2">Generating...</span>
-                <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full"></div>
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate Script
-              </>
-            )}
-          </Button>
-
-          {generatedScript && (
-            <div className="space-y-6">
-              <div className="rounded-lg border p-6 bg-card">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Generated Script</h2>
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor="show-visuals" className="text-sm">Show Visual Guides</Label>
-                    <Switch
-                      id="show-visuals"
-                      checked={showVisuals}
-                      onCheckedChange={setShowVisuals}
-                    />
-                  </div>
-                </div>
-                <div className="whitespace-pre-wrap font-mono text-sm space-y-2">
-                  {parsedLines.map((line, index) => (
-                    <div 
-                      key={index}
-                      className={cn(
-                        "py-2",
-                        isVisual[index] ? 
-                          "pl-4 text-blue-500 dark:text-blue-400 italic border-l-2 border-blue-500 dark:border-blue-400 bg-blue-500/5 rounded-r-lg" :
-                          "text-foreground"
-                      )}
-                    >
-                      {isVisual[index] ? `→ Visual: ${line}` : line}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <Button
-                    onClick={handleSaveScript}
-                    variant="outline"
-                    className="gap-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    Save Script
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+                </
