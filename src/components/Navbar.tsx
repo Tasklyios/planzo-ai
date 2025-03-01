@@ -76,19 +76,21 @@ const Navbar = () => {
 
   const currentPath = window.location.pathname;
   const isIndexPage = currentPath === '/';
+  const isAuthPage = currentPath === '/auth';
+  const isLandingPage = isIndexPage || isAuthPage;
 
   return (
-    <header className="fixed w-full bg-card/80 backdrop-blur-sm border-b border-border z-50">
+    <header className={`fixed w-full ${isLandingPage ? 'bg-white' : 'bg-card/80 backdrop-blur-sm'} border-b border-border z-50`}>
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
-          <div className="text-2xl font-bold text-[#0073FF]">Planzo AI</div>
+          <div className={`text-2xl font-bold ${isLandingPage ? 'text-[#0073FF]' : 'text-[#0073FF]'}`}>Planzo AI</div>
         </div>
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost">Overview</Button>
+              <Button variant={isLandingPage ? "outline" : "ghost"} className={isLandingPage ? "text-[#333333]" : ""}>Overview</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {MENU_CATEGORIES[0].items.map(item => (
@@ -104,7 +106,7 @@ const Navbar = () => {
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost">Create</Button>
+              <Button variant={isLandingPage ? "outline" : "ghost"} className={isLandingPage ? "text-[#333333]" : ""}>Create</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {MENU_CATEGORIES[1].items.map(item => (
@@ -120,7 +122,7 @@ const Navbar = () => {
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost">Library</Button>
+              <Button variant={isLandingPage ? "outline" : "ghost"} className={isLandingPage ? "text-[#333333]" : ""}>Library</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {MENU_CATEGORIES[2].items.map(item => (
@@ -148,7 +150,7 @@ const Navbar = () => {
           <div className="hidden md:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant={isLandingPage ? "outline" : "ghost"} size="icon" className={isLandingPage ? "text-[#333333]" : ""}>
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -175,7 +177,7 @@ const Navbar = () => {
           {/* Mobile Navigation */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" className="md:hidden" size="icon">
+              <Button variant={isLandingPage ? "outline" : "ghost"} className="md:hidden" size="icon">
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>

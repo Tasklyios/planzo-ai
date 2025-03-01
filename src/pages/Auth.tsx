@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,25 @@ import { Button } from "@/components/ui/button";
 import PricingDialog from "@/components/pricing/PricingDialog";
 
 const Auth = () => {
+  // Force light mode on auth page
+  useEffect(() => {
+    // Save current theme preference
+    const root = window.document.documentElement;
+    const originalTheme = root.classList.contains('dark') ? 'dark' : 'light';
+    
+    // Force light mode
+    root.classList.remove('dark');
+    root.classList.add('light');
+    
+    // Restore original theme when component unmounts
+    return () => {
+      if (originalTheme === 'dark') {
+        root.classList.remove('light');
+        root.classList.add('dark');
+      }
+    };
+  }, []);
+
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
@@ -169,30 +187,30 @@ const Auth = () => {
 
   if (isResetPassword) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-light-bg to-light-bg-2 dark:from-background dark:to-background/80 flex items-center justify-center p-4">
-        <div className="max-w-md w-full glass rounded-2xl p-8 shadow-xl fade-up">
+      <div className="min-h-screen bg-[#f3f3f3] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 shadow-xl fade-up">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-dark dark:text-white mb-2">
+            <h1 className="text-2xl font-bold text-[#333333] mb-2">
               Reset Your Password
             </h1>
-            <p className="text-dark/70 dark:text-white/70">
+            <p className="text-[#555555]">
               Please enter your new password below
             </p>
           </div>
 
           <form onSubmit={handleResetPassword} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-dark dark:text-white" htmlFor="new-password">
+              <label className="text-sm font-medium text-[#333333]" htmlFor="new-password">
                 New Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40 dark:text-white/40" size={20} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" size={20} />
                 <input
                   id="new-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-white text-[#333333] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="Enter your new password"
                   required
                 />
@@ -200,17 +218,17 @@ const Auth = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-dark dark:text-white" htmlFor="confirm-password">
+              <label className="text-sm font-medium text-[#333333]" htmlFor="confirm-password">
                 Confirm Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40 dark:text-white/40" size={20} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" size={20} />
                 <input
                   id="confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-white text-[#333333] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="Confirm your new password"
                   required
                 />
@@ -236,17 +254,17 @@ const Auth = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-b from-light-bg to-light-bg-2 dark:from-background dark:to-background/80 flex items-center justify-center p-4">
-        <div className="max-w-md w-full glass rounded-2xl p-8 shadow-xl fade-up">
+      <div className="min-h-screen bg-[#f3f3f3] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 shadow-xl fade-up">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-dark dark:text-white mb-2">
+            <h1 className="text-2xl font-bold text-[#333333] mb-2">
               {isForgotPassword 
                 ? "Reset Your Password" 
                 : isSignUp 
                   ? "Create an Account" 
                   : "Welcome Back"}
             </h1>
-            <p className="text-dark/70 dark:text-white/70">
+            <p className="text-[#555555]">
               {isForgotPassword
                 ? "Enter your email to receive a password reset link"
                 : isSignUp
@@ -255,28 +273,24 @@ const Auth = () => {
             </p>
           </div>
 
-          {!isForgotPassword && (
-            <div className="space-y-4 mb-6">
-              <button
-                onClick={handleGoogleSignIn}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                <FcGoogle size={20} />
-                <span className="text-dark dark:text-white">Continue with Google</span>
-              </button>
-            </div>
-          )}
+          <div className="space-y-4 mb-6">
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <FcGoogle size={20} />
+              <span className="text-dark dark:text-white">Continue with Google</span>
+            </button>
+          </div>
 
-          {!isForgotPassword && (
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-800 text-dark/60 dark:text-white/60">Or continue with</span>
-              </div>
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
             </div>
-          )}
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white dark:bg-gray-800 text-dark/60 dark:text-white/60">Or continue with</span>
+            </div>
+          </div>
 
           {isForgotPassword ? (
             resetSent ? (
@@ -284,7 +298,7 @@ const Auth = () => {
                 <p className="text-green-600">
                   A password reset link has been sent to your email.
                 </p>
-                <p className="text-dark/70 dark:text-white/70">
+                <p className="text-[#555555]">
                   Please check your inbox and follow the instructions to reset your password.
                 </p>
                 <Button 
@@ -300,17 +314,17 @@ const Auth = () => {
             ) : (
               <form onSubmit={handleForgotPassword} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-dark dark:text-white" htmlFor="reset-email">
+                  <label className="text-sm font-medium text-[#333333]" htmlFor="reset-email">
                     Email
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40 dark:text-white/40" size={20} />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" size={20} />
                     <input
                       id="reset-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-white text-[#333333] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                       placeholder="Enter your email"
                       required
                     />
@@ -343,17 +357,17 @@ const Auth = () => {
           ) : (
             <form onSubmit={handleAuth} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-dark dark:text-white" htmlFor="email">
+                <label className="text-sm font-medium text-[#333333]" htmlFor="email">
                   Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40 dark:text-white/40" size={20} />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" size={20} />
                   <input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-white text-[#333333] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="Enter your email"
                     required
                   />
@@ -362,7 +376,7 @@ const Auth = () => {
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium text-dark dark:text-white" htmlFor="password">
+                  <label className="text-sm font-medium text-[#333333]" htmlFor="password">
                     Password
                   </label>
                   {!isSignUp && (
@@ -379,13 +393,13 @@ const Auth = () => {
                   )}
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark/40 dark:text-white/40" size={20} />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" size={20} />
                   <input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-white text-[#333333] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="Enter your password"
                     required
                   />
@@ -406,19 +420,17 @@ const Auth = () => {
             </form>
           )}
 
-          {!isForgotPassword && (
-            <div className="mt-6 text-center">
-              <p className="text-dark/70 dark:text-white/70">
-                {isSignUp ? "Already have an account?" : "Don't have an account?"}
-                <button
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  className="ml-1 text-[#0073FF] hover:underline"
-                >
-                  {isSignUp ? "Sign In" : "Sign Up"}
-                </button>
-              </p>
-            </div>
-          )}
+          <div className="mt-6 text-center">
+            <p className="text-dark/70 dark:text-white/70">
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}
+              <button
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="ml-1 text-[#0073FF] hover:underline"
+              >
+                {isSignUp ? "Sign In" : "Sign Up"}
+              </button>
+            </p>
+          </div>
         </div>
       </div>
 
