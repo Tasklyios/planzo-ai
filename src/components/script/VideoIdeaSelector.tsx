@@ -40,7 +40,7 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
         .from("video_ideas")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(5);
+        .limit(10); // Increased from 5 to 10 to show more ideas
 
       if (error) throw error;
       setIdeas(data || []);
@@ -64,7 +64,7 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
         .select("*")
         .ilike("title", `%${searchQuery}%`)
         .order("created_at", { ascending: false })
-        .limit(5);
+        .limit(10); // Increased from 5 to 10
 
       if (error) throw error;
       setIdeas(data || []);
@@ -78,6 +78,10 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
   const handleSelectIdea = (idea: GeneratedIdea) => {
     setSelectedIdea(idea);
     onSelectIdea(idea);
+    toast({
+      title: "Idea selected",
+      description: "You've selected the idea: " + idea.title
+    });
   };
 
   return (
@@ -99,7 +103,7 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : ideas.length > 0 ? (
-        <div className="space-y-2 max-h-[300px] overflow-y-auto">
+        <div className="space-y-2 max-h-[450px] overflow-y-auto"> {/* Increased from 300px to 450px */}
           {ideas.map((idea) => (
             <Card
               key={idea.id}

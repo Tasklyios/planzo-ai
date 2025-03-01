@@ -1,329 +1,373 @@
 
-// supabase/functions/generate-ideas/index.ts
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+
+// Define CORS headers
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-  if (!OPENAI_API_KEY) {
-    return new Response(
-      JSON.stringify({ error: 'OpenAI API key not configured' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+  // Check if request is POST
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
   try {
-    const body = await req.json();
-    const { type } = body;
-
-    console.log(`Processing ${type} request`);
-
-    let response;
-    if (type === 'script') {
-      response = await generateScript(body, OPENAI_API_KEY, supabase);
-    } else if (type === 'script_coach') {
-      response = await generateScriptCoachResponse(body, OPENAI_API_KEY);
-    } else {
-      // Default to idea generation
-      response = await generateIdeas(body, OPENAI_API_KEY);
+    // Get the authorization header from the request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("No authorization header");
     }
 
-    return new Response(
-      JSON.stringify(response),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    // Create a Supabase client
+    const supabaseClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
+    
+    // Verify the user is authenticated
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    
+    if (authError || !user) {
+      console.error("Authentication error:", authError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Check usage limits
+    const { data: usageData, error: usageError } = await supabaseClient.rpc(
+      "check_and_increment_usage",
+      { feature_name: "ideas" }
     );
+
+    if (usageError) {
+      console.error("Usage check error:", usageError);
+      return new Response(
+        JSON.stringify({ error: `Error checking usage limits: ${usageError.message}` }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (!usageData) {
+      return new Response(
+        JSON.stringify({ error: "You've reached your daily limit for idea generation" }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Parse request body
+    const { niche, audience, videoType, platform, customIdeas, contentStyle, contentPersonality, previousIdeas } = await req.json();
+
+    // Prepare system message
+    let systemMessage = `You are a creative content strategist who helps creators generate engaging video ideas for ${platform}.`;
+    
+    if (contentStyle || contentPersonality) {
+      systemMessage += ` The creator's preferred content style is ${contentStyle || "not specified"} and their content personality is ${contentPersonality || "not specified"}.`;
+    }
+
+    // Add context about previous ideas if available
+    let previousIdeasContext = "";
+    if (previousIdeas && previousIdeas.count > 0) {
+      previousIdeasContext = `\nThe creator has previously generated ${previousIdeas.count} ideas.`;
+      
+      if (previousIdeas.titles && previousIdeas.titles.length > 0) {
+        previousIdeasContext += `\nRecent idea titles include: ${previousIdeas.titles.slice(0, 5).join(", ")}`;
+      }
+      
+      if (previousIdeas.categories && previousIdeas.categories.length > 0) {
+        const categoryFrequency = {};
+        previousIdeas.categories.forEach(cat => {
+          categoryFrequency[cat] = (categoryFrequency[cat] || 0) + 1;
+        });
+        
+        // Get the top 3 most frequent categories
+        const topCategories = Object.entries(categoryFrequency)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(entry => entry[0]);
+          
+        previousIdeasContext += `\nTop categories used: ${topCategories.join(", ")}`;
+      }
+    }
+
+    // Prepare user prompt
+    let prompt = `Generate 5 unique, creative, and engaging ${videoType} video ideas for ${platform} in the ${niche} niche targeting ${audience}.`;
+    
+    if (customIdeas) {
+      prompt += `\nIncorporate these specific ideas or themes if possible: ${customIdeas}`;
+    }
+    
+    prompt += `\nFor each idea, include:\n1. A catchy title\n2. A brief description (2-3 sentences)\n3. A relevant category\n4. 3-5 hashtags/tags`;
+    
+    // Start tracking time for the OpenAI call
+    const startTime = Date.now();
+    
+    console.log("Calling OpenAI with prompt:", prompt);
+    
+    // Call OpenAI API
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini", // Changed from gpt-4-turbo to gpt-4o-mini
+        messages: [
+          {
+            role: "system",
+            content: systemMessage + previousIdeasContext,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.8,
+      }),
+    });
+
+    // Calculate time taken for OpenAI API call
+    const timeTaken = Date.now() - startTime;
+    console.log(`OpenAI API call took ${timeTaken}ms`);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("OpenAI API error:", errorData);
+      return new Response(
+        JSON.stringify({ error: `OpenAI API error: ${errorData.error?.message || JSON.stringify(errorData)}` }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const data = await response.json();
+    const rawResponse = data.choices[0].message.content;
+    console.log("Raw OpenAI response:", rawResponse);
+
+    // Parse the response to extract the ideas
+    try {
+      const ideas = parseIdeasFromResponse(rawResponse);
+      
+      return new Response(
+        JSON.stringify({ ideas, rawResponse }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    } catch (parseError) {
+      console.error("Error parsing OpenAI response:", parseError);
+      return new Response(
+        JSON.stringify({ error: `Failed to parse AI response: ${parseError.message}`, rawResponse }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
   } catch (error) {
-    console.error(`Error in generate-ideas function:`, error);
+    console.error("Edge function error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: error.message || "An unknown error occurred" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });
 
-async function generateIdeas(body, apiKey) {
-  const { 
-    niche, audience, videoType, platform, customIdeas,
-    contentStyle, contentPersonality, previousIdeas
-  } = body;
+function parseIdeasFromResponse(text) {
+  // Try to split by numbered items first (1., 2., etc.)
+  const ideas = [];
+  const lines = text.split('\n').filter(line => line.trim() !== '');
 
-  console.log(`Generating ideas for niche: ${niche}, audience: ${audience}, videoType: ${videoType}`);
+  let currentIdea = null;
+  let inHashtags = false;
 
-  let prompt = `Generate 3 engaging ${platform} video ideas for a ${videoType}.`;
-  
-  if (niche) {
-    prompt += ` The content niche is: ${niche}.`;
-  }
-  
-  if (audience) {
-    prompt += ` The target audience is: ${audience}.`;
-  }
+  // First try to identify numbered ideas (1., 2., etc.)
+  const ideaStartRegex = /^(\d+)[\.\)]\s+(.+)$/;
 
-  if (contentStyle) {
-    prompt += ` The content style is: ${contentStyle}.`;
-  }
-
-  if (contentPersonality) {
-    prompt += ` The content personality is: ${contentPersonality}.`;
-  }
-
-  if (customIdeas) {
-    prompt += ` Consider the following custom requests: ${customIdeas}.`;
-  }
-
-  // Add context about previous ideas to avoid repetition
-  if (previousIdeas && previousIdeas.count > 0) {
-    prompt += ` Please avoid generating ideas similar to these previous titles: ${previousIdeas.titles.join(", ")}.`;
-  }
-
-  prompt += ` For each idea, provide: 
-1. An engaging title (max 60 chars)
-2. A concise description explaining the content (2-3 sentences)
-3. A category (e.g., Tutorial, Entertainment, Educational)
-4. 3-5 relevant hashtags
-
-Format the response as a JSON array of objects with title, description, category, and tags fields.`;
-
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are a content idea generator specialized in social media content. Provide creative and specific ideas that will engage the target audience. Always format your response as valid JSON."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.7
-      })
-    });
-
-    const data = await response.json();
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
     
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      console.error('Invalid response from OpenAI:', data);
-      throw new Error('Failed to generate ideas: Invalid API response');
-    }
-
-    const content = data.choices[0].message.content;
+    // Check if this line starts a new idea
+    const ideaMatch = line.match(ideaStartRegex);
     
-    // Try to parse the JSON response
-    try {
-      // Extract JSON from the response (it might be wrapped in markdown code blocks)
-      const jsonRegex = /```(?:json)?\s*([\s\S]*?)\s*```|(\[[\s\S]*\])/;
-      const match = content.match(jsonRegex);
+    if (ideaMatch) {
+      // If we already have a current idea, push it to our array
+      if (currentIdea) {
+        ideas.push(currentIdea);
+      }
       
-      let jsonContent = match ? (match[1] || match[2]) : content;
-      const ideas = JSON.parse(jsonContent);
-      
-      console.log(`Successfully generated ${ideas.length} ideas`);
-      return { ideas };
-    } catch (jsonError) {
-      console.error('Error parsing AI response as JSON:', jsonError);
-      console.log('Raw response:', content);
-      
-      // Return the raw response in case frontend wants to handle it
-      return { 
-        error: 'Failed to parse AI response as JSON', 
-        rawResponse: content 
+      // Start a new idea
+      currentIdea = {
+        title: ideaMatch[2],
+        description: '',
+        category: '',
+        tags: []
       };
-    }
-  } catch (error) {
-    console.error('Error generating ideas:', error);
-    throw new Error(`Failed to generate ideas: ${error.message}`);
-  }
-}
-
-async function generateScript(body, apiKey, supabase) {
-  const { 
-    title, description, category, toneOfVoice, duration, 
-    additionalNotes, hook, structure, niche, audience, videoType, platform
-  } = body;
-
-  console.log(`Generating script for: ${title}, duration: ${duration}s, tone: ${toneOfVoice}`);
-  
-  // First, get the user's active style profile if available
-  let styleInfo = '';
-  let stylePrompt = '';
-  
-  if (niche) {
-    stylePrompt += `The content niche is: ${niche}. `;
-  }
-  
-  if (audience) {
-    stylePrompt += `The target audience is: ${audience}. `;
-  }
-  
-  if (videoType) {
-    stylePrompt += `The video type is: ${videoType}. `;
-  }
-  
-  if (platform) {
-    stylePrompt += `The platform is: ${platform}. `;
-  }
-
-  // Prepare the full prompt
-  let prompt = `Generate a script for a ${duration}-second video titled "${title}".`;
-
-  if (description) {
-    prompt += ` The video is about: ${description}.`;
-  }
-
-  if (category) {
-    prompt += ` It's in the ${category} category.`;
-  }
-
-  prompt += ` Use a ${toneOfVoice} tone of voice.`;
-  prompt += ` ${stylePrompt}`;
-
-  if (hook) {
-    prompt += ` Use this hook to start the video: "${hook}"`;
-  }
-
-  if (structure) {
-    prompt += ` Follow this structure for the video: ${structure}`;
-  }
-
-  if (additionalNotes) {
-    prompt += ` Additional notes: ${additionalNotes}.`;
-  }
-
-  prompt += ` Include visual guide markers [VISUAL_GUIDE]descriptive text about what to show visually here[/VISUAL_GUIDE] throughout the script to help with filming.`;
-  
-  prompt += ` The script should have an engaging hook, clear explanation of the content, and end with a call to action.`;
-
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are a professional scriptwriter for social media content. Create engaging scripts that match the requested tone and style. Include visual elements with [VISUAL_GUIDE] markers."
-          },
-          {
-            role: "user",
-            content: prompt
+      
+      inHashtags = false;
+    } else if (currentIdea) {
+      // We're in the middle of an idea
+      
+      // Check for description
+      if (line.toLowerCase().includes("description") || (line.toLowerCase().includes("desc") && line.includes(":"))) {
+        const descriptionParts = line.split(":");
+        if (descriptionParts.length > 1) {
+          currentIdea.description = descriptionParts[1].trim();
+        }
+        continue;
+      }
+      
+      // Check for category
+      if (line.toLowerCase().includes("category") || (line.toLowerCase().includes("cat") && line.includes(":"))) {
+        const categoryParts = line.split(":");
+        if (categoryParts.length > 1) {
+          currentIdea.category = categoryParts[1].trim();
+        }
+        continue;
+      }
+      
+      // Check for tags/hashtags
+      if (line.toLowerCase().includes("tag") || 
+          line.toLowerCase().includes("hashtag") || 
+          inHashtags || 
+          line.startsWith("#")) {
+        inHashtags = true;
+        
+        // Extract hashtags
+        const hashtagMatch = line.match(/#[\w\d]+/g);
+        if (hashtagMatch) {
+          currentIdea.tags = currentIdea.tags.concat(
+            hashtagMatch.map(tag => tag.substring(1)) // Remove the # symbol
+          );
+          continue;
+        }
+        
+        // If line contains "Tags:" or "Hashtags:", extract the content after the colon
+        if (line.includes(":")) {
+          const tagsParts = line.split(":");
+          if (tagsParts.length > 1) {
+            const tagsText = tagsParts[1].trim();
+            // Split by commas or spaces if they look like hashtags
+            const tags = tagsText.startsWith("#") 
+              ? tagsText.split(/\s+/).map(tag => tag.startsWith("#") ? tag.substring(1) : tag)
+              : tagsText.split(",").map(tag => tag.trim());
+            
+            currentIdea.tags = currentIdea.tags.concat(tags);
           }
-        ],
-        temperature: 0.7
-      })
-    });
-
-    const data = await response.json();
-    
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      console.error('Invalid response from OpenAI:', data);
-      throw new Error('Failed to generate script: Invalid API response');
+          continue;
+        }
+      }
+      
+      // If the line doesn't match any of the above patterns, add it to the description
+      if (!currentIdea.description) {
+        currentIdea.description = line;
+      } else if (line && !line.includes(":") && !inHashtags) {
+        currentIdea.description += " " + line;
+      }
     }
-
-    const script = data.choices[0].message.content;
-    console.log(`Successfully generated script of ${script.length} characters`);
-    
-    return { script };
-  } catch (error) {
-    console.error('Error generating script:', error);
-    throw new Error(`Failed to generate script: ${error.message}`);
   }
-}
-
-async function generateScriptCoachResponse(body, apiKey) {
-  const { message, script, conversation } = body;
   
-  console.log(`Script coach responding to: ${message.substring(0, 50)}...`);
-  
-  // Prepare conversation history
-  const messages = [
-    {
-      role: "system",
-      content: `You are an expert script coach for social media content. 
-      Help users improve their scripts by providing specific, actionable feedback and suggestions. 
-      When appropriate, offer direct script improvements or alternatives.
-      If asked to rewrite or improve the script, provide a complete updated version that maintains the original style but incorporates your improvements.`
-    }
-  ];
-  
-  // Add conversation history (limited to last 10 messages to avoid token limits)
-  const recentConversation = conversation.slice(-10);
-  messages.push(...recentConversation);
-  
-  // Add the current script for context
-  messages.push({
-    role: "user",
-    content: `Here is the current script I'm working with:\n\n${script}\n\nMy question is: ${message}`
-  });
-
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: messages,
-        temperature: 0.7
-      })
-    });
-
-    const data = await response.json();
-    
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      console.error('Invalid response from OpenAI:', data);
-      throw new Error('Failed to generate coach response: Invalid API response');
-    }
-
-    const content = data.choices[0].message.content;
-    
-    // Check if the response contains a complete updated script
-    // by looking for patterns that suggest a full script rewrite
-    const containsFullScript = 
-      (content.includes("[VISUAL_GUIDE]") && content.includes("[/VISUAL_GUIDE]")) ||
-      (content.length > script.length * 0.7) ||
-      (content.includes("Here's the improved script:") || content.includes("Here is the updated script:"));
-    
-    // If it looks like a full script rewrite, provide it as updatedScript as well
-    const result = {
-      response: content
-    };
-    
-    if (containsFullScript) {
-      result.updatedScript = content;
-    }
-    
-    console.log(`Generated coach response (${content.length} chars)${containsFullScript ? ' with script update' : ''}`);
-    return result;
-  } catch (error) {
-    console.error('Error generating coach response:', error);
-    throw new Error(`Failed to generate coach response: ${error.message}`);
+  // Don't forget to add the last idea
+  if (currentIdea) {
+    ideas.push(currentIdea);
   }
+  
+  // If we couldn't parse ideas with the above method, try an alternative approach
+  if (ideas.length === 0) {
+    // Look for ideas with titles in quotes or bold markdown
+    const titleRegex = /[""]([^""]+)[""]|(?:\*\*)(.*?)(?:\*\*)/g;
+    let match;
+    let lastIndex = 0;
+    
+    while ((match = titleRegex.exec(text)) !== null) {
+      const title = match[1] || match[2];
+      const startIdx = match.index;
+      const endIdx = text.indexOf("\n\n", startIdx);
+      
+      const ideaText = text.substring(startIdx, endIdx > startIdx ? endIdx : undefined);
+      
+      // Extract category if present
+      let category = '';
+      const categoryMatch = ideaText.match(/category:?\s*([^,\n]+)/i);
+      if (categoryMatch) {
+        category = categoryMatch[1].trim();
+      }
+      
+      // Extract description - everything between title and category/tags
+      let description = ideaText.substring(match[0].length).trim();
+      if (categoryMatch) {
+        description = description.substring(0, description.toLowerCase().indexOf('category')).trim();
+      }
+      
+      // Extract tags
+      const tags = [];
+      const hashtagMatch = ideaText.match(/#[\w\d]+/g);
+      if (hashtagMatch) {
+        hashtagMatch.forEach(tag => tags.push(tag.substring(1)));
+      }
+      
+      ideas.push({
+        title,
+        description,
+        category,
+        tags
+      });
+      
+      lastIndex = endIdx;
+    }
+  }
+  
+  // Final checks and cleanup
+  for (const idea of ideas) {
+    // Default values for any missing properties
+    if (!idea.title) idea.title = "Untitled Idea";
+    if (!idea.description) idea.description = "No description provided.";
+    if (!idea.category) idea.category = "Miscellaneous";
+    if (!idea.tags || idea.tags.length === 0) idea.tags = ["content"];
+    
+    // Cleanup tags (remove duplicates, empty tags, etc.)
+    idea.tags = [...new Set(idea.tags.filter(tag => tag && tag.trim() !== ''))];
+    
+    // Clean up description (remove "Description:" prefix if present)
+    if (idea.description.toLowerCase().startsWith("description:")) {
+      idea.description = idea.description.substring("description:".length).trim();
+    }
+  }
+  
+  return ideas;
 }
