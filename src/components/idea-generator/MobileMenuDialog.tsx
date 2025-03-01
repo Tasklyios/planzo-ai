@@ -8,10 +8,20 @@ import { LogOut } from "lucide-react";
 interface MobileMenuDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onLogout: () => void;
+  onLogout?: () => void;
+  activeTab?: 'input' | 'ideas';
+  setActiveTab?: React.Dispatch<React.SetStateAction<'input' | 'ideas'>>;
+  hasIdeas?: boolean;
 }
 
-const MobileMenuDialog = ({ open, onOpenChange, onLogout }: MobileMenuDialogProps) => {
+const MobileMenuDialog = ({ 
+  open, 
+  onOpenChange, 
+  onLogout,
+  activeTab,
+  setActiveTab,
+  hasIdeas = false
+}: MobileMenuDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="h-screen w-screen sm:max-w-[300px] p-0">
@@ -42,14 +52,45 @@ const MobileMenuDialog = ({ open, onOpenChange, onLogout }: MobileMenuDialogProp
               >
                 Calendar
               </Link>
+              
+              {/* Add tab switching if hasIdeas is true */}
+              {hasIdeas && setActiveTab && (
+                <div className="mt-4 border-t pt-4">
+                  <h3 className="text-sm font-medium mb-2">Idea Generator</h3>
+                  <div className="flex flex-col space-y-2">
+                    <Button
+                      variant={activeTab === 'input' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setActiveTab('input');
+                        onOpenChange(false);
+                      }}
+                    >
+                      Input Form
+                    </Button>
+                    <Button
+                      variant={activeTab === 'ideas' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setActiveTab('ideas');
+                        onOpenChange(false);
+                      }}
+                    >
+                      View Ideas
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          <div className="border-t p-4">
-            <Button onClick={onLogout} className="w-full">
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign out
-            </Button>
-          </div>
+          {onLogout && (
+            <div className="border-t p-4">
+              <Button onClick={onLogout} className="w-full">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
