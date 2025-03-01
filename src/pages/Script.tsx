@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -943,4 +944,102 @@ export default function Script() {
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="selectedStructure">Script Structure (Optional)</Label>
+                <Select value={selectedStructure || "none"} onValueChange={setSelectedStructure}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a structure" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No structure</SelectItem>
+                    {structures.map((structure) => (
+                      <SelectItem key={structure.id} value={structure.id || ""}>
+                        {structure.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 pt-2">
+              <Switch
+                id="showVisuals"
+                checked={showVisuals}
+                onCheckedChange={setShowVisuals}
+              />
+              <Label htmlFor="showVisuals">Show visual guides in script</Label>
+            </div>
+
+            <div className="flex justify-between pt-6">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => navigate('/ideas')}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={generateScript}
+                disabled={loading || (scriptType === "existing" && !selectedIdea) || (scriptType === "custom" && (!customTitle || !customDescription))}
+                className="px-6"
+              >
+                {loading ? (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generate Script
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {generatedScript && (
+          <div className="mt-12 space-y-6 border-t pt-8">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold">Generated Script</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveScript}
+                className="gap-2"
+              >
+                <Save className="h-4 w-4" />
+                Save Script
+              </Button>
+            </div>
+
+            <div className="bg-card border rounded-lg p-6 space-y-4">
+              {parsedLines.map((line, index) => (
+                <div 
+                  key={index}
+                  className={cn(
+                    "py-1 px-2 -mx-2 rounded", 
+                    isVisual[index] ? "bg-primary/10 border-l-4 border-primary pl-3" : ""
+                  )}
+                >
+                  {isVisual[index] && <span className="text-xs text-primary font-medium block mb-1">VISUAL GUIDE</span>}
+                  <p className={cn(
+                    isVisual[index] ? "text-sm italic" : "text-base"
+                  )}>
+                    {line}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
