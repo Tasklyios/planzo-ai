@@ -1,6 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 import { useToast } from '@/components/ui/use-toast';
 import { Send } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +27,7 @@ interface ChatWidgetProps {
 }
 
 const ChatWidget: React.FC<ChatWidgetProps> = ({ script = '', onScriptUpdate }) => {
-  const { toast } = useToast();
+  const { toasts } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);

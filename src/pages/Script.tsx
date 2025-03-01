@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GeneratedIdea, ScriptHook, ScriptStructure, StyleProfile } from "@/types/idea";
 import { Save, Search, Upload, Sparkles, Plus, Check, Trash2, Paintbrush } from "lucide-react";
@@ -79,7 +80,6 @@ export default function Script() {
   const [showVisuals, setShowVisuals] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const { toast } = useToast();
   const navigate = useNavigate();
   
   // Add new state for custom hook and structure data
