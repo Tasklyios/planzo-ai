@@ -47,7 +47,7 @@ const LinkSubscriptionDialog = ({ onSuccess }: LinkSubscriptionDialogProps) => {
 
       console.log("Sending link subscription request with email:", email);
 
-      // Call the Supabase Edge Function directly
+      // Call the Supabase Edge Function
       const response = await supabase.functions.invoke('link-subscription', {
         body: { email },
       });
@@ -56,6 +56,10 @@ const LinkSubscriptionDialog = ({ onSuccess }: LinkSubscriptionDialogProps) => {
       
       if (response.error) {
         throw new Error(response.error.message || "Failed to link subscription");
+      }
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || "Failed to link subscription");
       }
 
       toast({
