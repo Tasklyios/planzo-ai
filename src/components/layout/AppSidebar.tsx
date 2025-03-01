@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -13,7 +14,7 @@ import {
   ChevronUp,
   LightbulbIcon,
   BookOpen,
-  Hook,
+  Anchor,
   Palette
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -145,7 +146,7 @@ const AppSidebar = () => {
           />
           <SidebarItem
             href="/hooks"
-            icon={<Hook className="w-5 h-5" />}
+            icon={<Anchor className="w-5 h-5" />}
             label="Generate Hooks"
           />
         </SidebarCategory>

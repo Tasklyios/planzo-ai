@@ -15,7 +15,7 @@ import {
   Palette,
   LightbulbIcon,
   BookOpen,
-  Hook
+  Anchor
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,7 +62,7 @@ const Navbar = () => {
       items: [
         { path: '/generator', label: 'Generate Ideas', icon: <LightbulbIcon className="h-5 w-5 mr-2" /> },
         { path: '/script', label: 'Generate Scripts', icon: <BookOpen className="h-5 w-5 mr-2" /> },
-        { path: '/hooks', label: 'Generate Hooks', icon: <Hook className="h-5 w-5 mr-2" /> },
+        { path: '/hooks', label: 'Generate Hooks', icon: <Anchor className="h-5 w-5 mr-2" /> },
       ]
     },
     {
