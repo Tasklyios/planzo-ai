@@ -20,26 +20,51 @@ export const useIdeaGenerator = () => {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "niche" && e.newValue !== null) {
+        console.log(`Storage event: niche updated to ${e.newValue}`);
         setNiche(e.newValue);
       } else if (e.key === "audience" && e.newValue !== null) {
+        console.log(`Storage event: audience updated to ${e.newValue}`);
         setAudience(e.newValue);
       } else if (e.key === "videoType" && e.newValue !== null) {
+        console.log(`Storage event: videoType updated to ${e.newValue}`);
         setVideoType(e.newValue);
       } else if (e.key === "platform" && e.newValue !== null) {
+        console.log(`Storage event: platform updated to ${e.newValue}`);
         setPlatform(e.newValue);
       }
     };
 
+    // Also listen for custom events as a fallback
+    const handleCustomStorageChange = (e: CustomEvent<{key: string, newValue: string}>) => {
+      const { key, newValue } = e.detail;
+      console.log(`Custom storage event: ${key} updated to ${newValue}`);
+      
+      if (key === "niche" && newValue !== null) {
+        setNiche(newValue);
+      } else if (key === "audience" && newValue !== null) {
+        setAudience(newValue);
+      } else if (key === "videoType" && newValue !== null) {
+        setVideoType(newValue);
+      } else if (key === "platform" && newValue !== null) {
+        setPlatform(newValue);
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('localStorageChange', handleCustomStorageChange as EventListener);
+    
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('localStorageChange', handleCustomStorageChange as EventListener);
     };
   }, []);
 
   useEffect(() => {
+    console.log("Fetching user preferences on mount");
     fetchUserPreferences();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      console.log("Auth state changed, fetching preferences");
       fetchUserPreferences();
     });
 
@@ -52,7 +77,8 @@ export const useIdeaGenerator = () => {
           schema: 'public',
           table: 'profiles',
         },
-        () => {
+        (payload) => {
+          console.log("Profile changed in database:", payload);
           fetchUserPreferences();
         }
       )
@@ -66,8 +92,12 @@ export const useIdeaGenerator = () => {
 
   const fetchUserPreferences = async () => {
     try {
+      console.log("Fetching user preferences from Supabase");
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      if (!session?.user) {
+        console.log("No authenticated user found");
+        return;
+      }
 
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -75,40 +105,56 @@ export const useIdeaGenerator = () => {
         .eq('id', session.user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
+      }
+
+      console.log("Profile data from database:", profile);
 
       if (profile) {
         // Determine which niche to use based on account type
         let nicheValue = "";
-        let videoTypeValue = localStorage.getItem("videoType") || "";
+        let videoTypeValue = "";
         
         if (profile.account_type === 'business' && profile.business_niche) {
           nicheValue = profile.business_niche;
+          videoTypeValue = profile.business_niche || "Business Promotion";
         } else if (profile.account_type === 'ecommerce' && profile.product_niche) {
           nicheValue = profile.product_niche;
+          videoTypeValue = profile.product_niche || "Product Showcase";
         } else {
           nicheValue = profile.content_niche || "";
+          videoTypeValue = profile.content_niche || "";
         }
+
+        console.log(`Setting niche based on account type (${profile.account_type}):`, nicheValue);
+        console.log(`Setting videoType based on account type:`, videoTypeValue);
 
         // Only update state if values actually changed to prevent unnecessary re-renders
         if (nicheValue !== niche) {
+          console.log(`Updating niche from ${niche} to ${nicheValue}`);
           setNiche(nicheValue);
           localStorage.setItem("niche", nicheValue);
         }
 
         if (profile.target_audience && profile.target_audience !== audience) {
+          console.log(`Updating audience from ${audience} to ${profile.target_audience}`);
           setAudience(profile.target_audience);
           localStorage.setItem("audience", profile.target_audience);
         }
         
         if (profile.posting_platforms && profile.posting_platforms.length > 0 && profile.posting_platforms[0] !== platform) {
+          console.log(`Updating platform from ${platform} to ${profile.posting_platforms[0]}`);
           setPlatform(profile.posting_platforms[0]);
           localStorage.setItem("platform", profile.posting_platforms[0]);
         }
 
-        // Save videoType to localStorage if not already set
-        if (videoType) {
-          localStorage.setItem("videoType", videoType);
+        // Set videoType based on account type
+        if (videoTypeValue && videoTypeValue !== videoType) {
+          console.log(`Updating videoType from ${videoType} to ${videoTypeValue}`);
+          setVideoType(videoTypeValue);
+          localStorage.setItem("videoType", videoTypeValue);
         }
       }
 
@@ -118,19 +164,30 @@ export const useIdeaGenerator = () => {
       const localStorageVideoType = localStorage.getItem("videoType");
       const localStoragePlatform = localStorage.getItem("platform");
       
+      console.log("LocalStorage values:", {
+        niche: localStorageNiche,
+        audience: localStorageAudience,
+        videoType: localStorageVideoType,
+        platform: localStoragePlatform
+      });
+      
       if (localStorageNiche && localStorageNiche !== niche) {
+        console.log(`Updating niche from localStorage: ${localStorageNiche}`);
         setNiche(localStorageNiche);
       }
       
       if (localStorageAudience && localStorageAudience !== audience) {
+        console.log(`Updating audience from localStorage: ${localStorageAudience}`);
         setAudience(localStorageAudience);
       }
 
       if (localStorageVideoType && localStorageVideoType !== videoType) {
+        console.log(`Updating videoType from localStorage: ${localStorageVideoType}`);
         setVideoType(localStorageVideoType);
       }
       
       if (localStoragePlatform && localStoragePlatform !== platform) {
+        console.log(`Updating platform from localStorage: ${localStoragePlatform}`);
         setPlatform(localStoragePlatform);
       }
     } catch (error) {

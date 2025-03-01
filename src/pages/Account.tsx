@@ -156,6 +156,7 @@ export default function Account() {
         return;
       }
 
+      // Prepare the update data based on account type
       const updateData: Profile = {
         content_personality: profile.content_personality,
         content_style: profile.content_style,
@@ -172,12 +173,16 @@ export default function Account() {
         updateData.product_niche = profile.product_niche;
       }
 
+      console.log("Updating profile with:", updateData);
+
       const { error } = await supabase
         .from('profiles')
         .update(updateData)
         .eq('id', session.user.id);
 
       if (error) throw error;
+
+      console.log("Profile updated successfully");
 
       // Update localStorage with correct values based on account type
       let nicheToStore = profile.content_niche || "";
@@ -198,22 +203,32 @@ export default function Account() {
         updateLocalStorage("platform", profile.posting_platforms[0]);
       }
 
-      // Video type is derived from content focus for business and ecommerce accounts
-      if (profile.account_type === 'business' || profile.account_type === 'ecommerce') {
+      // Set videoType based on account type
+      if (profile.account_type === 'ecommerce') {
+        // For ecommerce, use product_niche as videoType (e.g., "Product Showcase")
+        updateLocalStorage("videoType", profile.product_niche || "Product Showcase");
+      } else if (profile.account_type === 'business') {
+        // For business, potentially use business_niche or a default business video type
+        updateLocalStorage("videoType", profile.business_niche || "Business Promotion");
+      } else {
+        // For personal accounts, use content_niche or another appropriate default
         updateLocalStorage("videoType", profile.content_niche || "");
       }
+
+      // Force a refresh of localStorage data to ensure consistency
+      window.dispatchEvent(new Event('storage'));
 
       toast({
         title: "Profile updated",
         description: "Your changes have been saved successfully.",
       });
     } catch (error: any) {
+      console.error('Error updating profile:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to update profile. Please try again.",
       });
-      console.error('Error updating profile:', error);
     } finally {
       setLoading(false);
     }
@@ -222,6 +237,8 @@ export default function Account() {
   // Helper function to update localStorage and trigger storage event for cross-tab communication
   const updateLocalStorage = (key: string, value: string) => {
     const oldValue = localStorage.getItem(key);
+    console.log(`Updating localStorage: ${key} = ${value} (was: ${oldValue})`);
+    
     if (oldValue !== value) {
       localStorage.setItem(key, value);
       
@@ -238,6 +255,12 @@ export default function Account() {
         // Some browsers may not support the StorageEvent constructor
         // If it fails, we're still setting localStorage correctly
         console.warn('Could not dispatch storage event', e);
+        
+        // Fallback: dispatch a custom event
+        const customEvent = new CustomEvent('localStorageChange', { 
+          detail: { key, oldValue, newValue: value } 
+        });
+        window.dispatchEvent(customEvent);
       }
     }
   };
