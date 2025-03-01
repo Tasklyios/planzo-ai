@@ -30,7 +30,7 @@ export function PlannerColumn({
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className="bg-muted/50 rounded-lg p-4 h-full min-w-[320px]"
+          className="bg-muted/50 rounded-lg p-4 h-full w-[350px] flex-shrink-0"
         >
           <div 
             className="flex justify-between items-center mb-4"
@@ -60,7 +60,7 @@ export function PlannerColumn({
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className="space-y-2 min-h-[200px]"
+                className="space-y-2 min-h-[calc(100vh-16rem)]"
               >
                 {children}
                 {provided.placeholder}

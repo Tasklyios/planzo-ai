@@ -18,7 +18,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         <div className="p-4 h-16 border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-10 flex items-center">
           <SearchBar />
         </div>
-        <main className="container mx-auto p-4">
+        <main className="max-w-full mx-auto p-4">
           {children}
         </main>
       </div>
