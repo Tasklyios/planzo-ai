@@ -81,25 +81,34 @@ const IdeasGrid = ({
                 </span>
               ))}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onBookmarkToggle(idea.id)}
-              className={cn(
-                "ml-2 cursor-pointer transition-all duration-300 ease-in-out hover:scale-110",
-                idea.is_saved
-                  ? "text-primary hover:text-primary/90"
-                  : "text-muted-foreground hover:text-primary/70"
-              )}
-            >
-              <Bookmark
-                className={cn(
-                  "h-4 w-4 transition-transform duration-300",
-                  idea.is_saved && "transform scale-110 animate-scale-in"
-                )}
-                fill={idea.is_saved ? "currentColor" : "none"}
-              />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onBookmarkToggle(idea.id)}
+                    className={cn(
+                      "ml-2 cursor-pointer transition-all duration-300 ease-in-out hover:scale-110",
+                      idea.is_saved
+                        ? "text-primary hover:text-primary/90"
+                        : "text-muted-foreground hover:text-primary/70"
+                    )}
+                  >
+                    <Bookmark
+                      className={cn(
+                        "h-4 w-4 transition-transform duration-300",
+                        idea.is_saved && "transform scale-110 animate-scale-in"
+                      )}
+                      fill={idea.is_saved ? "currentColor" : "none"}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{idea.is_saved ? "Remove from saved ideas" : "Save idea"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       ))}
