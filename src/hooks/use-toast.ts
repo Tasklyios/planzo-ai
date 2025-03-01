@@ -45,6 +45,19 @@ export const toast = {
     const context = useToast();
     context.addToast({ ...props, variant: "destructive" });
   },
+  // Shorthand toast functions
+  success(description: string, title = "Success") {
+    const context = useToast();
+    context.addToast({ title, description, variant: "default" });
+  },
+  error(description: string, title = "Error") {
+    const context = useToast();
+    context.addToast({ title, description, variant: "destructive" });
+  },
+  info(description: string, title = "Information") {
+    const context = useToast();
+    context.addToast({ title, description, variant: "default" });
+  }
 };
 
 // Export the provider
@@ -71,19 +84,3 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     </ToastContext.Provider>
   );
 }
-
-// Shorthand toast functions
-toast.success = (description: string, title = "Success") => {
-  const context = useToast();
-  context.addToast({ title, description, variant: "default" });
-};
-
-toast.error = (description: string, title = "Error") => {
-  const context = useToast();
-  context.addToast({ title, description, variant: "destructive" });
-};
-
-toast.info = (description: string, title = "Information") => {
-  const context = useToast();
-  context.addToast({ title, description, variant: "default" });
-};
