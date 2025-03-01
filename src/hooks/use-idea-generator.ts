@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -415,8 +416,8 @@ export const useIdeaGenerator = () => {
           user_id: userId,
           color: 'blue',
           is_saved: false,
-          is_ad: isAdRequest,
-          // IMPORTANT: Don't add scheduled_for here - this was causing ideas to be auto-added to calendar
+          is_ad: isAdRequest
+          // IMPORTANT: Removed scheduled_for completely to ensure ideas aren't automatically added to calendar
         }));
 
         const { error: saveError } = await supabase
