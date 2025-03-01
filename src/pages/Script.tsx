@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -137,38 +138,40 @@ export default function Script() {
 
       // Use the generic query method instead of the type-safe approach
       // since these tables aren't in the generated TypeScript types yet
-      const { data: hooksData, error: hooksError } = await supabase
-        .rpc('get_hooks', { user_id_param: sessionData.session.user.id })
-        .catch(() => {
-          // Fallback to direct SQL query if RPC method isn't available
-          return supabase
-            .from('script_hooks')
-            .select('*')
-            .eq('user_id', sessionData.session.user.id) as unknown as { 
-              data: HookData[] | null; 
-              error: any 
-            };
-        });
+      try {
+        const { data: hooksData, error: hooksError } = await supabase
+          .rpc('get_hooks', { user_id_param: sessionData.session.user.id });
 
-      if (hooksError) throw hooksError;
-      setHooks((hooksData || []) as HookData[]);
+        if (hooksError) throw hooksError;
+        setHooks((hooksData || []) as HookData[]);
+      } catch (fallbackError) {
+        // Fallback to direct SQL query if RPC method isn't available
+        const { data: fallbackHooksData, error: fallbackHooksError } = await supabase
+          .from('script_hooks')
+          .select('*')
+          .eq('user_id', sessionData.session.user.id);
+          
+        if (fallbackHooksError) throw fallbackHooksError;
+        setHooks((fallbackHooksData || []) as HookData[]);
+      }
 
       // Same approach for structures
-      const { data: structuresData, error: structuresError } = await supabase
-        .rpc('get_structures', { user_id_param: sessionData.session.user.id })
-        .catch(() => {
-          // Fallback to direct SQL query if RPC method isn't available
-          return supabase
-            .from('script_structures')
-            .select('*')
-            .eq('user_id', sessionData.session.user.id) as unknown as {
-              data: StructureData[] | null;
-              error: any
-            };
-        });
+      try {
+        const { data: structuresData, error: structuresError } = await supabase
+          .rpc('get_structures', { user_id_param: sessionData.session.user.id });
 
-      if (structuresError) throw structuresError;
-      setStructures((structuresData || []) as StructureData[]);
+        if (structuresError) throw structuresError;
+        setStructures((structuresData || []) as StructureData[]);
+      } catch (fallbackError) {
+        // Fallback to direct SQL query if RPC method isn't available
+        const { data: fallbackStructuresData, error: fallbackStructuresError } = await supabase
+          .from('script_structures')
+          .select('*')
+          .eq('user_id', sessionData.session.user.id);
+          
+        if (fallbackStructuresError) throw fallbackStructuresError;
+        setStructures((fallbackStructuresData || []) as StructureData[]);
+      }
     } catch (error: any) {
       console.error("Error fetching hooks and structures:", error);
     }
