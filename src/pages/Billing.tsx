@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { CreditCard, AlertCircle } from "lucide-react";
+import { CreditCard, AlertCircle, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import PricingSheet from "@/components/pricing/PricingSheet";
@@ -19,42 +19,69 @@ type Subscription = {
   tier: 'free' | 'pro' | 'plus' | 'business';
   current_period_end: string | null;
   stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
 };
 
 const Billing = () => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      try {
-        const { data: { session }, error: authError } = await supabase.auth.getSession();
-        
-        if (authError || !session) {
-          navigate('/auth');
-          return;
-        }
-
-        const { data, error: subError } = await supabase
-          .from('user_subscriptions')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-
-        if (subError) throw subError;
-        setSubscription(data);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+  const fetchSubscription = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      
+      if (authError || !session) {
+        navigate('/auth');
+        return;
       }
-    };
 
+      const { data, error: subError } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (subError) throw subError;
+      
+      console.log("Fetched subscription data:", data);
+      setSubscription(data);
+    } catch (err: any) {
+      console.error("Error fetching subscription:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchSubscription();
+    
+    // Set up listener for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+      fetchSubscription();
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, [navigate]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    toast({
+      title: "Refreshing subscription data",
+      description: "Getting your latest subscription information",
+    });
+    fetchSubscription();
+  };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A';
@@ -105,7 +132,7 @@ const Billing = () => {
     }
   };
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <div className="container mx-auto p-6">
         <div className="h-8 w-32 bg-muted animate-pulse rounded mb-4" />
@@ -116,7 +143,19 @@ const Billing = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold">Billing</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Billing</h1>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefresh} 
+          disabled={refreshing}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
 
       {error && (
         <Alert variant="destructive">
@@ -178,6 +217,14 @@ const Billing = () => {
                 <span className="text-sm text-muted-foreground">
                   Payment method on file
                 </span>
+              </div>
+            )}
+            
+            {subscription && (
+              <div className="mt-4 pt-4 border-t text-xs text-muted-foreground">
+                <p>Subscription ID: {subscription.stripe_subscription_id || 'N/A'}</p>
+                <p>Customer ID: {subscription.stripe_customer_id || 'N/A'}</p>
+                <p>Last updated: {new Date().toLocaleTimeString()}</p>
               </div>
             )}
           </CardContent>
