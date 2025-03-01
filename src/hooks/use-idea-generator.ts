@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { GeneratedIdea, PreviousIdeasContext } from "@/types/idea";
+import { GeneratedIdea, PreviousIdeasContext, StyleProfile } from "@/types/idea";
 
 export const useIdeaGenerator = () => {
   const [niche, setNiche] = useState(() => localStorage.getItem("niche") || "");
@@ -118,7 +119,7 @@ export const useIdeaGenerator = () => {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('account_type, content_niche, business_niche, product_niche, target_audience, posting_platforms, content_style, content_personality')
+        .select('account_type, content_niche, business_niche, product_niche, target_audience, posting_platforms, content_style, content_personality, active_style_profile_id')
         .eq('id', session.user.id)
         .maybeSingle();
 
@@ -129,7 +130,28 @@ export const useIdeaGenerator = () => {
 
       console.log("Profile data from database:", profile);
 
-      if (profile) {
+      // Check if user has an active style profile
+      if (profile && profile.active_style_profile_id) {
+        // Fetch the active style profile
+        const { data: styleProfile, error: styleError } = await supabase
+          .from('style_profiles')
+          .select('*')
+          .eq('id', profile.active_style_profile_id)
+          .maybeSingle();
+          
+        if (!styleError && styleProfile) {
+          console.log("Active style profile found:", styleProfile);
+          
+          // Use the style profile content style and personality
+          if (styleProfile.content_style) {
+            localStorage.setItem("contentStyle", styleProfile.content_style);
+          }
+          
+          if (styleProfile.content_personality) {
+            localStorage.setItem("contentPersonality", styleProfile.content_personality);
+          }
+        }
+      } else if (profile) {
         // Determine which niche to use based on account type
         let nicheValue = "";
         

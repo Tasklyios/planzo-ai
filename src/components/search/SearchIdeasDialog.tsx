@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -12,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { GeneratedIdea } from "@/types/idea";
+import { GeneratedIdea, StyleProfile } from "@/types/idea";
 
 interface SearchIdeasDialogProps {
   open: boolean;
@@ -32,7 +31,42 @@ export function SearchIdeasDialog({
   const [searchQuery, setSearchQuery] = useState("");
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeStyleProfile, setActiveStyleProfile] = useState<StyleProfile | null>(null);
   const { toast } = useToast();
+
+  // Fetch the active style profile when the dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchActiveStyleProfile();
+    }
+  }, [open]);
+
+  const fetchActiveStyleProfile = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('active_style_profile_id')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (profileError || !profile?.active_style_profile_id) return;
+
+      const { data: styleProfile, error: styleError } = await supabase
+        .from('style_profiles')
+        .select('*')
+        .eq('id', profile.active_style_profile_id)
+        .maybeSingle();
+
+      if (styleError || !styleProfile) return;
+
+      setActiveStyleProfile(styleProfile);
+    } catch (error) {
+      console.error("Error fetching active style profile:", error);
+    }
+  };
 
   // Search for ideas whenever the search query changes
   useEffect(() => {
@@ -124,6 +158,11 @@ export function SearchIdeasDialog({
           <DialogTitle>Add idea to {columnTitle}</DialogTitle>
           <DialogDescription>
             Search for ideas to add to this column.
+            {activeStyleProfile && (
+              <span className="block mt-1 text-primary">
+                Using style profile: {activeStyleProfile.name}
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
         

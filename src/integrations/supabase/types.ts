@@ -36,6 +36,7 @@ export type Database = {
       profiles: {
         Row: {
           account_type: string
+          active_style_profile_id: string | null
           business_niche: string | null
           content_niche: string | null
           content_personality: string | null
@@ -49,6 +50,7 @@ export type Database = {
         }
         Insert: {
           account_type: string
+          active_style_profile_id?: string | null
           business_niche?: string | null
           content_niche?: string | null
           content_personality?: string | null
@@ -62,6 +64,7 @@ export type Database = {
         }
         Update: {
           account_type?: string
+          active_style_profile_id?: string | null
           business_niche?: string | null
           content_niche?: string | null
           content_personality?: string | null
@@ -73,7 +76,15 @@ export type Database = {
           product_niche?: string | null
           target_audience?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_style_profile_id_fkey"
+            columns: ["active_style_profile_id"]
+            isOneToOne: false
+            referencedRelation: "style_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scheduled_content: {
         Row: {
@@ -202,6 +213,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      style_profiles: {
+        Row: {
+          content_personality: string | null
+          content_style: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          content_personality?: string | null
+          content_style?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          user_id: string
+        }
+        Update: {
+          content_personality?: string | null
+          content_style?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_daily_usage: {
         Row: {

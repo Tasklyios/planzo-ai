@@ -11,10 +11,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, CheckCircle, Link as LinkIcon, ThumbsUp, Zap } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { StyleProfile } from "@/types/idea";
 
 const FindYourStyle = () => {
   const [links, setLinks] = useState<string[]>([""]);
   const [notes, setNotes] = useState("");
+  const [profileName, setProfileName] = useState("");
   const [loading, setLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -104,20 +106,14 @@ const FindYourStyle = () => {
 
       setAnalysisResult(data);
       
-      // Update user profile with the analyzed style
-      if (data.contentStyle) {
-        await supabase
-          .from('profiles')
-          .update({
-            content_style: data.contentStyle,
-            content_personality: data.contentPersonality
-          })
-          .eq('id', userId);
+      // Set a default name for the style profile if user hasn't provided one
+      if (!profileName) {
+        setProfileName(`My Style ${new Date().toLocaleDateString()}`);
       }
 
       toast({
         title: "Analysis Complete!",
-        description: "Your content style has been analyzed and saved.",
+        description: "Your content style has been analyzed.",
       });
 
     } catch (err: any) {
@@ -128,6 +124,81 @@ const FindYourStyle = () => {
         variant: "destructive",
         title: "Analysis Failed",
         description: err.message || "An error occurred while analyzing your content",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveStyleProfile = async () => {
+    try {
+      setLoading(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+
+      if (!userId) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please log in to save your style profile.",
+        });
+        navigate("/auth");
+        return;
+      }
+
+      if (!profileName.trim()) {
+        toast({
+          variant: "destructive",
+          title: "Name Required",
+          description: "Please provide a name for your style profile.",
+        });
+        return;
+      }
+
+      // Save the new style profile
+      const { data: newProfile, error: saveError } = await supabase
+        .from('style_profiles')
+        .insert({
+          user_id: userId,
+          name: profileName.trim(),
+          content_style: analysisResult.contentStyle || "",
+          content_personality: analysisResult.contentPersonality || "",
+          is_active: false
+        })
+        .select('*')
+        .single();
+
+      if (saveError) {
+        throw saveError;
+      }
+
+      // Update the user's profile with the new style
+      await supabase
+        .from('profiles')
+        .update({
+          content_style: analysisResult.contentStyle,
+          content_personality: analysisResult.contentPersonality
+        })
+        .eq('id', userId);
+
+      // Store in localStorage for immediate use
+      localStorage.setItem("contentStyle", analysisResult.contentStyle || "");
+      localStorage.setItem("contentPersonality", analysisResult.contentPersonality || "");
+      
+      toast({
+        title: "Style Profile Saved",
+        description: `Your style profile "${profileName}" has been saved.`,
+      });
+
+      // Navigate to account page
+      navigate("/account");
+      
+    } catch (err: any) {
+      console.error("Error saving style profile:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || "Failed to save style profile.",
       });
     } finally {
       setLoading(false);
@@ -249,6 +320,17 @@ const FindYourStyle = () => {
             {analysisResult ? (
               <div className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="profileName">Style Profile Name</Label>
+                  <Input
+                    id="profileName"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    placeholder="Give your style profile a name"
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <div className="font-medium">Content Style</div>
                   <div className="bg-secondary p-3 rounded-md">
                     {analysisResult.contentStyle}
@@ -273,9 +355,9 @@ const FindYourStyle = () => {
 
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
-                  <AlertTitle>Style Saved</AlertTitle>
+                  <AlertTitle>Style Analyzed</AlertTitle>
                   <AlertDescription>
-                    This style has been saved to your profile and will be used when generating content ideas and scripts.
+                    Save this as a style profile to use it for generating ideas and scripts.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -286,11 +368,24 @@ const FindYourStyle = () => {
               </div>
             )}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex gap-2 flex-col sm:flex-row">
             {analysisResult && (
-              <Button onClick={applyAndGenerate} className="w-full">
-                Apply Style & Generate Ideas
-              </Button>
+              <>
+                <Button 
+                  onClick={saveStyleProfile} 
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {loading ? <Spinner size="sm" /> : "Save Style Profile"}
+                </Button>
+                <Button 
+                  onClick={applyAndGenerate} 
+                  variant="outline" 
+                  className="w-full"
+                >
+                  Use & Generate Ideas
+                </Button>
+              </>
             )}
           </CardFooter>
         </Card>

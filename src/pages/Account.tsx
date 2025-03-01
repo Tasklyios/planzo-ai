@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun, Plus, Trash2, Check } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import AuthGuard from "@/components/AuthGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { StyleProfile } from "@/types/idea";
 
 const themeOptions = [
   {
@@ -59,10 +60,11 @@ interface Profile {
   posting_platforms?: string[] | null;
   business_niche?: string | null;
   product_niche?: string | null;
+  active_style_profile_id?: string | null;
 }
 
 export default function Account() {
-  const [activeTab, setActiveTab] = useState<'settings' | 'customize'>('settings');
+  const [activeTab, setActiveTab] = useState<'settings' | 'customize' | 'styles'>('settings');
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<Profile>({account_type: 'personal'});
   const [loading, setLoading] = useState(false);
@@ -74,11 +76,15 @@ export default function Account() {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [isChangingEmail, setIsChangingEmail] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [styleProfiles, setStyleProfiles] = useState<StyleProfile[]>([]);
+  const [newProfileName, setNewProfileName] = useState("");
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     console.log("Account component mounted, fetching profile");
     fetchProfile();
+    fetchStyleProfiles();
   }, []);
 
   const fetchProfile = async () => {
@@ -106,7 +112,7 @@ export default function Account() {
       // Fetch profile data
       const { data, error } = await supabase
         .from('profiles')
-        .select('content_personality, content_style, account_type, content_niche, target_audience, posting_platforms, business_niche, product_niche')
+        .select('content_personality, content_style, account_type, content_niche, target_audience, posting_platforms, business_niche, product_niche, active_style_profile_id')
         .eq('id', session.user.id)
         .maybeSingle();
 
@@ -136,6 +142,10 @@ export default function Account() {
           localStorage.setItem("niche", data.business_niche);
         } else if (data.content_niche) {
           localStorage.setItem("videoType", data.content_niche);
+        }
+
+        if (data.active_style_profile_id) {
+          setActiveProfileId(data.active_style_profile_id);
         }
         
         // Trigger a storage event to notify other tabs
@@ -179,6 +189,35 @@ export default function Account() {
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to load profile data",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStyleProfiles = async () => {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) return;
+
+      const { data, error } = await supabase
+        .from('style_profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      console.log("Style profiles fetched:", data);
+      setStyleProfiles(data || []);
+
+    } catch (error: any) {
+      console.error('Error fetching style profiles:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch style profiles. " + error.message,
       });
     } finally {
       setLoading(false);
@@ -432,6 +471,170 @@ export default function Account() {
     fetchProfile();
   };
 
+  const createNewStyleProfile = async () => {
+    try {
+      if (!newProfileName.trim()) {
+        toast({
+          variant: "destructive",
+          title: "Name Required",
+          description: "Please provide a name for your style profile.",
+        });
+        return;
+      }
+
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please log in to create a style profile",
+        });
+        return;
+      }
+
+      // Create new style profile
+      const { data, error } = await supabase
+        .from('style_profiles')
+        .insert({
+          user_id: session.user.id,
+          name: newProfileName.trim(),
+          content_style: "",
+          content_personality: "",
+          is_active: false
+        })
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Style Profile Created",
+        description: "Your new style profile has been created. You can now customize it.",
+      });
+
+      setStyleProfiles([data, ...styleProfiles]);
+      setNewProfileName("");
+      
+      // Navigate to the find your style page to populate it
+      navigate("/find-your-style");
+
+    } catch (error: any) {
+      console.error('Error creating style profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create style profile. " + error.message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteStyleProfile = async (profileId: string) => {
+    try {
+      setLoading(true);
+      
+      // Check if this is the active profile
+      if (profile.active_style_profile_id === profileId) {
+        // Clear the active profile reference first
+        await supabase
+          .from('profiles')
+          .update({ active_style_profile_id: null })
+          .eq('id', profile.id);
+        
+        setProfile(prev => ({ ...prev, active_style_profile_id: null }));
+        setActiveProfileId(null);
+      }
+
+      const { error } = await supabase
+        .from('style_profiles')
+        .delete()
+        .eq('id', profileId);
+
+      if (error) throw error;
+
+      setStyleProfiles(styleProfiles.filter(p => p.id !== profileId));
+      
+      toast({
+        title: "Style Profile Deleted",
+        description: "The style profile has been deleted successfully.",
+      });
+    } catch (error: any) {
+      console.error('Error deleting style profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete style profile. " + error.message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const activateStyleProfile = async (profileId: string) => {
+    try {
+      setLoading(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      
+      const profileToActivate = styleProfiles.find(p => p.id === profileId);
+      if (!profileToActivate) {
+        throw new Error("Style profile not found");
+      }
+
+      // Update the active profile in the database
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          active_style_profile_id: profileId,
+          content_style: profileToActivate.content_style,
+          content_personality: profileToActivate.content_personality
+        })
+        .eq('id', session.user.id);
+
+      if (error) throw error;
+
+      // Update local profile state
+      setProfile(prev => ({ 
+        ...prev, 
+        active_style_profile_id: profileId,
+        content_style: profileToActivate.content_style,
+        content_personality: profileToActivate.content_personality 
+      }));
+      
+      setActiveProfileId(profileId);
+
+      // Update localStorage
+      if (profileToActivate.content_style) {
+        localStorage.setItem("contentStyle", profileToActivate.content_style);
+      }
+      
+      if (profileToActivate.content_personality) {
+        localStorage.setItem("contentPersonality", profileToActivate.content_personality);
+      }
+
+      // Trigger storage events
+      triggerStorageEvents();
+
+      toast({
+        title: "Style Profile Activated",
+        description: `"${profileToActivate.name}" is now your active style profile.`,
+      });
+    } catch (error: any) {
+      console.error('Error activating style profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to activate style profile. " + error.message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (fetchError) {
     return (
       <AuthGuard>
@@ -468,6 +671,16 @@ export default function Account() {
                 }`}
               >
                 Settings
+              </button>
+              <button
+                onClick={() => setActiveTab('styles')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'styles'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'hover:bg-accent hover:text-accent-foreground'
+                }`}
+              >
+                Style Profiles
               </button>
               <button
                 onClick={() => setActiveTab('customize')}
@@ -613,6 +826,88 @@ export default function Account() {
                 </RadioGroup>
               </div>
             </div>
+          ) : activeTab === 'styles' ? (
+            <div className="widget-box p-6">
+              <h2 className="text-xl font-semibold mb-6">Style Profiles</h2>
+              <p className="text-muted-foreground mb-6">
+                Create and manage your content style profiles to quickly switch between different styles.
+              </p>
+              
+              <div className="space-y-6">
+                {/* Create new style profile */}
+                <div className="flex gap-2 mb-4">
+                  <Input 
+                    placeholder="New style profile name" 
+                    value={newProfileName}
+                    onChange={(e) => setNewProfileName(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={createNewStyleProfile}
+                    disabled={loading || !newProfileName.trim()}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create
+                  </Button>
+                </div>
+                
+                {/* Style profiles list */}
+                <div className="space-y-3">
+                  {styleProfiles.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>You don't have any style profiles yet.</p>
+                      <p className="mt-2">Create a new one or use Find Your Style to analyze content.</p>
+                    </div>
+                  ) : (
+                    styleProfiles.map(profile => (
+                      <div 
+                        key={profile.id} 
+                        className={`p-4 border rounded-lg relative ${
+                          activeProfileId === profile.id ? 'border-primary bg-primary/5' : ''
+                        }`}
+                      >
+                        {activeProfileId === profile.id && (
+                          <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5 flex items-center">
+                            <Check className="h-3 w-3 mr-1" />
+                            Active
+                          </div>
+                        )}
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-medium">{profile.name}</h3>
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              {profile.content_personality || "No personality set"}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            {activeProfileId !== profile.id && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => activateStyleProfile(profile.id)}
+                                disabled={loading}
+                              >
+                                Activate
+                              </Button>
+                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                              onClick={() => deleteStyleProfile(profile.id)}
+                              disabled={loading}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="widget-box p-6">
               <h2 className="text-xl font-semibold mb-6">Customize Experience</h2>
@@ -674,65 +969,4 @@ export default function Account() {
                     <Label htmlFor="content_niche">Content Niche</Label>
                     <Input
                       id="content_niche"
-                      placeholder="E.g., Technology, Fitness, Personal Development..."
-                      value={profile.content_niche || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="target_audience">Target Audience</Label>
-                    <Input
-                      id="target_audience"
-                      placeholder="E.g., Entrepreneurs, Students, Fitness Enthusiasts..."
-                      value={profile.target_audience || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="posting_platforms">Preferred Platforms (comma-separated)</Label>
-                    <Input
-                      id="posting_platforms"
-                      placeholder="E.g., TikTok, Instagram, YouTube..."
-                      value={profile.posting_platforms?.join(', ') || ''}
-                      onChange={(e) => setProfile(prev => ({ 
-                        ...prev, 
-                        posting_platforms: e.target.value.split(',').map(p => p.trim()).filter(Boolean)
-                      }))}
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="personality">Content Personality</Label>
-                    <Textarea
-                      id="personality"
-                      placeholder="E.g., Energetic and funny, Professional and educational, Casual and relatable..."
-                      value={profile.content_personality || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
-                      className="min-h-[100px]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="style">Content Style</Label>
-                    <Textarea
-                      id="style"
-                      placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences..."
-                      value={profile.content_style || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
-                      className="min-h-[100px]"
-                    />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Saving..." : "Save Changes"}
-                </Button>
-              </form>
-            </div>
-          )}
-        </div>
-      </div>
-    </AuthGuard>
-  );
-}
+                      placeholder

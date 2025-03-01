@@ -1,3 +1,4 @@
+
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -66,4 +67,14 @@ export interface PlannerColumn {
   user_id?: string;
   created_at?: string;
   order?: number;
+}
+
+export interface StyleProfile {
+  id: string;
+  name: string;
+  content_style: string | null;
+  content_personality: string | null;
+  created_at: string;
+  is_active: boolean;
+  user_id: string;
 }
