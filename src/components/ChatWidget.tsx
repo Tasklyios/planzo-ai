@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -27,7 +28,7 @@ interface ChatWidgetProps {
 }
 
 const ChatWidget: React.FC<ChatWidgetProps> = ({ script = '', onScriptUpdate }) => {
-  const { toasts } = useToast();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -86,6 +87,17 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ script = '', onScriptUpdate }) 
     setIsLoading(true);
     
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please log in to use the script coach.",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       // Get the most recent script revision to send
       const currentScript = scriptRevisions[currentRevision].content;
       
@@ -99,7 +111,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ script = '', onScriptUpdate }) 
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Edge function error:", error);
+        throw new Error(`Failed to get response: ${error.message || "Unknown error"}`);
+      }
       
       if (!data || !data.response) {
         throw new Error('Invalid response from AI');
@@ -145,6 +160,17 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ script = '', onScriptUpdate }) 
         title: "Error",
         description: error.message || "Failed to get response from AI",
       });
+      
+      // Add a system error message
+      setMessages(prev => [
+        ...prev, 
+        {
+          id: `error-${Date.now()}`,
+          content: "Sorry, I encountered an error. Please try again later.",
+          role: 'assistant',
+          timestamp: new Date()
+        }
+      ]);
     } finally {
       setIsLoading(false);
     }

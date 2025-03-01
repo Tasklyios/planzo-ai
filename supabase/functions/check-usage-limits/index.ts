@@ -1,138 +1,175 @@
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0'
-import { corsHeaders } from '../_shared/cors.ts'
+// supabase/functions/check-usage-limits/index.ts
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
-interface RequestBody {
-  action: string; // 'ideas' or 'scripts'
-}
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
-serve(async (req: Request) => {
+serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
-  // Add CORS headers to all responses
-  const headers = {
-    ...corsHeaders,
-    'Content-Type': 'application/json',
-  };
-
   try {
-    // Create Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { action } = await req.json();
+    console.log(`Checking usage limits for action: ${action}`);
 
     // Get user ID from JWT
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser();
-
-    if (!user) {
-      return new Response(
-        JSON.stringify({
-          success: false, 
-          canProceed: false,
-          message: 'User not authenticated'
-        }),
-        { headers, status: 401 }
-      );
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
     }
 
-    const requestData: RequestBody = await req.json();
-    const action = requestData.action;
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
-    // Check the action type is valid
-    if (action !== 'ideas' && action !== 'scripts') {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          canProceed: false,
-          message: 'Invalid action type. Must be "ideas" or "scripts".'
-        }),
-        { headers, status: 400 }
-      );
-    }
-
-    console.log(`Checking usage limits for user ${user.id} for action: ${action}`);
-
-    // Check usage limits by calling check_and_increment_usage function
-    // Note: The function only checks usage, it doesn't increment it yet
-    const { data: usageCheckResult, error: usageCheckError } = await supabaseClient
-      .rpc('check_and_increment_usage', { feature_name: action });
-
-    if (usageCheckError) {
-      console.error('Error checking usage limits:', usageCheckError);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          canProceed: false,
-          message: `Error checking usage limits: ${usageCheckError.message}`
-        }),
-        { headers, status: 500 }
-      );
+    if (userError || !user) {
+      console.error('Auth error:', userError);
+      throw new Error('Authentication failed');
     }
 
     // Get user's subscription tier
-    const { data: subscription, error: subscriptionError } = await supabaseClient
+    const { data: subscription, error: subError } = await supabase
       .from('user_subscriptions')
       .select('tier')
       .eq('user_id', user.id)
       .single();
 
-    if (subscriptionError && subscriptionError.code !== 'PGRST116') {
-      console.error('Error fetching subscription tier:', subscriptionError);
+    if (subError) {
+      console.error("Error fetching subscription:", subError);
+      // Default to free tier if we can't determine the subscription
+      const tier = 'free';
+      
+      // Create a free tier subscription for the user if it doesn't exist
+      await supabase.from('user_subscriptions').insert({
+        user_id: user.id,
+        tier: 'free'
+      }).select().maybeSingle();
+
+      const maxLimit = tier === 'free' ? 5 : 
+                       tier === 'pro' ? 20 : 
+                       tier === 'plus' ? 50 : 1000;
+                       
+      console.log(`New user with default tier: ${tier}, limit: ${maxLimit}`);
+      
+      // Allow the action since it's a new user
+      return new Response(
+        JSON.stringify({ 
+          canProceed: true, 
+          message: "New user - first usage allowed" 
+        }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
     }
 
     const tier = subscription?.tier || 'free';
-    
-    // Get current usage count
-    const { data: usageData, error: usageError } = await supabaseClient
+    console.log(`User subscription tier: ${tier}`);
+
+    // Get current usage for today
+    const { data: usage, error: usageError } = await supabase
       .from('user_daily_usage')
-      .select(action === 'ideas' ? 'ideas_generated' : 'scripts_generated')
+      .select('*')
       .eq('user_id', user.id)
       .eq('date', new Date().toISOString().split('T')[0])
       .single();
-    
-    // Handle case where no usage record exists yet
-    const currentUsage = usageData 
-      ? (action === 'ideas' ? usageData.ideas_generated : usageData.scripts_generated) || 0
+
+    if (usageError && usageError.code !== 'PGRST116') {
+      console.error("Error fetching usage:", usageError);
+      throw new Error(`Failed to check usage: ${usageError.message}`);
+    }
+
+    // Determine current usage value based on action type
+    const currentUsage = usage 
+      ? (action === 'ideas' ? usage.ideas_generated : usage.scripts_generated) || 0 
       : 0;
-      
-    // Define usage limits based on tier
-    const maxLimit = tier === 'free' ? 5 
-      : tier === 'plus' ? 50 
-      : tier === 'pro' ? 200 
-      : tier === 'business' ? 1000 
-      : 5;
-      
-    const canProceed = usageCheckResult === true;
     
-    return new Response(
-      JSON.stringify({
-        success: true,
-        canProceed,
-        tier,
-        usage: {
-          current: currentUsage,
-          max: maxLimit
+    console.log(`Current usage for ${action}: ${currentUsage}`);
+
+    // Set max limit based on tier
+    const maxLimit = tier === 'free' ? 5 : 
+                    tier === 'pro' ? 20 : 
+                    tier === 'plus' ? 50 : 1000;
+    
+    console.log(`Max limit for tier ${tier}: ${maxLimit}`);
+
+    if (currentUsage >= maxLimit) {
+      console.log(`Usage limit reached: ${currentUsage}/${maxLimit}`);
+      return new Response(
+        JSON.stringify({ 
+          canProceed: false, 
+          message: `You've reached your daily limit for ${action === 'ideas' ? 'idea generation' : 'script generation'}.` 
+        }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json' 
+          } 
         }
-      }),
-      { headers, status: 200 }
-    );
-  } catch (error) {
-    console.error('Unexpected error:', error);
+      );
+    }
+
+    // Update usage counter
+    if (!usage) {
+      // Insert new usage record
+      await supabase.from('user_daily_usage').insert({
+        user_id: user.id,
+        date: new Date().toISOString().split('T')[0],
+        ideas_generated: action === 'ideas' ? 1 : 0,
+        scripts_generated: action === 'scripts' ? 1 : 0
+      });
+    } else {
+      // Update existing usage record
+      await supabase.from('user_daily_usage').update({
+        ideas_generated: action === 'ideas' ? (usage.ideas_generated || 0) + 1 : (usage.ideas_generated || 0),
+        scripts_generated: action === 'scripts' ? (usage.scripts_generated || 0) + 1 : (usage.scripts_generated || 0)
+      }).eq('id', usage.id);
+    }
+
+    console.log(`Usage updated. User can proceed with ${action}.`);
     return new Response(
-      JSON.stringify({
-        success: false,
-        canProceed: false,
-        message: error.message || 'An unexpected error occurred'
+      JSON.stringify({ 
+        canProceed: true, 
+        message: "Usage limit check passed",
+        tier: tier,
+        currentUsage: currentUsage + 1,
+        maxLimit: maxLimit 
       }),
-      { headers, status: 500 }
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json' 
+        } 
+      }
+    );
+
+  } catch (error) {
+    console.error('Error in check-usage-limits:', error.message);
+    return new Response(
+      JSON.stringify({ 
+        error: error.message, 
+        canProceed: false,
+        message: `Error checking usage limits: ${error.message}`
+      }),
+      { 
+        status: 500,
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json' 
+        } 
+      }
     );
   }
 });

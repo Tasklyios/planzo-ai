@@ -513,10 +513,26 @@ export default function Script() {
         : "Instagram";
       const videoType = ideaToUse.category || "Tutorial";
       
+      // Get additional style data from the active style profile
+      let contentStyle = "";
+      let contentPersonality = "";
+      
+      if (activeStyleProfile) {
+        contentStyle = activeStyleProfile.content_style || "";
+        contentPersonality = activeStyleProfile.content_personality || "";
+      } else {
+        // Fallback to localStorage if no active profile
+        contentStyle = localStorage.getItem("contentStyle") || "";
+        contentPersonality = localStorage.getItem("contentPersonality") || "";
+      }
+      
       console.log("Sending script generation request with profile data:", {
-        niche, audience, platform, videoType
+        niche, audience, platform, videoType, 
+        contentStyle, contentPersonality,
+        activeProfileName: activeStyleProfile?.name || "None"
       });
 
+      // Call the generate-ideas function with the type parameter set to 'script'
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: {
           type: 'script',
@@ -534,7 +550,10 @@ export default function Script() {
           niche,
           audience, 
           videoType,
-          platform
+          platform,
+          // Add style information
+          contentStyle,
+          contentPersonality
         },
       });
 
@@ -790,38 +809,50 @@ export default function Script() {
               <ScrollArea className="h-[200px] rounded-lg border p-4">
                 <Carousel className="w-full">
                   <CarouselContent className="-ml-2 md:-ml-4">
-                    {filteredIdeas.map((idea) => (
-                      <CarouselItem 
-                        key={idea.id} 
-                        className="pl-2 md:pl-4 pt-2 pb-2 md:basis-1/2 lg:basis-1/3"
-                      >
-                        <div className="p-1">
-                          <Card 
-                            className={cn(
-                              "p-3 cursor-pointer transition-all border-l-4 relative overflow-visible",
-                              colorClasses[idea.color || 'blue'] || colorClasses.blue,
-                              selectedIdea?.id === idea.id 
-                                ? 'ring-2 ring-primary shadow-lg scale-[1.02] bg-primary/5' 
-                                : 'hover:border-primary hover:shadow-md hover:scale-[1.01]'
-                            )}
-                            onClick={() => setSelectedIdea(idea)}
-                          >
-                            {selectedIdea?.id === idea.id && (
-                              <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs z-20">
-                                ✓
-                              </div>
-                            )}
-                            <h4 className="font-medium mb-2 pr-8">{idea.title}</h4>
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {idea.description}
-                            </p>
-                          </Card>
+                    {filteredIdeas.length > 0 ? (
+                      filteredIdeas.map((idea) => (
+                        <CarouselItem 
+                          key={idea.id} 
+                          className="pl-2 md:pl-4 pt-2 pb-2 md:basis-1/2 lg:basis-1/3"
+                        >
+                          <div className="p-1">
+                            <Card 
+                              className={cn(
+                                "p-3 cursor-pointer transition-all border-l-4 relative overflow-visible",
+                                colorClasses[idea.color || 'blue'] || colorClasses.blue,
+                                selectedIdea?.id === idea.id 
+                                  ? 'ring-2 ring-primary shadow-lg scale-[1.02] bg-primary/5' 
+                                  : 'hover:border-primary hover:shadow-md hover:scale-[1.01]'
+                              )}
+                              onClick={() => setSelectedIdea(idea)}
+                            >
+                              {selectedIdea?.id === idea.id && (
+                                <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs z-20">
+                                  ✓
+                                </div>
+                              )}
+                              <h4 className="font-medium mb-2 pr-8">{idea.title}</h4>
+                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                {idea.description}
+                              </p>
+                            </Card>
+                          </div>
+                        </CarouselItem>
+                      ))
+                    ) : (
+                      <CarouselItem className="pl-2 md:pl-4 pt-2 pb-2">
+                        <div className="p-4 text-center">
+                          <p className="text-muted-foreground">No saved ideas found. Try changing the filters or create a custom idea.</p>
                         </div>
                       </CarouselItem>
-                    ))}
+                    )}
                   </CarouselContent>
-                  <CarouselPrevious className="-left-12 md:-left-16" />
-                  <CarouselNext className="-right-12 md:-right-16" />
+                  {filteredIdeas.length > 3 && (
+                    <>
+                      <CarouselPrevious className="-left-12 md:-left-16" />
+                      <CarouselNext className="-right-12 md:-right-16" />
+                    </>
+                  )}
                 </Carousel>
               </ScrollArea>
             </div>
@@ -890,11 +921,50 @@ export default function Script() {
                 placeholder="Any specific requirements or points to include in the script"
               />
             </div>
+            
+            {/* Hook and Structure dropdowns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="selectedHook">Opening Hook (Optional)</Label>
+                <Select value={selectedHook || ""} onValueChange={setSelectedHook}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a hook" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No hook</SelectItem>
+                    {hooks.map((hook) => (
+                      <SelectItem key={hook.id} value={hook.id || ""}>
+                        {hook.category}: {hook.hook.substring(0, 30)}...
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="selectedStructure">Script Structure (Optional)</Label>
+                <Select value={selectedStructure || ""} onValueChange={setSelectedStructure}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a structure" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Default structure</SelectItem>
+                    {structures.map((structure) => (
+                      <SelectItem key={structure.id} value={structure.id || ""}>
+                        {structure.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
           <Button 
             onClick={generateScript} 
-            disabled={loading}
+            disabled={loading || 
+              (scriptType === "existing" && !selectedIdea) || 
+              (scriptType === "custom" && (!customTitle || !customDescription))}
             className="w-full"
           >
             {loading ? (
