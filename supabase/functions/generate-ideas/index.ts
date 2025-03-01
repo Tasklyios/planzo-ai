@@ -1,141 +1,138 @@
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import 'https://deno.land/x/xhr@0.1.0/mod.ts'
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
-const OPENAI_API_HOST = 'https://api.openai.com'
-const OPENAI_API_PATH = '/v1/chat/completions'
-const OPENAI_MODEL = 'gpt-4o-mini'
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Edge function called: generate-ideas')
-    const { niche, audience, videoType, platform, customIdeas } = await req.json()
+    // Parse the request body
+    const { niche, audience, videoType, platform, customIdeas } = await req.json();
+    console.log("Request data:", { niche, audience, videoType, platform, customIdeas });
     
-    console.log('Request parameters:', { niche, audience, videoType, platform, customIdeas })
+    // Check if this is an e-commerce ad request
+    const isAdRequest = videoType.toLowerCase().includes('ad') || 
+                         videoType.toLowerCase().includes('ads') || 
+                         videoType.toLowerCase().includes('advertisement') ||
+                         videoType.toLowerCase().includes('promotional');
     
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not set')
+    // Construct the appropriate prompt based on whether it's an ad request or not
+    let promptContent;
+    
+    if (isAdRequest) {
+      promptContent = `Generate 5 viral product advertisement ideas for ${platform} with the following criteria:
+      - Product Niche: ${niche}
+      - Target Audience: ${audience}
+      - Ad Type: ${videoType}
+      
+      For each idea, provide:
+      - A catchy title that will make customers want to buy the product
+      - A compelling description that highlights product benefits and includes a clear call-to-action
+      - Category (e.g., Testimonial, Demo, Before/After, etc.)
+      - 3 relevant hashtags (without the # symbol) to maximize reach
+      
+      ${customIdeas ? `Consider these additional ideas or requirements: ${customIdeas}` : ''}
+      
+      Format the response as JSON with this structure:
+      {
+        "ideas": [
+          {
+            "title": "string",
+            "description": "string",
+            "category": "string",
+            "tags": ["string"]
+          }
+        ]
+      }`;
+    } else {
+      promptContent = `Generate 5 viral video ideas for ${platform} with the following criteria:
+      - Niche: ${niche}
+      - Target Audience: ${audience}
+      - Video Type: ${videoType}
+      
+      For each idea, provide:
+      - A catchy title
+      - A brief description
+      - Category
+      - 3 relevant hashtags (without the # symbol)
+      
+      ${customIdeas ? `Consider these additional ideas or requirements: ${customIdeas}` : ''}
+      
+      Format the response as JSON with this structure:
+      {
+        "ideas": [
+          {
+            "title": "string",
+            "description": "string",
+            "category": "string",
+            "tags": ["string"]
+          }
+        ]
+      }`;
     }
 
-    if (!niche || !audience || !videoType || !platform) {
-      throw new Error('Missing required parameters: niche, audience, videoType, and platform are required')
-    }
+    console.log("Using prompt:", promptContent);
 
-    let promptContent = `Generate 5 viral video ideas for ${platform} with the following criteria:
-    - Niche: ${niche}
-    - Target Audience: ${audience}
-    - Video Type: ${videoType}
-    
-    For each idea, provide:
-    - A catchy title (max 60 chars)
-    - A brief description (2-3 sentences)
-    - Category (e.g., Educational, Entertainment, Tutorial, etc.)
-    - 3 relevant hashtags (without the # symbol)
-    
-    Format the response as JSON with this structure:
-    {
-      "ideas": [
-        {
-          "title": "string",
-          "description": "string",
-          "category": "string",
-          "tags": ["string", "string", "string"]
-        }
-      ]
-    }`
-
-    // Add custom ideas if provided
-    if (customIdeas && customIdeas.trim()) {
-      promptContent += `\n\nIncorporate these custom idea themes if possible: ${customIdeas}`
-    }
-
-    console.log('Sending request to OpenAI')
-    
-    const response = await fetch(`${OPENAI_API_HOST}${OPENAI_API_PATH}`, {
+    // Make the request to OpenAI
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: OPENAI_MODEL,
+        model: 'gpt-4o-mini',
         messages: [
           { 
             role: 'system', 
-            content: 'You are a social media content strategist who helps creators make viral content. Respond only with the requested JSON format.'
+            content: isAdRequest 
+              ? 'You are a marketing expert who specializes in creating viral product advertisements for social media.'
+              : 'You are a social media content strategist who helps creators make viral content.' 
           },
           { role: 'user', content: promptContent }
         ],
-        temperature: 0.7,
       }),
-    })
+    });
 
-    const responseData = await response.json()
+    // Process the response
+    const data = await response.json();
+    console.log("OpenAI response status:", response.status);
     
     if (!response.ok) {
-      console.error('Error from OpenAI:', responseData)
-      throw new Error(`OpenAI API error: ${responseData.error?.message || 'Unknown error'}`)
+      console.error("OpenAI API error:", data);
+      throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
     }
 
-    if (!responseData.choices || !responseData.choices[0].message) {
-      throw new Error('Invalid response from OpenAI')
-    }
+    const aiResponse = data.choices[0].message.content;
+    console.log("OpenAI response:", aiResponse);
 
-    const ideasText = responseData.choices[0].message.content
-    
-    console.log('Received response from OpenAI')
-    
     try {
-      // Parse the ideas from the response - handle different possible formats
-      let ideas
-      
-      // Try to parse the entire response as JSON first
-      try {
-        ideas = JSON.parse(ideasText)
-      } catch (e) {
-        // If that fails, try to extract JSON from markdown code blocks
-        const jsonMatch = ideasText.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
-        if (jsonMatch && jsonMatch[1]) {
-          ideas = JSON.parse(jsonMatch[1].trim())
-        } else {
-          throw new Error('Could not parse JSON from OpenAI response')
-        }
-      }
+      // Try to parse the JSON response
+      const ideas = JSON.parse(aiResponse);
       
       // Return the ideas
-      return new Response(
-        JSON.stringify(ideas),
-        { 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json' 
-          } 
-        }
-      )
-    } catch (e) {
-      console.error('Failed to parse JSON from OpenAI:', e)
-      console.log('Raw response:', ideasText)
-      throw new Error('Failed to parse ideas from AI response')
+      return new Response(JSON.stringify(ideas), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (parseError) {
+      console.error("Error parsing OpenAI response:", parseError);
+      throw new Error(`Failed to parse OpenAI response: ${parseError.message}`);
     }
   } catch (error) {
-    console.error('Error in generate-ideas function:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 400, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    )
+    console.error('Error:', error);
+    return new Response(JSON.stringify({ error: error.message || 'An unknown error occurred' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
-})
+});

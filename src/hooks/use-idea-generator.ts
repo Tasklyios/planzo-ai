@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -171,7 +172,12 @@ export const useIdeaGenerator = () => {
         return;
       }
 
-      console.log("Calling generate-ideas function with:", { niche, audience, videoType, platform, customIdeas });
+      // Check if this is an ad-related request
+      const isAdRequest = videoType.toLowerCase().includes('ad') || 
+                         videoType.toLowerCase().includes('advertisement') ||
+                         videoType.toLowerCase().includes('promotional');
+
+      console.log("Calling generate-ideas function with:", { niche, audience, videoType, platform, customIdeas, isAdRequest });
       
       try {
         const { data, error } = await supabase.functions.invoke('generate-ideas', {
@@ -207,6 +213,7 @@ export const useIdeaGenerator = () => {
           user_id: userId,
           color: 'blue',
           is_saved: false,
+          is_ad: isAdRequest, // Add this field to flag ad ideas
         }));
 
         const { error: saveError } = await supabase
@@ -235,7 +242,9 @@ export const useIdeaGenerator = () => {
 
         toast({
           title: "Success!",
-          description: "Your video ideas have been generated and saved.",
+          description: isAdRequest 
+            ? "Your advertisement ideas have been generated and saved."
+            : "Your video ideas have been generated and saved.",
         });
       } catch (functionError: any) {
         console.error('Error in generate-ideas function:', functionError);
