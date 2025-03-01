@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { toast } from "@/hooks/use-toast";
 import { 
   Dialog,
   DialogContent,
@@ -26,7 +25,7 @@ const LinkSubscriptionDialog = ({ onSuccess }: LinkSubscriptionDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const { toasts } = useToast();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,10 +61,7 @@ const LinkSubscriptionDialog = ({ onSuccess }: LinkSubscriptionDialogProps) => {
         throw new Error(response.data.error || "Failed to link subscription");
       }
 
-      toast({
-        title: "Subscription linked successfully",
-        description: `Your ${response.data.subscription.tier} subscription has been linked to your account.`,
-      });
+      toast.success(`Your ${response.data.subscription.tier} subscription has been linked to your account.`);
       
       setOpen(false);
       onSuccess();

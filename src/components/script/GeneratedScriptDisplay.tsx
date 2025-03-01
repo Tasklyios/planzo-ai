@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -6,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Save, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { GeneratedIdea } from "@/types/idea";
 
 interface GeneratedScriptDisplayProps {
@@ -21,6 +20,7 @@ export function GeneratedScriptDisplay({
   fetchSavedIdeas
 }: GeneratedScriptDisplayProps) {
   const [showVisuals, setShowVisuals] = useState(false);
+  const { toast } = useToast();
   
   const parseScript = (script: string, showVisuals: boolean) => {
     if (!script) return { parsedLines: [], isVisual: [] };
@@ -64,11 +64,7 @@ export function GeneratedScriptDisplay({
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user.id) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to save scripts",
-          variant: "destructive",
-        });
+        toast.error("You must be logged in to save scripts");
         return;
       }
 
@@ -97,10 +93,7 @@ export function GeneratedScriptDisplay({
         if (ideaError) throw ideaError;
       }
 
-      toast({
-        title: "Success",
-        description: "Script saved successfully",
-      });
+      toast.success("Script saved successfully");
 
       // If this is an existing idea, let's refresh the saved ideas
       if (fetchSavedIdeas) {
@@ -108,11 +101,7 @@ export function GeneratedScriptDisplay({
       }
     } catch (error: any) {
       console.error("Error saving script:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save script",
-      });
+      toast.error("Failed to save script");
     }
   };
 

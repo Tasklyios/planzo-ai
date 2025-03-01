@@ -16,15 +16,16 @@ type ToastContextProps = {
   toasts: ToastProps[];
   addToast: (toast: Omit<ToastProps, "id">) => void;
   removeToast: (id: string) => void;
+  toast: {
+    default: (props: Omit<ToastProps, "id" | "variant">) => void;
+    destructive: (props: Omit<ToastProps, "id" | "variant">) => void;
+    success: (description: string, title?: string) => void;
+    error: (description: string, title?: string) => void;
+    info: (description: string, title?: string) => void;
+  };
 };
 
-const ToastContext = createContext<ToastContextProps>({
-  toasts: [],
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  addToast: () => {},
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  removeToast: () => {},
-});
+const ToastContext = createContext<ToastContextProps | undefined>(undefined);
 
 export function useToast() {
   const context = useContext(ToastContext);
@@ -34,28 +35,46 @@ export function useToast() {
   return context;
 }
 
-// External accessor for adding toasts
-export const toast = {
+// Create a standalone toast function that can be imported directly
+const createToastHelpers = (addToast: (toast: Omit<ToastProps, "id">) => void) => ({
   default(props: Omit<ToastProps, "id" | "variant">) {
-    const context = useToast();
-    context.addToast({ ...props, variant: "default" });
+    addToast({ ...props, variant: "default" });
   },
   destructive(props: Omit<ToastProps, "id" | "variant">) {
-    const context = useToast();
-    context.addToast({ ...props, variant: "destructive" });
+    addToast({ ...props, variant: "destructive" });
   },
-  // Shorthand toast functions
   success(description: string, title = "Success") {
-    const context = useToast();
-    context.addToast({ title, description, variant: "default" });
+    addToast({ title, description, variant: "default" });
   },
   error(description: string, title = "Error") {
-    const context = useToast();
-    context.addToast({ title, description, variant: "destructive" });
+    addToast({ title, description, variant: "destructive" });
   },
   info(description: string, title = "Information") {
-    const context = useToast();
-    context.addToast({ title, description, variant: "default" });
+    addToast({ title, description, variant: "default" });
+  }
+});
+
+// Export a standalone toast function
+export const toast = {
+  default(props: Omit<ToastProps, "id" | "variant">) {
+    const ctx = useToast();
+    ctx.addToast({ ...props, variant: "default" });
+  },
+  destructive(props: Omit<ToastProps, "id" | "variant">) {
+    const ctx = useToast();
+    ctx.addToast({ ...props, variant: "destructive" });
+  },
+  success(description: string, title = "Success") {
+    const ctx = useToast();
+    ctx.addToast({ title, description, variant: "default" });
+  },
+  error(description: string, title = "Error") {
+    const ctx = useToast();
+    ctx.addToast({ title, description, variant: "destructive" });
+  },
+  info(description: string, title = "Information") {
+    const ctx = useToast();
+    ctx.addToast({ title, description, variant: "default" });
   }
 };
 
@@ -77,8 +96,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
+  // Create the toast helpers using the addToast function
+  const toastHelpers = createToastHelpers(addToast);
+
+  // Create the context value with all the necessary properties
+  const contextValue: ToastContextProps = {
+    toasts,
+    addToast,
+    removeToast,
+    toast: toastHelpers
+  };
+
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
     </ToastContext.Provider>
   );

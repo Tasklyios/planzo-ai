@@ -1,5 +1,5 @@
 
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Upload } from "lucide-react";
 import SpreadsheetUploader from "@/components/SpreadsheetUploader";
 import {
@@ -14,20 +14,16 @@ interface HookStructureUploaderProps {
 }
 
 export function HookStructureUploader({ fetchHooksAndStructures }: HookStructureUploaderProps) {
+  const { toast } = useToast();
+
   const handleHookUploadComplete = () => {
     fetchHooksAndStructures();
-    toast({
-      title: "Success",
-      description: "Hook data uploaded successfully",
-    });
+    toast.success("Hook data uploaded successfully");
   };
 
   const handleStructureUploadComplete = () => {
     fetchHooksAndStructures();
-    toast({
-      title: "Success",
-      description: "Structure data uploaded successfully",
-    });
+    toast.success("Structure data uploaded successfully");
   };
 
   return (
@@ -44,6 +40,7 @@ export function HookStructureUploader({ fetchHooksAndStructures }: HookStructure
             <div>
               <h4 className="text-sm font-medium mb-2">Upload Hooks</h4>
               <SpreadsheetUploader 
+                type="hooks"
                 functionName="process-spreadsheet"
                 onUploadComplete={handleHookUploadComplete}
                 additionalParams={{ type: 'hook' }}
@@ -53,6 +50,7 @@ export function HookStructureUploader({ fetchHooksAndStructures }: HookStructure
             <div>
               <h4 className="text-sm font-medium mb-2">Upload Structures</h4>
               <SpreadsheetUploader 
+                type="structures"
                 functionName="process-spreadsheet"
                 onUploadComplete={handleStructureUploadComplete}
                 additionalParams={{ type: 'structure' }}
