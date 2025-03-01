@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun, Plus, Trash2, Check } from "lucide-react";
@@ -11,6 +12,7 @@ import AuthGuard from "@/components/AuthGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { StyleProfile } from "@/types/idea";
+import { useNavigate } from "react-router-dom";
 
 const themeOptions = [
   {
@@ -52,9 +54,10 @@ const accountTypes = [
 ];
 
 interface Profile {
+  id?: string;
   content_personality?: string | null;
   content_style?: string | null;
-  account_type: string; // Making this required to fix the TypeScript error
+  account_type: string;
   content_niche?: string | null;
   target_audience?: string | null;
   posting_platforms?: string[] | null;
@@ -969,4 +972,72 @@ export default function Account() {
                     <Label htmlFor="content_niche">Content Niche</Label>
                     <Input
                       id="content_niche"
-                      placeholder
+                      placeholder="E.g., Fitness, Technology, Art..."
+                      value={profile.content_niche || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="target_audience">Target Audience</Label>
+                    <Input
+                      id="target_audience"
+                      placeholder="E.g., Millennials, Working Professionals, Students..."
+                      value={profile.target_audience || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="posting_platforms">Posting Platforms</Label>
+                    <Input
+                      id="posting_platforms"
+                      placeholder="E.g., TikTok, Instagram, YouTube..."
+                      value={profile.posting_platforms?.[0] || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, posting_platforms: [e.target.value] }))}
+                    />
+                    <p className="text-xs text-muted-foreground">Enter your primary posting platform</p>
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="content_style">Content Style</Label>
+                    <Textarea
+                      id="content_style"
+                      placeholder="How would you describe your content style?"
+                      value={profile.content_style || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_style: e.target.value }))}
+                      className="min-h-[100px]"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Use Find Your Style to automatically analyze your content style
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="content_personality">Content Personality</Label>
+                    <Textarea
+                      id="content_personality"
+                      placeholder="Describe your content personality or tone..."
+                      value={profile.content_personality || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, content_personality: e.target.value }))}
+                      className="min-h-[100px]"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Use Find Your Style to automatically analyze your content personality
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+    </AuthGuard>
+  );
+}
