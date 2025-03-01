@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,6 +25,8 @@ interface IdeaData {
   color?: string;
   script?: string;
   scheduled_for?: string | null;
+  is_saved?: boolean;
+  status?: string;
 }
 
 const availableColors = [
@@ -103,6 +106,9 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     if (!idea) return;
 
     try {
+      // Always ensure saved ideas have "ideas" as status if there's no status
+      const status = idea.is_saved && !idea.status ? "ideas" : idea.status;
+
       const { error } = await supabase
         .from("video_ideas")
         .update({
@@ -113,7 +119,9 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           platform: idea.platform,
           color: idea.color || 'blue',
           script: idea.script,
-          scheduled_for: idea.scheduled_for
+          scheduled_for: idea.scheduled_for,
+          is_saved: idea.is_saved,
+          status: status
         })
         .eq("id", idea.id);
 
@@ -225,6 +233,20 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                   </div>
                 </Button>
               ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <label>Bookmark</label>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="is_saved"
+                checked={idea.is_saved || false}
+                onChange={(e) => setIdea({ ...idea, is_saved: e.target.checked })}
+                className="mr-2"
+              />
+              <label htmlFor="is_saved">Save this idea to the Ideas column</label>
             </div>
           </div>
 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -414,9 +415,9 @@ export const useIdeaGenerator = () => {
           platform: platform,
           user_id: userId,
           color: 'blue',
-          is_saved: false,
-          is_ad: isAdRequest
-          // IMPORTANT: No scheduled_for field here at all
+          is_saved: false, // Initially not saved
+          is_ad: isAdRequest,
+          status: "ideas" // Always set the initial status to "ideas"
         }));
 
         const { error: saveError } = await supabase

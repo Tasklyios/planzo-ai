@@ -1,131 +1,184 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CalendarPlus, PenSquare, Bookmark } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Trash, CalendarIcon, BookmarkIcon, Copy } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { GeneratedIdea, AddToCalendarIdea } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import type { GeneratedIdea } from "@/types/idea";
+import clsx from "clsx";
+import { format } from "date-fns";
 
 interface IdeaCardProps {
   idea: GeneratedIdea;
-  onAddToCalendar: () => void;
-  onEdit: () => void;
-  showBookmark?: boolean;
-  onBookmarkToggle?: () => void;
+  onDeleteIdea?: (id: string) => void;
+  onAddToCalendar: (idea: AddToCalendarIdea) => void;
+  onSaveIdea?: (id: string, isSaved: boolean) => void;
+  variant?: "compact" | "full";
 }
 
-const IdeaCard = ({ 
-  idea, 
-  onAddToCalendar, 
-  onEdit, 
-  showBookmark = true,
-  onBookmarkToggle 
-}: IdeaCardProps) => {
+export default function IdeaCard({
+  idea,
+  onDeleteIdea,
+  onAddToCalendar,
+  onSaveIdea,
+  variant = "full",
+}: IdeaCardProps) {
+  const isCompact = variant === "compact";
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(idea.is_saved);
 
-  const handleBookmarkToggle = async () => {
+  const handleAddToCalendar = () => {
+    onAddToCalendar({
+      idea,
+      title: idea.title,
+      scheduledFor: format(new Date(), "yyyy-MM-dd"),
+    });
+  };
+
+  const handleSaveToggle = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setLoading(true);
+    
     try {
+      // Update in the database
       const { error } = await supabase
         .from('video_ideas')
-        .update({ is_saved: !idea.is_saved })
+        .update({ 
+          is_saved: !saved,
+          status: 'ideas' // When saving, always set to ideas column
+        })
         .eq('id', idea.id);
 
       if (error) throw error;
 
-      if (onBookmarkToggle) {
-        onBookmarkToggle();
+      // Update local state
+      setSaved(!saved);
+      
+      // Call callback if provided
+      if (onSaveIdea) {
+        onSaveIdea(idea.id, !saved);
       }
-
+      
       toast({
-        title: idea.is_saved ? "Idea removed from bookmarks" : "Idea bookmarked",
-        description: idea.is_saved 
-          ? "You can always bookmark it again later" 
-          : "You can find this idea in your saved ideas",
+        title: saved ? "Idea Removed" : "Idea Saved",
+        description: saved 
+          ? "Idea removed from your saved collection"
+          : "Idea saved to your collection in the Ideas column",
+      });
+    } catch (error: any) {
+      console.error('Error toggling save status:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update idea status",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopyToClipboard = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    try {
+      const textToCopy = `${idea.title}\n\n${idea.description}\n\nCategory: ${idea.category}\nTags: ${idea.tags.join(', ')}`;
+      navigator.clipboard.writeText(textToCopy);
+      toast({
+        title: "Copied to clipboard",
+        description: "Idea details copied to clipboard",
       });
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
       toast({
-        title: "Error",
-        description: "Failed to update bookmark status",
         variant: "destructive",
+        title: "Error",
+        description: "Failed to copy to clipboard",
       });
     }
   };
 
   return (
-    <div className="group bg-[#F9FAFC] rounded-xl p-4 md:p-6 hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-[#4F92FF]/20">
-      <div className="flex items-start justify-between mb-3 md:mb-4">
-        <div className="flex items-center gap-2 md:gap-3">
-          <div className={cn(
-            "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center",
-            `bg-${idea.color || 'blue'}-500/10`,
-            `text-${idea.color || 'blue'}-500`
-          )}>
-            <div className="w-4 h-4 md:w-5 md:h-5" />
-          </div>
-          <div>
-            <span className="text-xs md:text-sm text-[#4F92FF] font-medium">{idea.category}</span>
-            <h3 className="text-sm md:text-lg font-medium text-[#222831]">{idea.title}</h3>
-          </div>
+    <Card className={clsx("h-full transition-all cursor-pointer hover:shadow-md", {
+      "border-2 border-primary": saved
+    })}>
+      <CardHeader className={clsx(isCompact ? "p-4" : "p-6")}>
+        <div className="flex justify-between items-start">
+          <CardTitle className={clsx("text-lg line-clamp-2", isCompact ? "text-base" : "text-lg")}>
+            {idea.title}
+          </CardTitle>
         </div>
-        <div className="flex gap-1 md:gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={onAddToCalendar}
-            className="hidden md:flex items-center"
-          >
-            <CalendarPlus className="h-4 w-4 mr-2" />
-            Add to Calendar
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={onEdit}
-          >
-            <PenSquare className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-      <p className="text-xs md:text-sm text-gray-600 line-clamp-2 md:line-clamp-none">
-        {idea.description}
-      </p>
-      <div className="flex items-center justify-between mt-3">
-        <div className="flex flex-wrap gap-2">
-          {idea.tags?.map((tag, tagIndex) => (
-            <span 
-              key={tagIndex} 
-              className="px-2 py-1 bg-[#4F92FF]/10 text-[#4F92FF] text-xs rounded-full"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
-        {showBookmark && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBookmarkToggle}
-            className={cn(
-              "ml-2 cursor-pointer transition-all duration-300 ease-in-out hover:scale-110",
-              idea.is_saved 
-                ? "text-[#4F92FF] hover:text-[#4F92FF]/90" 
-                : "text-gray-400 hover:text-[#4F92FF]/70"
+        <CardDescription className={clsx("line-clamp-1", isCompact ? "text-xs" : "text-sm")}>
+          {idea.category}
+        </CardDescription>
+      </CardHeader>
+      {!isCompact && (
+        <CardContent>
+          <p className="text-sm text-muted-foreground line-clamp-3 mb-3">{idea.description}</p>
+          <div className="flex flex-wrap gap-1 mt-2">
+            {idea.tags && idea.tags.slice(0, 3).map((tag, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+            {idea.tags && idea.tags.length > 3 && (
+              <Badge variant="outline" className="text-xs">
+                +{idea.tags.length - 3} more
+              </Badge>
             )}
-          >
-            <Bookmark 
-              className={cn(
-                "h-4 w-4 transition-transform duration-300",
-                idea.is_saved && "transform scale-110 animate-scale-in"
-              )} 
-              fill={idea.is_saved ? "currentColor" : "none"}
-            />
-          </Button>
-        )}
-      </div>
-    </div>
+          </div>
+        </CardContent>
+      )}
+      <CardFooter className={isCompact ? "p-3" : "px-6 py-4"}>
+        <div className="flex justify-between items-center w-full">
+          <div className="flex space-x-1">
+            <Button
+              variant="ghost"
+              size={isCompact ? "icon" : "sm"}
+              onClick={handleSaveToggle}
+              disabled={loading}
+              className="h-8 w-8"
+              title={saved ? "Remove bookmark" : "Bookmark"}
+            >
+              <BookmarkIcon className={clsx("h-4 w-4", saved ? "fill-primary text-primary" : "")} />
+            </Button>
+            <Button
+              variant="ghost"
+              size={isCompact ? "icon" : "sm"}
+              onClick={handleCopyToClipboard}
+              className="h-8 w-8"
+              title="Copy to clipboard"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex space-x-1">
+            {onDeleteIdea && (
+              <Button
+                variant="ghost"
+                size={isCompact ? "icon" : "sm"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteIdea(idea.id);
+                }}
+                className="h-8 w-8"
+                title="Delete"
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size={isCompact ? "icon" : "sm"}
+              onClick={handleAddToCalendar}
+              className="h-8 w-8"
+              title="Add to calendar"
+            >
+              <CalendarIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardFooter>
+    </Card>
   );
-};
-
-export default IdeaCard;
+}
