@@ -82,8 +82,16 @@ export default function IdeaGenerator() {
     }
   };
 
-  const openAddToCalendarDialog = (idea: AddToCalendarIdea) => {
-    setAddToCalendarIdea(idea);
+  const handleAddToCalendar = async (idea: GeneratedIdea) => {
+    // Create the AddToCalendarIdea object
+    const calendarIdea: AddToCalendarIdea = {
+      idea: idea,
+      title: idea.title,
+      scheduledFor: new Date().toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
+    };
+    
+    // Open the dialog
+    setAddToCalendarIdea(calendarIdea);
   };
 
   const handleAddToCalendarUpdate = (field: keyof AddToCalendarIdea, value: string) => {
@@ -95,7 +103,7 @@ export default function IdeaGenerator() {
     }
   };
 
-  const handleAddToCalendar = async () => {
+  const saveToCalendar = async () => {
     if (!addToCalendarIdea) return;
 
     try {
@@ -145,14 +153,12 @@ export default function IdeaGenerator() {
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
         hasIdeas={ideas.length > 0}
-        isMobile={isMobile}
-        onMenuOpen={() => setIsMenuOpen(true)}
       />
       
       {isMobile && (
         <MobileMenuDialog 
-          isOpen={isMenuOpen} 
-          onClose={() => setIsMenuOpen(false)}
+          open={isMenuOpen} 
+          onOpenChange={(open) => setIsMenuOpen(open)}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           hasIdeas={ideas.length > 0}
@@ -163,25 +169,27 @@ export default function IdeaGenerator() {
         {activeTab === 'input' ? (
           <InputForm
             niche={niche}
-            setNiche={setNiche}
             audience={audience}
-            setAudience={setAudience}
             videoType={videoType}
-            setVideoType={setVideoType}
             platform={platform}
-            setPlatform={setPlatform}
-            loading={loading}
-            onGenerate={generateIdeas}
             customIdeas={customIdeas}
+            setNiche={setNiche}
+            setAudience={setAudience}
+            setVideoType={setVideoType}
+            setPlatform={setPlatform}
             setCustomIdeas={setCustomIdeas}
-            error={error}
           />
         ) : (
           <IdeasGrid
             ideas={ideas}
-            onDeleteIdea={handleDeleteIdea}
-            onSaveIdea={handleSaveIdea}
-            onAddToCalendar={openAddToCalendarDialog}
+            onAddToCalendar={handleAddToCalendar}
+            onEdit={(id) => console.log("Edit idea", id)}
+            onBookmarkToggle={(id) => {
+              const idea = ideas.find(i => i.id === id);
+              if (idea) {
+                handleSaveIdea(id, !idea.is_saved);
+              }
+            }}
           />
         )}
       </div>
@@ -189,7 +197,7 @@ export default function IdeaGenerator() {
       <AddToCalendarDialog
         idea={addToCalendarIdea}
         onOpenChange={(open) => !open && setAddToCalendarIdea(null)}
-        onAddToCalendar={handleAddToCalendar}
+        onAddToCalendar={saveToCalendar}
         onUpdate={handleAddToCalendarUpdate}
       />
     </div>
