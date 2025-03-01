@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -30,11 +29,12 @@ const normalizeHook = (hook: any): HookType => {
     category: hook.category,
     hook_text: hook.hook_text || hook.hook || '',
     created_at: hook.created_at,
-    user_id: hook.user_id
+    // Don't include user_id in normalized hook as it's not in HookType
   };
 };
 
 const HookSelector = ({ onSelectHook }: HookSelectorProps) => {
+  // ... keep existing code (state variables, handlers, etc.)
   const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('saved');
