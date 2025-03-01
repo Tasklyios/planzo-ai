@@ -1,5 +1,4 @@
 
-// src/hooks/use-toast.ts
 import { createContext, useContext, useState } from "react";
 
 export type ToastProps = {
