@@ -1,3 +1,4 @@
+<lov-code>
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -943,4 +944,4 @@ export default function Script() {
                     <SelectItem value="none">Default structure</SelectItem>
                     {structures.map((structure) => (
                       <SelectItem key={structure.id} value={structure.id || ""}>
-                        {structure.name}
+                        {structure
