@@ -38,8 +38,15 @@ const Generator = () => {
     if (!addingToCalendar?.idea) return;
     try {
       const {
-        data: sessionData
+        data: sessionData,
+        error: sessionError
       } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw new Error(`Authentication error: ${sessionError.message}`);
+      }
+      
       const userId = sessionData.session?.user.id;
       if (!userId) {
         navigate("/auth");
@@ -59,7 +66,7 @@ const Generator = () => {
       
       if (scheduleError) {
         console.error("Error adding to calendar:", scheduleError);
-        throw scheduleError;
+        throw new Error(`Error adding to calendar: ${scheduleError.message}`);
       }
       
       toast({
@@ -73,7 +80,7 @@ const Generator = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add idea to calendar. Please try again."
+        description: error.message || "Failed to add idea to calendar. Please try again."
       });
     }
   };
@@ -101,7 +108,7 @@ const Generator = () => {
       
       if (error) {
         console.error("Bookmark update error:", error);
-        throw error;
+        throw new Error(`Error updating bookmark: ${error.message}`);
       }
       
       setIdeas(prevIdeas => prevIdeas.map(idea => idea.id === ideaId ? {
@@ -117,7 +124,7 @@ const Generator = () => {
       console.error("Error updating bookmark:", error);
       toast({
         title: "Error",
-        description: "Failed to update bookmark status",
+        description: error.message || "Failed to update bookmark status",
         variant: "destructive"
       });
     }

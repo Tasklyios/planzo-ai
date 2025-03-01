@@ -137,7 +137,8 @@ export const useIdeaGenerator = () => {
         });
 
       if (usageError) {
-        throw usageError;
+        console.error("Usage check error:", usageError);
+        throw new Error(`Usage check error: ${usageError.message}`);
       }
 
       if (!canGenerate) {
@@ -165,14 +166,13 @@ export const useIdeaGenerator = () => {
 
       console.log("Calling generate-ideas function with:", { niche, audience, videoType, platform, customIdeas });
       
-      // Improved error handling for the Edge Function call
       try {
         const { data, error } = await supabase.functions.invoke('generate-ideas', {
           body: {
             niche: niche.trim(),
             audience: audience.trim(),
             videoType: videoType.trim(),
-            platform: platform.toLowerCase(),
+            platform: platform,
             customIdeas: customIdeas.trim()
           },
         });
@@ -184,18 +184,18 @@ export const useIdeaGenerator = () => {
           throw new Error(`Edge function error: ${error.message || 'Unknown error'}`);
         }
 
-        if (!data?.ideas) {
+        if (!data?.ideas || !Array.isArray(data.ideas)) {
           console.error("Invalid response format:", data);
-          throw new Error('Invalid response format from AI');
+          throw new Error('Invalid response format from AI: ideas array is missing');
         }
 
-        console.log("Saving ideas to database:", data.ideas);
+        console.log("Ideas generated successfully:", data.ideas);
 
         const ideasToSave = data.ideas.map((idea: any) => ({
           title: idea.title,
           description: idea.description,
           category: idea.category,
-          tags: idea.tags,
+          tags: idea.tags || [],
           platform: platform,
           user_id: userId,
           color: 'blue',
@@ -208,7 +208,7 @@ export const useIdeaGenerator = () => {
 
         if (saveError) {
           console.error("Error saving ideas:", saveError);
-          throw saveError;
+          throw new Error(`Error saving ideas: ${saveError.message}`);
         }
 
         const { data: savedIdeas, error: fetchError } = await supabase
@@ -216,11 +216,11 @@ export const useIdeaGenerator = () => {
           .select("*")
           .eq("user_id", userId)
           .order("created_at", { ascending: false })
-          .limit(5);
+          .limit(ideasToSave.length);
 
         if (fetchError) {
           console.error("Error fetching saved ideas:", fetchError);
-          throw fetchError;
+          throw new Error(`Error fetching saved ideas: ${fetchError.message}`);
         }
 
         const transformedIdeas = (savedIdeas || []).map(transformSupabaseIdea);
@@ -238,8 +238,8 @@ export const useIdeaGenerator = () => {
       console.error('Error generating ideas:', error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || 'Failed to generate ideas. Please try again.',
+        title: "Failed to Generate Ideas",
+        description: error.message || 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setLoading(false);
