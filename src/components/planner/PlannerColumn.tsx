@@ -1,6 +1,9 @@
 
 import { Draggable, Droppable } from "react-beautiful-dnd";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { SearchIdeasDialog } from "../search/SearchIdeasDialog";
 
 interface PlannerColumnProps {
   title: string;
@@ -11,6 +14,8 @@ interface PlannerColumnProps {
 }
 
 export function PlannerColumn({ title, id, index, children, isDeletable = true }: PlannerColumnProps) {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   return (
     <Draggable draggableId={`column-${id}`} index={index} isDragDisabled={!isDeletable}>
       {(provided) => (
@@ -32,6 +37,15 @@ export function PlannerColumn({ title, id, index, children, isDeletable = true }
               <h3 className="font-semibold text-lg">{title}</h3>
               {!isDeletable && <span className="text-xs text-muted-foreground ml-2">(Default)</span>}
             </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={() => setIsSearchOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              <span className="sr-only">Add idea to {title}</span>
+            </Button>
           </div>
           <Droppable droppableId={id} type="task">
             {(provided) => (
@@ -45,6 +59,13 @@ export function PlannerColumn({ title, id, index, children, isDeletable = true }
               </div>
             )}
           </Droppable>
+
+          <SearchIdeasDialog 
+            open={isSearchOpen} 
+            onOpenChange={setIsSearchOpen}
+            columnId={id}
+            columnTitle={title}
+          />
         </div>
       )}
     </Draggable>
