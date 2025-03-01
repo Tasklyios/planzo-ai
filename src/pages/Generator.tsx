@@ -190,16 +190,34 @@ const Generator: React.FC = () => {
         return;
       }
 
+      // First, create a video_idea record
+      const { data: videoIdea, error: videoIdeaError } = await supabase
+        .from('video_ideas')
+        .insert({
+          title: scriptTitle,
+          description: `Script for ${ideaGenerator.videoType} on ${ideaGenerator.niche}`,
+          user_id: session.user.id,
+          platform: ideaGenerator.platform,
+          category: ideaGenerator.videoType,
+          tags: [ideaGenerator.niche, ideaGenerator.audience],
+          is_saved: true,
+          status: 'scripts'
+        })
+        .select()
+        .single();
+
+      if (videoIdeaError) {
+        console.error("Error saving video idea:", videoIdeaError);
+        throw videoIdeaError;
+      }
+
+      // Now save the script linked to the video idea
       const { data, error } = await supabase
         .from('scripts')
         .insert({
-          title: scriptTitle,
           content: script,
           user_id: session.user.id,
-          video_type: ideaGenerator.videoType,
-          niche: ideaGenerator.niche,
-          target_audience: ideaGenerator.audience,
-          platform: ideaGenerator.platform,
+          idea_id: videoIdea.id
         })
         .select()
         .single();
