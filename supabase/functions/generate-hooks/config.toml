@@ -1,3 +1,2 @@
 
-functions = ["invoke_external_api"]
-verify_jwt = true
+project_id = "hhkabxkelgabcsczsljf"

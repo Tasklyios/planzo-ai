@@ -24,7 +24,10 @@ export const generateHooks = async (
       body: { topic, audience, details },
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(error.message || "Failed to generate hooks");
+    }
     
     return data.hooks || [];
   } catch (error: any) {
