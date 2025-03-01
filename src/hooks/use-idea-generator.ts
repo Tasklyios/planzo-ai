@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -22,6 +23,8 @@ export const useIdeaGenerator = () => {
         setNiche(e.newValue);
       } else if (e.key === "audience" && e.newValue !== null) {
         setAudience(e.newValue);
+      } else if (e.key === "videoType" && e.newValue !== null) {
+        setVideoType(e.newValue);
       } else if (e.key === "platform" && e.newValue !== null) {
         setPlatform(e.newValue);
       }
@@ -77,6 +80,7 @@ export const useIdeaGenerator = () => {
       if (profile) {
         // Determine which niche to use based on account type
         let nicheValue = "";
+        let videoTypeValue = localStorage.getItem("videoType") || "";
         
         if (profile.account_type === 'business' && profile.business_niche) {
           nicheValue = profile.business_niche;
@@ -101,11 +105,17 @@ export const useIdeaGenerator = () => {
           setPlatform(profile.posting_platforms[0]);
           localStorage.setItem("platform", profile.posting_platforms[0]);
         }
+
+        // Save videoType to localStorage if not already set
+        if (videoType) {
+          localStorage.setItem("videoType", videoType);
+        }
       }
 
       // Update from localStorage as well (in case user updated another tab)
       const localStorageNiche = localStorage.getItem("niche");
       const localStorageAudience = localStorage.getItem("audience");
+      const localStorageVideoType = localStorage.getItem("videoType");
       const localStoragePlatform = localStorage.getItem("platform");
       
       if (localStorageNiche && localStorageNiche !== niche) {
@@ -114,6 +124,10 @@ export const useIdeaGenerator = () => {
       
       if (localStorageAudience && localStorageAudience !== audience) {
         setAudience(localStorageAudience);
+      }
+
+      if (localStorageVideoType && localStorageVideoType !== videoType) {
+        setVideoType(localStorageVideoType);
       }
       
       if (localStoragePlatform && localStoragePlatform !== platform) {

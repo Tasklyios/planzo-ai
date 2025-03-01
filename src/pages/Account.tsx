@@ -198,6 +198,11 @@ export default function Account() {
         updateLocalStorage("platform", profile.posting_platforms[0]);
       }
 
+      // Video type is derived from content focus for business and ecommerce accounts
+      if (profile.account_type === 'business' || profile.account_type === 'ecommerce') {
+        updateLocalStorage("videoType", profile.content_niche || "");
+      }
+
       toast({
         title: "Profile updated",
         description: "Your changes have been saved successfully.",
