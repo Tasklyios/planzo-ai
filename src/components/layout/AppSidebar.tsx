@@ -1,22 +1,27 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-import { Sparkles, BookCopy, Zap, Calendar, Film, PenTool, Grid3X3, UserCircle, CreditCard, Palette } from "lucide-react";
+import { Sparkles, BookCopy, Zap, Calendar, Film, PenTool, Grid3X3, UserCircle, CreditCard, Palette, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface SidebarItemProps {
   href: string;
   icon: React.ReactNode;
   label: string;
+  onClick?: () => void;
 }
 
-const SidebarItem = ({ href, icon, label }: SidebarItemProps) => {
+const SidebarItem = ({ href, icon, label, onClick }: SidebarItemProps) => {
   const location = useLocation();
   const isActive = location.pathname === href;
 
   return (
     <Link
       to={href}
+      onClick={onClick}
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
         isActive
@@ -31,8 +36,28 @@ const SidebarItem = ({ href, icon, label }: SidebarItemProps) => {
 };
 
 const AppSidebar = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate("/auth");
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error logging out",
+        description: error.message,
+      });
+    }
+  };
+
   return (
-    <div className="w-64 border-r h-full flex flex-col">
+    <div className="w-64 border-r h-screen flex flex-col">
       <div className="px-4 py-4">
         <h1 className="text-xl font-bold flex items-center">
           <Sparkles className="w-5 h-5 mr-2" />
@@ -40,6 +65,8 @@ const AppSidebar = () => {
         </h1>
       </div>
       <Separator />
+      
+      {/* Main navigation - no overflow */}
       <div className="flex-1 px-4 py-4 space-y-1">
         <SidebarItem
           href="/dashboard"
@@ -77,18 +104,27 @@ const AppSidebar = () => {
           label="Calendar"
         />
       </div>
-      <Separator />
-      <div className="px-4 py-4 space-y-1">
-        <SidebarItem
-          href="/account"
-          icon={<UserCircle className="w-5 h-5" />}
-          label="Account"
-        />
-        <SidebarItem
-          href="/billing"
-          icon={<CreditCard className="w-5 h-5" />}
-          label="Billing"
-        />
+      
+      {/* User account section - always visible at bottom */}
+      <div className="mt-auto px-4 py-4 border-t border-border">
+        <div className="space-y-1">
+          <SidebarItem
+            href="/account"
+            icon={<UserCircle className="w-5 h-5" />}
+            label="Account"
+          />
+          <SidebarItem
+            href="/billing"
+            icon={<CreditCard className="w-5 h-5" />}
+            label="Billing"
+          />
+          <SidebarItem
+            href="#"
+            onClick={handleLogout}
+            icon={<LogOut className="w-5 h-5" />}
+            label="Logout"
+          />
+        </div>
       </div>
     </div>
   );
