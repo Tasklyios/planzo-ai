@@ -97,8 +97,8 @@ function ToastProvider({ children }: { children: React.ReactNode }) {
 
 // Helper function to create toast
 function toast({ title, description, variant = "default", action }: Omit<ToastProps, "id">) {
-  const { addToast } = useToast();
-  addToast({ title, description, variant, action });
+  const context = useToast();
+  context.addToast({ title, description, variant, action });
 }
 
 export { ToastProvider, useToast, toast };
