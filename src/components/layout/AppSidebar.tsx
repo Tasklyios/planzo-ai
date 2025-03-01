@@ -1,9 +1,7 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { 
   Sparkles, 
-  BookCopy, 
   Calendar, 
   Film, 
   Grid3X3, 
@@ -15,7 +13,8 @@ import {
   LightbulbIcon,
   BookOpen,
   Anchor,
-  Palette
+  Palette,
+  LayoutPanelLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -123,7 +122,7 @@ const AppSidebar = () => {
           />
           <SidebarItem
             href="/planner"
-            icon={<BookCopy className="w-5 h-5" />}
+            icon={<LayoutPanelLeft className="w-5 h-5" />}
             label="Content Planner"
           />
           <SidebarItem
