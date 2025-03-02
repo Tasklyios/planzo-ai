@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -26,12 +25,24 @@ interface HookSelectorProps {
 
 // Helper function to normalize hook data structure
 const normalizeHook = (hook: any): HookType => {
+  // Normalize the category to lowercase and handle special cases
+  let category = hook.category?.toLowerCase() || '';
+  
+  // Map special categories to our four standard categories
+  if (category === 'benefit' || category === 'problem-solution' || category === 'controversial') {
+    category = 'challenge'; // Map additional categories to challenge
+  }
+  
+  // Ensure it's one of our four supported categories
+  if (!['question', 'statistic', 'story', 'challenge'].includes(category)) {
+    category = 'question'; // Default to question for unknown categories
+  }
+  
   return {
     id: hook.id,
-    category: hook.category,
+    category: category,
     hook_text: hook.hook_text || hook.hook || '',
     created_at: hook.created_at,
-    // Don't include user_id in normalized hook as it's not in HookType
   };
 };
 
@@ -95,8 +106,11 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
     setGenerating(true);
     try {
       const generatedRawHooks = await generateHooks(topic, audience, details);
-      // Normalize the generated hooks to match HookType
+      
+      // Normalize the generated hooks to match HookType and correctly map categories
       const normalizedHooks = generatedRawHooks.map(normalizeHook);
+      console.log("Normalized hooks with corrected categories:", normalizedHooks);
+      
       setGeneratedHooks(normalizedHooks);
       setActiveTab('generate'); // Switch to the generate tab to show the results
       
