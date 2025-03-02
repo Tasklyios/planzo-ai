@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -369,7 +370,8 @@ export const useIdeaGenerator = () => {
         isAdRequest: videoType.toLowerCase().includes('ad') || 
                     videoType.toLowerCase().includes('advertisement') ||
                     videoType.toLowerCase().includes('promotional'),
-        previousIdeasContext 
+        previousIdeasContext,
+        numIdeas: 5  // Specify exactly 5 ideas should be generated
       });
       
       try {
@@ -382,7 +384,8 @@ export const useIdeaGenerator = () => {
             customIdeas: customIdeas.trim(),
             contentStyle: localStorage.getItem("contentStyle") || "",
             contentPersonality: localStorage.getItem("contentPersonality") || "",
-            previousIdeas: previousIdeasContext
+            previousIdeas: previousIdeasContext,
+            numIdeas: 5  // Important: Specifying the number of ideas to generate
           },
         });
 
@@ -430,7 +433,10 @@ export const useIdeaGenerator = () => {
                            videoType.toLowerCase().includes('advertisement') ||
                            videoType.toLowerCase().includes('promotional');
 
-        const ideasToSave = data.ideas.map((idea: any) => ({
+        // Only process up to 5 ideas
+        const ideasToProcess = (data.ideas || []).slice(0, 5);
+
+        const ideasToSave = ideasToProcess.map((idea: any) => ({
           title: idea.title,
           description: idea.description,
           category: idea.category,
