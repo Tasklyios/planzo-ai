@@ -109,6 +109,19 @@ const InputForm = ({
     }
   };
 
+  // Handle content niche changes for ecommerce accounts
+  const handleContentNicheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setContentNiche(newValue);
+  };
+
+  // Handle target audience changes for ecommerce accounts
+  const handleTargetAudienceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setTargetAudience(newValue);
+    setAudience(newValue); // Update parent component state
+  };
+
   if (loading) {
     return <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8 animate-pulse">
       {[...Array(4)].map((_, i) => (
@@ -184,11 +197,9 @@ const InputForm = ({
                 <input
                   type="text"
                   value={contentNiche}
-                  onChange={(e) => setContentNiche(e.target.value)}
+                  onChange={handleContentNicheChange}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
                   placeholder="Your content niche"
-                  disabled
-                  title="This is synced from your account settings"
                 />
               </div>
             </div>
@@ -202,11 +213,9 @@ const InputForm = ({
                 <input
                   type="text"
                   value={targetAudience}
-                  onChange={(e) => setTargetAudience(e.target.value)}
+                  onChange={handleTargetAudienceChange}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
                   placeholder="Your target audience"
-                  disabled
-                  title="This is synced from your account settings"
                 />
               </div>
             </div>
