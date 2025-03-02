@@ -53,6 +53,15 @@ const Script = () => {
       const scriptTitle = useSavedIdea ? savedIdea.title : title;
       const scriptDescription = useSavedIdea ? savedIdea.description : description;
 
+      console.log("Sending parameters:", {
+        title: scriptTitle,
+        description: scriptDescription,
+        contentStyle,
+        hook: selectedHook,
+        userId,
+        savedIdea: useSavedIdea ? savedIdea : null,
+      });
+
       const { data, error } = await supabase.functions.invoke('generate-script', {
         body: {
           title: scriptTitle,
@@ -60,6 +69,7 @@ const Script = () => {
           contentStyle,
           hook: selectedHook,
           userId,
+          savedIdea: useSavedIdea ? savedIdea : null,
         },
       });
 

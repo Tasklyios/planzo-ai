@@ -72,18 +72,20 @@ serve(async (req) => {
 
     // Parse the request
     const requestData = await req.json();
+    console.log("Received request data:", JSON.stringify(requestData));
+    
     const { 
-      videoIdea, 
-      hook,
-      structureTemplate,
-      additionalInstructions = "",
+      title, 
+      description, 
       contentStyle = "",
-      contentPersonality = ""
+      hook = "",
+      userId
     } = requestData;
 
-    if (!videoIdea) {
+    if (!title) {
+      console.error("Missing title in request");
       return new Response(
-        JSON.stringify({ error: "Video idea is required" }),
+        JSON.stringify({ error: "Title is required" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -91,34 +93,27 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Generating script for video idea: ${videoIdea.title}`);
+    console.log(`Generating script for title: ${title}`);
 
     // Create prompt for script generation
     let prompt = `
-      Generate a complete video script for the following video idea:
+      Generate a complete video script for the following title and description:
       
-      TITLE: ${videoIdea.title}
-      DESCRIPTION: ${videoIdea.description || "N/A"}
-      CATEGORY: ${videoIdea.category || "N/A"}
-      PLATFORM: ${videoIdea.platform || "TikTok"}
+      TITLE: ${title}
+      DESCRIPTION: ${description || "N/A"}
       
-      ${hook ? `HOOK: ${hook.hook}` : ""}
-      
-      ${structureTemplate ? `SCRIPT STRUCTURE: ${structureTemplate.structure}` : ""}
+      ${hook ? `HOOK: ${hook}` : ""}
       
       ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ""}
-      ${contentPersonality ? `CONTENT PERSONALITY: ${contentPersonality}` : ""}
       
-      ${additionalInstructions ? `ADDITIONAL INSTRUCTIONS: ${additionalInstructions}` : ""}
-      
-      The script should be well-structured, engaging, and tailored to the platform.
+      The script should be well-structured, engaging, and tailored for video content.
       Format the script with clear sections and keep it concise but comprehensive.
       Include natural speaking cues, transitions, and elements that will engage the audience.
     `;
 
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: "You are a professional video script writer who creates engaging scripts." },
         { role: "user", content: prompt }
@@ -138,33 +133,31 @@ serve(async (req) => {
       );
     }
 
-    // Save the script to the database
-    const { data: savedScript, error: saveError } = await supabase
-      .from("scripts")
-      .insert({
-        content: scriptContent,
-        idea_id: videoIdea.id,
-        user_id: user.id
-      })
-      .select()
-      .single();
+    // Save the script to the database - only if we have a saved idea
+    if (requestData.savedIdea && requestData.savedIdea.id) {
+      try {
+        const { error: saveError } = await supabase
+          .from("scripts")
+          .insert({
+            content: scriptContent,
+            idea_id: requestData.savedIdea.id,
+            user_id: userId || user.id
+          });
 
-    if (saveError) {
-      console.error("Error saving script:", saveError);
-      return new Response(
-        JSON.stringify({ error: `Error saving script: ${saveError.message}` }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        if (saveError) {
+          console.error("Error saving script:", saveError);
+          // We'll continue even if saving fails, just log the error
         }
-      );
+      } catch (saveError) {
+        console.error("Error during script save:", saveError);
+        // Continue with script generation even if saving fails
+      }
     }
 
     // Return the generated script
     return new Response(
       JSON.stringify({ 
-        script: scriptContent,
-        savedScript 
+        script: scriptContent
       }),
       {
         status: 200,
