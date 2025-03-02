@@ -1,191 +1,165 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.36.0'
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Define CORS headers for browser compatibility
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Content-Type': 'application/json'
+};
 
-// Main function handler
-Deno.serve(async (req) => {
-  // Handle CORS preflight requests
+serve(async (req: Request) => {
+  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders, status: 200 })
+    return new Response(null, {
+      status: 200,
+      headers: corsHeaders
+    });
   }
 
   try {
-    // Get the authorization header
-    const authHeader = req.headers.get('Authorization')
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
     
+    // Get authorization header
+    const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('No authorization header')
+      console.error('No authorization header provided');
       return new Response(
         JSON.stringify({ 
-          error: 'No authorization header', 
-          canProceed: false, 
-          message: 'Authentication required' 
+          canProceed: false,
+          message: "Authentication required. Please log in."
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401 
-        }
-      )
+        { status: 401, headers: corsHeaders }
+      );
     }
     
-    // Get Supabase client with the auth context
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false }
-    })
+    // Create authenticated client using user's JWT
+    const jwt = authHeader.replace('Bearer ', '');
+    const authenticatedSupabase = createClient(
+      supabaseUrl,
+      supabaseKey,
+      { global: { headers: { Authorization: `Bearer ${jwt}` } } }
+    );
 
-    // Verify auth context
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
-
+    // Get user information from JWT
+    const { data: { user }, error: userError } = await authenticatedSupabase.auth.getUser(jwt);
+    
     if (userError || !user) {
-      console.error('Auth error:', userError?.message)
+      console.error('Error getting user:', userError);
       return new Response(
         JSON.stringify({ 
-          error: userError?.message || 'User not authenticated', 
-          canProceed: false, 
-          message: 'Authentication required' 
+          canProceed: false,
+          message: "Invalid authentication. Please log in again." 
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401 
-        }
-      )
+        { status: 401, headers: corsHeaders }
+      );
     }
 
-    // Get the request body
-    const { action } = await req.json()
+    // Parse request body
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      console.error('Error parsing request body:', e);
+      return new Response(
+        JSON.stringify({ 
+          canProceed: false,
+          message: "Invalid request format." 
+        }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    const { action } = body;
     
     if (!action) {
-      console.error('Missing action parameter')
+      console.error('No action specified in request');
       return new Response(
         JSON.stringify({ 
-          error: 'Missing action parameter', 
-          canProceed: false, 
-          message: 'Please specify which action to check (ideas, scripts, hooks)' 
+          canProceed: false,
+          message: "No action specified." 
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
-        }
-      )
+        { status: 400, headers: corsHeaders }
+      );
     }
-    
-    // Check for business tier first (they have unlimited access)
-    const { data: subscriptionData, error: subscriptionError } = await supabase
+
+    // Check if user has Business tier (they can skip the check)
+    const { data: subscriptionData, error: subError } = await supabase
       .from('user_subscriptions')
       .select('tier')
       .eq('user_id', user.id)
-      .maybeSingle()
-    
-    if (subscriptionError) {
-      console.error('Error fetching subscription tier:', subscriptionError.message)
-      // Continue with the check - don't block users if we can't check subscription
-    }
-    
-    // Business tier users have unlimited usage
-    if (subscriptionData?.tier === 'business') {
-      console.log(`Business tier user ${user.id} granted unlimited access for ${action}`)
+      .maybeSingle();
+
+    if (subError) {
+      console.error('Error checking subscription tier:', subError);
+    } else if (subscriptionData?.tier === 'business') {
+      console.log('Business tier user detected, skipping usage check');
       return new Response(
         JSON.stringify({ 
-          canProceed: true, 
-          message: 'Business tier has unlimited access',
-          tier: 'business'
+          canProceed: true,
+          message: "Business tier users have unlimited access." 
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
-        }
-      )
+        { status: 200, headers: corsHeaders }
+      );
     }
 
-    // For other tiers, check and increment usage
-    console.log(`Checking usage for user ${user.id}, action: ${action}`)
-    const { data, error } = await supabase.rpc('check_and_increment_usage', {
-      p_user_id: user.id,
-      p_action: action,
-    })
+    // Call the check_and_increment_usage function
+    const { data, error } = await supabase.rpc(
+      'check_and_increment_usage',
+      { p_user_id: user.id, p_action: action }
+    );
 
     if (error) {
-      console.error('Error checking usage:', error.message)
+      console.error('Error checking usage limits:', error);
       return new Response(
         JSON.stringify({ 
-          error: `Usage check failed: ${error.message}`, 
-          canProceed: false, 
-          message: 'Unable to verify usage limits. Please try again.' 
+          canProceed: false,
+          message: `Error checking usage limits: ${error.message}` 
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500 
-        }
-      )
+        { status: 500, headers: corsHeaders }
+      );
     }
 
-    // Return the result (boolean from the RPC function)
-    const canProceed = data === true
-    
-    if (canProceed) {
-      console.log(`User ${user.id} has not reached limit for ${action}`)
+    // Handle the response from the function
+    if (data === true) {
       return new Response(
         JSON.stringify({ 
-          canProceed: true, 
-          message: `You can proceed with ${action}`,
-          tier: subscriptionData?.tier || 'free'
+          canProceed: true,
+          message: "Usage limit check passed." 
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
-        }
-      )
+        { status: 200, headers: corsHeaders }
+      );
     } else {
-      console.log(`User ${user.id} has reached limit for ${action}`)
-      
-      // Determine message based on subscription tier
-      const tier = subscriptionData?.tier || 'free'
-      let message = `You've reached your daily limit for ${action}.`
-      
-      if (tier === 'free') {
-        message += ' Upgrade to Pro or Plus for more generations!'
-      } else if (tier === 'pro') {
-        message += ' Upgrade to Plus or Business for more generations!'
-      } else if (tier === 'plus') {
-        message += ' Upgrade to Business for unlimited generations!'
-      }
+      // Get the user's subscription tier to provide a helpful message
+      const { data: tierData } = await supabase
+        .from('user_subscriptions')
+        .select('tier')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const tier = tierData?.tier || 'free';
       
       return new Response(
         JSON.stringify({ 
-          canProceed: false, 
-          message: message,
-          tier: tier
+          canProceed: false,
+          message: `You've reached your daily ${action} limit for your ${tier} tier. Please upgrade your plan for additional generations.` 
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 // Still use 200 status for limit reached (not an error)
-        }
-      )
+        { status: 200, headers: corsHeaders }
+      );
     }
-  } catch (e) {
-    // Catch any unexpected errors
-    console.error('Unexpected error:', e.message)
+
+  } catch (error) {
+    console.error('Unexpected error in check-usage-limits:', error);
     return new Response(
       JSON.stringify({ 
-        error: `Unexpected error: ${e.message}`, 
-        canProceed: false, 
-        message: 'An unexpected error occurred. Please try again.' 
+        canProceed: false,
+        message: "An unexpected error occurred. Please try again later." 
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
-    )
+      { status: 500, headers: corsHeaders }
+    );
   }
-})
+});
