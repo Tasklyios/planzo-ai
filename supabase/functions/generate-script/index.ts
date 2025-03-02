@@ -1,96 +1,78 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { OpenAI } from "https://esm.sh/openai@4.0.0";
-import { corsHeaders } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { OpenAI } from "https://deno.land/x/openai@v4.20.1/mod.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.29.0';
 
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "";
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
-
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-});
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
-  // Handle CORS preflight request
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Create a Supabase client with the user's JWT
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: {
-        headers: { Authorization: req.headers.get("Authorization") || "" },
-      },
+    const apiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!apiKey) {
+      throw new Error('OpenAI API key is missing');
+    }
+
+    const openai = new OpenAI({
+      apiKey: apiKey,
     });
 
-    // Verify user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      console.error("Authentication error:", authError);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+    // Get Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+      throw new Error('Supabase environment variables are missing');
     }
 
-    // First check usage limits
-    const { data: usageCheckData, error: usageCheckError } = await supabase.functions.invoke('check-usage-limits', {
-      body: { action: 'scripts' }
-    });
+    // Initialize Supabase client with service role key for admin operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    if (usageCheckError) {
-      console.error("Error checking usage limits:", usageCheckError);
-      return new Response(
-        JSON.stringify({ error: `Error checking usage limits: ${usageCheckError.message}` }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    if (!usageCheckData.canProceed) {
-      console.log("User has reached script generation limit:", usageCheckData.message);
-      return new Response(
-        JSON.stringify({ 
-          error: "Usage limit reached", 
-          message: usageCheckData.message || "You've reached your daily limit for generating scripts."
-        }),
-        {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Parse the request
-    const requestData = await req.json();
-    console.log("Received request data:", JSON.stringify(requestData));
-    
-    const { 
-      title, 
-      description, 
-      contentStyle = "",
-      hook = "",
-      userId
-    } = requestData;
+    // Parse request body
+    const requestBody = await req.json();
+    const { title, description, contentStyle, hook, targetLength, userId, savedIdea } = requestBody;
 
     if (!title) {
-      console.error("Missing title in request");
       return new Response(
-        JSON.stringify({ error: "Title is required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        JSON.stringify({ error: 'Title is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Check if the user exists if userId is provided
+    if (userId) {
+      // Verify user has not exceeded their daily script generation limit
+      try {
+        const { data: canGenerate, error: limitCheckError } = await supabase.rpc(
+          'check_and_increment_usage',
+          { feature_name: 'scripts' }
+        );
+
+        if (limitCheckError) {
+          throw new Error(`Error checking usage limits: ${limitCheckError.message}`);
+        }
+
+        if (!canGenerate) {
+          return new Response(
+            JSON.stringify({ error: 'Daily script generation limit reached. Upgrade your plan for more scripts.' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } catch (error) {
+        console.error('Error checking usage limits:', error);
+        return new Response(
+          JSON.stringify({ error: 'Error checking usage limits' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     console.log(`Generating script for title: ${title}`);
@@ -102,9 +84,11 @@ serve(async (req) => {
       TITLE: ${title}
       DESCRIPTION: ${description || "N/A"}
       
-      ${hook ? `HOOK: ${hook}` : ""}
+      ${hook ? `HOOK TO USE AT THE START: ${hook}` : ""}
       
       ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ""}
+      
+      TARGET VIDEO LENGTH: ${targetLength || "3-5"} minutes
       
       IMPORTANT:
       - Write the script in an extremely conversational tone, like a friend casually talking to another friend.
@@ -116,6 +100,7 @@ serve(async (req) => {
       - Maintain a warm, authentic tone throughout.
       - Don't be afraid to use slang (where appropriate) and casual expressions.
       - Avoid perfectionism - real people don't speak in perfectly structured paragraphs.
+      - Adjust the script length to fit the target video duration of ${targetLength || "3-5"} minutes.
       
       The script should sound completely natural when read aloud - like something someone would actually say in a conversation, not like something written.
     `;
@@ -135,56 +120,16 @@ serve(async (req) => {
 
     const scriptContent = completion.choices[0]?.message?.content || "";
 
-    if (!scriptContent) {
-      return new Response(
-        JSON.stringify({ error: "Failed to generate script content" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Save the script to the database - only if we have a saved idea
-    if (requestData.savedIdea && requestData.savedIdea.id) {
-      try {
-        const { error: saveError } = await supabase
-          .from("scripts")
-          .insert({
-            content: scriptContent,
-            idea_id: requestData.savedIdea.id,
-            user_id: userId || user.id
-          });
-
-        if (saveError) {
-          console.error("Error saving script:", saveError);
-          // We'll continue even if saving fails, just log the error
-        }
-      } catch (saveError) {
-        console.error("Error during script save:", saveError);
-        // Continue with script generation even if saving fails
-      }
-    }
-
     // Return the generated script
     return new Response(
-      JSON.stringify({ 
-        script: scriptContent
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ script: scriptContent }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error("Error generating script:", error);
-
+    console.error('Error in function:', error);
     return new Response(
-      JSON.stringify({ error: `Error generating script: ${error.message}` }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ error: error.message || 'An error occurred' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

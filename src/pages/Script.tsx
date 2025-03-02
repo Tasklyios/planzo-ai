@@ -20,6 +20,7 @@ const Script = () => {
   const [script, setScript] = useState("");
   const [contentStyle, setContentStyle] = useState("educational");
   const [selectedHook, setSelectedHook] = useState("");
+  const [targetLength, setTargetLength] = useState("3-5");
   const [isGenerating, setIsGenerating] = useState(false);
   const [useSavedIdea, setUseSavedIdea] = useState(false);
   const [isSavingScript, setIsSavingScript] = useState(false);
@@ -59,6 +60,7 @@ const Script = () => {
         description: scriptDescription,
         contentStyle,
         hook: selectedHook,
+        targetLength,
         userId,
         savedIdea: useSavedIdea ? savedIdea : null,
       });
@@ -69,6 +71,7 @@ const Script = () => {
           description: scriptDescription,
           contentStyle,
           hook: selectedHook,
+          targetLength,
           userId,
           savedIdea: useSavedIdea ? savedIdea : null,
         },
@@ -277,6 +280,25 @@ const Script = () => {
                     <SelectItem value="inspirational">Inspirational</SelectItem>
                     <SelectItem value="controversial">Controversial</SelectItem>
                     <SelectItem value="storytelling">Storytelling</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="target-length">Target Video Length</Label>
+                <Select
+                  value={targetLength}
+                  onValueChange={setTargetLength}
+                >
+                  <SelectTrigger id="target-length">
+                    <SelectValue placeholder="Select target video length" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1-2">1-2 minutes (Short)</SelectItem>
+                    <SelectItem value="3-5">3-5 minutes (Standard)</SelectItem>
+                    <SelectItem value="6-10">6-10 minutes (Detailed)</SelectItem>
+                    <SelectItem value="10-15">10-15 minutes (In-depth)</SelectItem>
+                    <SelectItem value="15+">15+ minutes (Comprehensive)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
