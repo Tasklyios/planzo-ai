@@ -44,11 +44,31 @@ serve(async (req) => {
     }
     
     const userId = user.id;
+    console.log(`Processing request for user: ${userId}`);
     
     // Parse request body
-    const { action } = await req.json();
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (e) {
+      console.error("Invalid JSON in request body:", e);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid request body", 
+          canProceed: false, 
+          message: "Invalid JSON in request body" 
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400
+        }
+      );
+    }
+    
+    const { action } = requestBody;
     
     if (!action || !['ideas', 'scripts', 'hooks'].includes(action)) {
+      console.error("Invalid action specified:", action);
       return new Response(
         JSON.stringify({ 
           error: "Invalid action specified", 
@@ -62,6 +82,8 @@ serve(async (req) => {
       );
     }
     
+    console.log(`Checking usage for action: ${action}`);
+    
     // First, check if the user has a business subscription - if so, bypass usage check
     const { data: subscription, error: subscriptionError } = await supabaseClient
       .from('user_subscriptions')
@@ -73,6 +95,8 @@ serve(async (req) => {
       console.error("Error fetching subscription:", subscriptionError);
       // Continue with the check instead of returning an error
     }
+    
+    console.log(`User subscription tier: ${subscription?.tier || 'none/free'}`);
     
     // Business tier users get unlimited usage
     if (subscription?.tier === 'business') {
@@ -91,18 +115,71 @@ serve(async (req) => {
     }
     
     // For other tiers, execute the usage check function
-    const { data, error } = await supabaseClient.rpc(
-      'check_and_increment_usage',
-      { feature_name: action }
-    );
-    
-    if (error) {
-      console.error("Error checking usage:", error);
+    try {
+      const { data, error } = await supabaseClient.rpc(
+        'check_and_increment_usage',
+        { feature_name: action }
+      );
+      
+      if (error) {
+        console.error("Error checking usage:", error);
+        return new Response(
+          JSON.stringify({ 
+            error: "Error checking usage limits", 
+            canProceed: false, 
+            message: error.message || "Unable to check usage limits" 
+          }),
+          { 
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 500
+          }
+        );
+      }
+      
+      console.log(`Usage check result for ${action}: ${data}`);
+      
+      // Determine message based on tier
+      let message = "";
+      if (data === false) {
+        const tierLimits = {
+          free: { ideas: 5, scripts: 3, hooks: 5 },
+          pro: { ideas: 20, scripts: 10, hooks: 15 },
+          plus: { ideas: 50, scripts: 25, hooks: 30 }
+        };
+        
+        // Default to free tier limits if no subscription found
+        const tier = subscription?.tier || 'free';
+        const limit = tierLimits[tier][action] || 5;
+        
+        message = `You've reached your daily limit of ${limit} ${action} for the ${tier} plan. `;
+        
+        if (tier === 'free') {
+          message += "Upgrade to Pro or Plus for more generations!";
+        } else if (tier === 'pro') {
+          message += "Upgrade to Plus or Business for more generations!";
+        } else if (tier === 'plus') {
+          message += "Upgrade to Business for unlimited generations!";
+        }
+      }
+      
       return new Response(
         JSON.stringify({ 
-          error: "Error checking usage limits", 
+          canProceed: data, 
+          message: data ? "Usage within limits" : message,
+          subscription: subscription 
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200
+        }
+      );
+    } catch (rpcError) {
+      console.error("RPC call error:", rpcError);
+      return new Response(
+        JSON.stringify({ 
+          error: "Error calling usage check function", 
           canProceed: false, 
-          message: error.message || "Unable to check usage limits" 
+          message: rpcError.message || "An error occurred checking usage" 
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -110,42 +187,6 @@ serve(async (req) => {
         }
       );
     }
-    
-    // Determine message based on tier
-    let message = "";
-    if (data === false) {
-      const tierLimits = {
-        free: { ideas: 5, scripts: 3, hooks: 5 },
-        pro: { ideas: 20, scripts: 10, hooks: 15 },
-        plus: { ideas: 50, scripts: 25, hooks: 30 }
-      };
-      
-      // Default to free tier limits if no subscription found
-      const tier = subscription?.tier || 'free';
-      const limit = tierLimits[tier][action] || 5;
-      
-      message = `You've reached your daily limit of ${limit} ${action} for the ${tier} plan. `;
-      
-      if (tier === 'free') {
-        message += "Upgrade to Pro or Plus for more generations!";
-      } else if (tier === 'pro') {
-        message += "Upgrade to Plus or Business for more generations!";
-      } else if (tier === 'plus') {
-        message += "Upgrade to Business for unlimited generations!";
-      }
-    }
-    
-    return new Response(
-      JSON.stringify({ 
-        canProceed: data, 
-        message: data ? "Usage within limits" : message,
-        subscription: subscription 
-      }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200
-      }
-    );
   } catch (err) {
     console.error("Unexpected error:", err);
     return new Response(
