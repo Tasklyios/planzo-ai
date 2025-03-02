@@ -274,6 +274,7 @@ export type Database = {
       user_daily_usage: {
         Row: {
           date: string
+          hooks_generated: number | null
           id: string
           ideas_generated: number | null
           scripts_generated: number | null
@@ -281,6 +282,7 @@ export type Database = {
         }
         Insert: {
           date?: string
+          hooks_generated?: number | null
           id?: string
           ideas_generated?: number | null
           scripts_generated?: number | null
@@ -288,6 +290,7 @@ export type Database = {
         }
         Update: {
           date?: string
+          hooks_generated?: number | null
           id?: string
           ideas_generated?: number | null
           scripts_generated?: number | null

@@ -1,167 +1,184 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.29.0";
+import { OpenAI } from "https://esm.sh/openai@4.0.0";
+import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
+});
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  // Handle CORS preflight request
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: req.headers.get('Authorization')! } },
-      auth: { persistSession: false }
-    });
-
-    // Check usage limits first
-    const usageResponse = await fetch(`${supabaseUrl}/functions/v1/check-usage-limits`, {
-      method: 'POST',
-      headers: {
-        'Authorization': req.headers.get('Authorization')!,
-        'Content-Type': 'application/json',
+    // Create a Supabase client with the user's JWT
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: {
+        headers: { Authorization: req.headers.get("Authorization") || "" },
       },
-      body: JSON.stringify({ action: 'scripts' }),
     });
 
-    const usageData = await usageResponse.json();
-    if (!usageData.canProceed) {
+    // Verify user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error("Authentication error:", authError);
       return new Response(
-        JSON.stringify({ error: usageData.message || "You've reached your daily limit for script generation" }),
-        { 
-          status: 429, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
 
-    // Get the request data
+    // First check usage limits
+    const { data: usageCheckData, error: usageCheckError } = await supabase.functions.invoke('check-usage-limits', {
+      body: { action: 'scripts' }
+    });
+
+    if (usageCheckError) {
+      console.error("Error checking usage limits:", usageCheckError);
+      return new Response(
+        JSON.stringify({ error: `Error checking usage limits: ${usageCheckError.message}` }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (!usageCheckData.canProceed) {
+      console.log("User has reached script generation limit:", usageCheckData.message);
+      return new Response(
+        JSON.stringify({ 
+          error: "Usage limit reached", 
+          message: usageCheckData.message || "You've reached your daily limit for generating scripts."
+        }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Parse the request
+    const requestData = await req.json();
     const { 
-      title, 
-      hook, 
-      structure, 
-      length, 
-      style, 
-      audience, 
-      platform, 
-      callToAction,
-      keypoints
-    } = await req.json();
+      videoIdea, 
+      hook,
+      structureTemplate,
+      additionalInstructions = "",
+      contentStyle = "",
+      contentPersonality = ""
+    } = requestData;
 
-    console.log("Generating script for:", title);
-
-    if (!title) {
+    if (!videoIdea) {
       return new Response(
-        JSON.stringify({ error: "Title is required" }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        JSON.stringify({ error: "Video idea is required" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
 
-    // Create the prompt
-    let systemPrompt = "You are an expert video script writer who creates engaging and conversion-optimized scripts.";
-    
-    let userPrompt = `Write a script for a ${platform || "social media"} video titled "${title}".`;
-    
-    if (hook) {
-      userPrompt += `\n\nStart with this hook: "${hook}"`;
-    }
-    
-    if (structure) {
-      userPrompt += `\n\nFollow this structure: ${structure}`;
-    }
-    
-    if (length) {
-      userPrompt += `\n\nThe script should be approximately ${length} in length.`;
-    }
-    
-    if (style) {
-      userPrompt += `\n\nUse a ${style} style.`;
-    }
-    
-    if (audience) {
-      userPrompt += `\n\nTarget audience: ${audience}`;
-    }
-    
-    if (keypoints && keypoints.length > 0) {
-      userPrompt += `\n\nInclude these key points:\n`;
-      keypoints.forEach((point: string, index: number) => {
-        userPrompt += `${index + 1}. ${point}\n`;
-      });
-    }
-    
-    if (callToAction) {
-      userPrompt += `\n\nEnd with this call to action: "${callToAction}"`;
-    }
-    
-    userPrompt += `\n\nFormat the script using markdown, with clear sections for HOOK, INTRO, MAIN CONTENT, and OUTRO/CTA.
-    Add [VISUAL: description] for visual cues where appropriate.`;
+    console.log(`Generating script for video idea: ${videoIdea.title}`);
+
+    // Create prompt for script generation
+    let prompt = `
+      Generate a complete video script for the following video idea:
+      
+      TITLE: ${videoIdea.title}
+      DESCRIPTION: ${videoIdea.description || "N/A"}
+      CATEGORY: ${videoIdea.category || "N/A"}
+      PLATFORM: ${videoIdea.platform || "TikTok"}
+      
+      ${hook ? `HOOK: ${hook.hook}` : ""}
+      
+      ${structureTemplate ? `SCRIPT STRUCTURE: ${structureTemplate.structure}` : ""}
+      
+      ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ""}
+      ${contentPersonality ? `CONTENT PERSONALITY: ${contentPersonality}` : ""}
+      
+      ${additionalInstructions ? `ADDITIONAL INSTRUCTIONS: ${additionalInstructions}` : ""}
+      
+      The script should be well-structured, engaging, and tailored to the platform.
+      Format the script with clear sections and keep it concise but comprehensive.
+      Include natural speaking cues, transitions, and elements that will engage the audience.
+    `;
 
     // Call OpenAI API
-    const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${openAIApiKey}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: userPrompt
-          }
-        ],
-        temperature: 0.7,
-      })
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: "You are a professional video script writer who creates engaging scripts." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.7,
     });
 
-    if (!openAIResponse.ok) {
-      const errorData = await openAIResponse.json();
-      console.error("OpenAI API error:", errorData);
+    const scriptContent = completion.choices[0]?.message?.content || "";
+
+    if (!scriptContent) {
       return new Response(
-        JSON.stringify({ error: "Failed to generate script with AI" }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        JSON.stringify({ error: "Failed to generate script content" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
 
-    const openAIData = await openAIResponse.json();
-    const scriptContent = openAIData.choices[0].message.content;
+    // Save the script to the database
+    const { data: savedScript, error: saveError } = await supabase
+      .from("scripts")
+      .insert({
+        content: scriptContent,
+        idea_id: videoIdea.id,
+        user_id: user.id
+      })
+      .select()
+      .single();
 
-    // Return the script
+    if (saveError) {
+      console.error("Error saving script:", saveError);
+      return new Response(
+        JSON.stringify({ error: `Error saving script: ${saveError.message}` }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Return the generated script
     return new Response(
-      JSON.stringify({ script: scriptContent }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      JSON.stringify({ 
+        script: scriptContent,
+        savedScript 
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   } catch (error) {
-    console.error("Error in generate-script function:", error);
+    console.error("Error generating script:", error);
+
     return new Response(
-      JSON.stringify({ error: error.message || "An unexpected error occurred" }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      JSON.stringify({ error: `Error generating script: ${error.message}` }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
