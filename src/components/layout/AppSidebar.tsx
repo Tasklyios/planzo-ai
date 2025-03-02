@@ -1,5 +1,4 @@
 import { Link, useLocation } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
 import { 
   Sparkles, 
   Calendar, 
@@ -53,7 +52,7 @@ const SidebarItem = ({ href, icon, label, onClick }: SidebarItemProps) => {
       {label}
     </Link>
   );
-};
+}
 
 interface SidebarCategoryProps {
   title: string;
@@ -79,7 +78,7 @@ const SidebarCategory = ({ title, children, defaultOpen = false }: SidebarCatego
       </CollapsibleContent>
     </Collapsible>
   );
-};
+}
 
 const AppSidebar = () => {
   const navigate = useNavigate();
@@ -104,13 +103,12 @@ const AppSidebar = () => {
 
   return (
     <div className="w-64 border-r h-screen flex flex-col fixed">
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 h-16 flex items-center">
         <h1 className="text-xl font-bold flex items-center">
           <Sparkles className="w-5 h-5 mr-2 text-[#0073FF]" />
           <span className="text-[#0073FF]">Planzo AI</span>
         </h1>
       </div>
-      <Separator />
       
       {/* Main navigation - scrollable area */}
       <div className="flex-1 px-4 py-4 space-y-3 overflow-y-auto">
