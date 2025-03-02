@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -289,6 +290,12 @@ const Script = () => {
                     <p className="text-sm">{selectedHook}</p>
                   </div>
                 )}
+              </div>
+
+              <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-950 rounded-md border border-yellow-200 dark:border-yellow-800">
+                <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                  Scripts are generated with a natural, conversational tone - like a friend talking to a friend.
+                </p>
               </div>
             </CardContent>
           </Card>

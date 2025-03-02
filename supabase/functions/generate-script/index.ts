@@ -95,9 +95,9 @@ serve(async (req) => {
 
     console.log(`Generating script for title: ${title}`);
 
-    // Create prompt for script generation
+    // Create prompt for script generation with emphasis on conversational, friendly tone
     let prompt = `
-      Generate a complete video script for the following title and description:
+      Generate a video script for the following title and description:
       
       TITLE: ${title}
       DESCRIPTION: ${description || "N/A"}
@@ -106,19 +106,31 @@ serve(async (req) => {
       
       ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ""}
       
-      The script should be well-structured, engaging, and tailored for video content.
-      Format the script with clear sections and keep it concise but comprehensive.
-      Include natural speaking cues, transitions, and elements that will engage the audience.
+      IMPORTANT:
+      - Write the script in an extremely conversational tone, like a friend casually talking to another friend.
+      - Use casual language, contractions, filler words (like "um", "you know", "actually"), and natural pauses.
+      - Include informal transitions between topics.
+      - Avoid formal language or "presenter voice" entirely.
+      - Include natural speech patterns, brief tangents, and self-corrections occasionally.
+      - Use simple words and short sentences, as if speaking off the cuff.
+      - Maintain a warm, authentic tone throughout.
+      - Don't be afraid to use slang (where appropriate) and casual expressions.
+      - Avoid perfectionism - real people don't speak in perfectly structured paragraphs.
+      
+      The script should sound completely natural when read aloud - like something someone would actually say in a conversation, not like something written.
     `;
 
-    // Call OpenAI API
+    // Call OpenAI API with more specific system role
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are a professional video script writer who creates engaging scripts." },
+        { 
+          role: "system", 
+          content: "You write extremely conversational, authentic-sounding video scripts that sound exactly like how a real person talks to their friend. You don't sound like a professional presenter or educator - you write scripts that sound like genuine, unscripted conversation. You include natural speech patterns, casual language, brief tangents, and self-corrections. Your scripts never sound stiff or formal." 
+        },
         { role: "user", content: prompt }
       ],
-      temperature: 0.7,
+      temperature: 0.8, // Slightly higher temperature for more natural variations
     });
 
     const scriptContent = completion.choices[0]?.message?.content || "";
