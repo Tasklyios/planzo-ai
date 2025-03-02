@@ -9,7 +9,7 @@ export const generateHooks = async (
 ): Promise<HookType[]> => {
   try {
     // First check usage limits
-    const { data: usageResponse, error: usageError } = await supabase.functions.invoke('check-usage-limits', {
+    const { data: usageResponse, error: usageError, status } = await supabase.functions.invoke('check-usage-limits', {
       body: { action: 'hooks' }
     });
 
@@ -19,9 +19,9 @@ export const generateHooks = async (
     }
 
     // Check if we can proceed or not
-    if (usageResponse && !usageResponse.canProceed) {
-      console.error("Usage limit reached:", usageResponse.message);
-      throw new Error(usageResponse.message || "You've reached your daily limit for generating hooks.");
+    if (!usageResponse?.canProceed) {
+      console.error("Usage limit reached:", usageResponse?.message);
+      throw new Error(usageResponse?.message || "You've reached your daily limit for generating hooks.");
     }
 
     // Call Supabase Edge Function to generate hooks

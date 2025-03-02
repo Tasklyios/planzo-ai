@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +14,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { AddToCalendarIdea, PreviousIdeasContext, StyleProfile } from "@/types/idea";
 import { Badge } from "@/components/ui/badge";
-import { Paintbrush, AlertCircle } from "lucide-react";
+import { Paintbrush, AlertCircle, Zap } from "lucide-react";
 
 const Generator = () => {
   const {
@@ -279,7 +280,8 @@ const Generator = () => {
                   <Spinner size="sm" className="text-white dark:text-white" />
                   <span>Generating...</span>
                 </> : <>
-                  ⚡ Generate Viral Ideas
+                  <Zap className="h-4 w-4" />
+                  Generate Viral Ideas
                 </>}
             </button>
           </div>
