@@ -1,0 +1,166 @@
+
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getSavedHooks, deleteSavedHook } from "@/services/hookService";
+import { SavedHook } from "@/types/hooks";
+import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Bookmark, Copy, Loader2, Trash2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const SavedHooks = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  
+  // Fetch saved hooks
+  const { data: savedHooks, isLoading } = useQuery({
+    queryKey: ['savedHooks'],
+    queryFn: getSavedHooks,
+  });
+
+  // Delete hook mutation
+  const deleteHookMutation = useMutation({
+    mutationFn: deleteSavedHook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedHooks'] });
+      toast({
+        title: "Hook deleted",
+        description: "Your hook has been removed from saved hooks.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to delete hook",
+        description: error.message,
+      });
+    },
+  });
+
+  // Copy hook text to clipboard
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        toast({
+          title: "Copied to clipboard",
+          description: "Hook text copied to clipboard successfully.",
+        });
+      })
+      .catch(() => {
+        toast({
+          variant: "destructive",
+          title: "Failed to copy",
+          description: "Could not copy text to clipboard.",
+        });
+      });
+  };
+
+  // Filter hooks by category
+  const getFilteredHooks = () => {
+    if (!savedHooks) return [];
+    if (activeCategory === "all") return savedHooks;
+    return savedHooks.filter(hook => hook.category === activeCategory);
+  };
+
+  // Get unique categories from hooks
+  const getCategories = (): string[] => {
+    if (!savedHooks) return [];
+    const categories = savedHooks.map(hook => hook.category);
+    return [...new Set(categories)];
+  };
+
+  const filteredHooks = getFilteredHooks();
+  const categories = getCategories();
+
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold">Saved Hooks</h1>
+        <p className="text-muted-foreground">Manage your collection of saved hooks for scripts</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Saved Hooks</CardTitle>
+          <CardDescription>
+            Use these hooks in your scripts or copy them for other content
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : !savedHooks || savedHooks.length === 0 ? (
+            <div className="text-center py-8">
+              <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium">No saved hooks yet</h3>
+              <p className="text-muted-foreground mt-2">
+                Head over to the Hook Generator to create and save some hooks
+              </p>
+              <Button 
+                className="mt-4" 
+                variant="default" 
+                onClick={() => window.location.href = '/hooks'}
+              >
+                Go to Hook Generator
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory} className="w-full">
+                <TabsList className="mb-4 flex flex-wrap">
+                  <TabsTrigger value="all">All Hooks</TabsTrigger>
+                  {categories.map(category => (
+                    <TabsTrigger key={category} value={category} className="capitalize">
+                      {category}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                <TabsContent value={activeCategory} className="mt-0">
+                  <div className="grid gap-3">
+                    {filteredHooks.map((hook: SavedHook) => (
+                      <div 
+                        key={hook.id} 
+                        className="p-4 border rounded-md flex justify-between items-start gap-4"
+                      >
+                        <div>
+                          <p className="text-sm font-medium mb-1 capitalize">{hook.category} Hook</p>
+                          <p>{hook.hook}</p>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyToClipboard(hook.hook)}
+                            title="Copy to clipboard"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => deleteHookMutation.mutate(hook.id)}
+                            disabled={deleteHookMutation.isPending}
+                            title="Delete hook"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default SavedHooks;

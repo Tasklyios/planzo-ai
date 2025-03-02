@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +14,8 @@ import {
   Palette,
   LightbulbIcon,
   BookOpen,
-  Anchor
+  Anchor,
+  BookmarkIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,6 +69,7 @@ const Navbar = () => {
       title: "Library",
       items: [
         { path: '/ideas', label: 'Saved Ideas', icon: <Film className="h-5 w-5 mr-2" /> },
+        { path: '/saved-hooks', label: 'Saved Hooks', icon: <BookmarkIcon className="h-5 w-5 mr-2" /> },
         { path: '/find-your-style', label: 'Content Style', icon: <Palette className="h-5 w-5 mr-2" /> },
       ]
     }

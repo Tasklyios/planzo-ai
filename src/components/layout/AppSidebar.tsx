@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { 
   Sparkles, 
@@ -13,7 +14,8 @@ import {
   BookOpen,
   Anchor,
   Palette,
-  LayoutPanelLeft
+  LayoutPanelLeft,
+  BookmarkIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -153,6 +155,11 @@ const AppSidebar = () => {
             href="/ideas"
             icon={<Film className="w-5 h-5" />}
             label="Saved Ideas"
+          />
+          <SidebarItem
+            href="/saved-hooks"
+            icon={<BookmarkIcon className="w-5 h-5" />}
+            label="Saved Hooks"
           />
           <SidebarItem
             href="/find-your-style"
