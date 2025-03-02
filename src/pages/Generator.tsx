@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -127,7 +126,7 @@ const Generator = () => {
         description: "Idea added to calendar successfully"
       });
       setAddingToCalendar(null);
-      navigate("/calendar");
+      // Removed the navigate("/calendar") line to keep the user on the current page
     } catch (error: any) {
       console.error("Error adding to calendar:", error);
       toast({
