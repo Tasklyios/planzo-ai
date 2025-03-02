@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
     // Verify JWT token from the request
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
+      console.error('Missing Authorization header')
       return new Response(
         JSON.stringify({ 
           error: 'Missing Authorization header',
@@ -40,13 +41,32 @@ Deno.serve(async (req) => {
     }
 
     // Get the action from the request body
-    const { action } = await req.json()
-    if (!action) {
+    let action: string
+    try {
+      const body = await req.json()
+      action = body.action
+      
+      if (!action) {
+        console.error('Missing action parameter')
+        return new Response(
+          JSON.stringify({ 
+            error: 'Missing action parameter',
+            canProceed: false,
+            message: 'Action parameter is required (ideas, scripts, or hooks)'
+          }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      }
+    } catch (err) {
+      console.error('Error parsing request body:', err)
       return new Response(
         JSON.stringify({ 
-          error: 'Missing action parameter',
+          error: 'Invalid request body',
           canProceed: false,
-          message: 'Action parameter is required (ideas, scripts, or hooks)'
+          message: 'Request body must be valid JSON with an action field'
         }),
         { 
           status: 400, 
@@ -104,7 +124,7 @@ Deno.serve(async (req) => {
       .from('user_subscriptions')
       .select('tier')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
     
     if (subError) {
       console.error('Error fetching subscription:', subError)
