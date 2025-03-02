@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -9,9 +10,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Anchor, Loader2, Plus } from "lucide-react";
-import { useQuery } from '@tanstack/react-query';
-import { getSavedHooks, generateHooks } from '@/services/hookService';
+import { Anchor, Bookmark, Loader2, Plus } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getSavedHooks, generateHooks, saveHook } from '@/services/hookService';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,7 +56,9 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
   const [details, setDetails] = useState('');
   const [generating, setGenerating] = useState(false);
   const [generatedHooks, setGeneratedHooks] = useState<HookType[]>([]);
+  const [savingHookId, setSavingHookId] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Fetch saved hooks
   const { 
@@ -65,6 +68,27 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
   } = useQuery({
     queryKey: ['savedHooks'],
     queryFn: getSavedHooks,
+  });
+
+  // Save hook mutation
+  const saveHookMutation = useMutation({
+    mutationFn: saveHook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedHooks'] });
+      toast({
+        title: "Hook saved",
+        description: "Your hook has been saved successfully.",
+      });
+      setSavingHookId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to save hook",
+        description: error.message,
+      });
+      setSavingHookId(null);
+    },
   });
 
   // Normalize saved hooks to match HookType
@@ -91,6 +115,16 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
   const handleSelectHook = (hookText: string) => {
     onSelectHook(hookText);
     setOpen(false);
+  };
+
+  const handleSaveHook = (hook: HookType) => {
+    setSavingHookId(hook.id || hook.hook_text);
+    saveHookMutation.mutate(hook);
+  };
+
+  // Check if a hook is already saved
+  const isHookSaved = (hookText: string): boolean => {
+    return savedHooks.some(savedHook => savedHook.hook_text === hookText);
   };
 
   const handleGenerateHooks = async () => {
@@ -288,14 +322,37 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
                           </p>
                         ) : (
                           filterHooks(category, generatedHooks).map((hook, index) => (
-                            <Button
+                            <div 
                               key={`generated-${category}-${index}`}
-                              variant="ghost"
-                              className="w-full justify-start text-left p-3 h-auto"
-                              onClick={() => handleSelectHook(hook.hook_text)}
+                              className="p-3 border rounded-md flex justify-between items-start"
                             >
-                              {hook.hook_text}
-                            </Button>
+                              <p className="flex-1">{hook.hook_text}</p>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  disabled={saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) || isHookSaved(hook.hook_text)}
+                                  onClick={() => handleSaveHook(hook)}
+                                  title={isHookSaved(hook.hook_text) ? "Already saved" : "Save hook"}
+                                >
+                                  {saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Bookmark 
+                                      className="h-4 w-4" 
+                                      fill={isHookSaved(hook.hook_text) ? "currentColor" : "none"} 
+                                    />
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  className="px-2"
+                                  onClick={() => handleSelectHook(hook.hook_text)}
+                                >
+                                  Use
+                                </Button>
+                              </div>
+                            </div>
                           ))
                         )}
                       </div>
