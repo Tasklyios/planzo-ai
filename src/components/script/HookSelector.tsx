@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -62,6 +63,7 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
   useEffect(() => {
     if (!open) {
       setGeneratedHooks([]);
+      setActiveTab('saved');
     }
   }, [open]);
 
@@ -96,6 +98,7 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
       // Normalize the generated hooks to match HookType
       const normalizedHooks = generatedRawHooks.map(normalizeHook);
       setGeneratedHooks(normalizedHooks);
+      setActiveTab('generate'); // Switch to the generate tab to show the results
       
       toast({
         title: "Hooks generated",
