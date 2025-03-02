@@ -9,7 +9,7 @@ export const generateHooks = async (
 ): Promise<HookType[]> => {
   try {
     // First check usage limits
-    const { data: usageResponse, error: usageError, status } = await supabase.functions.invoke('check-usage-limits', {
+    const { data: usageResponse, error: usageError } = await supabase.functions.invoke('check-usage-limits', {
       body: { action: 'hooks' }
     });
 
