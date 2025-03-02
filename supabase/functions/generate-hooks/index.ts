@@ -1,12 +1,14 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.29.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -15,186 +17,162 @@ serve(async (req) => {
   }
 
   try {
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not found');
-    }
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
-
-    // Properly get the authorization header from the request
-    const authHeader = req.headers.get('Authorization');
-    
-    if (!authHeader) {
-      console.log('No authorization header found');
-      return new Response(
-        JSON.stringify({ error: 'No authorization header found' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Create a Supabase client with the authorization header
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
+      global: { headers: { Authorization: req.headers.get('Authorization')! } },
+      auth: { persistSession: false }
     });
 
-    // Get user session - this will use the provided auth header
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
-      console.log('User authentication error:', userError);
+    // Check usage limits first
+    const usageResponse = await fetch(`${supabaseUrl}/functions/v1/check-usage-limits`, {
+      method: 'POST',
+      headers: {
+        'Authorization': req.headers.get('Authorization')!,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'hooks' }),
+    });
+
+    const usageData = await usageResponse.json();
+    if (!usageData.canProceed) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: usageData.message || "You've reached your daily limit for hook generation" }),
         { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
-    console.log('Authenticated user ID:', user.id);
-
-    // Parse request body
+    // Extract request body
     const { topic, audience, details } = await req.json();
-    console.log('Generating hooks for:', { topic, audience, details });
 
-    if (!topic || !audience) {
-      throw new Error('Topic and audience are required');
+    if (!topic) {
+      return new Response(
+        JSON.stringify({ error: "Topic is required" }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    // Prepare the prompt for OpenAI
+    // Create prompt for OpenAI
     const prompt = `
-      Create 8 attention-grabbing hooks for a ${topic} video targeting ${audience}.
-      ${details ? `Additional context: ${details}` : ''}
-      
-      Return exactly 2 hooks of each category:
-      1. Question hooks: Thought-provoking questions that make the viewer curious
-      2. Statistic hooks: Surprising facts or statistics that grab attention
-      3. Story hooks: Short narrative or anecdote openings
-      4. Challenge hooks: Phrases that challenge common misconceptions
-      
-      Each hook should be concise, engaging, and directly relevant to the topic.
-      
-      Format your response as a JSON array with objects containing:
-      - hook_text: The actual hook text
-      - category: One of "question", "statistic", "story", or "challenge"
+    Create a set of engaging hooks for a video about ${topic}. 
+    Target audience: ${audience || "General viewers"}
+    Additional details: ${details || ""}
+    
+    Please create 3 hooks for each of the following categories:
+    1. Question Hooks (hooks that pose an interesting question)
+    2. Statistic Hooks (hooks that use a surprising statistic or fact)
+    3. Story Hooks (hooks that start with a compelling narrative)
+    4. Challenge Hooks (hooks that challenge common beliefs)
+    
+    Format your response as a JSON array with each hook having 'category' and 'hook_text' fields.
     `;
 
-    console.log('Sending request to OpenAI');
-    
     // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+    const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openAIApiKey}`
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are a professional content creator assistant that generates attention-grabbing hooks for videos. Respond ONLY with a valid JSON array containing objects with hook_text and category fields. Do not include any explanations or text outside of the JSON.'
+          {
+            role: "system",
+            content: "You are an expert content creator assistant that specializes in creating engaging hooks for videos."
           },
-          { role: 'user', content: prompt }
+          {
+            role: "user",
+            content: prompt
+          }
         ],
-        max_tokens: 1000,
         temperature: 0.7,
-      }),
+      })
     });
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${response.status} ${errorData}`);
-    }
-
-    const data = await response.json();
-    console.log('OpenAI response received');
-    console.log('Response content:', data.choices[0].message.content);
-
-    // Extract the generated hooks from the OpenAI response
-    let hooks = [];
-    try {
-      const content = data.choices[0].message.content.trim();
-      
-      // First try to parse the response directly as JSON
-      try {
-        hooks = JSON.parse(content);
-        console.log('Parsed JSON directly:', hooks);
-      } catch (parseError) {
-        console.log('Direct JSON parsing failed, trying to extract JSON from text');
-        
-        // If direct parsing fails, try to extract JSON from the text
-        const jsonRegex = /\[\s*\{.*\}\s*\]/s;
-        const jsonMatch = content.match(jsonRegex);
-        
-        if (jsonMatch) {
-          try {
-            hooks = JSON.parse(jsonMatch[0]);
-            console.log('Extracted and parsed JSON from text:', hooks);
-          } catch (extractError) {
-            console.error('Failed to parse extracted JSON:', extractError);
-            throw new Error('Failed to parse hooks from AI response');
-          }
-        } else {
-          console.error('No JSON array found in response');
-          throw new Error('Invalid response format from AI');
-        }
-      }
-      
-      // Validate that hooks is an array
-      if (!Array.isArray(hooks)) {
-        console.error('Parsed content is not an array:', hooks);
-        throw new Error('AI response is not in the expected array format');
-      }
-      
-    } catch (e) {
-      console.error('Error parsing OpenAI response:', e);
-      // Fallback with clear error message
+    if (!openAIResponse.ok) {
+      const errorData = await openAIResponse.json();
+      console.error("OpenAI API error:", errorData);
       return new Response(
-        JSON.stringify({ 
-          error: "Failed to parse AI response. Please try again.",
-          details: e.message 
-        }),
+        JSON.stringify({ error: "Failed to generate hooks with AI" }),
         { 
           status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
-    // Validate and format hooks
-    const formattedHooks = hooks.map(hook => ({
-      hook_text: typeof hook.hook_text === 'string' ? hook.hook_text : String(hook.hook_text || ''),
-      category: ['question', 'statistic', 'story', 'challenge'].includes(hook.category) 
-        ? hook.category 
-        : 'question'
-    }));
+    const openAIData = await openAIResponse.json();
+    const aiResponse = openAIData.choices[0].message.content;
+    console.log("AI Response:", aiResponse);
 
-    console.log(`Returning ${formattedHooks.length} hooks to client`);
-    console.log('Formatted hooks:', JSON.stringify(formattedHooks));
-    
+    // Parse JSON from AI response
+    let hooks;
+    try {
+      // Find JSON in the response (in case AI adds explanatory text)
+      const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        hooks = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error("No valid JSON found in AI response");
+      }
+    } catch (error) {
+      console.error("Error parsing AI response:", error);
+      console.log("Raw AI response:", aiResponse);
+      
+      // Attempt to extract hooks through regex if JSON parsing fails
+      const hookRegex = /"?(category|hook_text)"?\s*:\s*"([^"]+)"/g;
+      let match;
+      const extractedHooks = [];
+      let currentHook = {};
+      
+      while ((match = hookRegex.exec(aiResponse)) !== null) {
+        const [_, key, value] = match;
+        currentHook[key] = value;
+        
+        if (Object.keys(currentHook).length === 2) {
+          extractedHooks.push({...currentHook});
+          currentHook = {};
+        }
+      }
+      
+      if (extractedHooks.length > 0) {
+        hooks = extractedHooks;
+      } else {
+        return new Response(
+          JSON.stringify({ 
+            error: "Failed to parse AI response into hooks format",
+            rawResponse: aiResponse
+          }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+    }
+
+    // Return the hooks
     return new Response(
-      JSON.stringify({ hooks: formattedHooks }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ hooks }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
     );
-
   } catch (error) {
-    console.error('Error in generate-hooks function:', error);
+    console.error("Error in generate-hooks function:", error);
     return new Response(
-      JSON.stringify({ error: error.message || 'An unknown error occurred' }),
+      JSON.stringify({ error: error.message || "An unexpected error occurred" }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

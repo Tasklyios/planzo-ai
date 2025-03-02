@@ -8,17 +8,6 @@ export const generateHooks = async (
   details?: string
 ): Promise<HookType[]> => {
   try {
-    // Check usage limits
-    const { data: canUse, error: usageError } = await supabase.rpc(
-      'check_and_increment_usage',
-      { feature_name: 'hooks' }
-    );
-
-    if (usageError) throw usageError;
-    if (!canUse) {
-      throw new Error("You've reached your daily limit for hook generation");
-    }
-
     // Call Supabase Edge Function to generate hooks
     const { data, error } = await supabase.functions.invoke("generate-hooks", {
       body: { topic, audience, details },
