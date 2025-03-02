@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RefreshCw, Undo2 } from "lucide-react";
+import { Loader2, RefreshCw, Undo2, Save } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
@@ -22,6 +21,7 @@ const Script = () => {
   const [selectedHook, setSelectedHook] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [useSavedIdea, setUseSavedIdea] = useState(false);
+  const [isSavingScript, setIsSavingScript] = useState(false);
   const { toast } = useToast();
 
   const generateScript = async () => {
@@ -108,6 +108,53 @@ const Script = () => {
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const saveScriptToIdea = async () => {
+    if (!script) {
+      toast({
+        variant: "destructive",
+        title: "No script to save",
+        description: "Please generate a script first.",
+      });
+      return;
+    }
+
+    if (!useSavedIdea || !savedIdea) {
+      toast({
+        variant: "destructive",
+        title: "Cannot save script",
+        description: "You need to select a saved idea to save the script.",
+      });
+      return;
+    }
+
+    setIsSavingScript(true);
+
+    try {
+      const { error } = await supabase
+        .from("video_ideas")
+        .update({ script: script })
+        .eq("id", savedIdea.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "Script saved to idea successfully!",
+      });
+    } catch (error: any) {
+      console.error("Error saving script:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to save script. Please try again.",
+      });
+    } finally {
+      setIsSavingScript(false);
     }
   };
 
@@ -252,7 +299,28 @@ const Script = () => {
       {script && (
         <Card className="mt-8">
           <CardContent className="pt-6">
-            <h2 className="text-xl font-semibold mb-4">Generated Script</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Generated Script</h2>
+              {useSavedIdea && savedIdea && (
+                <Button 
+                  onClick={saveScriptToIdea} 
+                  disabled={isSavingScript}
+                  variant="secondary"
+                >
+                  {isSavingScript ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save to Idea
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
             <div className="whitespace-pre-wrap bg-muted p-4 rounded-md">
               {script}
             </div>
