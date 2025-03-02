@@ -39,8 +39,9 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
       const { data, error } = await supabase
         .from("video_ideas")
         .select("*")
+        .eq("is_saved", true) // Only fetch saved ideas
         .order("created_at", { ascending: false })
-        .limit(20); // Increased from 10 to 20 to show more ideas
+        .limit(20);
 
       if (error) throw error;
       setIdeas(data || []);
@@ -62,9 +63,10 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
       const { data, error } = await supabase
         .from("video_ideas")
         .select("*")
+        .eq("is_saved", true) // Only search saved ideas
         .ilike("title", `%${searchQuery}%`)
         .order("created_at", { ascending: false })
-        .limit(20); // Increased limit
+        .limit(20);
 
       if (error) throw error;
       setIdeas(data || []);

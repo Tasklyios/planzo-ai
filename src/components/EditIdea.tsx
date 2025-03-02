@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -107,8 +108,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     try {
       console.log("Saving idea with status:", idea.status, "is_saved:", true);
       
-      // Important: Ensure we preserve the status - this is critical to keep the idea in its current column
-      // Always set is_saved to true to ensure the idea shows in content planner
+      // Ensure we preserve the status and set is_saved to true
       const { error } = await supabase
         .from("video_ideas")
         .update({
@@ -120,8 +120,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           color: idea.color || 'blue',
           script: idea.script,
           scheduled_for: idea.scheduled_for,
-          is_saved: true, // Always set is_saved to true
-          status: idea.status || "ideas" // Preserve the status or default to "ideas"
+          is_saved: true, // Always save when editing
+          status: idea.status || "ideas"
         })
         .eq("id", idea.id);
 

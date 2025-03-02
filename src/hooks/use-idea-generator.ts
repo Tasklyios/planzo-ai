@@ -438,7 +438,7 @@ export const useIdeaGenerator = () => {
           platform: platform,
           user_id: userId,
           color: 'blue',
-          is_saved: true, // Always save ideas
+          is_saved: false, // Changed from true to false - ideas are not automatically saved
           is_ad: isAdRequest,
           status: "ideas" // Always set the initial status to "ideas"
         }));
@@ -480,8 +480,8 @@ export const useIdeaGenerator = () => {
         toast({
           title: "Success!",
           description: isAdRequest 
-            ? "Your advertisement ideas have been generated and saved."
-            : "Your video ideas have been generated and saved.",
+            ? "Your advertisement ideas have been generated."
+            : "Your video ideas have been generated.",
         });
       } catch (functionError: any) {
         console.error('Error in generate-ideas function:', functionError);

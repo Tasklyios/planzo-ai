@@ -156,7 +156,7 @@ export default function ContentPlanner() {
         setColumns(columnsWithItems);
       }
 
-      // Fetch ideas - Important change: get ALL saved ideas regardless of status
+      // Fetch ideas - IMPORTANT CHANGE: get ONLY saved ideas (is_saved = true)
       const { data: ideas, error: ideasError } = await supabase
         .from('video_ideas')
         .select('*')
