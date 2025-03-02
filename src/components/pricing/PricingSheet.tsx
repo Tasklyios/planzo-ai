@@ -80,8 +80,8 @@ const PricingSheet = ({ trigger, className }: PricingSheetProps) => {
       description: "Perfect to get started",
       price: "19.99",
       features: [
-        "10 AI video ideas per day",
-        "20 script generations per day",
+        "20 AI video ideas per day",
+        "10 script generations per day",
         "Basic analytics",
         "Simple calendar features"
       ],
@@ -94,8 +94,8 @@ const PricingSheet = ({ trigger, className }: PricingSheetProps) => {
       description: "For serious creators",
       price: "29.99",
       features: [
-        "20 AI video ideas per day",
-        "30 script generations per day",
+        "50 AI video ideas per day", 
+        "25 script generations per day",
         "Advanced analytics",
         "Full calendar features",
         "Priority support"
