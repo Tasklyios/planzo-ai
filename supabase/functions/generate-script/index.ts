@@ -47,35 +47,38 @@ serve(async (req) => {
       );
     }
 
-    // Check if the user exists if userId is provided
+    console.log(`Starting script generation for: ${title}`);
+
+    // Check if the user exists and usage limits
     if (userId) {
-      // Verify user has not exceeded their daily script generation limit
       try {
-        const { data: canGenerate, error: limitCheckError } = await supabase.rpc(
-          'check_and_increment_usage',
-          { feature_name: 'scripts' }
-        );
+        // Check usage limits using the shared function
+        const { data: usageResponse, error: limitCheckError } = await supabase.functions.invoke('check-usage-limits', {
+          body: { action: 'scripts' }
+        });
 
         if (limitCheckError) {
+          console.error("Usage check error:", limitCheckError);
           throw new Error(`Error checking usage limits: ${limitCheckError.message}`);
         }
 
-        if (!canGenerate) {
+        if (!usageResponse?.canProceed) {
+          console.error("Usage limit reached:", usageResponse?.message);
           return new Response(
-            JSON.stringify({ error: 'Daily script generation limit reached. Upgrade your plan for more scripts.' }),
+            JSON.stringify({ error: usageResponse?.message || "Daily script generation limit reached" }),
             { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
+        
+        console.log("Usage limit check passed");
       } catch (error) {
         console.error('Error checking usage limits:', error);
         return new Response(
-          JSON.stringify({ error: 'Error checking usage limits' }),
+          JSON.stringify({ error: error.message || 'Error checking usage limits' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
-
-    console.log(`Generating script for title: ${title}`);
 
     // Create prompt for script generation with emphasis on conversational, friendly tone
     let prompt = `
@@ -105,6 +108,8 @@ serve(async (req) => {
       The script should sound completely natural when read aloud - like something someone would actually say in a conversation, not like something written.
     `;
 
+    console.log("Sending request to OpenAI");
+
     // Call OpenAI API with more specific system role
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -119,6 +124,8 @@ serve(async (req) => {
     });
 
     const scriptContent = completion.choices[0]?.message?.content || "";
+    
+    console.log("Script generated successfully");
 
     // Return the generated script
     return new Response(
