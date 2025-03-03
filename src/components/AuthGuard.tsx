@@ -35,7 +35,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           console.log("Session found, user is authenticated", session.user.id);
           console.log("Access token is valid:", !!session.access_token);
           
-          // Store the session in localStorage for edge functions to use
+          // Store the session access token for edge functions to use
           localStorage.setItem('supabase.auth.token', session.access_token);
           
           setIsAuthenticated(true);

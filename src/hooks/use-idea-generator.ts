@@ -158,11 +158,21 @@ export const useIdeaGenerator = () => {
         return;
       }
 
+      if (!session.access_token) {
+        console.error("No access token in session");
+        setError("Authentication error: No access token");
+        setLoading(false);
+        return;
+      }
+
       console.log("Session found, proceeding with authentication header");
       
-      // Make sure we have a valid auth token
+      // Use the session token from the current session
       const authHeader = `Bearer ${session.access_token}`;
+      console.log("Auth header created (token redacted for security)");
       
+      // First check usage limits
+      console.log("Calling check-usage-limits function with auth header");
       const checkResponse = await supabase.functions.invoke('check-usage-limits', {
         body: { action: 'ideas' },
         headers: {
@@ -174,14 +184,14 @@ export const useIdeaGenerator = () => {
       
       if (checkResponse.error) {
         console.error("Usage check error:", checkResponse.error);
-        setError(checkResponse.error.message || "Unable to check usage limits");
+        setError(`Usage check error: ${checkResponse.error.message || "Unable to check usage limits"}`);
         setLoading(false);
         return;
       }
       
-      if (!checkResponse.data.canProceed) {
+      if (!checkResponse.data?.canProceed) {
         // Handle usage limit reached
-        const errorMessage = checkResponse.data.message || "Usage limit reached";
+        const errorMessage = checkResponse.data?.message || "You've reached your daily limit for idea generation";
         setError(errorMessage);
         setLoading(false);
         return;
@@ -189,7 +199,7 @@ export const useIdeaGenerator = () => {
       
       // Now proceed with idea generation if usage limits allow
       console.log("Calling generate-ideas function with auth header");
-      const { data, error } = await supabase.functions.invoke('generate-ideas', {
+      const { data, error: generationError } = await supabase.functions.invoke('generate-ideas', {
         body: {
           niche,
           audience,
@@ -204,16 +214,17 @@ export const useIdeaGenerator = () => {
         }
       });
 
-      if (error) {
-        console.error("Generation error:", error);
-        setError(`Error generating ideas: ${error.message}`);
+      if (generationError) {
+        console.error("Generation error:", generationError);
+        setError(`Error generating ideas: ${generationError.message || "Unknown error"}`);
         setLoading(false);
         return;
       }
 
       console.log("Generated ideas data:", data);
       
-      if (!data.ideas || !Array.isArray(data.ideas)) {
+      if (!data?.ideas || !Array.isArray(data.ideas)) {
+        console.error("Invalid response format:", data);
         setError("Invalid response format from idea generator");
         setLoading(false);
         return;
@@ -277,7 +288,7 @@ export const useIdeaGenerator = () => {
       
     } catch (error: any) {
       console.error("Error generating ideas:", error);
-      setError(`Error generating ideas: ${error.message}`);
+      setError(`Error generating ideas: ${error.message || "Unknown error"}`);
     } finally {
       setLoading(false);
     }

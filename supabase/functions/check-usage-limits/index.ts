@@ -1,257 +1,235 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-console.log("Check usage limits function loaded");
-
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
+  // Handle CORS preflight request
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-  
+
   try {
-    // Extract the Authorization header
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      console.error("No Authorization header found");
+    // Get the JWT from the request headers
+    const authHeader = req.headers.get('Authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('No Authorization header or invalid format');
       return new Response(
         JSON.stringify({
-          error: "Authentication error",
+          error: 'Authentication error',
           canProceed: false,
-          message: "You must be logged in to perform this action"
+          message: 'Authentication failed: No valid Bearer token provided!'
         }),
-        {
-          status: 401, // Changed back to 401 to properly indicate auth failure
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
 
-    console.log("Authorization header found, length:", authHeader.length);
+    // Get the JWT token
+    const jwt = authHeader.split(' ')[1];
     
-    // Create Supabase client with the Authorization header
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? '',
-      Deno.env.get("SUPABASE_ANON_KEY") ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
+    if (!jwt) {
+      console.error('No JWT found in Authorization header');
+      return new Response(
+        JSON.stringify({
+          error: 'Authentication error',
+          canProceed: false,
+          message: 'Authentication failed: No JWT token found!'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    // Initialize Supabase client with JWT
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      },
+      global: {
+        headers: {
+          Authorization: `Bearer ${jwt}`
+        }
       }
-    );
-    
-    // Get the authenticated user
+    });
+
+    // Verify the JWT is valid by getting the user
     const {
       data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser();
+      error: userError
+    } = await supabase.auth.getUser(jwt);
 
-    if (userError) {
-      console.error("Auth error:", userError);
+    if (userError || !user) {
+      console.error('JWT verification failed:', userError?.message || 'No user found');
       return new Response(
         JSON.stringify({
-          error: "Authentication error",
+          error: 'Authentication error',
           canProceed: false,
-          message: "Authentication failed: " + userError.message
+          message: `Authentication failed: ${userError?.message || 'User not found'}`
         }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
-    
-    if (!user) {
-      console.error("No user found in session");
-      return new Response(
-        JSON.stringify({
-          error: "Authentication error",
-          canProceed: false,
-          message: "You must be logged in to perform this action"
-        }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-    
-    console.log(`Successfully authenticated user ${user.id}`);
-    
-    // Get the request data
-    let requestData;
-    try {
-      requestData = await req.json();
-    } catch (parseError) {
-      console.error("Error parsing request body:", parseError);
-      return new Response(
-        JSON.stringify({
-          error: "Invalid request format",
-          canProceed: false,
-          message: "Invalid request format"
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-    
-    const { action } = requestData;
+
+    // Parse the request body
+    const { action } = await req.json();
     
     if (!action) {
       return new Response(
         JSON.stringify({
-          error: "Missing action parameter",
+          error: 'Missing parameters',
           canProceed: false,
-          message: "Invalid request"
+          message: 'Action parameter is required'
         }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    console.log(`Checking usage for user ${user.id}, action: ${action}`);
-
-    // Get the user's subscription tier
-    const { data: subscription, error: subError } = await supabaseClient
-      .from("user_subscriptions")
-      .select("tier")
-      .eq("user_id", user.id)
+    // Check user's tier in subscriptions table
+    const { data: subscriptionData, error: subscriptionError } = await supabase
+      .from('user_subscriptions')
+      .select('tier')
+      .eq('user_id', user.id)
       .maybeSingle();
-    
-    if (subError) {
-      console.error("Error fetching subscription:", subError);
-      // Continue with free tier as default if there's an error
-    }
-    
-    // Default to free tier if no subscription found
-    const tier = subscription?.tier || "free";
 
-    console.log(`User ${user.id} has subscription tier: ${tier}`);
-    
-    // Business tier has unlimited usage
-    if (tier === "business") {
+    // For business tier, always allow
+    if (subscriptionData?.tier === 'business') {
       return new Response(
-        JSON.stringify({ canProceed: true }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200
-        }
+        JSON.stringify({
+          canProceed: true,
+          message: 'Business tier has unlimited usage'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    // Get current usage for today
-    const { data: usage, error: usageError } = await supabaseClient
-      .from("user_daily_usage")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("date", new Date().toISOString().split("T")[0])
+
+    // Default to free tier if no subscription found
+    const tier = subscriptionData?.tier || 'free';
+
+    // Check current usage
+    const { data: usageData, error: usageError } = await supabase
+      .from('user_daily_usage')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('date', new Date().toISOString().split('T')[0])
       .maybeSingle();
 
-    if (usageError) {
-      console.error("Error fetching usage:", usageError);
-      // Continue with zero usage as default if there's an error
+    // Get the current usage count
+    let currentUsage = 0;
+    if (usageData) {
+      if (action === 'ideas') currentUsage = usageData.ideas_generated || 0;
+      else if (action === 'scripts') currentUsage = usageData.scripts_generated || 0;
+      else if (action === 'hooks') currentUsage = usageData.hooks_generated || 0;
     }
 
-    // Default usage to 0 if no record found
-    const currentUsage = {
-      ideas_generated: usage?.ideas_generated || 0,
-      scripts_generated: usage?.scripts_generated || 0,
-      hooks_generated: usage?.hooks_generated || 0
-    };
-
-    console.log(`Current usage for ${action}:`, currentUsage);
+    // Determine max limit based on tier and action
+    let maxLimit = 5; // Default limit
     
-    // Define limits for each tier and action
-    const limits = {
-      free: {
-        ideas: 5,
-        scripts: 3,
-        hooks: 5
-      },
-      pro: {
-        ideas: 20,
-        scripts: 10,
-        hooks: 15
-      },
-      plus: {
-        ideas: 50,
-        scripts: 25,
-        hooks: 30
-      },
-      business: {
-        ideas: 1000,
-        scripts: 500,
-        hooks: 500
-      }
-    };
-    
-    // Get the appropriate limit
-    const limit = limits[tier as keyof typeof limits][action as keyof typeof limits.free] || 0;
-    let currentCount = 0;
-    
-    // Get the current usage count for the requested action
-    if (action === "ideas") {
-      currentCount = currentUsage.ideas_generated;
-    } else if (action === "scripts") {
-      currentCount = currentUsage.scripts_generated;
-    } else if (action === "hooks") {
-      currentCount = currentUsage.hooks_generated;
+    if (action === 'ideas') {
+      if (tier === 'free') maxLimit = 5;
+      else if (tier === 'pro') maxLimit = 20;
+      else if (tier === 'plus') maxLimit = 50;
+    } else if (action === 'scripts') {
+      if (tier === 'free') maxLimit = 3;
+      else if (tier === 'pro') maxLimit = 10;
+      else if (tier === 'plus') maxLimit = 25;
+    } else if (action === 'hooks') {
+      if (tier === 'free') maxLimit = 5;
+      else if (tier === 'pro') maxLimit = 15;
+      else if (tier === 'plus') maxLimit = 30;
     }
-    
-    console.log(`Usage limit for ${tier} tier, ${action}: ${limit}, current: ${currentCount}`);
-    
-    // Check if usage is within limits
-    if (currentCount >= limit) {
-      // User has reached their limit, deny access
+
+    // Check if user is over their limit
+    if (currentUsage >= maxLimit) {
       return new Response(
         JSON.stringify({
           canProceed: false,
-          message: `You've reached your daily limit (${limit}) for ${action}. Upgrade to Business for unlimited generations!`,
-          currentUsage: currentCount,
-          limit: limit
+          message: `You've reached your daily limit for ${action}. Upgrade your plan for more.`
         }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200 // Using 200 status even for "limit reached" to avoid errors
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    // If we get here, user can proceed
+
+    // Increment usage counter
+    const usage = {
+      user_id: user.id,
+      date: new Date().toISOString().split('T')[0],
+      ideas_generated: action === 'ideas' ? 1 : 0,
+      scripts_generated: action === 'scripts' ? 1 : 0,
+      hooks_generated: action === 'hooks' ? 1 : 0
+    };
+
+    if (usageData) {
+      // Update existing record
+      const { error: updateError } = await supabase
+        .from('user_daily_usage')
+        .update({
+          ideas_generated: action === 'ideas' ? (usageData.ideas_generated || 0) + 1 : (usageData.ideas_generated || 0),
+          scripts_generated: action === 'scripts' ? (usageData.scripts_generated || 0) + 1 : (usageData.scripts_generated || 0),
+          hooks_generated: action === 'hooks' ? (usageData.hooks_generated || 0) + 1 : (usageData.hooks_generated || 0)
+        })
+        .eq('user_id', user.id)
+        .eq('date', new Date().toISOString().split('T')[0]);
+
+      if (updateError) {
+        console.error('Error updating usage:', updateError);
+        return new Response(
+          JSON.stringify({
+            error: 'Database error',
+            canProceed: false,
+            message: `Failed to update usage: ${updateError.message}`
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
+      }
+    } else {
+      // Insert new record
+      const { error: insertError } = await supabase
+        .from('user_daily_usage')
+        .insert([usage]);
+
+      if (insertError) {
+        console.error('Error inserting usage:', insertError);
+        return new Response(
+          JSON.stringify({
+            error: 'Database error',
+            canProceed: false,
+            message: `Failed to record usage: ${insertError.message}`
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
+      }
+    }
+
     return new Response(
       JSON.stringify({
         canProceed: true,
-        currentUsage: currentCount,
-        limit: limit,
-        remaining: limit - currentCount
+        message: 'Usage limit checked and updated successfully',
+        debug: {
+          tier,
+          currentUsage,
+          maxLimit,
+          userId: user.id
+        }
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error("Error in check-usage-limits:", error);
+    console.error('Unhandled error in check-usage-limits:', error);
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: 'Server error',
         canProceed: false,
-        message: "An error occurred while checking usage limits"
+        message: error.message || 'An unexpected error occurred'
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
