@@ -1,3 +1,4 @@
+
 import 'https://deno.land/x/xhr@0.1.0/mod.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
@@ -195,7 +196,7 @@ function constructPrompt({
 3. Generate distinctive ideas that don't overlap too much
 4. Each idea should include a clear hook to grab attention in the first few seconds
 5. Format each idea with a catchy title, a category, and a brief description
-6. ALWAYS output only valid JSON`;
+6. ALWAYS output only valid JSON in the exact format requested`;
 
   // Add platform-specific guidance
   if (platform === 'TikTok') {
@@ -251,7 +252,7 @@ function constructPrompt({
   }
   
   // Specify the output format
-  userPrompt += `\n\nPlease respond with exactly ${numIdeas} ideas in this JSON format without any other text:
+  userPrompt += `\n\nPlease respond with exactly ${numIdeas} ideas in this JSON format without any explanations or other text:
   {
     "ideas": [
       {
@@ -267,7 +268,7 @@ function constructPrompt({
   return { systemPrompt, userPrompt };
 }
 
-// Fixed parser function with better error handling and recovery
+// Improved parser function with better error handling and recovery
 function parseAndValidateIdeas(rawResponse, isEcoBrand) {
   try {
     // Find JSON in the response
@@ -352,7 +353,7 @@ function parseAndValidateIdeas(rawResponse, isEcoBrand) {
   }
 }
 
-// New function to extract ideas from text when JSON parsing fails
+// Function to extract ideas from text when JSON parsing fails
 function extractIdeasFromText(text) {
   try {
     // This is a fallback method when JSON parsing fails
@@ -361,56 +362,87 @@ function extractIdeasFromText(text) {
     // Look for patterns like "1. Title: Description" or "Title: Description"
     const ideas = [];
     
-    // Try to split by numbered items first
-    const numberedPattern = /\d+\.\s+(.+?):\s+(.+?)(?=\n\d+\.|\n\n|\n$|$)/gs;
-    let match;
-    
-    while ((match = numberedPattern.exec(text)) !== null) {
-      if (match[1] && match[2]) {
+    // First, check if the text contains JSON-like structure but with syntax issues
+    if (text.includes('"title"') && text.includes('"description"')) {
+      // Extract potential ideas from malformed JSON
+      const titleRegex = /"title"\s*:\s*"([^"]+)"/g;
+      const categoryRegex = /"category"\s*:\s*"([^"]+)"/g;
+      const descriptionRegex = /"description"\s*:\s*"([^"]+)"/g;
+      
+      const titles = [];
+      const categories = [];
+      const descriptions = [];
+      
+      let match;
+      while ((match = titleRegex.exec(text)) !== null) {
+        titles.push(match[1]);
+      }
+      
+      while ((match = categoryRegex.exec(text)) !== null) {
+        categories.push(match[1]);
+      }
+      
+      while ((match = descriptionRegex.exec(text)) !== null) {
+        descriptions.push(match[1]);
+      }
+      
+      // Create ideas from extracted parts
+      for (let i = 0; i < Math.min(titles.length, descriptions.length); i++) {
         ideas.push({
-          title: match[1].trim(),
-          category: 'General',
-          description: match[2].trim(),
-          tags: []
+          title: titles[i],
+          category: categories[i] || 'General',
+          description: descriptions[i],
+          tags: extractTagsFromTitle(titles[i])
         });
       }
     }
     
-    // If no numbered items found, try to find title-description patterns
+    // If no ideas were found from JSON-like structure, try other patterns
     if (ideas.length === 0) {
-      const titleDescPattern = /(?:^|\n)([^:\n]+):\s*([^\n]+)/g;
+      // Try to split by numbered items
+      const numberedPattern = /\d+\.\s+(.+?):\s+(.+?)(?=\n\d+\.|\n\n|\n$|$)/gs;
+      let match;
       
-      while ((match = titleDescPattern.exec(text)) !== null) {
+      while ((match = numberedPattern.exec(text)) !== null) {
         if (match[1] && match[2]) {
           ideas.push({
             title: match[1].trim(),
             category: 'General',
             description: match[2].trim(),
-            tags: []
+            tags: extractTagsFromTitle(match[1])
           });
+        }
+      }
+      
+      // If no numbered items found, try to find title-description patterns
+      if (ideas.length === 0) {
+        const titleDescPattern = /(?:^|\n)([^:\n]+):\s*([^\n]+)/g;
+        
+        while ((match = titleDescPattern.exec(text)) !== null) {
+          if (match[1] && match[2]) {
+            ideas.push({
+              title: match[1].trim(),
+              category: 'General',
+              description: match[2].trim(),
+              tags: extractTagsFromTitle(match[1])
+            });
+          }
         }
       }
     }
     
-    // Add some default tags
-    ideas.forEach(idea => {
-      // Extract potential tags from the title
-      const words = idea.title.split(' ')
-        .filter(word => word.length > 4)
-        .map(word => word.replace(/[^\w]/g, ''));
-      
-      idea.tags = [...new Set(words.slice(0, 3))]; // Take up to 3 unique words as tags
-      
-      if (idea.tags.length < 3) {
-        // Add some generic tags
-        const genericTags = ['content', 'social', 'video', 'trending'];
-        
-        // Add generic tags to get at least 3 tags total
-        idea.tags = [...idea.tags, ...genericTags.slice(0, 3 - idea.tags.length)];
-      }
-    });
-    
     console.log(`Extracted ${ideas.length} ideas from text format`);
+    
+    // If we still have no ideas, create a default one
+    if (ideas.length === 0) {
+      return [{
+        title: 'Generated Idea',
+        category: 'General',
+        description: 'This idea was extracted from an AI response. Try generating again for more specific ideas.',
+        tags: ['content', 'video', 'social']
+      }];
+    }
+    
     return ideas.slice(0, 5); // Limit to 5 ideas
   } catch (error) {
     console.error('Error extracting ideas from text:', error);
@@ -423,4 +455,26 @@ function extractIdeasFromText(text) {
       tags: ['content', 'video', 'social']
     }];
   }
+}
+
+// Helper function to extract tags from a title
+function extractTagsFromTitle(title) {
+  if (!title) return ['content', 'video', 'social'];
+  
+  // Extract potential tags from the title
+  const words = title.split(' ')
+    .filter(word => word.length > 4)
+    .map(word => word.replace(/[^\w]/g, ''));
+  
+  const tags = [...new Set(words.slice(0, 3))]; // Take up to 3 unique words as tags
+  
+  if (tags.length < 3) {
+    // Add some generic tags
+    const genericTags = ['content', 'social', 'video', 'trending'];
+    
+    // Add generic tags to get at least 3 tags total
+    return [...tags, ...genericTags.slice(0, 3 - tags.length)];
+  }
+  
+  return tags;
 }

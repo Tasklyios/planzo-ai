@@ -230,10 +230,22 @@ export const useIdeaGenerator = () => {
         return;
       }
 
+      // Format and clean up the ideas for display
+      const formattedIdeas = data.ideas.map((idea: any) => ({
+        id: crypto.randomUUID(), // Add temporary client-side ID
+        title: typeof idea.title === 'string' ? idea.title.replace(/^"|"$/g, '') : 'Untitled Idea',
+        category: typeof idea.category === 'string' ? idea.category.replace(/^"|"$/g, '') : 'General',
+        description: typeof idea.description === 'string' ? idea.description.replace(/^"|"$/g, '') : '',
+        tags: Array.isArray(idea.tags) ? idea.tags.map((tag: any) => 
+          typeof tag === 'string' ? tag.replace(/^"|"$/g, '') : tag
+        ) : [],
+        is_saved: false
+      }));
+
       // Record the generated ideas to avoid duplicates in future
-      const newTitles = data.ideas.map((idea: any) => idea.title);
-      const newCategories = data.ideas.map((idea: any) => idea.category || "");
-      const newDescriptions = data.ideas.map((idea: any) => idea.description || "");
+      const newTitles = formattedIdeas.map((idea: any) => idea.title);
+      const newCategories = formattedIdeas.map((idea: any) => idea.category || "");
+      const newDescriptions = formattedIdeas.map((idea: any) => idea.description || "");
       
       setPreviousIdeasContext(prev => ({
         count: (prev.count || 0) + newTitles.length,
@@ -246,49 +258,53 @@ export const useIdeaGenerator = () => {
       if (session?.user?.id) {
         const userId = session.user.id;
         
-        const ideasWithMetadata = data.ideas.map((idea: any) => ({
+        const ideasWithMetadata = formattedIdeas.map((idea: any) => ({
           ...idea,
-          user_id: userId, 
-          niche,
-          audience,
-          platform
+          user_id: userId
         }));
         
         // Save to Supabase
-        const { error: saveError } = await supabase
-          .from('video_ideas')
-          .insert(ideasWithMetadata);
-        
-        if (saveError) {
-          console.error("Error saving ideas to database:", saveError);
-          // Continue anyway - the ideas will still be displayed to the user
-        } else {
-          console.log("Ideas saved to database successfully");
-          
-          // Now fetch the saved ideas to get their database IDs and additional fields
-          const { data: savedIdeas, error: fetchError } = await supabase
+        try {
+          const { error: saveError } = await supabase
             .from('video_ideas')
-            .select('*')
-            .eq('user_id', userId)
-            .in('title', newTitles)
-            .order('created_at', { ascending: false });
+            .insert(ideasWithMetadata);
           
-          if (fetchError) {
-            console.error("Error fetching saved ideas:", fetchError);
-            setIdeas(data.ideas);  // Fall back to the generated ideas without IDs
+          if (saveError) {
+            console.error("Error saving ideas to database:", saveError);
+            // Continue anyway - the ideas will still be displayed to the user
           } else {
-            console.log("Fetched saved ideas:", savedIdeas);
-            setIdeas(savedIdeas);
+            console.log("Ideas saved to database successfully");
+            
+            // Now fetch the saved ideas to get their database IDs and additional fields
+            const { data: savedIdeas, error: fetchError } = await supabase
+              .from('video_ideas')
+              .select('*')
+              .eq('user_id', userId)
+              .in('title', newTitles)
+              .order('created_at', { ascending: false });
+            
+            if (fetchError) {
+              console.error("Error fetching saved ideas:", fetchError);
+              setIdeas(formattedIdeas);  // Fall back to the generated ideas without IDs
+            } else {
+              console.log("Fetched saved ideas:", savedIdeas);
+              setIdeas(savedIdeas);
+            }
           }
+        } catch (dbError) {
+          console.error("Database error:", dbError);
+          // Still show ideas to user even if saving failed
+          setIdeas(formattedIdeas);
         }
       } else {
         // If not logged in (shouldn't happen due to earlier check)
-        setIdeas(data.ideas);
+        setIdeas(formattedIdeas);
       }
       
     } catch (error: any) {
       console.error("Error generating ideas:", error);
       setError(`Error generating ideas: ${error.message || "Unknown error"}`);
+      setIdeas([]);
     } finally {
       setLoading(false);
     }
