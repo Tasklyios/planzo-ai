@@ -152,6 +152,7 @@ const Generator = () => {
       
       const newSavedState = !ideaToUpdate.is_saved;
       
+      // Make sure we preserve all existing fields, especially the script
       const {
         error
       } = await supabase.from("video_ideas").update({

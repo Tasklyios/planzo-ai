@@ -46,6 +46,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
 
   const fetchIdea = async () => {
     try {
+      console.log("Fetching idea with ID:", ideaId);
       const { data, error } = await supabase
         .from("video_ideas")
         .select("*")
@@ -53,8 +54,11 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         .single();
 
       if (error) throw error;
+      
+      console.log("Fetched idea data:", data);
       setIdea(data);
     } catch (error: any) {
+      console.error("Error fetching idea:", error);
       toast({
         variant: "destructive",
         title: "Error",

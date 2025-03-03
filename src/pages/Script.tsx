@@ -147,14 +147,27 @@ const Script = () => {
     setIsSavingScript(true);
 
     try {
+      console.log("Saving script to idea ID:", savedIdea.id);
+      console.log("Script content:", script);
+      
       const { error } = await supabase
         .from("video_ideas")
-        .update({ script: script })
+        .update({ 
+          script: script,
+          // Make sure the idea remains saved when updating
+          is_saved: true 
+        })
         .eq("id", savedIdea.id);
 
       if (error) {
         throw error;
       }
+
+      // Update the local savedIdea object to reflect the change
+      setSavedIdea({
+        ...savedIdea,
+        script: script
+      });
 
       toast({
         title: "Success",
