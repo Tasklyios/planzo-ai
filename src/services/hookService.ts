@@ -31,6 +31,29 @@ export const generateHooks = async (
                         topic.toLowerCase().includes('ecommerce') ||
                         topic.toLowerCase().includes('e-commerce') ||
                         topic.toLowerCase().includes('marketplace');
+    
+    // Enhanced market research for successful brands like Sungod and Oakley
+    const brandMarketResearch = isEcommerce ? {
+      successfulTactics: [
+        "Product demonstration videos showcasing durability",
+        "Customer testimonial highlights",
+        "Behind-the-scenes manufacturing process",
+        "Lifestyle content showing products in action",
+        "Comparison videos with competitor products",
+        "Product feature spotlight videos",
+        "Limited edition/exclusive product launches",
+        "Athlete and influencer collaborations",
+        "Product care and maintenance tutorials"
+      ],
+      contentTypes: [
+        "Unboxing experiences",
+        "How it's made",
+        "Day in the life with the product",
+        "Product stress tests",
+        "Customer success stories",
+        "Product in extreme conditions"
+      ]
+    } : null;
 
     // Call Supabase Edge Function to generate hooks
     const { data, error } = await supabase.functions.invoke("generate-hooks", {
@@ -39,7 +62,8 @@ export const generateHooks = async (
         audience, 
         details,
         isEcommerce, // Pass the ecommerce flag to the edge function
-        optimizeForViral: isEcommerce // Optimize for viral content for ecommerce
+        optimizeForViral: isEcommerce, // Optimize for viral content for ecommerce
+        brandMarketResearch: brandMarketResearch // Pass market research data
       },
     });
 

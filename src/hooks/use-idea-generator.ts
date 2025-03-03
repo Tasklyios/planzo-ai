@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -304,8 +305,8 @@ export const useIdeaGenerator = () => {
     return nicheMatches || customIdeasMatches;
   };
 
-  // Updated helper function to check if user is an ecommerce account
-  const checkIsEcommerce = async (userId: string): Promise<boolean> => {
+  // Updated helper function to check if user is an ecommerce account and get product category
+  const checkIsEcommerce = async (userId: string): Promise<{isEcommerce: boolean, productCategory: string | null}> => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -315,7 +316,7 @@ export const useIdeaGenerator = () => {
         
       if (error) {
         console.error("Error checking account type:", error);
-        return false;
+        return { isEcommerce: false, productCategory: null };
       }
       
       // Return true if it's an ecommerce account OR if the niche contains ecommerce-related keywords
@@ -324,11 +325,127 @@ export const useIdeaGenerator = () => {
                               nicheKeywords.some(keyword => 
                                 data.product_niche.toLowerCase().includes(keyword.toLowerCase()));
       
-      return data?.account_type === 'ecommerce' || isEcommerceNiche;
+      return { 
+        isEcommerce: data?.account_type === 'ecommerce' || isEcommerceNiche,
+        productCategory: data?.product_niche || null
+      };
     } catch (error) {
       console.error("Error in checkIsEcommerce:", error);
-      return false;
+      return { isEcommerce: false, productCategory: null };
     }
+  };
+
+  // New function to generate market research based on product category
+  const getMarketResearch = (productCategory: string | null, niche: string): any => {
+    // Default market research for general ecommerce
+    const defaultResearch = {
+      successfulTactics: [
+        "Product showcase with key features highlighted",
+        "Customer testimonials and reviews",
+        "Behind-the-scenes of product creation",
+        "Problem-solution format showing how product solves an issue",
+        "Day-in-the-life with the product",
+        "Unboxing experiences and first impressions"
+      ],
+      contentTypes: [
+        "How-to tutorials",
+        "Product comparisons",
+        "Limited-time offers and flash sales",
+        "Lifestyle usage videos",
+        "FAQs answered visually",
+        "Product care and maintenance"
+      ]
+    };
+
+    // Eyewear specific research (Sungod, Oakley)
+    const eyewearResearch = {
+      successfulTactics: [
+        "Durability tests (dropping, bending, sitting on them)",
+        "Showcasing polarized lens benefits in different environments",
+        "Sports performance demonstrations with athletes",
+        "Style pairing suggestions with different outfits",
+        "Transition between different lighting conditions",
+        "Side-by-side comparison with cheaper alternatives"
+      ],
+      contentTypes: [
+        "Adventure videos with product in action",
+        "UV protection demonstrations",
+        "Before/after visual clarity comparisons",
+        "Customization options and process",
+        "Lens technology explanations",
+        "Customer transformation stories"
+      ],
+      brandExamples: [
+        "Sungod's UGC featuring customers in extreme sports",
+        "Oakley's athlete collaboration content",
+        "Ray-Ban's iconic style showcase videos",
+        "Warby Parker's home try-on program highlights"
+      ]
+    };
+
+    // Fashion specific research
+    const fashionResearch = {
+      successfulTactics: [
+        "Outfit transformations and styling tips",
+        "Seasonal lookbooks and trending styles",
+        "Material quality close-ups and texture showcases",
+        "Size inclusivity demonstrations with different body types",
+        "Color variants in different lighting conditions",
+        "Mix and match possibilities from limited pieces"
+      ],
+      contentTypes: [
+        "Get ready with me (GRWM) featuring products",
+        "Fashion hauls and try-ons",
+        "Styling one piece multiple ways",
+        "Wardrobe essentials featuring your products",
+        "Transition videos between outfits",
+        "Behind-the-scenes of photoshoots"
+      ]
+    };
+    
+    // Tech and gadgets research
+    const techResearch = {
+      successfulTactics: [
+        "Problem-solution demonstrations in real-life contexts",
+        "Speed/performance tests against competitors",
+        "Unboxing with genuine reactions",
+        "Hidden features and tips demonstrations",
+        "Battery life and durability showcases",
+        "Customer success stories with before/after results"
+      ],
+      contentTypes: [
+        "Quick tech tutorials",
+        "Day-in-life productivity improvements",
+        "Setup tours and optimization tips",
+        "Integration with other popular tech products",
+        "Tech hacks featuring your product",
+        "Problem-solving scenarios"
+      ]
+    };
+    
+    // Determine which research to use based on category or niche
+    const lowerNiche = (niche || "").toLowerCase();
+    const lowerCategory = (productCategory || "").toLowerCase();
+    
+    if (lowerCategory.includes('eyewear') || lowerCategory.includes('glasses') || 
+        lowerCategory.includes('sunglasses') || lowerNiche.includes('eyewear') || 
+        lowerNiche.includes('glasses') || lowerNiche.includes('sunglasses')) {
+      return eyewearResearch;
+    }
+    
+    if (lowerCategory.includes('fashion') || lowerCategory.includes('clothing') || 
+        lowerCategory.includes('apparel') || lowerNiche.includes('fashion') || 
+        lowerNiche.includes('clothing') || lowerNiche.includes('apparel')) {
+      return fashionResearch;
+    }
+    
+    if (lowerCategory.includes('tech') || lowerCategory.includes('gadget') || 
+        lowerCategory.includes('electronics') || lowerNiche.includes('tech') || 
+        lowerNiche.includes('gadget') || lowerNiche.includes('electronics')) {
+      return techResearch;
+    }
+    
+    return defaultResearch;
   };
 
   const generateIdeas = async () => {
@@ -406,7 +523,10 @@ export const useIdeaGenerator = () => {
 
       // Check for eco-related keywords to apply optimizations
       const isEcoRelated = detectEcoKeywords(niche, customIdeas);
-      const isEcommerce = await checkIsEcommerce(userId);
+      const { isEcommerce, productCategory } = await checkIsEcommerce(userId);
+      
+      // Get market research data based on product category
+      const marketResearch = isEcommerce ? getMarketResearch(productCategory, niche) : null;
       
       // Use a more specific model for ecommerce to speed up generation
       const modelToUse = isEcommerce ? 'gpt-4o-mini' : undefined; // Use mini for ecommerce for speed
@@ -427,7 +547,8 @@ export const useIdeaGenerator = () => {
         isEcoRelated,
         isEcommerce,
         optimizeForViral: isEcommerce, // Optimize for viral content for ecommerce
-        modelOverride: modelToUse
+        modelOverride: modelToUse,
+        marketResearch: marketResearch
       });
       
       try {
@@ -447,7 +568,8 @@ export const useIdeaGenerator = () => {
             isEcoRelated,
             isEcommerce,
             optimizeForViral: isEcommerce, // Optimize for viral ecommerce content
-            modelOverride: modelToUse // Pass the model override
+            modelOverride: modelToUse, // Pass the model override
+            marketResearch: marketResearch // Pass market research data
           },
         });
         
