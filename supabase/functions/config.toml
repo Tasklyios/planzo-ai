@@ -10,6 +10,9 @@ verify_jwt = true
 [generate-ideas]
 verify_jwt = true
 
+[generate-script]
+verify_jwt = true
+
 [get-stripe-key]
 verify_jwt = true
 

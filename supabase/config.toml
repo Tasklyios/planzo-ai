@@ -10,3 +10,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.check-usage-limits]
 verify_jwt = false
+[functions.generate-script]
+verify_jwt = false
