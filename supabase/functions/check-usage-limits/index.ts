@@ -7,6 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+console.log("Check usage limits function loaded");
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -14,22 +16,40 @@ serve(async (req) => {
   }
   
   try {
+    // Extract the Authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("No Authorization header found");
+      return new Response(
+        JSON.stringify({
+          error: "Authentication error",
+          canProceed: false,
+          message: "You must be logged in to perform this action"
+        }),
+        {
+          status: 200, // Use 200 status even for errors to avoid client-side rejection
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Create Supabase client with the Authorization header
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") || "",
-      Deno.env.get("SUPABASE_ANON_KEY") || "",
+      Deno.env.get("SUPABASE_URL") ?? '',
+      Deno.env.get("SUPABASE_ANON_KEY") ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get("Authorization")! },
+          headers: { Authorization: authHeader },
         },
       }
     );
     
-    // Get the user
+    // Get the authenticated user
     const {
       data: { user },
       error: userError,
     } = await supabaseClient.auth.getUser();
-    
+
     if (userError) {
       console.error("Auth error:", userError);
       return new Response(
@@ -46,7 +66,7 @@ serve(async (req) => {
     }
     
     if (!user) {
-      console.error("No user found");
+      console.error("No user found in session");
       return new Response(
         JSON.stringify({
           error: "Authentication error",
@@ -59,6 +79,8 @@ serve(async (req) => {
         }
       );
     }
+    
+    console.log(`Successfully authenticated user ${user.id}`);
     
     // Get the request data
     let requestData;
@@ -192,7 +214,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           canProceed: false,
-          message: `You've reached your daily limit (${limit}) for ${action}.`,
+          message: `You've reached your daily limit (${limit}) for ${action}. Upgrade to Business for unlimited generations!`,
           currentUsage: currentCount,
           limit: limit
         }),

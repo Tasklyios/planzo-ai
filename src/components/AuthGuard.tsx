@@ -17,16 +17,20 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     const checkAuth = async () => {
       setIsLoading(true);
       try {
+        console.log("Checking authentication status...");
         const { data: { session } } = await supabase.auth.getSession();
+        
         if (!session) {
           console.log("No session found, redirecting to auth");
+          setIsAuthenticated(false);
           navigate("/auth");
         } else {
-          console.log("Session found, user is authenticated");
+          console.log("Session found, user is authenticated", session.user.id);
           setIsAuthenticated(true);
         }
       } catch (error) {
         console.error("Error checking authentication:", error);
+        setIsAuthenticated(false);
         navigate("/auth");
       } finally {
         setIsLoading(false);
@@ -43,7 +47,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         setIsAuthenticated(false);
         navigate("/auth");
       } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        console.log("User signed in or token refreshed");
+        console.log("User signed in or token refreshed", session?.user.id);
         setIsAuthenticated(true);
         
         // Redirect to dashboard if user signs in and isn't already on a protected route
