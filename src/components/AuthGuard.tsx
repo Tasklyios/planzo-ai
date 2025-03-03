@@ -38,7 +38,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, session ? "session exists" : "no session");
       
-      if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+      if (event === "SIGNED_OUT") {
         console.log("User signed out, redirecting to auth");
         setIsAuthenticated(false);
         navigate("/auth");
