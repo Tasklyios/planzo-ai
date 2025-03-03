@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { HookType, SavedHook } from "@/types/hooks";
+import { toast } from "@/components/ui/use-toast";
 
 export const generateHooks = async (
   topic: string,

@@ -8,16 +8,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import HookGeneratorForm from '@/components/hooks/HookGeneratorForm';
 import GeneratedHooksGrid from '@/components/hooks/GeneratedHooksGrid';
 import SavedHooksView from '@/components/hooks/SavedHooksView';
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from 'react-router-dom';
 
 const Hooks = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [topic, setTopic] = useState('');
   const [audience, setAudience] = useState('');
   const [details, setDetails] = useState('');
   const [generatedHooks, setGeneratedHooks] = useState<HookType[]>([]);
   const [activeTab, setActiveTab] = useState('generate');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch saved hooks
   const { data: savedHooks, isLoading: isFetchingHooks } = useQuery({
@@ -74,10 +80,14 @@ const Hooks = () => {
     }
 
     setIsGenerating(true);
+    setError(null);
     try {
       const hooks = await generateHooks(topic, audience, details);
       setGeneratedHooks(hooks);
     } catch (error: any) {
+      console.error("Failed to generate hooks:", error);
+      setError(error.message || "Failed to generate hooks");
+      
       toast({
         variant: "destructive",
         title: "Generation failed",
@@ -86,6 +96,15 @@ const Hooks = () => {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleRetryGeneration = () => {
+    setError(null);
+    handleGenerateHooks();
+  };
+
+  const navigateToBilling = () => {
+    navigate('/billing');
   };
 
   const handleSaveHook = (hook: HookType) => {
@@ -129,6 +148,43 @@ const Hooks = () => {
             handleGenerateHooks={handleGenerateHooks}
             isGenerating={isGenerating}
           />
+
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              <AlertTitle>Error generating hooks</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p>{error}</p>
+                {error.includes("daily limit") && (
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <Button 
+                      variant="outline" 
+                      onClick={navigateToBilling}
+                      className="bg-destructive/10 hover:bg-destructive/20 text-destructive border-destructive/20"
+                    >
+                      Upgrade Plan
+                    </Button>
+                    <Button 
+                      onClick={handleRetryGeneration}
+                      className="bg-destructive/20 hover:bg-destructive/30 text-destructive"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+                {!error.includes("daily limit") && (
+                  <div className="mt-2">
+                    <Button 
+                      onClick={handleRetryGeneration}
+                      className="bg-destructive/20 hover:bg-destructive/30 text-destructive"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
 
           <GeneratedHooksGrid 
             hooks={generatedHooks}
