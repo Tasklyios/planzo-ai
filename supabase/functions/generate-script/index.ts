@@ -23,32 +23,36 @@ Deno.serve(async (req) => {
     const { title, description, contentStyle, hook, targetLength, userId, savedIdea } = await req.json();
 
     // Validate required fields
-    if (!title) {
+    if ((!title && !savedIdea) || (!savedIdea && !title)) {
       return new Response(
-        JSON.stringify({ error: 'Title is required' }),
+        JSON.stringify({ error: 'Title or saved idea is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Starting script generation for: ${title}`);
+    console.log(`Starting script generation for: ${savedIdea ? savedIdea.title : title}`);
 
     // Check if the user exists and usage limits
     if (userId) {
       try {
-        // Check usage limits using the check-usage-limits function
-        const { data: usageResponse, error: limitCheckError } = await supabase.functions.invoke('check-usage-limits', {
-          body: { action: 'scripts' }
-        });
+        // Check usage limits using the database function
+        const { data: usageLimitCheck, error: usageCheckError } = await supabase.rpc(
+          'check_and_increment_usage',
+          { p_user_id: userId, p_action: 'scripts' }
+        );
 
-        if (limitCheckError) {
-          console.error("Usage check error:", limitCheckError);
-          throw new Error(`Error checking usage limits: ${limitCheckError.message}`);
+        if (usageCheckError) {
+          console.error("Usage check error:", usageCheckError);
+          return new Response(
+            JSON.stringify({ error: `Error checking usage limits: ${usageCheckError.message}` }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
 
-        if (!usageResponse?.canProceed) {
-          console.error("Usage limit reached:", usageResponse?.message);
+        if (usageLimitCheck === false) {
+          console.error("Usage limit reached");
           return new Response(
-            JSON.stringify({ error: usageResponse?.message || "Daily script generation limit reached" }),
+            JSON.stringify({ error: "Daily script generation limit reached" }),
             { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
@@ -74,11 +78,15 @@ Deno.serve(async (req) => {
 
     const timeRange = lengthMapping[targetLength as keyof typeof lengthMapping] || "30-60 seconds";
 
+    // Get the actual title and description to use (from savedIdea or direct input)
+    const scriptTitle = savedIdea ? savedIdea.title : title;
+    const scriptDescription = savedIdea ? savedIdea.description : description;
+
     // Create prompt for script generation with emphasis on conversational, friendly tone
     let prompt = `
-      Write a short, engaging script for a ${timeRange} ${contentStyle} video about: "${title}".
+      Write a short, engaging script for a ${timeRange} ${contentStyle} video about: "${scriptTitle}".
       
-      ${description ? `Additional context: ${description}` : ''}
+      ${scriptDescription ? `Additional context: ${scriptDescription}` : ''}
       ${hook ? `Start with this hook: "${hook}"` : ''}
       
       The script should be:
