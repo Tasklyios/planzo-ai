@@ -25,8 +25,14 @@ const IdeasGrid = ({
 }: IdeasGridProps) => {
   console.log("IdeasGrid rendering with ideas:", ideas);
   
-  if (!ideas || ideas.length === 0) {
-    return null;
+  if (!ideas) {
+    console.log("Ideas array is undefined");
+    return <div className="py-4 text-center text-muted-foreground">No ideas available. Please try generating again.</div>;
+  }
+
+  if (ideas.length === 0) {
+    console.log("Ideas array is empty");
+    return <div className="py-4 text-center text-muted-foreground">No ideas generated yet.</div>;
   }
 
   return (
