@@ -24,9 +24,23 @@ export const generateHooks = async (
       throw new Error(usageResponse?.message || "You've reached your daily limit for generating hooks.");
     }
 
+    // Detect if this is for an ecommerce brand
+    const isEcommerce = topic.toLowerCase().includes('product') || 
+                        topic.toLowerCase().includes('shop') ||
+                        topic.toLowerCase().includes('store') ||
+                        topic.toLowerCase().includes('ecommerce') ||
+                        topic.toLowerCase().includes('e-commerce') ||
+                        topic.toLowerCase().includes('marketplace');
+
     // Call Supabase Edge Function to generate hooks
     const { data, error } = await supabase.functions.invoke("generate-hooks", {
-      body: { topic, audience, details },
+      body: { 
+        topic, 
+        audience, 
+        details,
+        isEcommerce, // Pass the ecommerce flag to the edge function
+        optimizeForViral: isEcommerce // Optimize for viral content for ecommerce
+      },
     });
 
     if (error) {

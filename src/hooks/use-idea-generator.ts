@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -285,6 +284,53 @@ export const useIdeaGenerator = () => {
     console.log("Updated previous ideas context:", updatedContext);
   };
 
+  // Modified function for detecting eco keywords
+  const detectEcoKeywords = (niche: string, customIdeas: string): boolean => {
+    const ecoKeywords = [
+      'eco', 'green', 'sustainable', 'environment', 'recycled', 'organic', 
+      'natural', 'biodegradable', 'zero waste', 'eco-friendly', 'vegan', 
+      'plant-based', 'carbon neutral', 'compostable', 'ethical', 'clean'
+    ];
+    
+    // Check if any eco keywords are in the niche or custom ideas
+    const nicheMatches = ecoKeywords.some(keyword => 
+      niche?.toLowerCase().includes(keyword.toLowerCase())
+    );
+    
+    const customIdeasMatches = customIdeas && ecoKeywords.some(keyword => 
+      customIdeas.toLowerCase().includes(keyword.toLowerCase())
+    );
+    
+    return nicheMatches || customIdeasMatches;
+  };
+
+  // Updated helper function to check if user is an ecommerce account
+  const checkIsEcommerce = async (userId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('account_type, product_niche')
+        .eq('id', userId)
+        .single();
+        
+      if (error) {
+        console.error("Error checking account type:", error);
+        return false;
+      }
+      
+      // Return true if it's an ecommerce account OR if the niche contains ecommerce-related keywords
+      const nicheKeywords = ['product', 'shop', 'store', 'ecommerce', 'e-commerce', 'marketplace'];
+      const isEcommerceNiche = data?.product_niche && 
+                              nicheKeywords.some(keyword => 
+                                data.product_niche.toLowerCase().includes(keyword.toLowerCase()));
+      
+      return data?.account_type === 'ecommerce' || isEcommerceNiche;
+    } catch (error) {
+      console.error("Error in checkIsEcommerce:", error);
+      return false;
+    }
+  };
+
   const generateIdeas = async () => {
     if (!niche || !audience || !videoType) {
       toast({
@@ -361,6 +407,9 @@ export const useIdeaGenerator = () => {
       // Check for eco-related keywords to apply optimizations
       const isEcoRelated = detectEcoKeywords(niche, customIdeas);
       const isEcommerce = await checkIsEcommerce(userId);
+      
+      // Use a more specific model for ecommerce to speed up generation
+      const modelToUse = isEcommerce ? 'gpt-4o-mini' : undefined; // Use mini for ecommerce for speed
 
       console.log("Calling generate-ideas function with:", { 
         niche, 
@@ -376,7 +425,9 @@ export const useIdeaGenerator = () => {
         previousIdeasContext,
         numIdeas: 5,  // Specify exactly 5 ideas should be generated
         isEcoRelated,
-        isEcommerce
+        isEcommerce,
+        optimizeForViral: isEcommerce, // Optimize for viral content for ecommerce
+        modelOverride: modelToUse
       });
       
       try {
@@ -392,7 +443,11 @@ export const useIdeaGenerator = () => {
             contentStyle: localStorage.getItem("contentStyle") || "",
             contentPersonality: localStorage.getItem("contentPersonality") || "",
             previousIdeas: previousIdeasContext,
-            numIdeas: 5  // Important: Specifying the number of ideas to generate
+            numIdeas: 5,  // Important: Specifying the number of ideas to generate
+            isEcoRelated,
+            isEcommerce,
+            optimizeForViral: isEcommerce, // Optimize for viral ecommerce content
+            modelOverride: modelToUse // Pass the model override
           },
         });
         
@@ -513,47 +568,6 @@ export const useIdeaGenerator = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  // New helper function to detect eco keywords
-  const detectEcoKeywords = (niche: string, customIdeas: string): boolean => {
-    const ecoKeywords = [
-      'eco', 'green', 'sustainable', 'environment', 'recycled', 'organic', 
-      'natural', 'biodegradable', 'zero waste', 'eco-friendly', 'vegan', 
-      'plant-based', 'carbon neutral', 'compostable', 'ethical', 'clean'
-    ];
-    
-    // Check if any eco keywords are in the niche or custom ideas
-    const nicheMatches = ecoKeywords.some(keyword => 
-      niche?.toLowerCase().includes(keyword.toLowerCase())
-    );
-    
-    const customIdeasMatches = customIdeas && ecoKeywords.some(keyword => 
-      customIdeas.toLowerCase().includes(keyword.toLowerCase())
-    );
-    
-    return nicheMatches || customIdeasMatches;
-  };
-
-  // New helper function to check if user is an ecommerce account
-  const checkIsEcommerce = async (userId: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('account_type')
-        .eq('id', userId)
-        .single();
-        
-      if (error) {
-        console.error("Error checking account type:", error);
-        return false;
-      }
-      
-      return data?.account_type === 'ecommerce';
-    } catch (error) {
-      console.error("Error in checkIsEcommerce:", error);
-      return false;
     }
   };
 
