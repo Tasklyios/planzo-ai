@@ -141,16 +141,24 @@ export const useIdeaGenerator = () => {
     setError(null);
     
     try {
-      // First, check usage limits
-      const { data: { session } } = await supabase.auth.getSession();
+      // First, ensure we have a valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (!session) {
-        setError("You must be logged in to generate ideas");
+      if (sessionError || !session) {
+        const errorMsg = sessionError ? 
+          `Authentication error: ${sessionError.message}` : 
+          "You must be logged in to generate ideas";
+        
+        console.error("Session error:", errorMsg);
+        setError(errorMsg);
         setLoading(false);
+        
+        // Force refresh of the auth state
+        await supabase.auth.refreshSession();
         return;
       }
 
-      console.log("Session found, proceeding with authentication header:", session.access_token);
+      console.log("Session found, proceeding with authentication header");
       
       // Make sure we have a valid auth token
       const authHeader = `Bearer ${session.access_token}`;
@@ -164,16 +172,23 @@ export const useIdeaGenerator = () => {
 
       console.log("Usage check response:", checkResponse);
       
-      if (checkResponse.error || !checkResponse.data.canProceed) {
+      if (checkResponse.error) {
+        console.error("Usage check error:", checkResponse.error);
+        setError(checkResponse.error.message || "Unable to check usage limits");
+        setLoading(false);
+        return;
+      }
+      
+      if (!checkResponse.data.canProceed) {
         // Handle usage limit reached
-        const errorMessage = checkResponse.error || checkResponse.data.message || "Unable to check usage limits";
+        const errorMessage = checkResponse.data.message || "Usage limit reached";
         setError(errorMessage);
         setLoading(false);
         return;
       }
       
       // Now proceed with idea generation if usage limits allow
-      console.log("Calling generate-ideas function with auth header:", authHeader);
+      console.log("Calling generate-ideas function with auth header");
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: {
           niche,

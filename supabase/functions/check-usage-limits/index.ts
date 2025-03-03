@@ -27,14 +27,14 @@ serve(async (req) => {
           message: "You must be logged in to perform this action"
         }),
         {
-          status: 200, // Use 200 status even for errors to avoid client-side rejection
+          status: 401, // Changed back to 401 to properly indicate auth failure
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
 
-    console.log("Authorization header found:", authHeader.substring(0, 20) + "...");
-
+    console.log("Authorization header found, length:", authHeader.length);
+    
     // Create Supabase client with the Authorization header
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? '',
@@ -58,10 +58,10 @@ serve(async (req) => {
         JSON.stringify({
           error: "Authentication error",
           canProceed: false,
-          message: "You must be logged in to perform this action"
+          message: "Authentication failed: " + userError.message
         }),
         {
-          status: 200, // Changed from 401 to 200 to avoid client-side rejection
+          status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -76,7 +76,7 @@ serve(async (req) => {
           message: "You must be logged in to perform this action"
         }),
         {
-          status: 200, // Changed from 401 to 200 to avoid client-side rejection
+          status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -97,7 +97,7 @@ serve(async (req) => {
           message: "Invalid request format"
         }),
         {
-          status: 200, // Changed from 400 to 200 to avoid client-side rejection
+          status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -113,7 +113,7 @@ serve(async (req) => {
           message: "Invalid request"
         }),
         {
-          status: 200, // Changed from 400 to 200 to avoid client-side rejection
+          status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -249,7 +249,7 @@ serve(async (req) => {
         message: "An error occurred while checking usage limits"
       }),
       {
-        status: 200, // Use 200 status even for errors to avoid client-side rejection
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );

@@ -34,6 +34,10 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         } else {
           console.log("Session found, user is authenticated", session.user.id);
           console.log("Access token is valid:", !!session.access_token);
+          
+          // Store the session in localStorage for edge functions to use
+          localStorage.setItem('supabase.auth.token', session.access_token);
+          
           setIsAuthenticated(true);
         }
       } catch (error) {
@@ -52,10 +56,17 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       
       if (event === "SIGNED_OUT") {
         console.log("User signed out, redirecting to auth");
+        localStorage.removeItem('supabase.auth.token');
         setIsAuthenticated(false);
         navigate("/auth");
       } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         console.log("User signed in or token refreshed", session?.user.id);
+        
+        // Update the token in localStorage
+        if (session?.access_token) {
+          localStorage.setItem('supabase.auth.token', session.access_token);
+        }
+        
         setIsAuthenticated(true);
         
         // Redirect to dashboard if user signs in and isn't already on a protected route
