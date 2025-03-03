@@ -11,23 +11,41 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.log("No session found, redirecting to auth");
+          navigate("/auth");
+        } else {
+          console.log("Session found, user is authenticated");
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
         navigate("/auth");
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
+      console.log("Auth state changed:", event, session ? "session exists" : "no session");
+      
+      if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+        console.log("User signed out, redirecting to auth");
+        setIsAuthenticated(false);
         navigate("/auth");
       } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        console.log("User signed in or token refreshed");
+        setIsAuthenticated(true);
+        
         // Redirect to dashboard if user signs in and isn't already on a protected route
         const currentPath = location.pathname;
         if (currentPath === "/" || currentPath === "/auth") {
@@ -36,7 +54,10 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log("Cleaning up auth subscription");
+      subscription.unsubscribe();
+    };
   }, [navigate, location]);
 
   if (isLoading) {
@@ -45,7 +66,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     </div>;
   }
 
-  return <>{children}</>;
+  // Only render children if the user is authenticated
+  return isAuthenticated ? <>{children}</> : null;
 };
 
 export default AuthGuard;
