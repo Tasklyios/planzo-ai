@@ -30,7 +30,7 @@ serve(async (req) => {
       error: userError,
     } = await supabaseClient.auth.getUser();
     
-    if (userError || !user) {
+    if (userError) {
       console.error("Auth error:", userError);
       return new Response(
         JSON.stringify({
@@ -45,8 +45,42 @@ serve(async (req) => {
       );
     }
     
+    if (!user) {
+      console.error("No user found");
+      return new Response(
+        JSON.stringify({
+          error: "Authentication error",
+          canProceed: false,
+          message: "You must be logged in to perform this action"
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    
     // Get the request data
-    const { action } = await req.json();
+    let requestData;
+    try {
+      requestData = await req.json();
+    } catch (parseError) {
+      console.error("Error parsing request body:", parseError);
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request format",
+          canProceed: false,
+          message: "Invalid request format"
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    
+    const { action } = requestData;
+    
     if (!action) {
       return new Response(
         JSON.stringify({
@@ -61,12 +95,19 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Checking usage for user ${user.id}, action: ${action}`);
+
     // Get the user's subscription tier
     const { data: subscription, error: subError } = await supabaseClient
       .from("user_subscriptions")
       .select("tier")
       .eq("user_id", user.id)
       .maybeSingle();
+    
+    if (subError) {
+      console.error("Error fetching subscription:", subError);
+      // Continue with free tier as default if there's an error
+    }
     
     // Default to free tier if no subscription found
     const tier = subscription?.tier || "free";
@@ -79,6 +120,7 @@ serve(async (req) => {
         JSON.stringify({ canProceed: true }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200
         }
       );
     }
@@ -90,6 +132,11 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .eq("date", new Date().toISOString().split("T")[0])
       .maybeSingle();
+
+    if (usageError) {
+      console.error("Error fetching usage:", usageError);
+      // Continue with zero usage as default if there's an error
+    }
 
     // Default usage to 0 if no record found
     const currentUsage = {
@@ -151,6 +198,7 @@ serve(async (req) => {
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200 // Using 200 status even for "limit reached" to avoid errors
         }
       );
     }
@@ -165,6 +213,7 @@ serve(async (req) => {
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200
       }
     );
   } catch (error) {
@@ -176,7 +225,7 @@ serve(async (req) => {
         message: "An error occurred while checking usage limits"
       }),
       {
-        status: 500,
+        status: 200, // Use 200 status even for errors to avoid client-side rejection
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );

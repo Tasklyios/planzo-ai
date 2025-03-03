@@ -38,19 +38,19 @@ BEGIN
     -- Set max limit based on tier and action
     IF p_action = 'ideas' THEN
         v_max_limit := CASE 
-            WHEN v_tier = 'free' THEN 2
+            WHEN v_tier = 'free' THEN 5
             WHEN v_tier = 'pro' THEN 20
             WHEN v_tier = 'plus' THEN 50
             WHEN v_tier = 'business' THEN 99999 -- Should not reach here but added as fallback
-            ELSE 2
+            ELSE 5
         END;
     ELSIF p_action = 'scripts' THEN
         v_max_limit := CASE 
-            WHEN v_tier = 'free' THEN 1
+            WHEN v_tier = 'free' THEN 3
             WHEN v_tier = 'pro' THEN 10
             WHEN v_tier = 'plus' THEN 25
             WHEN v_tier = 'business' THEN 99999 -- Should not reach here but added as fallback
-            ELSE 1
+            ELSE 3
         END;
     ELSIF p_action = 'hooks' THEN
         v_max_limit := CASE 

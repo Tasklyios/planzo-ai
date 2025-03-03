@@ -19,7 +19,7 @@ export const generateHooks = async (
     }
 
     // Check if we can proceed or not
-    if (!usageResponse?.canProceed) {
+    if (usageResponse?.canProceed === false) {
       console.error("Usage limit reached:", usageResponse?.message);
       throw new Error(usageResponse?.message || "You've reached your daily limit for generating hooks.");
     }
