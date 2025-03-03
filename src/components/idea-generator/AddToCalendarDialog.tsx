@@ -3,6 +3,8 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AddToCalendarIdea } from "@/types/idea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface AddToCalendarDialogProps {
   idea: AddToCalendarIdea | null;
@@ -32,24 +34,24 @@ const AddToCalendarDialog = ({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="space-y-2">
-            <label htmlFor="title" className="text-sm font-medium">Title</label>
-            <input
+            <Label htmlFor="title" className="text-sm font-medium">Title</Label>
+            <Input
               id="title"
               type="text"
               value={idea.title}
               onChange={(e) => onUpdate('title', e.target.value)}
-              className="w-full p-2 border rounded-md"
+              className="w-full"
               required
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="date" className="text-sm font-medium">Date</label>
-            <input
+            <Label htmlFor="date" className="text-sm font-medium">Date</Label>
+            <Input
               id="date"
               type="date"
               value={idea.scheduledFor}
               onChange={(e) => onUpdate('scheduledFor', e.target.value)}
-              className="w-full p-2 border rounded-md"
+              className="w-full"
               required
             />
           </div>
