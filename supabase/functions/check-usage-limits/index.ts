@@ -33,6 +33,8 @@ serve(async (req) => {
       );
     }
 
+    console.log("Authorization header found:", authHeader.substring(0, 20) + "...");
+
     // Create Supabase client with the Authorization header
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? '',

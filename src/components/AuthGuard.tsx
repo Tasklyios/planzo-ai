@@ -18,20 +18,28 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       setIsLoading(true);
       try {
         console.log("Checking authentication status...");
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Authentication check error:", error);
+          setIsAuthenticated(false);
+          navigate("/auth", { state: { from: location.pathname } });
+          return;
+        }
         
         if (!session) {
           console.log("No session found, redirecting to auth");
           setIsAuthenticated(false);
-          navigate("/auth");
+          navigate("/auth", { state: { from: location.pathname } });
         } else {
           console.log("Session found, user is authenticated", session.user.id);
+          console.log("Access token is valid:", !!session.access_token);
           setIsAuthenticated(true);
         }
       } catch (error) {
         console.error("Error checking authentication:", error);
         setIsAuthenticated(false);
-        navigate("/auth");
+        navigate("/auth", { state: { from: location.pathname } });
       } finally {
         setIsLoading(false);
       }

@@ -150,6 +150,8 @@ export const useIdeaGenerator = () => {
         return;
       }
 
+      console.log("Session found, proceeding with authentication header:", session.access_token);
+      
       // Make sure we have a valid auth token
       const authHeader = `Bearer ${session.access_token}`;
       
@@ -171,6 +173,7 @@ export const useIdeaGenerator = () => {
       }
       
       // Now proceed with idea generation if usage limits allow
+      console.log("Calling generate-ideas function with auth header:", authHeader);
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: {
           niche,
