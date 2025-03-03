@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -79,10 +80,12 @@ export function SearchIdeasDialog({
       setLoading(true);
       try {
         // Get ideas that match the search query but aren't already in this column
+        // IMPORTANT: Only search for saved ideas (is_saved = true)
         const { data, error } = await supabase
           .from('video_ideas')
           .select('*')
           .ilike('title', `%${searchQuery}%`)
+          .eq('is_saved', true) // Only search saved ideas
           .not('status', 'eq', columnId)
           .order('created_at', { ascending: false })
           .limit(10);
@@ -157,7 +160,7 @@ export function SearchIdeasDialog({
         <DialogHeader>
           <DialogTitle>Add idea to {columnTitle}</DialogTitle>
           <DialogDescription>
-            Search for ideas to add to this column.
+            Search for saved ideas to add to this column.
             {activeStyleProfile && (
               <span className="block mt-1 text-primary">
                 Using style profile: {activeStyleProfile.name}
@@ -170,7 +173,7 @@ export function SearchIdeasDialog({
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search ideas..."
+              placeholder="Search saved ideas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8"
@@ -187,13 +190,13 @@ export function SearchIdeasDialog({
         
         {!loading && ideas.length === 0 && searchQuery.trim() !== "" && (
           <div className="text-center py-8 text-muted-foreground">
-            No ideas found for "{searchQuery}"
+            No saved ideas found for "{searchQuery}"
           </div>
         )}
         
         {!loading && searchQuery.trim() === "" && (
           <div className="text-center py-8 text-muted-foreground">
-            Type to search for ideas
+            Type to search for your saved ideas
           </div>
         )}
         
