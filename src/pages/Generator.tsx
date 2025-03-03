@@ -43,6 +43,11 @@ const Generator = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Log ideas whenever they change
+  useEffect(() => {
+    console.log("Generator component - current ideas:", ideas);
+  }, [ideas]);
+
   useEffect(() => {
     const savedContext = localStorage.getItem('previousIdeasContext');
     if (savedContext) {
@@ -286,18 +291,28 @@ const Generator = () => {
             </button>
           </div>
 
-          {ideas.length > 0 && !error && (
-            <IdeasGrid 
-              ideas={ideas} 
-              onAddToCalendar={idea => setAddingToCalendar({
-                idea,
-                title: idea.title,
-                scheduledFor: new Date().toISOString().split('T')[0]
-              })} 
-              onEdit={ideaId => setEditingIdeaId(ideaId)} 
-              onBookmarkToggle={handleBookmarkToggle} 
-            />
-          )}
+          {ideas && ideas.length > 0 ? (
+            <>
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold text-foreground">Generated Ideas</h2>
+                <p className="text-sm text-muted-foreground">{ideas.length} ideas generated for your content</p>
+              </div>
+              <IdeasGrid 
+                ideas={ideas} 
+                onAddToCalendar={idea => setAddingToCalendar({
+                  idea,
+                  title: idea.title,
+                  scheduledFor: new Date().toISOString().split('T')[0]
+                })} 
+                onEdit={ideaId => setEditingIdeaId(ideaId)} 
+                onBookmarkToggle={handleBookmarkToggle} 
+              />
+            </>
+          ) : !loading && !error ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <p>No ideas generated yet. Fill in the form above and click "Generate Viral Ideas".</p>
+            </div>
+          ) : null}
         </section>
 
         {editingIdeaId && <EditIdea ideaId={editingIdeaId} onClose={() => setEditingIdeaId(null)} />}

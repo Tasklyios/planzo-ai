@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -247,6 +246,7 @@ export const useIdeaGenerator = () => {
   };
 
   const transformSupabaseIdea = (idea: any): GeneratedIdea => {
+    console.log("Transforming idea:", idea);
     return {
       id: idea.id,
       title: idea.title,
@@ -631,14 +631,17 @@ export const useIdeaGenerator = () => {
           platform: platform,
           user_id: userId,
           color: 'blue',
-          is_saved: false, // Changed from true to false - ideas are not automatically saved
+          is_saved: false,
           is_ad: isAdRequest,
-          status: "ideas" // Always set the initial status to "ideas"
+          status: "ideas"
         }));
 
-        const { error: saveError } = await supabase
+        console.log("Ideas to save:", ideasToSave);
+
+        const { data: insertResult, error: saveError } = await supabase
           .from("video_ideas")
-          .insert(ideasToSave);
+          .insert(ideasToSave)
+          .select();
 
         if (saveError) {
           console.error("Error saving ideas:", saveError);
@@ -647,28 +650,37 @@ export const useIdeaGenerator = () => {
           return;
         }
 
-        // Fetch ONLY the newly created ideas to display
-        const { data: savedIdeas, error: fetchError } = await supabase
-          .from("video_ideas")
-          .select("*")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(ideasToSave.length);
+        console.log("Insert result:", insertResult);
 
-        if (fetchError) {
-          console.error("Error fetching saved ideas:", fetchError);
-          setError(`Error fetching saved ideas: ${fetchError.message}`);
-          setLoading(false);
-          return;
+        if (insertResult && insertResult.length > 0) {
+          // Use the returned data directly instead of fetching again
+          const transformedIdeas = insertResult.map(transformSupabaseIdea);
+          console.log("Transformed ideas (from insert result):", transformedIdeas);
+          setIdeas(transformedIdeas);
+          updatePreviousIdeasContext(transformedIdeas);
+        } else {
+          // Fallback to fetching if insert doesn't return data
+          console.log("Fetching newly created ideas as fallback...");
+          const { data: savedIdeas, error: fetchError } = await supabase
+            .from("video_ideas")
+            .select("*")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(ideasToSave.length);
+
+          if (fetchError) {
+            console.error("Error fetching saved ideas:", fetchError);
+            setError(`Error fetching saved ideas: ${fetchError.message}`);
+            setLoading(false);
+            return;
+          }
+
+          console.log("Fetched ideas:", savedIdeas);
+          const transformedIdeas = (savedIdeas || []).map(transformSupabaseIdea);
+          console.log("Transformed ideas (from fetch):", transformedIdeas);
+          setIdeas(transformedIdeas);
+          updatePreviousIdeasContext(transformedIdeas);
         }
-
-        const transformedIdeas = (savedIdeas || []).map(transformSupabaseIdea);
-        
-        // Set the ideas state with the newly generated ideas only
-        setIdeas(transformedIdeas);
-        
-        // Update the previous ideas context with new ideas
-        updatePreviousIdeasContext(transformedIdeas);
 
         toast({
           title: "Success!",

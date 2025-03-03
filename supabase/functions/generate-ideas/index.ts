@@ -36,19 +36,24 @@ serve(async (req) => {
       contentPersonality,
       previousIdeas,
       numIdeas = 5,
+      isEcoRelated,
+      isEcommerce,
+      marketResearch,
+      modelOverride
     } = await req.json();
 
     // Start tracking time for performance measurement
     const startTime = Date.now();
     
     // Detect if this is an eco brand to apply optimizations
-    const isEcoBrand = detectEcoBrand(niche, customIdeas);
+    const isEcoBrand = isEcoRelated || detectEcoBrand(niche, customIdeas);
 
     console.log('Generating ideas with:', { 
       niche, audience, videoType, platform,
       customIdeasLength: customIdeas?.length || 0,
       numIdeas,
-      isEcoBrand
+      isEcoBrand,
+      isEcommerce
     });
 
     // Construct the prompt differently based on whether it's an eco brand or not
@@ -62,12 +67,18 @@ serve(async (req) => {
       contentPersonality,
       previousIdeas,
       isEcoBrand,
-      numIdeas
+      numIdeas,
+      isEcommerce,
+      marketResearch
     });
 
     // Use a more efficient model and optimize parameters for faster generation
+    const model = modelOverride || "gpt-4o-mini"; // Use provided model or default to gpt-4o-mini
+    
+    console.log('Using model:', model);
+    
     const apiRequestBody = {
-      model: "gpt-4o-mini", // Faster and more efficient model
+      model: model,
       messages: [
         { role: "system", content: prompt.systemPrompt },
         { role: "user", content: prompt.userPrompt }
@@ -80,6 +91,7 @@ serve(async (req) => {
     };
 
     // Call the OpenAI API
+    console.log('Calling OpenAI API...');
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -107,14 +119,23 @@ serve(async (req) => {
     
     // Process and validate the response
     const ideas = parseAndValidateIdeas(rawResponse, isEcoBrand);
+    console.log('Parsed and validated ideas:', ideas);
     
     // Calculate the time taken
     const timeElapsed = Date.now() - startTime;
     console.log(`Ideas generated in ${timeElapsed}ms`);
 
-    // Return the ideas
+    // Return the ideas with additional debug info
     return new Response(
-      JSON.stringify({ ideas, rawResponse }),
+      JSON.stringify({ 
+        ideas, 
+        rawResponse,
+        debug: {
+          modelUsed: model,
+          timeElapsed,
+          ideasCount: ideas.length
+        }
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
@@ -157,7 +178,9 @@ function constructPrompt({
   contentPersonality,
   previousIdeas,
   isEcoBrand,
-  numIdeas
+  numIdeas,
+  isEcommerce,
+  marketResearch
 }) {
   // Base system prompt
   let systemPrompt = `You are a viral video idea generator specializing in creating engaging, attention-grabbing content ideas specifically for businesses. Your goal is to help content creators make videos that will perform well on ${platform}.`;
@@ -257,10 +280,32 @@ function parseAndValidateIdeas(rawResponse, isEcoBrand) {
     }
     
     const jsonString = jsonMatch[0];
-    const parsedData = JSON.parse(jsonString);
+    
+    console.log('Extracted JSON string:', jsonString);
+    
+    let parsedData;
+    try {
+      parsedData = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      
+      // Try to fix common JSON issues and parse again
+      const fixedJson = jsonString
+        .replace(/,\s*}/g, '}')  // Remove trailing commas
+        .replace(/}\s*{/g, '},{')  // Fix missing commas between objects
+        .replace(/"\s*,\s*"/g, '","');  // Fix missing quotes between keys
+        
+      try {
+        parsedData = JSON.parse(fixedJson);
+        console.log('Fixed JSON parse successful');
+      } catch (fixError) {
+        console.error('Fixed JSON still invalid:', fixError);
+        return [];
+      }
+    }
     
     if (!parsedData.ideas || !Array.isArray(parsedData.ideas)) {
-      console.error('Invalid format: ideas array not found');
+      console.error('Invalid format: ideas array not found in parsed data:', parsedData);
       return [];
     }
 
