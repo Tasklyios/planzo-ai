@@ -1,25 +1,35 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
-import { corsHeaders } from '../_shared/cors.ts';
-import OpenAI from 'https://esm.sh/openai@4.28.0';
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.1";
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const openAIKey = Deno.env.get('OPENAI_API_KEY') ?? '';
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-const openai = new OpenAI({
-  apiKey: openAIKey,
-});
-
-Deno.serve(async (req) => {
+serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Check if request is from allowed domains
+  // Create Supabase client
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // OpenAI credentials
+  const openAiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openAiKey) {
+    return new Response(
+      JSON.stringify({ error: 'OpenAI API key not configured' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
+    // Get request parameters
     const { title, description, contentStyle, hook, targetLength, userId, savedIdea } = await req.json();
 
     // Validate required fields
@@ -56,18 +66,16 @@ Deno.serve(async (req) => {
             { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        
-        console.log("Usage limit check passed");
       } catch (error) {
-        console.error('Error checking usage limits:', error);
+        console.error("Error checking user or usage limits:", error);
         return new Response(
-          JSON.stringify({ error: error.message || 'Error checking usage limits' }),
+          JSON.stringify({ error: `Error checking user or usage limits: ${error.message}` }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
 
-    // Map target length to actual time ranges for prompt
+    // Map target length to human-readable duration
     const lengthMapping = {
       "15-30": "15-30 seconds",
       "30-60": "30-60 seconds",
@@ -82,68 +90,115 @@ Deno.serve(async (req) => {
     const scriptTitle = savedIdea ? savedIdea.title : title;
     const scriptDescription = savedIdea ? savedIdea.description : description;
 
-    // Create prompt for script generation with emphasis on conversational, friendly tone
+    // Enhanced examples of good and bad scripts
+    const goodExample = `
+Example of a GOOD script (authentic, engaging, conversational):
+
+[Looking out window] Ugh, another rainy day in Seattle. That's 14 days straight now. 
+
+[Turning to camera] You know what's weird though? I've actually started to enjoy these rainy mornings.
+
+[Sipping from mug] There's something about the sound of rain hitting the window while I'm wrapped in a blanket with my coffee.
+
+My therapist would probably call this "reframing" but I just call it survival. [Laughs]
+
+What's something you've learned to appreciate that you used to hate? Drop it in the comments!
+
+[Rain sounds intensify]
+`;
+
+    const badExample = `
+Example of a BAD script (avoid this generic, sales-pitchy style):
+
+Hey everyone! Have you ever faced a challenge while running? I know I have. But wearing the right sunglasses changed everything for me.
+
+When I put on my sunnies, not only did I block out the glare, but I also found my focus. I could see clearly, push through those tough miles, and I felt unstoppable.
+
+Sunnies became my secret weapon. Now I want to hear from you! How have #SunniesForSuccess helped your run? Let's inspire each other! Share your stories in the comments below!
+`;
+
+    // Create prompt for script generation with emphasis on authentic tone
     let prompt = `
-      Write a short, engaging script for a ${timeRange} ${contentStyle} video about: "${scriptTitle}".
+      Write a script for a ${timeRange} ${contentStyle || "authentic"} video about: "${scriptTitle}".
       
       ${scriptDescription ? `Additional context: ${scriptDescription}` : ''}
       ${hook ? `Start with this hook: "${hook}"` : ''}
       
-      The script should be:
-      - Concise and direct, optimized for ${timeRange} of content
-      - Written in a conversational, natural-sounding voice
-      - Engaging from the very first line to capture attention quickly
-      - Written in a first-person perspective (using "I", "we", etc.)
-      - Formatted as plain text (no timestamps, scene directions, or camera angles)
-      - Easy to read aloud without sounding scripted
-      - Include transitions between points for a smooth flow
+      THE SCRIPT MUST:
+      - Sound like a real person talking naturally, with personality and imperfections
+      - Include natural speech patterns (pauses, filler words, self-corrections) in [brackets]
+      - Use conversational language that feels authentic
+      - Avoid clichés and generic motivational language
+      - Include specific details that make the content unique and believable
+      - Feel like something a friend would say, not a corporate message
+      - Include moments of authenticity (humor, vulnerability, specific experiences)
+      - Sound nothing like a sales pitch unless explicitly requested
+      - Format script with natural breaks for pacing and emphasis
       
-      The script should NOT:
-      - Include any formatting like [INTRO], [HOOK], etc.
-      - Include any placeholder text or timestamps
-      - Sound robotic or overly formal
+      ${goodExample}
       
-      For short-form content (under 60 seconds):
-      - Focus on ONE main point or idea only
-      - Get to the point immediately
-      - Use short, punchy sentences
-      - Include a clear call-to-action at the end
+      DO NOT write a script like this:
+      ${badExample}
       
-      The script should sound completely natural when read aloud - like something someone would actually say in a conversation, not like something written.
+      If this is a product video, focus on authentic storytelling around the product, not generic benefits.
+      For educational content, use a teaching style that's casual and relatable.
+      
+      The final script should be formatted with natural line breaks to indicate pauses and camera directions in [brackets].
     `;
 
-    console.log("Sending request to OpenAI");
-
-    // Call OpenAI API with more specific system role
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert script writer for short-form social media videos. Write concise, engaging scripts that sound natural when spoken. Focus on conversational tone and getting to the point quickly."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      max_tokens: 1000,
+    // Call OpenAI API
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'You are an expert scriptwriter for short-form social media videos. You create authentic, engaging, and high-performing scripts that sound like real people talking, not corporate content.' 
+          },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.8, // Slightly higher temperature for more creativity
+        max_tokens: 800, // Adjust based on expected script length
+      }),
     });
 
-    const scriptContent = completion.choices[0]?.message?.content || "";
-    
-    console.log("Script generated successfully");
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', errorText);
+      return new Response(
+        JSON.stringify({ error: `Error from OpenAI API: ${response.status} ${response.statusText}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Return the generated script
+    const openAiData = await response.json();
+
+    if (!openAiData.choices || openAiData.choices.length === 0 || !openAiData.choices[0].message) {
+      console.error('Invalid response from OpenAI:', openAiData);
+      return new Response(
+        JSON.stringify({ error: 'Received an invalid response from OpenAI' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const script = openAiData.choices[0].message.content.trim();
+
+    console.log('Script generated successfully');
+
+    // Return the script
     return new Response(
-      JSON.stringify({ script: scriptContent }),
+      JSON.stringify({ script }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
   } catch (error) {
-    console.error('Error generating script:', error);
+    console.error('Error in generate-script function:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'An unexpected error occurred' }),
+      JSON.stringify({ error: `Error generating script: ${error.message}` }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
