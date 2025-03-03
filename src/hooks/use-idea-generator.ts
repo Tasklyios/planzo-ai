@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -245,14 +246,29 @@ export const useIdeaGenerator = () => {
     }
   };
 
+  // Define transformSupabaseIdea function here (single definition)
   const transformSupabaseIdea = (idea: any): GeneratedIdea => {
+    if (!idea) {
+      console.error("Tried to transform a null or undefined idea");
+      return {
+        id: "error",
+        title: "Error Processing Idea",
+        category: "Error",
+        description: "There was a problem processing this idea",
+        tags: [],
+        platform: platform,
+        color: "blue",
+        is_saved: false
+      };
+    }
+    
     console.log("Transforming idea:", idea);
     return {
-      id: idea.id,
+      id: idea.id || "missing-id",
       title: idea.title || "Untitled",
       category: idea.category || "General",
       description: idea.description || "No description provided",
-      tags: idea.tags || [],
+      tags: Array.isArray(idea.tags) ? idea.tags : [],
       platform: idea.platform || platform,
       color: idea.color || "blue",
       is_saved: Boolean(idea.is_saved),
@@ -741,36 +757,6 @@ export const useIdeaGenerator = () => {
       });
       setLoading(false);
     }
-  };
-
-  // Make sure the transformSupabaseIdea function is working correctly
-  const transformSupabaseIdea = (idea: any): GeneratedIdea => {
-    if (!idea) {
-      console.error("Tried to transform a null or undefined idea");
-      return {
-        id: "error",
-        title: "Error Processing Idea",
-        category: "Error",
-        description: "There was a problem processing this idea",
-        tags: [],
-        platform: platform,
-        color: "blue",
-        is_saved: false
-      };
-    }
-    
-    console.log("Transforming idea:", idea);
-    return {
-      id: idea.id || "missing-id",
-      title: idea.title || "Untitled",
-      category: idea.category || "General",
-      description: idea.description || "No description provided",
-      tags: Array.isArray(idea.tags) ? idea.tags : [],
-      platform: idea.platform || platform,
-      color: idea.color || "blue",
-      is_saved: Boolean(idea.is_saved),
-      scheduled_for: idea.scheduled_for
-    };
   };
 
   return {
