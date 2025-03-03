@@ -1,3 +1,5 @@
 
+# Project ID from Supabase settings > API
 project_id = "hhkabxkelgabcsczsljf"
+# Whether you want to verify JWT
 verify_jwt = true
