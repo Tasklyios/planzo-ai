@@ -12,7 +12,12 @@ export const useIdeaGenerator = () => {
   const [loading, setLoading] = useState(false);
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
   const [customIdeas, setCustomIdeas] = useState("");
-  const [previousIdeasContext, setPreviousIdeasContext] = useState<PreviousIdeasContext>({ titles: [] });
+  const [previousIdeasContext, setPreviousIdeasContext] = useState<PreviousIdeasContext>({ 
+    count: 0,
+    titles: [],
+    categories: [],
+    descriptions: []
+  });
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -197,9 +202,15 @@ export const useIdeaGenerator = () => {
       }
 
       // Record the generated ideas to avoid duplicates in future
-      const newTitles = data.ideas.map(idea => idea.title);
+      const newTitles = data.ideas.map((idea: any) => idea.title);
+      const newCategories = data.ideas.map((idea: any) => idea.category || "");
+      const newDescriptions = data.ideas.map((idea: any) => idea.description || "");
+      
       setPreviousIdeasContext(prev => ({
-        titles: [...prev.titles, ...newTitles].slice(-30)  // Keep last 30 titles
+        count: (prev.count || 0) + newTitles.length,
+        titles: [...prev.titles, ...newTitles].slice(-30),  // Keep last 30 titles
+        categories: [...(prev.categories || []), ...newCategories].slice(-30),
+        descriptions: [...(prev.descriptions || []), ...newDescriptions].slice(-30)
       }));
 
       // Save generated ideas to database with user_id

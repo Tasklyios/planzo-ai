@@ -1,4 +1,3 @@
-
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -33,10 +32,10 @@ export interface GeneratedIdea {
 }
 
 export interface PreviousIdeasContext {
-  count: number;
+  count?: number;
   titles: string[];
-  categories: string[];
-  descriptions: string[];
+  categories?: string[];
+  descriptions?: string[];
 }
 
 export interface AddToCalendarIdea {
