@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -203,7 +202,7 @@ const Generator = () => {
     navigate('/billing');
   };
 
-  // Add debug for auth status
+  // Debug auth status
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
@@ -211,6 +210,11 @@ const Generator = () => {
     };
     checkAuth();
   }, []);
+
+  // This function checks if we have a valid list of ideas to display
+  const hasValidIdeas = () => {
+    return Array.isArray(ideas) && ideas.length > 0;
+  };
 
   return <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 pt-8 pb-12 py-0">
@@ -307,7 +311,7 @@ const Generator = () => {
               <p className="mt-4 text-muted-foreground">Generating viral ideas for your content...</p>
             </div>
           ) : (
-            ideas && ideas.length > 0 ? (
+            hasValidIdeas() ? (
               <>
                 <div className="mb-4">
                   <h2 className="text-xl font-semibold text-foreground">Generated Ideas</h2>

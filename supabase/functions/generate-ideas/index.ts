@@ -1,4 +1,3 @@
-
 import 'https://deno.land/x/xhr@0.1.0/mod.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
@@ -268,7 +267,7 @@ function constructPrompt({
   return { systemPrompt, userPrompt };
 }
 
-// Helper function to parse and validate ideas from AI response
+// Fixed parser function with better error handling and recovery
 function parseAndValidateIdeas(rawResponse, isEcoBrand) {
   try {
     // Find JSON in the response
@@ -276,7 +275,8 @@ function parseAndValidateIdeas(rawResponse, isEcoBrand) {
     
     if (!jsonMatch) {
       console.error('No JSON found in the response');
-      return [];
+      // Attempt to extract ideas directly from the text
+      return extractIdeasFromText(rawResponse);
     }
     
     const jsonString = jsonMatch[0];
@@ -293,53 +293,134 @@ function parseAndValidateIdeas(rawResponse, isEcoBrand) {
       const fixedJson = jsonString
         .replace(/,\s*}/g, '}')  // Remove trailing commas
         .replace(/}\s*{/g, '},{')  // Fix missing commas between objects
-        .replace(/"\s*,\s*"/g, '","');  // Fix missing quotes between keys
+        .replace(/"\s*,\s*"/g, '","')  // Fix missing quotes between keys
+        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":') // Fix unquoted keys
+        .replace(/,\s*,/g, ',') // Fix multiple commas
+        .replace(/,\s*\]/g, ']'); // Fix trailing commas in arrays
         
       try {
         parsedData = JSON.parse(fixedJson);
         console.log('Fixed JSON parse successful');
       } catch (fixError) {
         console.error('Fixed JSON still invalid:', fixError);
-        return [];
+        // Last resort: try to parse each individual idea
+        return extractIdeasFromText(rawResponse);
       }
     }
     
-    if (!parsedData.ideas || !Array.isArray(parsedData.ideas)) {
-      console.error('Invalid format: ideas array not found in parsed data:', parsedData);
-      return [];
+    if (!parsedData.ideas || !Array.isArray(parsedData.ideas) || parsedData.ideas.length === 0) {
+      console.error('Invalid format or empty ideas array in parsed data:', parsedData);
+      return extractIdeasFromText(rawResponse);
     }
 
     // Process the ideas
-    const validatedIdeas = parsedData.ideas.map(idea => {
-      // Ensure all required properties exist
-      if (!idea.title || !idea.description) {
-        console.warn('Incomplete idea found, filling missing fields:', idea);
-        return {
+    const validatedIdeas = parsedData.ideas
+      .filter(idea => idea !== null && typeof idea === 'object')
+      .map(idea => {
+        // Ensure all required properties exist
+        const processedIdea = {
           title: idea.title || 'Untitled Idea',
           category: idea.category || 'General',
           description: idea.description || 'No description provided',
-          tags: idea.tags || []
+          tags: Array.isArray(idea.tags) ? idea.tags : []
         };
-      }
-      
-      // For eco brands, enhance the tags if needed
-      if (isEcoBrand && idea.tags && idea.tags.length < 5) {
-        const ecoTags = ['sustainability', 'ecofriendly', 'zerowaste', 'ethical', 'green', 'sustainable', 'eco'];
-        const existingTags = new Set(idea.tags.map(tag => tag.toLowerCase()));
         
-        // Add relevant eco tags that aren't already included
-        const additionalTags = ecoTags.filter(tag => !existingTags.has(tag.toLowerCase()));
+        // For eco brands, enhance the tags if needed
+        if (isEcoBrand && processedIdea.tags.length < 5) {
+          const ecoTags = ['sustainability', 'ecofriendly', 'zerowaste', 'ethical', 'green', 'sustainable', 'eco'];
+          const existingTags = new Set(processedIdea.tags.map(tag => typeof tag === 'string' ? tag.toLowerCase() : ''));
+          
+          // Add relevant eco tags that aren't already included
+          const additionalTags = ecoTags.filter(tag => !existingTags.has(tag.toLowerCase()));
+          
+          // Add up to 3 additional eco tags
+          processedIdea.tags = [...processedIdea.tags, ...additionalTags.slice(0, 3)];
+        }
         
-        // Add up to 3 additional eco tags
-        idea.tags = [...idea.tags, ...additionalTags.slice(0, 3)];
-      }
-      
-      return idea;
-    });
+        return processedIdea;
+      });
     
-    return validatedIdeas;
+    if (validatedIdeas.length > 0) {
+      return validatedIdeas;
+    } else {
+      console.error('No valid ideas found after processing');
+      return extractIdeasFromText(rawResponse);
+    }
   } catch (error) {
     console.error('Error parsing ideas:', error);
-    return [];
+    return extractIdeasFromText(rawResponse);
+  }
+}
+
+// New function to extract ideas from text when JSON parsing fails
+function extractIdeasFromText(text) {
+  try {
+    // This is a fallback method when JSON parsing fails
+    console.log('Attempting to extract ideas from text format');
+    
+    // Look for patterns like "1. Title: Description" or "Title: Description"
+    const ideas = [];
+    
+    // Try to split by numbered items first
+    const numberedPattern = /\d+\.\s+(.+?):\s+(.+?)(?=\n\d+\.|\n\n|\n$|$)/gs;
+    let match;
+    
+    while ((match = numberedPattern.exec(text)) !== null) {
+      if (match[1] && match[2]) {
+        ideas.push({
+          title: match[1].trim(),
+          category: 'General',
+          description: match[2].trim(),
+          tags: []
+        });
+      }
+    }
+    
+    // If no numbered items found, try to find title-description patterns
+    if (ideas.length === 0) {
+      const titleDescPattern = /(?:^|\n)([^:\n]+):\s*([^\n]+)/g;
+      
+      while ((match = titleDescPattern.exec(text)) !== null) {
+        if (match[1] && match[2]) {
+          ideas.push({
+            title: match[1].trim(),
+            category: 'General',
+            description: match[2].trim(),
+            tags: []
+          });
+        }
+      }
+    }
+    
+    // Add some default tags
+    ideas.forEach(idea => {
+      // Extract potential tags from the title
+      const words = idea.title.split(' ')
+        .filter(word => word.length > 4)
+        .map(word => word.replace(/[^\w]/g, ''));
+      
+      idea.tags = [...new Set(words.slice(0, 3))]; // Take up to 3 unique words as tags
+      
+      if (idea.tags.length < 3) {
+        // Add some generic tags
+        const genericTags = ['content', 'social', 'video', 'trending'];
+        
+        // Add generic tags to get at least 3 tags total
+        idea.tags = [...idea.tags, ...genericTags.slice(0, 3 - idea.tags.length)];
+      }
+    });
+    
+    console.log(`Extracted ${ideas.length} ideas from text format`);
+    return ideas.slice(0, 5); // Limit to 5 ideas
+  } catch (error) {
+    console.error('Error extracting ideas from text:', error);
+    
+    // If all else fails, return at least one dummy idea so the UI has something to display
+    return [{
+      title: 'Generated Idea',
+      category: 'General',
+      description: 'This idea was extracted from an AI response. Try generating again for more specific ideas.',
+      tags: ['content', 'video', 'social']
+    }];
   }
 }

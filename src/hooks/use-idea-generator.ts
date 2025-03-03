@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -595,19 +594,39 @@ export const useIdeaGenerator = () => {
           return;
         }
 
-        if (!data.ideas || !Array.isArray(data.ideas)) {
-          console.error("Invalid response format:", data);
+        if (!data.ideas || !Array.isArray(data.ideas) || data.ideas.length === 0) {
+          console.error("Invalid response format or empty ideas array:", data);
           
           if (data.rawResponse) {
             console.log("Raw AI response:", data.rawResponse);
-            setError('The AI returned an invalid format. Please try again.');
+            // Try to extract ideas from the raw response as a last resort
+            if (!data.ideas && data.rawResponse) {
+              try {
+                // Attempt to parse JSON from the raw response
+                const jsonMatch = data.rawResponse.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                  const parsedJson = JSON.parse(jsonMatch[0]);
+                  if (parsedJson.ideas && Array.isArray(parsedJson.ideas) && parsedJson.ideas.length > 0) {
+                    data.ideas = parsedJson.ideas;
+                    console.log("Successfully extracted ideas from raw response:", data.ideas);
+                  }
+                }
+              } catch (parseError) {
+                console.error("Failed to extract ideas from raw response:", parseError);
+              }
+            }
+            
+            // If still no ideas, set error
+            if (!data.ideas || !Array.isArray(data.ideas) || data.ideas.length === 0) {
+              setError('The AI returned an invalid format. Please try again.');
+              setLoading(false);
+              return;
+            }
+          } else {
+            setError('Invalid response format from AI: ideas array is missing or empty');
             setLoading(false);
             return;
           }
-          
-          setError('Invalid response format from AI: ideas array is missing');
-          setLoading(false);
-          return;
         }
 
         console.log("Ideas generated successfully:", data.ideas);
@@ -634,6 +653,12 @@ export const useIdeaGenerator = () => {
 
         console.log("Ideas to save:", ideasToSave);
 
+        if (ideasToSave.length === 0) {
+          setError('No valid ideas were generated. Please try again.');
+          setLoading(false);
+          return;
+        }
+
         // Use insert with returning to get the inserted rows
         const { data: insertResult, error: saveError } = await supabase
           .from("video_ideas")
@@ -651,7 +676,7 @@ export const useIdeaGenerator = () => {
 
         if (insertResult && insertResult.length > 0) {
           // Transform the returned data directly instead of fetching again
-          const transformedIdeas = insertResult.map(transformSupabaseIdea);
+          const transformedIdeas = insertResult.map(idea => transformSupabaseIdea(idea));
           console.log("Transformed ideas (from insert result):", transformedIdeas);
           
           // Set ideas - make sure this is working
@@ -664,6 +689,7 @@ export const useIdeaGenerator = () => {
               ? "Your advertisement ideas have been generated."
               : "Your video ideas have been generated.",
           });
+          setLoading(false);
         } else {
           // Fallback to fetching if insert doesn't return data
           console.log("Fetching newly created ideas as fallback...");
@@ -683,7 +709,7 @@ export const useIdeaGenerator = () => {
 
           console.log("Fetched ideas:", savedIdeas);
           if (savedIdeas && savedIdeas.length > 0) {
-            const transformedIdeas = savedIdeas.map(transformSupabaseIdea);
+            const transformedIdeas = savedIdeas.map(idea => transformSupabaseIdea(idea));
             console.log("Transformed ideas (from fetch):", transformedIdeas);
             setIdeas(transformedIdeas);
             updatePreviousIdeasContext(transformedIdeas);
@@ -697,9 +723,8 @@ export const useIdeaGenerator = () => {
           } else {
             console.error("No ideas were returned after saving");
             setError("No ideas were generated. Please try again.");
-            setLoading(false);
-            return;
           }
+          setLoading(false);
         }
       } catch (functionError: any) {
         console.error('Error in generate-ideas function:', functionError);
@@ -716,6 +741,36 @@ export const useIdeaGenerator = () => {
       });
       setLoading(false);
     }
+  };
+
+  // Make sure the transformSupabaseIdea function is working correctly
+  const transformSupabaseIdea = (idea: any): GeneratedIdea => {
+    if (!idea) {
+      console.error("Tried to transform a null or undefined idea");
+      return {
+        id: "error",
+        title: "Error Processing Idea",
+        category: "Error",
+        description: "There was a problem processing this idea",
+        tags: [],
+        platform: platform,
+        color: "blue",
+        is_saved: false
+      };
+    }
+    
+    console.log("Transforming idea:", idea);
+    return {
+      id: idea.id || "missing-id",
+      title: idea.title || "Untitled",
+      category: idea.category || "General",
+      description: idea.description || "No description provided",
+      tags: Array.isArray(idea.tags) ? idea.tags : [],
+      platform: idea.platform || platform,
+      color: idea.color || "blue",
+      is_saved: Boolean(idea.is_saved),
+      scheduled_for: idea.scheduled_for
+    };
   };
 
   return {

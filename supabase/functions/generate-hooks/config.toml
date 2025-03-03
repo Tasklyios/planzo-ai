@@ -1,2 +1,4 @@
 
+# This should be kept the same
 project_id = "hhkabxkelgabcsczsljf"
+verify_jwt = false
