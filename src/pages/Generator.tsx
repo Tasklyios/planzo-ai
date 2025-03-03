@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -135,9 +136,9 @@ const Generator = () => {
     } catch (error: any) {
       console.error("Error adding to calendar:", error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to add idea to calendar. Please try again."
+        description: error.message || "Failed to add idea to calendar",
+        variant: "destructive"
       });
     }
   };
@@ -201,6 +202,15 @@ const Generator = () => {
   const navigateToBilling = () => {
     navigate('/billing');
   };
+
+  // Add debug for auth status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      console.log("Auth status:", data.session ? "Logged in" : "Not logged in");
+    };
+    checkAuth();
+  }, []);
 
   return <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 pt-8 pb-12 py-0">
@@ -291,28 +301,35 @@ const Generator = () => {
             </button>
           </div>
 
-          {ideas && ideas.length > 0 ? (
-            <>
-              <div className="mb-4">
-                <h2 className="text-xl font-semibold text-foreground">Generated Ideas</h2>
-                <p className="text-sm text-muted-foreground">{ideas.length} ideas generated for your content</p>
-              </div>
-              <IdeasGrid 
-                ideas={ideas} 
-                onAddToCalendar={idea => setAddingToCalendar({
-                  idea,
-                  title: idea.title,
-                  scheduledFor: new Date().toISOString().split('T')[0]
-                })} 
-                onEdit={ideaId => setEditingIdeaId(ideaId)} 
-                onBookmarkToggle={handleBookmarkToggle} 
-              />
-            </>
-          ) : !loading && !error ? (
-            <div className="py-8 text-center text-muted-foreground">
-              <p>No ideas generated yet. Fill in the form above and click "Generate Viral Ideas".</p>
+          {loading ? (
+            <div className="py-8 text-center">
+              <Spinner size="lg" className="mx-auto" />
+              <p className="mt-4 text-muted-foreground">Generating viral ideas for your content...</p>
             </div>
-          ) : null}
+          ) : (
+            ideas && ideas.length > 0 ? (
+              <>
+                <div className="mb-4">
+                  <h2 className="text-xl font-semibold text-foreground">Generated Ideas</h2>
+                  <p className="text-sm text-muted-foreground">{ideas.length} ideas generated for your content</p>
+                </div>
+                <IdeasGrid 
+                  ideas={ideas} 
+                  onAddToCalendar={idea => setAddingToCalendar({
+                    idea,
+                    title: idea.title,
+                    scheduledFor: new Date().toISOString().split('T')[0]
+                  })} 
+                  onEdit={ideaId => setEditingIdeaId(ideaId)} 
+                  onBookmarkToggle={handleBookmarkToggle} 
+                />
+              </>
+            ) : !error ? (
+              <div className="py-8 text-center text-muted-foreground">
+                <p>No ideas generated yet. Fill in the form above and click "Generate Viral Ideas".</p>
+              </div>
+            ) : null
+          )}
         </section>
 
         {editingIdeaId && <EditIdea ideaId={editingIdeaId} onClose={() => setEditingIdeaId(null)} />}

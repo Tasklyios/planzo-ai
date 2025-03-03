@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -249,13 +250,13 @@ export const useIdeaGenerator = () => {
     console.log("Transforming idea:", idea);
     return {
       id: idea.id,
-      title: idea.title,
-      category: idea.category,
-      description: idea.description,
+      title: idea.title || "Untitled",
+      category: idea.category || "General",
+      description: idea.description || "No description provided",
       tags: idea.tags || [],
-      platform: idea.platform,
-      color: idea.color,
-      is_saved: idea.is_saved || false,
+      platform: idea.platform || platform,
+      color: idea.color || "blue",
+      is_saved: Boolean(idea.is_saved),
       scheduled_for: idea.scheduled_for
     };
   };
@@ -536,17 +537,13 @@ export const useIdeaGenerator = () => {
         audience, 
         videoType, 
         platform, 
-        customIdeas, 
+        customIdeas,
         contentStyle: localStorage.getItem("contentStyle") || "",
         contentPersonality: localStorage.getItem("contentPersonality") || "",
-        isAdRequest: videoType.toLowerCase().includes('ad') || 
-                    videoType.toLowerCase().includes('advertisement') ||
-                    videoType.toLowerCase().includes('promotional'),
         previousIdeasContext,
-        numIdeas: 5,  // Specify exactly 5 ideas should be generated
+        numIdeas: 5,
         isEcoRelated,
         isEcommerce,
-        optimizeForViral: isEcommerce, // Optimize for viral content for ecommerce
         modelOverride: modelToUse,
         marketResearch: marketResearch
       });
@@ -564,18 +561,17 @@ export const useIdeaGenerator = () => {
             contentStyle: localStorage.getItem("contentStyle") || "",
             contentPersonality: localStorage.getItem("contentPersonality") || "",
             previousIdeas: previousIdeasContext,
-            numIdeas: 5,  // Important: Specifying the number of ideas to generate
+            numIdeas: 5,
             isEcoRelated,
             isEcommerce,
-            optimizeForViral: isEcommerce, // Optimize for viral ecommerce content
-            modelOverride: modelToUse, // Pass the model override
-            marketResearch: marketResearch // Pass market research data
+            optimizeForViral: isEcommerce,
+            modelOverride: modelToUse,
+            marketResearch: marketResearch
           },
         });
         
         const end = performance.now();
         console.log(`Idea generation took ${end - start}ms`);
-
         console.log("Response from generate-ideas:", data, error);
 
         if (error) {
@@ -624,9 +620,9 @@ export const useIdeaGenerator = () => {
         const ideasToProcess = (data.ideas || []).slice(0, 5);
 
         const ideasToSave = ideasToProcess.map((idea: any) => ({
-          title: idea.title,
-          description: idea.description,
-          category: idea.category,
+          title: idea.title || "Untitled Idea",
+          description: idea.description || "No description provided",
+          category: idea.category || "General",
           tags: idea.tags || [],
           platform: platform,
           user_id: userId,
@@ -638,6 +634,7 @@ export const useIdeaGenerator = () => {
 
         console.log("Ideas to save:", ideasToSave);
 
+        // Use insert with returning to get the inserted rows
         const { data: insertResult, error: saveError } = await supabase
           .from("video_ideas")
           .insert(ideasToSave)
@@ -653,11 +650,20 @@ export const useIdeaGenerator = () => {
         console.log("Insert result:", insertResult);
 
         if (insertResult && insertResult.length > 0) {
-          // Use the returned data directly instead of fetching again
+          // Transform the returned data directly instead of fetching again
           const transformedIdeas = insertResult.map(transformSupabaseIdea);
           console.log("Transformed ideas (from insert result):", transformedIdeas);
+          
+          // Set ideas - make sure this is working
           setIdeas(transformedIdeas);
           updatePreviousIdeasContext(transformedIdeas);
+          
+          toast({
+            title: "Success!",
+            description: isAdRequest 
+              ? "Your advertisement ideas have been generated."
+              : "Your video ideas have been generated.",
+          });
         } else {
           // Fallback to fetching if insert doesn't return data
           console.log("Fetching newly created ideas as fallback...");
@@ -676,21 +682,29 @@ export const useIdeaGenerator = () => {
           }
 
           console.log("Fetched ideas:", savedIdeas);
-          const transformedIdeas = (savedIdeas || []).map(transformSupabaseIdea);
-          console.log("Transformed ideas (from fetch):", transformedIdeas);
-          setIdeas(transformedIdeas);
-          updatePreviousIdeasContext(transformedIdeas);
+          if (savedIdeas && savedIdeas.length > 0) {
+            const transformedIdeas = savedIdeas.map(transformSupabaseIdea);
+            console.log("Transformed ideas (from fetch):", transformedIdeas);
+            setIdeas(transformedIdeas);
+            updatePreviousIdeasContext(transformedIdeas);
+            
+            toast({
+              title: "Success!",
+              description: isAdRequest 
+                ? "Your advertisement ideas have been generated."
+                : "Your video ideas have been generated.",
+            });
+          } else {
+            console.error("No ideas were returned after saving");
+            setError("No ideas were generated. Please try again.");
+            setLoading(false);
+            return;
+          }
         }
-
-        toast({
-          title: "Success!",
-          description: isAdRequest 
-            ? "Your advertisement ideas have been generated."
-            : "Your video ideas have been generated.",
-        });
       } catch (functionError: any) {
         console.error('Error in generate-ideas function:', functionError);
         setError(`Generate Ideas function error: ${functionError.message || 'Unknown error'}`);
+        setLoading(false);
       }
     } catch (error: any) {
       console.error('Error generating ideas:', error);
@@ -700,7 +714,6 @@ export const useIdeaGenerator = () => {
         title: "Failed to Generate Ideas",
         description: error.message || 'An unexpected error occurred. Please try again.',
       });
-    } finally {
       setLoading(false);
     }
   };
