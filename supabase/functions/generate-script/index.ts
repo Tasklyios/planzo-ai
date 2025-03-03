@@ -1,45 +1,28 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { OpenAI } from "https://deno.land/x/openai@v4.20.1/mod.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.29.0';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
+import { corsHeaders } from '../_shared/cors.ts';
+import OpenAI from 'https://esm.sh/openai@4.28.0';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const openAIKey = Deno.env.get('OPENAI_API_KEY') ?? '';
 
-serve(async (req) => {
+const supabase = createClient(supabaseUrl, supabaseKey);
+const openai = new OpenAI({
+  apiKey: openAIKey,
+});
+
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Check if request is from allowed domains
   try {
-    const apiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!apiKey) {
-      throw new Error('OpenAI API key is missing');
-    }
+    const { title, description, contentStyle, hook, targetLength, userId, savedIdea } = await req.json();
 
-    const openai = new OpenAI({
-      apiKey: apiKey,
-    });
-
-    // Get Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
-      throw new Error('Supabase environment variables are missing');
-    }
-
-    // Initialize Supabase client with service role key for admin operations
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Parse request body
-    const requestBody = await req.json();
-    const { title, description, contentStyle, hook, targetLength, userId, savedIdea } = requestBody;
-
+    // Validate required fields
     if (!title) {
       return new Response(
         JSON.stringify({ error: 'Title is required' }),
@@ -52,7 +35,7 @@ serve(async (req) => {
     // Check if the user exists and usage limits
     if (userId) {
       try {
-        // Check usage limits using the shared function
+        // Check usage limits using the check-usage-limits function
         const { data: usageResponse, error: limitCheckError } = await supabase.functions.invoke('check-usage-limits', {
           body: { action: 'scripts' }
         });
@@ -80,30 +63,43 @@ serve(async (req) => {
       }
     }
 
+    // Map target length to actual time ranges for prompt
+    const lengthMapping = {
+      "15-30": "15-30 seconds",
+      "30-60": "30-60 seconds",
+      "1-2": "1-2 minutes",
+      "2-3": "2-3 minutes",
+      "3-5": "3-5 minutes"
+    };
+
+    const timeRange = lengthMapping[targetLength as keyof typeof lengthMapping] || "30-60 seconds";
+
     // Create prompt for script generation with emphasis on conversational, friendly tone
     let prompt = `
-      Generate a video script for the following title and description:
+      Write a short, engaging script for a ${timeRange} ${contentStyle} video about: "${title}".
       
-      TITLE: ${title}
-      DESCRIPTION: ${description || "N/A"}
+      ${description ? `Additional context: ${description}` : ''}
+      ${hook ? `Start with this hook: "${hook}"` : ''}
       
-      ${hook ? `HOOK TO USE AT THE START: ${hook}` : ""}
+      The script should be:
+      - Concise and direct, optimized for ${timeRange} of content
+      - Written in a conversational, natural-sounding voice
+      - Engaging from the very first line to capture attention quickly
+      - Written in a first-person perspective (using "I", "we", etc.)
+      - Formatted as plain text (no timestamps, scene directions, or camera angles)
+      - Easy to read aloud without sounding scripted
+      - Include transitions between points for a smooth flow
       
-      ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ""}
+      The script should NOT:
+      - Include any formatting like [INTRO], [HOOK], etc.
+      - Include any placeholder text or timestamps
+      - Sound robotic or overly formal
       
-      TARGET VIDEO LENGTH: ${targetLength || "3-5"} minutes
-      
-      IMPORTANT:
-      - Write the script in an extremely conversational tone, like a friend casually talking to another friend.
-      - Use casual language, contractions, filler words (like "um", "you know", "actually"), and natural pauses.
-      - Include informal transitions between topics.
-      - Avoid formal language or "presenter voice" entirely.
-      - Include natural speech patterns, brief tangents, and self-corrections occasionally.
-      - Use simple words and short sentences, as if speaking off the cuff.
-      - Maintain a warm, authentic tone throughout.
-      - Don't be afraid to use slang (where appropriate) and casual expressions.
-      - Avoid perfectionism - real people don't speak in perfectly structured paragraphs.
-      - Adjust the script length to fit the target video duration of ${targetLength || "3-5"} minutes.
+      For short-form content (under 60 seconds):
+      - Focus on ONE main point or idea only
+      - Get to the point immediately
+      - Use short, punchy sentences
+      - Include a clear call-to-action at the end
       
       The script should sound completely natural when read aloud - like something someone would actually say in a conversation, not like something written.
     `;
@@ -114,13 +110,16 @@ serve(async (req) => {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { 
-          role: "system", 
-          content: "You write extremely conversational, authentic-sounding video scripts that sound exactly like how a real person talks to their friend. You don't sound like a professional presenter or educator - you write scripts that sound like genuine, unscripted conversation. You include natural speech patterns, casual language, brief tangents, and self-corrections. Your scripts never sound stiff or formal." 
+        {
+          role: "system",
+          content: "You are an expert script writer for short-form social media videos. Write concise, engaging scripts that sound natural when spoken. Focus on conversational tone and getting to the point quickly."
         },
-        { role: "user", content: prompt }
+        {
+          role: "user",
+          content: prompt
+        }
       ],
-      temperature: 0.8, // Slightly higher temperature for more natural variations
+      max_tokens: 1000,
     });
 
     const scriptContent = completion.choices[0]?.message?.content || "";
@@ -132,10 +131,11 @@ serve(async (req) => {
       JSON.stringify({ script: scriptContent }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
-    console.error('Error in function:', error);
+    console.error('Error generating script:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'An error occurred' }),
+      JSON.stringify({ error: error.message || 'An unexpected error occurred' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

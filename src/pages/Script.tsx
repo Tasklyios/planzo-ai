@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +20,7 @@ const Script = () => {
   const [script, setScript] = useState("");
   const [contentStyle, setContentStyle] = useState("educational");
   const [selectedHook, setSelectedHook] = useState("");
-  const [targetLength, setTargetLength] = useState("3-5");
+  const [targetLength, setTargetLength] = useState("30-60");
   const [isGenerating, setIsGenerating] = useState(false);
   const [useSavedIdea, setUseSavedIdea] = useState(false);
   const [isSavingScript, setIsSavingScript] = useState(false);
@@ -58,7 +59,7 @@ const Script = () => {
         title: scriptTitle,
         description: scriptDescription,
         contentStyle,
-        hook: selectedHook,
+        hook: selectedHook || null, // Make hook optional
         targetLength,
         userId,
         savedIdea: useSavedIdea ? savedIdea : null,
@@ -69,7 +70,7 @@ const Script = () => {
           title: scriptTitle,
           description: scriptDescription,
           contentStyle,
-          hook: selectedHook,
+          hook: selectedHook || null, // Make hook optional
           targetLength,
           userId,
           savedIdea: useSavedIdea ? savedIdea : null,
@@ -86,12 +87,22 @@ const Script = () => {
         return;
       }
 
-      if (data.error) {
+      if (data && data.error) {
         console.error('Error in function response:', data.error);
         toast({
           variant: "destructive",
           title: "Error",
           description: `Error from AI service: ${data.error}`,
+        });
+        return;
+      }
+
+      if (!data || !data.script) {
+        console.error('Invalid response from function:', data);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Received an invalid response from the server. Please try again.",
         });
         return;
       }
@@ -293,17 +304,19 @@ const Script = () => {
                     <SelectValue placeholder="Select target video length" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1-2">1-2 minutes (Short)</SelectItem>
-                    <SelectItem value="3-5">3-5 minutes (Standard)</SelectItem>
-                    <SelectItem value="6-10">6-10 minutes (Detailed)</SelectItem>
-                    <SelectItem value="10-15">10-15 minutes (In-depth)</SelectItem>
-                    <SelectItem value="15+">15+ minutes (Comprehensive)</SelectItem>
+                    <SelectItem value="15-30">15-30 seconds (Ideal for TikTok)</SelectItem>
+                    <SelectItem value="30-60">30-60 seconds (Short-form)</SelectItem>
+                    <SelectItem value="1-2">1-2 minutes (Standard)</SelectItem>
+                    <SelectItem value="2-3">2-3 minutes (Extended)</SelectItem>
+                    <SelectItem value="3-5">3-5 minutes (Long-form)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
               <div className="space-y-2">
-                <Label>Add a Hook to Your Script</Label>
+                <div className="flex justify-between items-center">
+                  <Label>Add a Hook (Optional)</Label>
+                </div>
                 <HookSelector onSelectHook={handleSelectHook} selectedHook={selectedHook} />
                 
                 {selectedHook && (

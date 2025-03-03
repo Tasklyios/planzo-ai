@@ -11,7 +11,7 @@ verify_jwt = true
 verify_jwt = true
 
 [generate-script]
-verify_jwt = true
+verify_jwt = false
 
 [get-stripe-key]
 verify_jwt = true
