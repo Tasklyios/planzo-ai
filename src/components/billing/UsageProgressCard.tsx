@@ -33,7 +33,7 @@ const UsageItem = ({ title, current, max, type }: UsageItemProps) => {
       </div>
       <Progress
         value={percentage}
-        className={`h-2 ${getProgressColor()}`}
+        indicatorClassName={getProgressColor()}
       />
     </div>
   );
