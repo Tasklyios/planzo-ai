@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -295,13 +296,17 @@ const Generator = () => {
               disabled={loading} 
               className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white dark:text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
             >
-              {loading ? <>
-                  <Spinner size="sm" className="text-white dark:text-white" />
+              {loading ? (
+                <>
+                  <span className="animate-spin">⚡️</span>
                   <span>Generating...</span>
-                </> : <>
-                  <Zap className="h-4 w-4" />
-                  Generate Viral Ideas
-                </>}
+                </>
+              ) : (
+                <>
+                  <span>⚡️</span>
+                  Generate Video Ideas
+                </>
+              )}
             </button>
           </div>
 
@@ -330,7 +335,7 @@ const Generator = () => {
               </>
             ) : !error ? (
               <div className="py-8 text-center text-muted-foreground">
-                <p>No ideas generated yet. Fill in the form above and click "Generate Viral Ideas".</p>
+                <p>No ideas generated yet. Fill in the form above and click "Generate Video Ideas".</p>
               </div>
             ) : null
           )}
