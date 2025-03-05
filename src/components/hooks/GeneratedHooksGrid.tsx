@@ -18,7 +18,13 @@ const GeneratedHooksGrid = ({
   filterHooksByCategory,
   getHookText
 }: GeneratedHooksGridProps) => {
-  if (hooks.length === 0) return null;
+  if (!hooks || hooks.length === 0) return null;
+
+  console.log("GeneratedHooksGrid - Hooks received:", hooks);
+  console.log("Question hooks:", filterHooksByCategory(hooks, 'question').length);
+  console.log("Statistic hooks:", filterHooksByCategory(hooks, 'statistic').length);
+  console.log("Story hooks:", filterHooksByCategory(hooks, 'story').length);
+  console.log("Challenge hooks:", filterHooksByCategory(hooks, 'challenge').length);
 
   return (
     <div className="mt-8">

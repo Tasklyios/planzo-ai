@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -83,6 +82,7 @@ const Hooks = () => {
     setError(null);
     try {
       const hooks = await generateHooks(topic, audience, details);
+      console.log("Hooks received from service:", hooks);
       setGeneratedHooks(hooks);
     } catch (error: any) {
       console.error("Failed to generate hooks:", error);
@@ -116,12 +116,19 @@ const Hooks = () => {
   };
 
   const filterHooksByCategory = (hooks: (HookType | SavedHook)[], category: string): (HookType | SavedHook)[] => {
-    return hooks.filter(hook => hook.category === category);
+    if (!hooks) return [];
+    
+    return hooks.filter(hook => {
+      const hookCategory = 'category' in hook ? hook.category : '';
+      return hookCategory.toLowerCase() === category.toLowerCase();
+    });
   };
 
   // Function to get the hook text regardless of whether it's a HookType or SavedHook
   const getHookText = (hook: HookType | SavedHook): string => {
-    return 'hook_text' in hook ? hook.hook_text : hook.hook;
+    if ('hook_text' in hook) return hook.hook_text;
+    if ('hook' in hook) return hook.hook;
+    return '';
   };
 
   return (

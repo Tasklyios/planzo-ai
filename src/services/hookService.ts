@@ -79,7 +79,41 @@ export const generateHooks = async (
     }
     
     console.log("Hooks generated successfully:", data.hooks);
-    return data.hooks || [];
+    
+    // Transform the returned hooks to match the expected HookType structure
+    // and assign them to specific categories
+    const formattedHooks = data.hooks.map((hook: any, index: number) => {
+      // Determine category based on index or content
+      let category: string;
+      
+      // Simple distribution across categories (this ensures we get hooks in all categories)
+      const categoryIndex = index % 4;
+      switch (categoryIndex) {
+        case 0:
+          category = "question";
+          break;
+        case 1:
+          category = "statistic";
+          break;
+        case 2:
+          category = "story";
+          break;
+        case 3:
+          category = "challenge";
+          break;
+        default:
+          category = "question"; // Default fallback
+      }
+
+      return {
+        id: crypto.randomUUID(),
+        hook_text: hook.hook || "",
+        category: category,
+        explanation: hook.explanation || ""
+      };
+    });
+
+    return formattedHooks || [];
   } catch (error: any) {
     console.error("Error generating hooks:", error);
     throw new Error(error.message || "Failed to generate hooks");

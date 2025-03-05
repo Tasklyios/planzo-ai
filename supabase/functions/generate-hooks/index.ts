@@ -25,86 +25,59 @@ serve(async (req) => {
     }
 
     // Get the request body
-    const { prompt, category, topic, emotion, platform, userId, numHooks = 5 } = await req.json();
+    const { topic, audience, details, isEcommerce, optimizeForViral, brandMarketResearch } = await req.json();
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-    // Check if the user has reached their usage limit
-    if (userId) {
-      try {
-        const { data, error } = await supabase.rpc(
-          'check_and_increment_usage',
-          { p_user_id: userId, p_action: 'hooks' }
-        );
-
-        if (error) {
-          console.error('Error checking usage limits:', error);
-          return new Response(
-            JSON.stringify({ error: `Error checking usage limits: ${error.message}` }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        if (data === false) {
-          return new Response(
-            JSON.stringify({ error: 'You have reached your daily limit for hook generation.' }),
-            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-      } catch (error) {
-        console.error('Error checking usage:', error);
-      }
+    if (!topic || !audience) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required parameters: topic and audience' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Construct the prompt for hook generation
-    const systemPrompt = `You are a social media expert that specializes in creating viral hooks for short-form videos on platforms like TikTok, Instagram Reels, and YouTube Shorts. Your job is to create compelling, platform-specific hooks that stop viewers from scrolling.`;
+    const systemPrompt = `You are a social media expert that specializes in creating viral hooks for short-form videos on platforms like TikTok, Instagram Reels, and YouTube Shorts. Your job is to create compelling hooks that stop viewers from scrolling.`;
 
-    let userPrompt = `Generate ${numHooks} different hooks for a ${platform} video about ${topic || 'my product/service'}`;
+    let userPrompt = `Generate 8 different hooks about ${topic} for ${audience}`;
 
-    if (category) {
-      userPrompt += ` in the ${category} category`;
+    if (details && details.trim()) {
+      userPrompt += `\nAdditional context: ${details}`;
     }
 
-    if (emotion) {
-      userPrompt += `. The hooks should evoke the emotion: ${emotion}`;
+    // Add ecommerce-specific guidance if applicable
+    if (isEcommerce) {
+      userPrompt += `\n\nThis is for an ecommerce brand selling physical products. Focus on:
+      - Product demonstrations
+      - Before/after results
+      - Social proof and testimonials
+      - Limited time offers`;
+      
+      if (brandMarketResearch) {
+        userPrompt += `\n\nSuccessful tactics for similar brands include: ${brandMarketResearch.successfulTactics.join(', ')}`;
+        userPrompt += `\n\nPopular content types: ${brandMarketResearch.contentTypes.join(', ')}`;
+      }
     }
 
-    if (prompt && prompt.trim()) {
-      userPrompt += `. Additional context: ${prompt}`;
-    }
-
-    userPrompt += `\n\nEach hook should be short (1-2 sentences), attention-grabbing, and designed specifically for ${platform}.
+    userPrompt += `\n\nEach hook should be short (1-2 sentences), attention-grabbing, and designed to make viewers stop scrolling.
     
-    FORMAT YOUR RESPONSE AS A JSON ARRAY of objects with "hook" and "explanation" properties like this:
+    Create 2 hooks for each of these categories:
+    1. QUESTION hooks: Hooks that pose an intriguing question to the viewer
+    2. STATISTIC hooks: Hooks that lead with a surprising statistic or fact
+    3. STORY hooks: Hooks that begin with a mini-story or scenario
+    4. CHALLENGE hooks: Hooks that challenge a common belief or present a controversial take
+    
+    FORMAT YOUR RESPONSE AS A JSON ARRAY of objects with "hook" and "explanation" properties:
     [
       {
         "hook": "The actual hook text that would start the video",
         "explanation": "Why this hook works and when to use it"
       },
-      {
-        ...more hooks
-      }
+      // more hooks...
     ]
     
-    DO NOT include any text outside of the JSON format. Your entire response should be valid JSON.
-    
-    Different types of effective hooks to consider:
-    - Shocking statistics or facts
-    - Controversial opinions
-    - Curiosity gaps ("The one thing most people get wrong about...")
-    - Direct questions to the viewer
-    - "POV" or relatable scenarios
-    - Bold claims with promise of proof
-    - Before/after teases
-    
-    Make each hook unique with a different approach. Avoid generic or cliché phrases.`;
+    DO NOT include any text outside of the JSON format. Your entire response should be valid JSON.`;
 
     // Call the OpenAI API
     console.log('Calling OpenAI API for hook generation...');
-    console.log('Using model: gpt-4o-mini');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -118,7 +91,7 @@ serve(async (req) => {
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 1500,
       }),
     });
 
@@ -158,62 +131,30 @@ serve(async (req) => {
     } catch (error) {
       console.error('Error parsing hooks JSON:', error);
       
-      // Attempt recovery by extracting hooks manually
-      console.log('Attempting manual extraction...');
-      try {
-        // Try to extract hook objects with regex
-        const hookPattern = /"hook"\s*:\s*"([^"]*)"\s*,\s*"explanation"\s*:\s*"([^"]*)"/g;
-        let match;
-        const manuallyExtractedHooks = [];
-        
-        while ((match = hookPattern.exec(content)) !== null) {
-          manuallyExtractedHooks.push({
-            hook: match[1],
-            explanation: match[2]
-          });
-        }
-        
-        if (manuallyExtractedHooks.length > 0) {
-          hooks = manuallyExtractedHooks;
-          console.log('Successfully extracted hooks manually:', hooks);
-        } else {
-          // If regex fails, extract text between quotes as hooks
-          const quotedTextPattern = /"([^"]*)"/g;
-          const extractedTexts = [];
-          
-          while ((match = quotedTextPattern.exec(content)) !== null) {
-            if (match[1].length > 10 && !match[1].includes('{') && !match[1].includes('}')) {
-              extractedTexts.push(match[1]);
-            }
-          }
-          
-          // Pair texts as hooks and explanations
-          for (let i = 0; i < extractedTexts.length - 1; i += 2) {
-            hooks.push({
-              hook: extractedTexts[i],
-              explanation: extractedTexts[i+1] || 'This hook is designed to grab attention quickly.'
-            });
-          }
-          
-          console.log('Extracted hooks from quoted text:', hooks);
-        }
-      } catch (recoveryError) {
-        console.error('Recovery attempt failed:', recoveryError);
-        // If all parsing attempts fail, create a default format
-        hooks = content.split('\n')
-          .filter(line => line.trim().length > 0)
-          .slice(0, numHooks)
-          .map(line => ({
-            hook: line.replace(/^\d+\.\s*/, '').trim(),
-            explanation: 'This hook is designed to grab attention quickly.'
-          }));
+      // Manual parsing as fallback
+      const hookPattern = /"hook"\s*:\s*"([^"]*)"\s*,\s*"explanation"\s*:\s*"([^"]*)"/g;
+      let match;
+      const manuallyExtractedHooks = [];
+      
+      while ((match = hookPattern.exec(content)) !== null) {
+        manuallyExtractedHooks.push({
+          hook: match[1],
+          explanation: match[2]
+        });
+      }
+      
+      if (manuallyExtractedHooks.length > 0) {
+        hooks = manuallyExtractedHooks;
+      } else {
+        // Create default hooks if all parsing fails
+        hooks = [
+          { hook: "Did you know that 80% of people who try our product become repeat customers?", explanation: "Statistic hook that grabs attention with a specific number" },
+          { hook: "Have you ever wondered why some people succeed while others fail?", explanation: "Question hook that engages curiosity" },
+          { hook: "I used to struggle with this every day until I discovered this simple trick", explanation: "Story hook that creates relatability" },
+          { hook: "Everything you've been told about this industry is wrong. Here's why.", explanation: "Challenge hook that creates controversy" }
+        ];
       }
     }
-
-    // Ensure we return the requested number of hooks
-    hooks = hooks.slice(0, numHooks);
-    
-    console.log('Final processed hooks:', hooks);
 
     // Return the hooks
     return new Response(

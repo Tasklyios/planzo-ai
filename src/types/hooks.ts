@@ -1,8 +1,10 @@
+
 export interface HookType {
   id?: string;
   hook_text: string;
   category: string;
   created_at?: string;
+  explanation?: string;
 }
 
 export interface SavedHook {
