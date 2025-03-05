@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import PricingSheet from "@/components/pricing/PricingSheet";
 import LinkSubscriptionDialog from "@/components/billing/LinkSubscriptionDialog";
+import UsageProgressCard from "@/components/billing/UsageProgressCard";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -25,12 +26,24 @@ type Subscription = {
   stripe_subscription_id: string | null;
 };
 
+type UsageData = {
+  ideas: { current: number; max: number };
+  scripts: { current: number; max: number };
+  hooks: { current: number; max: number };
+};
+
 const Billing = () => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const [usageLoading, setUsageLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [usageData, setUsageData] = useState<UsageData>({
+    ideas: { current: 0, max: 5 },
+    scripts: { current: 0, max: 3 },
+    hooks: { current: 0, max: 5 }
+  });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -72,6 +85,9 @@ const Billing = () => {
           stripe_customer_id: data.stripe_customer_id,
           stripe_subscription_id: data.stripe_subscription_id
         });
+
+        // Update usage limits based on tier
+        updateUsageLimits(subscriptionTier as 'free' | 'pro' | 'plus' | 'business');
       } else {
         console.log("No subscription data found, defaulting to free tier");
         // Default to free tier if no subscription is found
@@ -81,6 +97,9 @@ const Billing = () => {
           stripe_customer_id: null,
           stripe_subscription_id: null
         });
+        
+        // Set free tier limits
+        updateUsageLimits('free');
       }
       
       setLastUpdated(new Date());
@@ -94,18 +113,96 @@ const Billing = () => {
         stripe_customer_id: null,
         stripe_subscription_id: null
       });
+      updateUsageLimits('free');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
+  const fetchUsageData = async () => {
+    try {
+      setUsageLoading(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) return;
+
+      const { data, error } = await supabase
+        .from('user_daily_usage')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('date', new Date().toISOString().split('T')[0])
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching usage data:", error);
+        throw error;
+      }
+
+      console.log("Raw usage data from database:", data);
+
+      if (data) {
+        setUsageData(prevData => ({
+          ideas: { ...prevData.ideas, current: data.ideas_generated || 0 },
+          scripts: { ...prevData.scripts, current: data.scripts_generated || 0 },
+          hooks: { ...prevData.hooks, current: data.hooks_generated || 0 }
+        }));
+      } else {
+        // No usage data today, set all to 0
+        setUsageData(prevData => ({
+          ideas: { ...prevData.ideas, current: 0 },
+          scripts: { ...prevData.scripts, current: 0 },
+          hooks: { ...prevData.hooks, current: 0 }
+        }));
+      }
+    } catch (err) {
+      console.error("Error fetching usage data:", err);
+    } finally {
+      setUsageLoading(false);
+    }
+  };
+
+  const updateUsageLimits = (tier: 'free' | 'pro' | 'plus' | 'business') => {
+    let ideasLimit = 5;
+    let scriptsLimit = 3;
+    let hooksLimit = 5;
+
+    switch (tier) {
+      case 'pro':
+        ideasLimit = 20;
+        scriptsLimit = 10;
+        hooksLimit = 15;
+        break;
+      case 'plus':
+        ideasLimit = 50;
+        scriptsLimit = 25;
+        hooksLimit = 30;
+        break;
+      case 'business':
+        ideasLimit = 999; // Effectively unlimited
+        scriptsLimit = 999;
+        hooksLimit = 999;
+        break;
+      default: // 'free'
+        break;
+    }
+
+    setUsageData(prevData => ({
+      ideas: { ...prevData.ideas, max: ideasLimit },
+      scripts: { ...prevData.scripts, max: scriptsLimit },
+      hooks: { ...prevData.hooks, max: hooksLimit }
+    }));
+  };
+
   useEffect(() => {
     fetchSubscription();
+    fetchUsageData();
     
     // Set up listener for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(() => {
       fetchSubscription();
+      fetchUsageData();
     });
     
     // Set up a subscription to subscription changes
@@ -121,15 +218,30 @@ const Billing = () => {
       })
       .subscribe();
 
+    // Set up a subscription to usage changes
+    const usageChannel = supabase
+      .channel('public:user_daily_usage')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'user_daily_usage',
+      }, () => {
+        console.log('Usage data changed, refreshing...');
+        fetchUsageData();
+      })
+      .subscribe();
+
     // Poll for changes every 30 seconds in case webhook fails
     const interval = setInterval(() => {
       console.log('Polling for subscription changes...');
       fetchSubscription();
+      fetchUsageData();
     }, 30000);
 
     return () => {
       authListener.subscription.unsubscribe();
       supabase.removeChannel(channel);
+      supabase.removeChannel(usageChannel);
       clearInterval(interval);
     };
   }, [navigate]);
@@ -141,6 +253,7 @@ const Billing = () => {
       description: "Getting your latest subscription information",
     });
     fetchSubscription();
+    fetchUsageData();
   };
 
   const formatDate = (dateString: string | null) => {
@@ -223,63 +336,71 @@ const Billing = () => {
       )}
 
       <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" /> Current Subscription
-            </CardTitle>
-            <CardDescription>
-              Your current plan and subscription details
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground">Current Plan</h3>
-                <p className="text-2xl font-bold capitalize">
-                  {subscription?.tier || "Free"}
-                </p>
-              </div>
-              
-              {subscription?.current_period_end && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" /> Current Subscription
+              </CardTitle>
+              <CardDescription>
+                Your current plan and subscription details
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
                 <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">Renews On</h3>
-                  <p className="font-medium">
-                    {formatDate(subscription.current_period_end)}
+                  <h3 className="font-medium text-sm text-muted-foreground">Current Plan</h3>
+                  <p className="text-2xl font-bold capitalize">
+                    {subscription?.tier || "Free"}
                   </p>
                 </div>
-              )}
-              
-              {subscription?.tier !== 'free' && subscription?.stripe_customer_id && (
-                <Button
-                  variant="outline"
-                  className="w-full mt-4"
-                  onClick={handleManageSubscription}
-                >
-                  Manage Subscription
-                </Button>
-              )}
-              
-              {!subscription || subscription?.tier === 'free' ? (
-                <span className="text-sm text-muted-foreground block mt-2">
-                  Upgrade to get access to more features
-                </span>
-              ) : (
-                <span className="text-sm text-muted-foreground block mt-2">
-                  Your subscription is active and will automatically renew
-                </span>
-              )}
-            </div>
-            
-            {subscription && (
-              <div className="mt-4 pt-4 border-t text-xs text-muted-foreground">
-                <p>Subscription ID: {subscription.stripe_subscription_id || 'N/A'}</p>
-                <p>Customer ID: {subscription.stripe_customer_id || 'N/A'}</p>
-                <p>Last updated: {lastUpdated.toLocaleTimeString()}</p>
+                
+                {subscription?.current_period_end && (
+                  <div>
+                    <h3 className="font-medium text-sm text-muted-foreground">Renews On</h3>
+                    <p className="font-medium">
+                      {formatDate(subscription.current_period_end)}
+                    </p>
+                  </div>
+                )}
+                
+                {subscription?.tier !== 'free' && subscription?.stripe_customer_id && (
+                  <Button
+                    variant="outline"
+                    className="w-full mt-4"
+                    onClick={handleManageSubscription}
+                  >
+                    Manage Subscription
+                  </Button>
+                )}
+                
+                {!subscription || subscription?.tier === 'free' ? (
+                  <span className="text-sm text-muted-foreground block mt-2">
+                    Upgrade to get access to more features
+                  </span>
+                ) : (
+                  <span className="text-sm text-muted-foreground block mt-2">
+                    Your subscription is active and will automatically renew
+                  </span>
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+              
+              {subscription && (
+                <div className="mt-4 pt-4 border-t text-xs text-muted-foreground">
+                  <p>Subscription ID: {subscription.stripe_subscription_id || 'N/A'}</p>
+                  <p>Customer ID: {subscription.stripe_customer_id || 'N/A'}</p>
+                  <p>Last updated: {lastUpdated.toLocaleTimeString()}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <UsageProgressCard 
+            tierName={subscription?.tier || 'Free'} 
+            usageData={usageData}
+            isLoading={usageLoading} 
+          />
+        </div>
 
         <div className="space-y-4">
           <Card>
