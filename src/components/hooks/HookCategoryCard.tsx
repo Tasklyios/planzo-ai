@@ -68,7 +68,7 @@ const HookCategoryCard = ({
                 <BookmarkIcon 
                   className="h-4 w-4" 
                   fill={isHookSaved(hook) ? "currentColor" : "none"} 
-                  stroke={isHookSaved(hook) ? "currentColor" : "currentColor"}
+                  stroke="currentColor"
                 />
               )}
             </Button>
