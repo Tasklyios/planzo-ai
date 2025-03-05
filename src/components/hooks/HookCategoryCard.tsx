@@ -60,6 +60,7 @@ const HookCategoryCard = ({
               onClick={() => 'hook_text' in hook ? onSaveHook(hook as HookType) : null}
               disabled={isSaving || isHookSaved(hook)}
               className={isHookSaved(hook) ? "text-primary" : ""}
+              title={isHookSaved(hook) ? "Already saved" : "Save hook"}
             >
               {isSaving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -67,6 +68,7 @@ const HookCategoryCard = ({
                 <BookmarkIcon 
                   className="h-4 w-4" 
                   fill={isHookSaved(hook) ? "currentColor" : "none"} 
+                  stroke={isHookSaved(hook) ? "currentColor" : "currentColor"}
                 />
               )}
             </Button>
