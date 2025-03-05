@@ -1,5 +1,6 @@
-<lov-code>
-import 'https://deno.land/x/xhr@0.1.0/mod.ts';
+
+// Import XHR using the correct syntax for Deno edge functions
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
 
@@ -334,4 +335,68 @@ function parseAndValidateIdeas(rawResponse, isEcoBrand) {
     let parsedData;
     try {
       parsedData = JSON.parse(jsonString);
-   
+      
+      if (!parsedData.ideas || !Array.isArray(parsedData.ideas)) {
+        throw new Error('JSON does not contain ideas array');
+      }
+      
+      return parsedData.ideas.map(cleanIdeaData);
+    } catch (jsonError) {
+      console.error('Error parsing JSON:', jsonError);
+      return extractIdeasFromText(rawResponse);
+    }
+  } catch (error) {
+    console.error('Error in parseAndValidateIdeas:', error);
+    return [];
+  }
+}
+
+// Helper function to extract ideas from text when JSON parsing fails
+function extractIdeasFromText(text) {
+  try {
+    const ideas = [];
+    
+    // Look for patterns like "1. Title:" or "#1: Title"
+    const titleMatches = text.match(/(?:^|\n)(?:\d+\.|\#\d+:?)\s*([^\n]+)/g);
+    
+    if (titleMatches && titleMatches.length > 0) {
+      titleMatches.slice(0, 5).forEach((match, index) => {
+        const title = match.replace(/(?:^|\n)(?:\d+\.|\#\d+:?)\s*/, '').trim();
+        
+        // Try to find description (everything between this title and the next, or the end)
+        const startPos = text.indexOf(match) + match.length;
+        const nextTitlePos = index < titleMatches.length - 1 ? 
+          text.indexOf(titleMatches[index + 1]) : text.length;
+        
+        let description = text.substring(startPos, nextTitlePos).trim();
+        
+        // Remove any category labels
+        description = description.replace(/^(?:Category|Type):[^\n]+\n/i, '');
+        
+        ideas.push({
+          title,
+          category: "General",
+          description: description.substring(0, 150) + (description.length > 150 ? '...' : ''),
+          tags: [title.split(' ')[0].toLowerCase(), "video", "content"]
+        });
+      });
+    }
+    
+    return ideas;
+  } catch (error) {
+    console.error('Error in extractIdeasFromText:', error);
+    return [];
+  }
+}
+
+// Helper function to clean and validate idea data
+function cleanIdeaData(idea) {
+  return {
+    title: typeof idea.title === 'string' ? idea.title.trim() : 'Untitled Idea',
+    category: typeof idea.category === 'string' ? idea.category.trim() : 'General',
+    description: typeof idea.description === 'string' ? idea.description.trim() : '',
+    tags: Array.isArray(idea.tags) ? 
+      idea.tags.map(tag => typeof tag === 'string' ? tag.trim().toLowerCase() : '') : 
+      ['content', 'video']
+  };
+}
