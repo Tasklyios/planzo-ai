@@ -79,7 +79,7 @@ serve(async (req) => {
     }
 
     // Parse the request body
-    const { action } = await req.json();
+    const { action, count = 1 } = await req.json();
     
     if (!action) {
       return new Response(
@@ -146,8 +146,11 @@ serve(async (req) => {
       else if (tier === 'plus') maxLimit = 30;
     }
 
-    // Check if user is over their limit
-    if (currentUsage >= maxLimit) {
+    // For ideas specifically, use the actual count (5) instead of 1
+    const incrementCount = action === 'ideas' ? 5 : 1;
+    
+    // Check if user would exceed their limit
+    if (currentUsage + incrementCount > maxLimit) {
       return new Response(
         JSON.stringify({
           canProceed: false,
@@ -157,13 +160,13 @@ serve(async (req) => {
       );
     }
 
-    // Increment usage counter
+    // Increment usage counter with the correct count
     const usage = {
       user_id: user.id,
       date: new Date().toISOString().split('T')[0],
-      ideas_generated: action === 'ideas' ? 1 : 0,
-      scripts_generated: action === 'scripts' ? 1 : 0,
-      hooks_generated: action === 'hooks' ? 1 : 0
+      ideas_generated: action === 'ideas' ? incrementCount : 0,
+      scripts_generated: action === 'scripts' ? incrementCount : 0,
+      hooks_generated: action === 'hooks' ? incrementCount : 0
     };
 
     if (usageData) {
@@ -171,9 +174,9 @@ serve(async (req) => {
       const { error: updateError } = await supabase
         .from('user_daily_usage')
         .update({
-          ideas_generated: action === 'ideas' ? (usageData.ideas_generated || 0) + 1 : (usageData.ideas_generated || 0),
-          scripts_generated: action === 'scripts' ? (usageData.scripts_generated || 0) + 1 : (usageData.scripts_generated || 0),
-          hooks_generated: action === 'hooks' ? (usageData.hooks_generated || 0) + 1 : (usageData.hooks_generated || 0)
+          ideas_generated: action === 'ideas' ? (usageData.ideas_generated || 0) + incrementCount : (usageData.ideas_generated || 0),
+          scripts_generated: action === 'scripts' ? (usageData.scripts_generated || 0) + incrementCount : (usageData.scripts_generated || 0),
+          hooks_generated: action === 'hooks' ? (usageData.hooks_generated || 0) + incrementCount : (usageData.hooks_generated || 0)
         })
         .eq('user_id', user.id)
         .eq('date', new Date().toISOString().split('T')[0]);
@@ -216,7 +219,8 @@ serve(async (req) => {
           tier,
           currentUsage,
           maxLimit,
-          userId: user.id
+          userId: user.id,
+          incrementBy: incrementCount
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

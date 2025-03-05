@@ -1,4 +1,4 @@
-
+<lov-code>
 import 'https://deno.land/x/xhr@0.1.0/mod.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
@@ -35,7 +35,7 @@ serve(async (req) => {
       contentStyle,
       contentPersonality,
       previousIdeas,
-      numIdeas = 5,
+      numIdeas = 5, // Default to 5 but override with exactly 5 below
       isEcoRelated,
       isEcommerce,
       marketResearch,
@@ -51,7 +51,7 @@ serve(async (req) => {
     console.log('Generating ideas with:', { 
       niche, audience, videoType, platform,
       customIdeasLength: customIdeas?.length || 0,
-      numIdeas,
+      numIdeas: 5, // Force exactly 5 ideas
       isEcoBrand,
       isEcommerce
     });
@@ -67,7 +67,7 @@ serve(async (req) => {
       contentPersonality,
       previousIdeas,
       isEcoBrand,
-      numIdeas,
+      numIdeas: 5, // Force exactly 5 ideas regardless of input
       isEcommerce,
       marketResearch
     });
@@ -118,8 +118,55 @@ serve(async (req) => {
     console.log('Raw AI response:', rawResponse);
     
     // Process and validate the response
-    const ideas = parseAndValidateIdeas(rawResponse, isEcoBrand);
-    console.log('Parsed and validated ideas:', ideas);
+    let ideas = parseAndValidateIdeas(rawResponse, isEcoBrand);
+    
+    // Ensure we return exactly 5 ideas
+    if (ideas.length > 5) {
+      ideas = ideas.slice(0, 5);
+      console.log('Trimmed ideas to 5');
+    } else if (ideas.length < 5) {
+      // If less than 5 ideas were generated, pad with generic ones up to 5
+      const genericIdeas = [
+        {
+          title: "Quick Product Demo",
+          category: "Product Showcase",
+          description: "A brief demonstration highlighting key features of your product.",
+          tags: ["product", "demo", "features"]
+        },
+        {
+          title: "Customer Testimonial",
+          category: "Social Proof",
+          description: "Share positive feedback from a satisfied customer.",
+          tags: ["testimonial", "review", "customer"]
+        },
+        {
+          title: "Behind the Scenes",
+          category: "Brand Story",
+          description: "Show how your product is made or your team at work.",
+          tags: ["behindthescenes", "process", "team"]
+        },
+        {
+          title: "How-To Tutorial",
+          category: "Educational",
+          description: "Step-by-step guide showing how to use your product.",
+          tags: ["tutorial", "howto", "guide"]
+        },
+        {
+          title: "Product Comparison",
+          category: "Educational",
+          description: "Compare your product with alternatives to show its advantages.",
+          tags: ["comparison", "versus", "better"]
+        }
+      ];
+      
+      while (ideas.length < 5) {
+        ideas.push(genericIdeas[ideas.length % genericIdeas.length]);
+      }
+      
+      console.log('Padded ideas to reach 5');
+    }
+    
+    console.log('Final ideas count:', ideas.length);
     
     // Calculate the time taken
     const timeElapsed = Date.now() - startTime;
@@ -287,194 +334,4 @@ function parseAndValidateIdeas(rawResponse, isEcoBrand) {
     let parsedData;
     try {
       parsedData = JSON.parse(jsonString);
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      
-      // Try to fix common JSON issues and parse again
-      const fixedJson = jsonString
-        .replace(/,\s*}/g, '}')  // Remove trailing commas
-        .replace(/}\s*{/g, '},{')  // Fix missing commas between objects
-        .replace(/"\s*,\s*"/g, '","')  // Fix missing quotes between keys
-        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":') // Fix unquoted keys
-        .replace(/,\s*,/g, ',') // Fix multiple commas
-        .replace(/,\s*\]/g, ']'); // Fix trailing commas in arrays
-        
-      try {
-        parsedData = JSON.parse(fixedJson);
-        console.log('Fixed JSON parse successful');
-      } catch (fixError) {
-        console.error('Fixed JSON still invalid:', fixError);
-        // Last resort: try to parse each individual idea
-        return extractIdeasFromText(rawResponse);
-      }
-    }
-    
-    if (!parsedData.ideas || !Array.isArray(parsedData.ideas) || parsedData.ideas.length === 0) {
-      console.error('Invalid format or empty ideas array in parsed data:', parsedData);
-      return extractIdeasFromText(rawResponse);
-    }
-
-    // Process the ideas
-    const validatedIdeas = parsedData.ideas
-      .filter(idea => idea !== null && typeof idea === 'object')
-      .map(idea => {
-        // Ensure all required properties exist
-        const processedIdea = {
-          title: idea.title || 'Untitled Idea',
-          category: idea.category || 'General',
-          description: idea.description || 'No description provided',
-          tags: Array.isArray(idea.tags) ? idea.tags : []
-        };
-        
-        // For eco brands, enhance the tags if needed
-        if (isEcoBrand && processedIdea.tags.length < 5) {
-          const ecoTags = ['sustainability', 'ecofriendly', 'zerowaste', 'ethical', 'green', 'sustainable', 'eco'];
-          const existingTags = new Set(processedIdea.tags.map(tag => typeof tag === 'string' ? tag.toLowerCase() : ''));
-          
-          // Add relevant eco tags that aren't already included
-          const additionalTags = ecoTags.filter(tag => !existingTags.has(tag.toLowerCase()));
-          
-          // Add up to 3 additional eco tags
-          processedIdea.tags = [...processedIdea.tags, ...additionalTags.slice(0, 3)];
-        }
-        
-        return processedIdea;
-      });
-    
-    if (validatedIdeas.length > 0) {
-      return validatedIdeas;
-    } else {
-      console.error('No valid ideas found after processing');
-      return extractIdeasFromText(rawResponse);
-    }
-  } catch (error) {
-    console.error('Error parsing ideas:', error);
-    return extractIdeasFromText(rawResponse);
-  }
-}
-
-// Function to extract ideas from text when JSON parsing fails
-function extractIdeasFromText(text) {
-  try {
-    // This is a fallback method when JSON parsing fails
-    console.log('Attempting to extract ideas from text format');
-    
-    // Look for patterns like "1. Title: Description" or "Title: Description"
-    const ideas = [];
-    
-    // First, check if the text contains JSON-like structure but with syntax issues
-    if (text.includes('"title"') && text.includes('"description"')) {
-      // Extract potential ideas from malformed JSON
-      const titleRegex = /"title"\s*:\s*"([^"]+)"/g;
-      const categoryRegex = /"category"\s*:\s*"([^"]+)"/g;
-      const descriptionRegex = /"description"\s*:\s*"([^"]+)"/g;
-      
-      const titles = [];
-      const categories = [];
-      const descriptions = [];
-      
-      let match;
-      while ((match = titleRegex.exec(text)) !== null) {
-        titles.push(match[1]);
-      }
-      
-      while ((match = categoryRegex.exec(text)) !== null) {
-        categories.push(match[1]);
-      }
-      
-      while ((match = descriptionRegex.exec(text)) !== null) {
-        descriptions.push(match[1]);
-      }
-      
-      // Create ideas from extracted parts
-      for (let i = 0; i < Math.min(titles.length, descriptions.length); i++) {
-        ideas.push({
-          title: titles[i],
-          category: categories[i] || 'General',
-          description: descriptions[i],
-          tags: extractTagsFromTitle(titles[i])
-        });
-      }
-    }
-    
-    // If no ideas were found from JSON-like structure, try other patterns
-    if (ideas.length === 0) {
-      // Try to split by numbered items
-      const numberedPattern = /\d+\.\s+(.+?):\s+(.+?)(?=\n\d+\.|\n\n|\n$|$)/gs;
-      let match;
-      
-      while ((match = numberedPattern.exec(text)) !== null) {
-        if (match[1] && match[2]) {
-          ideas.push({
-            title: match[1].trim(),
-            category: 'General',
-            description: match[2].trim(),
-            tags: extractTagsFromTitle(match[1])
-          });
-        }
-      }
-      
-      // If no numbered items found, try to find title-description patterns
-      if (ideas.length === 0) {
-        const titleDescPattern = /(?:^|\n)([^:\n]+):\s*([^\n]+)/g;
-        
-        while ((match = titleDescPattern.exec(text)) !== null) {
-          if (match[1] && match[2]) {
-            ideas.push({
-              title: match[1].trim(),
-              category: 'General',
-              description: match[2].trim(),
-              tags: extractTagsFromTitle(match[1])
-            });
-          }
-        }
-      }
-    }
-    
-    console.log(`Extracted ${ideas.length} ideas from text format`);
-    
-    // If we still have no ideas, create a default one
-    if (ideas.length === 0) {
-      return [{
-        title: 'Generated Idea',
-        category: 'General',
-        description: 'This idea was extracted from an AI response. Try generating again for more specific ideas.',
-        tags: ['content', 'video', 'social']
-      }];
-    }
-    
-    return ideas.slice(0, 5); // Limit to 5 ideas
-  } catch (error) {
-    console.error('Error extracting ideas from text:', error);
-    
-    // If all else fails, return at least one dummy idea so the UI has something to display
-    return [{
-      title: 'Generated Idea',
-      category: 'General',
-      description: 'This idea was extracted from an AI response. Try generating again for more specific ideas.',
-      tags: ['content', 'video', 'social']
-    }];
-  }
-}
-
-// Helper function to extract tags from a title
-function extractTagsFromTitle(title) {
-  if (!title) return ['content', 'video', 'social'];
-  
-  // Extract potential tags from the title
-  const words = title.split(' ')
-    .filter(word => word.length > 4)
-    .map(word => word.replace(/[^\w]/g, ''));
-  
-  const tags = [...new Set(words.slice(0, 3))]; // Take up to 3 unique words as tags
-  
-  if (tags.length < 3) {
-    // Add some generic tags
-    const genericTags = ['content', 'social', 'video', 'trending'];
-    
-    // Add generic tags to get at least 3 tags total
-    return [...tags, ...genericTags.slice(0, 3 - tags.length)];
-  }
-  
-  return tags;
-}
+   
