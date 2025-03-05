@@ -37,29 +37,46 @@ export function SearchBar() {
 
     setLoading(true);
     try {
-      // Fetch both results in parallel
-      const [ideaResults, scheduledResults] = await Promise.all([
-        supabase
-          .from('video_ideas')
-          .select('id, title, created_at')
-          .ilike('title', `%${searchQuery}%`)
-          .limit(5),
-        supabase
-          .from('scheduled_content')
-          .select('id, title, created_at')
-          .ilike('title', `%${searchQuery}%`)
-          .limit(5)
-      ]);
+      // Check if user is authenticated
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) {
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please sign in to search for ideas",
+        });
+        setLoading(false);
+        return;
+      }
 
-      if (ideaResults.error) throw ideaResults.error;
-      if (scheduledResults.error) throw scheduledResults.error;
+      const userId = sessionData.session.user.id;
+
+      // Fetch video ideas
+      const { data: ideaResults, error: ideaError } = await supabase
+        .from('video_ideas')
+        .select('id, title, created_at')
+        .eq('user_id', userId)
+        .ilike('title', `%${searchQuery}%`)
+        .limit(8);
+
+      if (ideaError) throw ideaError;
+
+      // Fetch scheduled content
+      const { data: scheduledResults, error: scheduledError } = await supabase
+        .from('scheduled_content')
+        .select('id, title, created_at')
+        .eq('user_id', userId)
+        .ilike('title', `%${searchQuery}%`)
+        .limit(4);
+
+      if (scheduledError) throw scheduledError;
 
       const formattedResults: SearchResult[] = [
-        ...(ideaResults.data?.map(item => ({
+        ...(ideaResults?.map(item => ({
           ...item,
           type: 'idea' as const
         })) || []),
-        ...(scheduledResults.data?.map(item => ({
+        ...(scheduledResults?.map(item => ({
           ...item,
           type: 'scheduled' as const
         })) || [])
@@ -111,8 +128,16 @@ export function SearchBar() {
   const handleSelect = (result: SearchResult) => {
     setOpen(false);
     setQuery(""); // Reset query when selecting
+    
     if (result.type === 'idea') {
-      navigate(`/ideas?selected=${result.id}`);
+      // If we're already on the ideas page, we need to use a different approach
+      if (window.location.pathname === '/ideas') {
+        // We can either refresh the page with a query parameter
+        // or use a more sophisticated state management approach
+        window.location.href = `/ideas?selected=${result.id}`;
+      } else {
+        navigate(`/ideas?selected=${result.id}`);
+      }
     } else {
       navigate(`/calendar?selected=${result.id}`);
     }
@@ -136,9 +161,12 @@ export function SearchBar() {
           placeholder="Search all ideas and scheduled content..." 
           value={query}
           onValueChange={setQuery}
+          autoFocus
         />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandEmpty>
+            {query.trim() ? "No results found." : "Type to search..."}
+          </CommandEmpty>
           {loading && (
             <div className="flex items-center justify-center py-6">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />

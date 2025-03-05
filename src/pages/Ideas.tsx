@@ -6,7 +6,7 @@ import { GeneratedIdea } from "@/types/idea";
 import EditIdea from "@/components/EditIdea";
 import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
 import { AddToCalendarIdea } from "@/types/idea";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Ideas() {
@@ -14,6 +14,7 @@ export default function Ideas() {
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   const fetchSavedIdeas = async () => {
@@ -35,6 +36,17 @@ export default function Ideas() {
       })) as GeneratedIdea[];
 
       setIdeas(transformedIdeas);
+      
+      // Check for selected idea in query params
+      const params = new URLSearchParams(location.search);
+      const selectedId = params.get('selected');
+      
+      if (selectedId) {
+        const selectedIdea = transformedIdeas.find(idea => idea.id === selectedId);
+        if (selectedIdea) {
+          setEditingIdeaId(selectedId);
+        }
+      }
     } catch (error: any) {
       console.error("Error fetching saved ideas:", error);
       toast({
@@ -47,7 +59,7 @@ export default function Ideas() {
 
   useEffect(() => {
     fetchSavedIdeas();
-  }, []);
+  }, [location.search]);
 
   const handleBookmarkToggle = async (ideaId: string) => {
     try {
@@ -131,16 +143,28 @@ export default function Ideas() {
           <p className="text-muted-foreground mt-2">Browse and manage your bookmarked video ideas</p>
         </div>
 
-        <IdeasGrid
-          ideas={ideas}
-          onAddToCalendar={(idea) => setAddingToCalendar({
-            idea,
-            title: idea.title,
-            scheduledFor: new Date().toISOString().split('T')[0],
-          })}
-          onEdit={(ideaId) => setEditingIdeaId(ideaId)}
-          onBookmarkToggle={handleBookmarkToggle}
-        />
+        {ideas.length > 0 ? (
+          <IdeasGrid
+            ideas={ideas}
+            onAddToCalendar={(idea) => setAddingToCalendar({
+              idea,
+              title: idea.title,
+              scheduledFor: new Date().toISOString().split('T')[0],
+            })}
+            onEdit={(ideaId) => setEditingIdeaId(ideaId)}
+            onBookmarkToggle={handleBookmarkToggle}
+          />
+        ) : (
+          <div className="text-center py-12 bg-muted/30 rounded-lg">
+            <p className="text-muted-foreground">No saved ideas found. Bookmark some ideas to see them here.</p>
+            <button 
+              onClick={() => navigate('/generator')}
+              className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
+            >
+              Generate Ideas
+            </button>
+          </div>
+        )}
       </section>
 
       {editingIdeaId && (
@@ -148,6 +172,8 @@ export default function Ideas() {
           ideaId={editingIdeaId}
           onClose={() => {
             setEditingIdeaId(null);
+            // Remove the query parameter when closing
+            navigate('/ideas', { replace: true });
             fetchSavedIdeas();
           }}
         />
