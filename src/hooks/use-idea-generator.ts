@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { GeneratedIdea, PreviousIdeasContext } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
