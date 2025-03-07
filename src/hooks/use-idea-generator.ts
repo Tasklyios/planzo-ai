@@ -39,53 +39,15 @@ export const useIdeaGenerator = () => {
           if (profile) {
             console.log("Profile data from database:", profile);
             // Set form values from profile if they exist
-            if (profile.account_type === 'ecommerce') {
-              if (profile.product_niche) {
-                setNiche(profile.product_niche);
-                console.log("Setting product niche:", profile.product_niche);
-              }
-              if (profile.target_audience) {
-                setAudience(profile.target_audience);
-                console.log("Setting target audience:", profile.target_audience);
-              }
-              // For ecommerce accounts, use content_niche for videoType
-              if (profile.content_niche) {
-                setVideoType(profile.content_niche);
-                console.log("Setting content niche as video type:", profile.content_niche);
-              }
-            } else if (profile.account_type === 'business') {
-              if (profile.business_niche) {
-                setNiche(profile.business_niche);
-                console.log("Setting business niche:", profile.business_niche);
-              }
-              if (profile.target_audience) {
-                setAudience(profile.target_audience);
-                console.log("Setting target audience:", profile.target_audience);
-              }
-              if (profile.content_niche) {
-                setVideoType(profile.content_niche);
-                console.log("Setting content niche as video type:", profile.content_niche);
-              }
-            } else {
-              // Personal accounts
-              if (profile.content_niche) {
-                setNiche(profile.content_niche);
-                console.log("Setting content niche:", profile.content_niche);
-              }
-              if (profile.target_audience) {
-                setAudience(profile.target_audience);
-                console.log("Setting target audience:", profile.target_audience);
-              }
-            }
-            
-            if (profile.posting_platforms && profile.posting_platforms.length > 0) {
+            if (profile.product_niche) setNiche(profile.product_niche);
+            if (profile.target_audience) setAudience(profile.target_audience);
+            if (profile.product_niche) setVideoType(profile.product_niche);
+            if (profile.posting_platforms && profile.posting_platforms.length > 0) 
               setPlatform(profile.posting_platforms[0]);
-              console.log("Setting platform:", profile.posting_platforms[0]);
-            }
           }
         }
 
-        // Also check localStorage for any saved values (but profile values take precedence)
+        // Also check localStorage for any saved values
         const localStorageValues = {
           niche: localStorage.getItem("ideaGenerator.niche"),
           audience: localStorage.getItem("ideaGenerator.audience"),
@@ -95,10 +57,10 @@ export const useIdeaGenerator = () => {
         
         console.log("LocalStorage values:", localStorageValues);
 
-        if (!niche && localStorageValues.niche) setNiche(localStorageValues.niche);
-        if (!audience && localStorageValues.audience) setAudience(localStorageValues.audience);
-        if (!videoType && localStorageValues.videoType) setVideoType(localStorageValues.videoType);
-        if (!platform && localStorageValues.platform) setPlatform(localStorageValues.platform);
+        if (localStorageValues.niche) setNiche(localStorageValues.niche);
+        if (localStorageValues.audience) setAudience(localStorageValues.audience);
+        if (localStorageValues.videoType) setVideoType(localStorageValues.videoType);
+        if (localStorageValues.platform) setPlatform(localStorageValues.platform);
         
       } catch (error) {
         console.error("Error fetching user preferences:", error);
@@ -235,30 +197,8 @@ export const useIdeaGenerator = () => {
         return;
       }
       
-      // Fetch the user's profile to get additional context
-      const { data: userProfile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
-      
-      console.log("Fetched user profile for additional context:", userProfile);
-      
       // Now proceed with idea generation if usage limits allow
       console.log("Calling generate-ideas function with auth header");
-      console.log("Sending data:", {
-        niche,
-        audience,
-        videoType,
-        platform,
-        customIdeas,
-        previousIdeas: previousIdeasContext,
-        numIdeas: 5,
-        accountType: userProfile?.account_type || 'personal',
-        isEcommerce: userProfile?.account_type === 'ecommerce',
-        productNiche: userProfile?.product_niche
-      });
-      
       const { data, error: generationError } = await supabase.functions.invoke('generate-ideas', {
         body: {
           niche,
@@ -267,12 +207,7 @@ export const useIdeaGenerator = () => {
           platform,
           customIdeas,
           previousIdeas: previousIdeasContext,
-          numIdeas: 5, // Explicitly requesting 5 ideas
-          accountType: userProfile?.account_type || 'personal',
-          isEcommerce: userProfile?.account_type === 'ecommerce',
-          productNiche: userProfile?.product_niche,
-          contentNiche: userProfile?.content_niche,
-          targetAudience: userProfile?.target_audience
+          numIdeas: 5
         },
         headers: {
           Authorization: authHeader
@@ -295,15 +230,8 @@ export const useIdeaGenerator = () => {
         return;
       }
 
-      // Ensure we're only taking exactly 5 ideas
-      let ideasToUse = data.ideas;
-      if (ideasToUse.length > 5) {
-        console.log(`Limiting ideas from ${ideasToUse.length} to exactly 5`);
-        ideasToUse = ideasToUse.slice(0, 5);
-      }
-
       // Format and clean up the ideas for display
-      const formattedIdeas = ideasToUse.map((idea: any) => ({
+      const formattedIdeas = data.ideas.map((idea: any) => ({
         id: crypto.randomUUID(), // Add temporary client-side ID
         title: typeof idea.title === 'string' ? idea.title.replace(/^"|"$/g, '') : 'Untitled Idea',
         category: typeof idea.category === 'string' ? idea.category.replace(/^"|"$/g, '') : 'General',
@@ -353,8 +281,7 @@ export const useIdeaGenerator = () => {
               .select('*')
               .eq('user_id', userId)
               .in('title', newTitles)
-              .order('created_at', { ascending: false })
-              .limit(5); // Make sure we only get 5 ideas
+              .order('created_at', { ascending: false });
             
             if (fetchError) {
               console.error("Error fetching saved ideas:", fetchError);
