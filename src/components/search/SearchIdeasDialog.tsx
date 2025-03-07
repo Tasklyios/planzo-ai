@@ -161,11 +161,6 @@ export function SearchIdeasDialog({
           <DialogTitle>Add idea to {columnTitle}</DialogTitle>
           <DialogDescription>
             Search for saved ideas to add to this column.
-            {activeStyleProfile && (
-              <span className="block mt-1 text-primary">
-                Using style profile: {activeStyleProfile.name}
-              </span>
-            )}
           </DialogDescription>
         </DialogHeader>
         
