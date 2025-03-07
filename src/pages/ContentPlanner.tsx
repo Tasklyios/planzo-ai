@@ -541,6 +541,16 @@ export default function ContentPlanner() {
     }
   };
 
+  const handleIdeaDeleted = () => {
+    // Refresh data after an idea is deleted
+    fetchColumnsAndIdeas();
+  };
+
+  const handleColumnDeleted = () => {
+    // Refresh data after a column is deleted
+    fetchColumnsAndIdeas();
+  };
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-8">
@@ -601,7 +611,8 @@ export default function ContentPlanner() {
                   id={column.id}
                   index={index}
                   isDeletable={column.id !== IDEAS_COLUMN_ID}
-                  onIdeaAdded={fetchColumnsAndIdeas} // Pass the refresh function
+                  onIdeaAdded={fetchColumnsAndIdeas}
+                  onColumnDeleted={handleColumnDeleted}
                 >
                   {column.items.map((item, itemIndex) => (
                     <PlannerCard 
@@ -612,6 +623,7 @@ export default function ContentPlanner() {
                       description={item.description}
                       color={item.color}
                       onEdit={fetchColumnsAndIdeas}
+                      onDelete={handleIdeaDeleted}
                     />
                   ))}
                 </PlannerColumn>

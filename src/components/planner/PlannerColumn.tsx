@@ -1,9 +1,12 @@
 
 import { Draggable, Droppable } from "react-beautiful-dnd";
-import { GripVertical, Plus } from "lucide-react";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { SearchIdeasDialog } from "../search/SearchIdeasDialog";
+import { DeleteIcon } from "./DeleteIcon";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PlannerColumnProps {
   title: string;
@@ -12,6 +15,7 @@ interface PlannerColumnProps {
   children: React.ReactNode;
   isDeletable?: boolean;
   onIdeaAdded?: () => void; // Add callback for when an idea is added
+  onColumnDeleted?: () => void; // Add callback for when column is deleted
 }
 
 export function PlannerColumn({ 
@@ -20,9 +24,48 @@ export function PlannerColumn({
   index, 
   children, 
   isDeletable = true,
-  onIdeaAdded
+  onIdeaAdded,
+  onColumnDeleted
 }: PlannerColumnProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleDeleteColumn = async () => {
+    try {
+      // Get items that need to be moved to 'ideas' column
+      const { data: columnItems } = await supabase
+        .from('video_ideas')
+        .select('id')
+        .eq('status', id);
+      
+      if (columnItems && columnItems.length > 0) {
+        // Update each item's status to 'ideas'
+        for (const item of columnItems) {
+          await supabase
+            .from('video_ideas')
+            .update({ status: 'ideas' })
+            .eq('id', item.id);
+        }
+      }
+      
+      // Delete the column
+      const { error } = await supabase
+        .from('planner_columns')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      // Notify parent component
+      if (onColumnDeleted) {
+        onColumnDeleted();
+      }
+      
+    } catch (error) {
+      console.error('Error deleting column:', error);
+      throw error;
+    }
+  };
 
   return (
     <Draggable draggableId={`column-${id}`} index={index} isDragDisabled={!isDeletable}>
@@ -45,15 +88,24 @@ export function PlannerColumn({
               <h3 className="font-semibold text-lg">{title}</h3>
               {!isDeletable && <span className="text-xs text-muted-foreground ml-2">(Default)</span>}
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8"
-              onClick={() => setIsSearchOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              <span className="sr-only">Add idea to {title}</span>
-            </Button>
+            <div className="flex items-center">
+              {isDeletable && (
+                <DeleteIcon 
+                  onDelete={handleDeleteColumn}
+                  title={`Delete ${title} Column`}
+                  description={`Are you sure you want to delete the "${title}" column? All ideas will be moved to the Ideas column.`}
+                />
+              )}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={() => setIsSearchOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="sr-only">Add idea to {title}</span>
+              </Button>
+            </div>
           </div>
           <Droppable droppableId={id} type="task">
             {(provided) => (
