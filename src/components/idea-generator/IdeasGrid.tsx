@@ -91,14 +91,23 @@ const IdeasGrid = ({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => onEdit(idea.id)}
-                  className="h-8 w-8 md:h-9 md:w-9"
-                >
-                  <PenSquare className="h-4 w-4" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => onEdit(idea.id)}
+                        className="h-8 w-8 md:h-9 md:w-9"
+                      >
+                        <PenSquare className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Edit Idea</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
             <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 md:line-clamp-none">

@@ -132,7 +132,6 @@ const Generator = () => {
         description: "Idea added to calendar successfully"
       });
       setAddingToCalendar(null);
-      // Removed the navigate("/calendar") line to keep the user on the current page
     } catch (error: any) {
       console.error("Error adding to calendar:", error);
       toast({
@@ -158,7 +157,6 @@ const Generator = () => {
       
       const newSavedState = !ideaToUpdate.is_saved;
       
-      // Make sure we preserve all existing fields, especially the script
       const {
         error
       } = await supabase.from("video_ideas").update({
@@ -329,7 +327,7 @@ const Generator = () => {
                     title: idea.title,
                     scheduledFor: new Date().toISOString().split('T')[0]
                   })} 
-                  onEdit={ideaId => setEditingIdeaId(ideaId)} 
+                  onEdit={setEditingIdeaId} 
                   onBookmarkToggle={handleBookmarkToggle} 
                 />
               </>
