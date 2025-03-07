@@ -36,7 +36,7 @@ serve(async (req) => {
       contentStyle,
       contentPersonality,
       previousIdeas,
-      numIdeas = 5, // Default to 5 but override with exactly 5 below
+      numIdeas = 5, // Default to 5
       isEcoRelated,
       isEcommerce,
       accountType,
@@ -91,7 +91,7 @@ serve(async (req) => {
       contentPersonality,
       previousIdeas,
       isEcoBrand,
-      numIdeas: 5, // Force exactly 5 ideas regardless of input
+      numIdeas: 5, // Force exactly 5 ideas
       isEcommerce: isEcommerceAccount,
       marketResearch,
       accountType
@@ -383,7 +383,7 @@ function constructPrompt({
   }
 
   // User prompt construction
-  let userPrompt = `Please generate ${numIdeas} unique video ideas for a ${niche ? `${niche} ` : ''}${accountType === 'ecommerce' ? 'e-commerce brand' : accountType === 'business' ? 'business' : 'content creator'} targeting ${audience || 'general audience'}.`;
+  let userPrompt = `Please generate EXACTLY ${numIdeas} unique video ideas for a ${niche ? `${niche} ` : ''}${accountType === 'ecommerce' ? 'e-commerce brand' : accountType === 'business' ? 'business' : 'content creator'} targeting ${audience || 'general audience'}.`;
   
   if (videoType) {
     userPrompt += ` The videos should be in the format of ${videoType}.`;
@@ -425,7 +425,7 @@ function constructPrompt({
   }
   
   // Specify the output format
-  userPrompt += `\n\nPlease respond with exactly ${numIdeas} ideas in this JSON format without any explanations or other text:
+  userPrompt += `\n\nPlease respond with EXACTLY ${numIdeas} ideas in this JSON format without any explanations or other text:
   {
     "ideas": [
       {

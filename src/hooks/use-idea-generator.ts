@@ -266,7 +266,7 @@ export const useIdeaGenerator = () => {
           platform,
           customIdeas,
           previousIdeas: previousIdeasContext,
-          numIdeas: 5,
+          numIdeas: 5, // Explicitly requesting 5 ideas
           accountType: userProfile?.account_type || 'personal',
           isEcommerce: userProfile?.account_type === 'ecommerce',
           productNiche: userProfile?.product_niche,
@@ -294,8 +294,15 @@ export const useIdeaGenerator = () => {
         return;
       }
 
+      // Ensure we're only taking exactly 5 ideas
+      let ideasToUse = data.ideas;
+      if (ideasToUse.length > 5) {
+        console.log(`Limiting ideas from ${ideasToUse.length} to exactly 5`);
+        ideasToUse = ideasToUse.slice(0, 5);
+      }
+
       // Format and clean up the ideas for display
-      const formattedIdeas = data.ideas.map((idea: any) => ({
+      const formattedIdeas = ideasToUse.map((idea: any) => ({
         id: crypto.randomUUID(), // Add temporary client-side ID
         title: typeof idea.title === 'string' ? idea.title.replace(/^"|"$/g, '') : 'Untitled Idea',
         category: typeof idea.category === 'string' ? idea.category.replace(/^"|"$/g, '') : 'General',
@@ -345,7 +352,8 @@ export const useIdeaGenerator = () => {
               .select('*')
               .eq('user_id', userId)
               .in('title', newTitles)
-              .order('created_at', { ascending: false });
+              .order('created_at', { ascending: false })
+              .limit(5); // Make sure we only get 5 ideas
             
             if (fetchError) {
               console.error("Error fetching saved ideas:", fetchError);
