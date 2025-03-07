@@ -39,6 +39,10 @@ serve(async (req) => {
       numIdeas = 5, // Default to 5 but override with exactly 5 below
       isEcoRelated,
       isEcommerce,
+      accountType,
+      productNiche,
+      contentNiche,
+      targetAudience,
       marketResearch,
       modelOverride
     } = await req.json();
@@ -46,21 +50,40 @@ serve(async (req) => {
     // Start tracking time for performance measurement
     const startTime = Date.now();
     
+    // Get the effective niche based on account type
+    let effectiveNiche = niche;
+    if (accountType === 'ecommerce' && productNiche && productNiche.trim()) {
+      effectiveNiche = productNiche;
+      console.log('Using ecommerce product niche:', effectiveNiche);
+    }
+    
+    // Get the effective audience
+    let effectiveAudience = audience;
+    if (targetAudience && (!audience || audience.trim() === '')) {
+      effectiveAudience = targetAudience;
+      console.log('Using profile target audience:', effectiveAudience);
+    }
+    
     // Detect if this is an eco brand to apply optimizations
-    const isEcoBrand = isEcoRelated || detectEcoBrand(niche, customIdeas);
+    const isEcoBrand = isEcoRelated || detectEcoBrand(effectiveNiche, customIdeas);
+    const isEcommerceAccount = isEcommerce || accountType === 'ecommerce';
 
     console.log('Generating ideas with:', { 
-      niche, audience, videoType, platform,
+      niche: effectiveNiche, 
+      audience: effectiveAudience, 
+      videoType, 
+      platform,
       customIdeasLength: customIdeas?.length || 0,
       numIdeas: 5, // Force exactly 5 ideas
       isEcoBrand,
-      isEcommerce
+      isEcommerceAccount,
+      accountType
     });
 
     // Construct the prompt differently based on whether it's an eco brand or not
     const prompt = constructPrompt({
-      niche,
-      audience,
+      niche: effectiveNiche,
+      audience: effectiveAudience,
       videoType,
       platform,
       customIdeas,
@@ -69,8 +92,9 @@ serve(async (req) => {
       previousIdeas,
       isEcoBrand,
       numIdeas: 5, // Force exactly 5 ideas regardless of input
-      isEcommerce,
-      marketResearch
+      isEcommerce: isEcommerceAccount,
+      marketResearch,
+      accountType
     });
 
     // Use a more efficient model and optimize parameters for faster generation
@@ -126,42 +150,11 @@ serve(async (req) => {
       ideas = ideas.slice(0, 5);
       console.log('Trimmed ideas to 5');
     } else if (ideas.length < 5) {
-      // If less than 5 ideas were generated, pad with generic ones up to 5
-      const genericIdeas = [
-        {
-          title: "Quick Product Demo",
-          category: "Product Showcase",
-          description: "A brief demonstration highlighting key features of your product.",
-          tags: ["product", "demo", "features"]
-        },
-        {
-          title: "Customer Testimonial",
-          category: "Social Proof",
-          description: "Share positive feedback from a satisfied customer.",
-          tags: ["testimonial", "review", "customer"]
-        },
-        {
-          title: "Behind the Scenes",
-          category: "Brand Story",
-          description: "Show how your product is made or your team at work.",
-          tags: ["behindthescenes", "process", "team"]
-        },
-        {
-          title: "How-To Tutorial",
-          category: "Educational",
-          description: "Step-by-step guide showing how to use your product.",
-          tags: ["tutorial", "howto", "guide"]
-        },
-        {
-          title: "Product Comparison",
-          category: "Educational",
-          description: "Compare your product with alternatives to show its advantages.",
-          tags: ["comparison", "versus", "better"]
-        }
-      ];
+      // If less than 5 ideas were generated, pad with personalized fallback ideas based on the account type
+      const fallbackIdeas = generatePersonalizedFallbackIdeas(effectiveNiche, accountType);
       
       while (ideas.length < 5) {
-        ideas.push(genericIdeas[ideas.length % genericIdeas.length]);
+        ideas.push(fallbackIdeas[ideas.length % fallbackIdeas.length]);
       }
       
       console.log('Padded ideas to reach 5');
@@ -181,7 +174,10 @@ serve(async (req) => {
         debug: {
           modelUsed: model,
           timeElapsed,
-          ideasCount: ideas.length
+          ideasCount: ideas.length,
+          effectiveNiche,
+          effectiveAudience,
+          accountType
         }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -197,6 +193,8 @@ serve(async (req) => {
 
 // Helper function to detect if the niche is related to eco brands
 function detectEcoBrand(niche, customIdeas) {
+  if (!niche && !customIdeas) return false;
+  
   const ecoKeywords = [
     'eco', 'green', 'sustainable', 'environment', 'recycled', 'organic', 
     'natural', 'biodegradable', 'zero waste', 'eco-friendly', 'vegan', 
@@ -204,8 +202,8 @@ function detectEcoBrand(niche, customIdeas) {
   ];
   
   // Check if any eco keywords are in the niche or custom ideas
-  const nicheMatches = ecoKeywords.some(keyword => 
-    niche?.toLowerCase().includes(keyword.toLowerCase())
+  const nicheMatches = niche && ecoKeywords.some(keyword => 
+    niche.toLowerCase().includes(keyword.toLowerCase())
   );
   
   const customIdeasMatches = customIdeas && ecoKeywords.some(keyword => 
@@ -213,6 +211,114 @@ function detectEcoBrand(niche, customIdeas) {
   );
   
   return nicheMatches || customIdeasMatches;
+}
+
+// Helper function to generate personalized fallback ideas based on niche and account type
+function generatePersonalizedFallbackIdeas(niche, accountType) {
+  // If we have a niche, use it to personalize the fallback ideas
+  const nichePrefix = niche ? `${niche} ` : '';
+  
+  if (accountType === 'ecommerce') {
+    return [
+      {
+        title: `${nichePrefix}Quick Product Demo`,
+        category: "Product Showcase",
+        description: `A brief demonstration highlighting key features of your ${niche || 'product'}.`,
+        tags: ["product", "demo", "features"]
+      },
+      {
+        title: `${nichePrefix}Customer Testimonial`,
+        category: "Social Proof",
+        description: `Share positive feedback from a satisfied customer about your ${niche || 'product'}.`,
+        tags: ["testimonial", "review", "customer"]
+      },
+      {
+        title: `${nichePrefix}Behind the Scenes`,
+        category: "Brand Story",
+        description: `Show how your ${niche || 'product'} is made or your team at work.`,
+        tags: ["behindthescenes", "process", "team"]
+      },
+      {
+        title: `${nichePrefix}How-To Tutorial`,
+        category: "Educational",
+        description: `Step-by-step guide showing how to use your ${niche || 'product'} effectively.`,
+        tags: ["tutorial", "howto", "guide"]
+      },
+      {
+        title: `${nichePrefix}Product Comparison`,
+        category: "Educational",
+        description: `Compare your ${niche || 'product'} with alternatives to show its advantages.`,
+        tags: ["comparison", "versus", "better"]
+      }
+    ];
+  } else if (accountType === 'business') {
+    return [
+      {
+        title: `${nichePrefix}Service Showcase`,
+        category: "Service Spotlight",
+        description: `Highlight the key benefits of your ${niche || 'business'} services.`,
+        tags: ["service", "business", "benefits"]
+      },
+      {
+        title: `${nichePrefix}Client Success Story`,
+        category: "Case Study",
+        description: `Share a success story from a client who used your ${niche || 'business'} services.`,
+        tags: ["success", "client", "results"]
+      },
+      {
+        title: `${nichePrefix}Team Introduction`,
+        category: "Company Culture",
+        description: `Introduce your team members and their expertise in ${niche || 'your industry'}.`,
+        tags: ["team", "experts", "culture"]
+      },
+      {
+        title: `${nichePrefix}Industry Tips`,
+        category: "Educational",
+        description: `Share valuable tips related to ${niche || 'your industry'} that showcase your expertise.`,
+        tags: ["tips", "advice", "expertise"]
+      },
+      {
+        title: `${nichePrefix}FAQ Session`,
+        category: "Educational",
+        description: `Answer frequently asked questions about ${niche || 'your services'}.`,
+        tags: ["faq", "questions", "answers"]
+      }
+    ];
+  } else {
+    // Default personal account fallbacks
+    return [
+      {
+        title: `${nichePrefix}Day in the Life`,
+        category: "Lifestyle",
+        description: `Share a day in your life focusing on ${niche || 'your activities'}.`,
+        tags: ["dayinthelife", "routine", "lifestyle"]
+      },
+      {
+        title: `${nichePrefix}Tutorial`,
+        category: "Educational",
+        description: `Teach your audience something valuable about ${niche || 'your topic'}.`,
+        tags: ["tutorial", "howto", "learning"]
+      },
+      {
+        title: `${nichePrefix}Top 5 Tips`,
+        category: "List",
+        description: `Share your top 5 tips related to ${niche || 'your expertise'}.`,
+        tags: ["tips", "advice", "top5"]
+      },
+      {
+        title: `${nichePrefix}Story Time`,
+        category: "Personal",
+        description: `Tell an engaging story related to ${niche || 'your experiences'}.`,
+        tags: ["story", "experience", "personal"]
+      },
+      {
+        title: `${nichePrefix}Q&A Session`,
+        category: "Engagement",
+        description: `Answer questions from your audience about ${niche || 'your content'}.`,
+        tags: ["questions", "answers", "engagement"]
+      }
+    ];
+  }
 }
 
 // Helper function to construct the prompt
@@ -228,10 +334,18 @@ function constructPrompt({
   isEcoBrand,
   numIdeas,
   isEcommerce,
-  marketResearch
+  marketResearch,
+  accountType
 }) {
   // Base system prompt
-  let systemPrompt = `You are a viral video idea generator specializing in creating engaging, attention-grabbing content ideas specifically for businesses. Your goal is to help content creators make videos that will perform well on ${platform}.`;
+  let systemPrompt = `You are a viral video idea generator specializing in creating engaging, attention-grabbing content ideas specifically for ${accountType === 'ecommerce' ? 'e-commerce brands' : accountType === 'business' ? 'business accounts' : 'content creators'}. Your goal is to help content creators make videos that will perform well on ${platform}.`;
+  
+  // Add account type specific instructions
+  if (accountType === 'ecommerce') {
+    systemPrompt += `\n\nSPECIAL INSTRUCTIONS: You are generating ideas for an e-commerce brand selling ${niche || 'products'}. Focus on product demonstrations, customer testimonials, behind-the-scenes content, how-to tutorials, and other content that showcases the products while providing value to potential customers.`;
+  } else if (accountType === 'business') {
+    systemPrompt += `\n\nSPECIAL INSTRUCTIONS: You are generating ideas for a business in the ${niche || ''} industry. Focus on service highlights, client success stories, team showcases, industry expertise, and educational content that positions the business as an authority in their field.`;
+  }
   
   // Add eco-brand specific instructions if applicable
   if (isEcoBrand) {
@@ -244,7 +358,8 @@ function constructPrompt({
 3. Generate distinctive ideas that don't overlap too much
 4. Each idea should include a clear hook to grab attention in the first few seconds
 5. Format each idea with a catchy title, a category, and a brief description
-6. ALWAYS output only valid JSON in the exact format requested`;
+6. ALWAYS output only valid JSON in the exact format requested
+7. Use the provided niche (${niche || 'not specified'}) and target audience (${audience || 'not specified'}) to craft highly personalized ideas`;
 
   // Add platform-specific guidance
   if (platform === 'TikTok') {
@@ -268,7 +383,7 @@ function constructPrompt({
   }
 
   // User prompt construction
-  let userPrompt = `Please generate ${numIdeas} unique video ideas for a ${niche} brand targeting ${audience}.`;
+  let userPrompt = `Please generate ${numIdeas} unique video ideas for a ${niche ? `${niche} ` : ''}${accountType === 'ecommerce' ? 'e-commerce brand' : accountType === 'business' ? 'business' : 'content creator'} targeting ${audience || 'general audience'}.`;
   
   if (videoType) {
     userPrompt += ` The videos should be in the format of ${videoType}.`;
@@ -297,6 +412,16 @@ function constructPrompt({
   // Request specific eco-friendly content if applicable
   if (isEcoBrand) {
     userPrompt += `\n\nThis is an eco-friendly brand, so focus on sustainability aspects, environmental benefits, and create ideas that educate and inspire viewers about eco-conscious living while highlighting the products.`;
+  }
+  
+  // Add e-commerce specific instructions
+  if (isEcommerce || accountType === 'ecommerce') {
+    userPrompt += `\n\nAs this is an e-commerce brand, focus on:
+1. Showcasing product features and benefits
+2. Demonstrating product usage and results
+3. Addressing common customer pain points
+4. Highlighting unique selling propositions
+5. Creating content that drives purchase decisions`;
   }
   
   // Specify the output format

@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface InputFormProps {
   niche: string;
@@ -45,6 +47,8 @@ const InputForm = ({
   const [contentNiche, setContentNiche] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
   const [businessNiche, setBusinessNiche] = useState("");
+  const [isProfileComplete, setIsProfileComplete] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getAccountType();
@@ -57,7 +61,7 @@ const InputForm = ({
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('account_type, product_niche, content_niche, business_niche, target_audience')
+        .select('account_type, product_niche, content_niche, business_niche, target_audience, posting_platforms')
         .eq('id', session.user.id)
         .single();
 
@@ -65,42 +69,71 @@ const InputForm = ({
       
       if (profile) {
         setAccountType(profile.account_type as AccountType);
+        console.log("Loading profile data:", profile);
         
-        // Store product niche, content niche, business niche and target audience
+        // Check if profile is incomplete based on account type
+        let incomplete = false;
+        
         if (profile.account_type === 'ecommerce') {
+          if (!profile.product_niche) incomplete = true;
           setProductNiche(profile.product_niche || "");
-          setContentNiche(profile.content_niche || "");
-          setTargetAudience(profile.target_audience || "");
+          setNiche(profile.product_niche || "");
           
-          // Update parent component state with the values from profile
-          // This ensures the AI gets all this information for context
-          setNiche(profile.product_niche || ""); // Set product niche to niche for AI
           if (profile.content_niche) {
             setContentNiche(profile.content_niche);
+            setVideoType(profile.content_niche);
+          } else {
+            incomplete = true;
           }
+          
           if (profile.target_audience) {
             setTargetAudience(profile.target_audience);
             setAudience(profile.target_audience);
+          } else {
+            incomplete = true;
           }
         } else if (profile.account_type === 'business') {
+          if (!profile.business_niche) incomplete = true;
           setBusinessNiche(profile.business_niche || "");
-          setContentNiche(profile.content_niche || "");
-          setTargetAudience(profile.target_audience || "");
+          setNiche(profile.business_niche || "");
           
-          // Update parent component state with the values from profile
-          // Now we set businessNiche value to niche for AI context but don't display the field
-          if (profile.business_niche) {
-            setBusinessNiche(profile.business_niche);
-            setNiche(profile.business_niche); // Set business niche to niche for AI context
-          }
           if (profile.content_niche) {
             setContentNiche(profile.content_niche);
+            setVideoType(profile.content_niche);
+          } else {
+            incomplete = true;
           }
+          
           if (profile.target_audience) {
             setTargetAudience(profile.target_audience);
             setAudience(profile.target_audience);
+          } else {
+            incomplete = true;
+          }
+        } else {
+          // Personal account
+          if (profile.content_niche) {
+            setContentNiche(profile.content_niche);
+            setNiche(profile.content_niche);
+          } else {
+            incomplete = true;
+          }
+          
+          if (profile.target_audience) {
+            setTargetAudience(profile.target_audience);
+            setAudience(profile.target_audience);
+          } else {
+            incomplete = true;
           }
         }
+        
+        if (profile.posting_platforms && profile.posting_platforms.length > 0) {
+          setPlatform(profile.posting_platforms[0]);
+        } else {
+          incomplete = true;
+        }
+        
+        setIsProfileComplete(!incomplete);
       }
     } catch (error) {
       console.error("Error fetching account type:", error);
@@ -109,17 +142,23 @@ const InputForm = ({
     }
   };
 
+  // Handle profile update navigation
+  const navigateToAccount = () => {
+    navigate('/account');
+  };
+
   // Handle content niche changes for ecommerce accounts
   const handleContentNicheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setContentNiche(newValue);
+    setVideoType(newValue);
   };
 
   // Handle target audience changes for ecommerce accounts
   const handleTargetAudienceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setTargetAudience(newValue);
-    setAudience(newValue); // Update parent component state
+    setAudience(newValue);
   };
 
   if (loading) {
@@ -191,16 +230,18 @@ const InputForm = ({
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
+                  <Package2 className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Product Niche</label>
                 </div>
                 <input
                   type="text"
-                  value={contentNiche}
-                  onChange={handleContentNicheChange}
-                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Your content niche"
+                  value={productNiche}
+                  readOnly
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left cursor-not-allowed"
+                  placeholder="Set in account settings"
+                  title="This is synced from your account settings"
                 />
+                <div className="text-xs text-muted-foreground mt-1">From account settings</div>
               </div>
             </div>
 
@@ -223,26 +264,17 @@ const InputForm = ({
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <Video className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Video Type</label>
+                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Content Focus</label>
                 </div>
                 <input
                   type="text"
-                  value={videoType}
-                  onChange={(e) => setVideoType(e.target.value)}
+                  value={contentNiche}
+                  onChange={handleContentNicheChange}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Video type"
+                  placeholder="Content focus area"
                 />
               </div>
-            </div>
-
-            {/* Hidden product niche field - not displayed but used for AI context */}
-            <div className="hidden">
-              <Input
-                type="text"
-                value={productNiche}
-                readOnly
-              />
             </div>
           </>
         );
@@ -250,22 +282,21 @@ const InputForm = ({
       case 'business':
         return (
           <>
-            {/* For business accounts, we only show content niche, target audience and video type fields */}
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
+                  <Building2 className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Business Niche</label>
                 </div>
                 <input
                   type="text"
-                  value={contentNiche}
+                  value={businessNiche}
                   readOnly
-                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Your content focus"
-                  disabled
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left cursor-not-allowed"
+                  placeholder="Set in account settings"
                   title="This is synced from your account settings"
                 />
+                <div className="text-xs text-muted-foreground mt-1">From account settings</div>
               </div>
             </div>
 
@@ -278,11 +309,9 @@ const InputForm = ({
                 <input
                   type="text"
                   value={targetAudience}
-                  readOnly
+                  onChange={handleTargetAudienceChange}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
                   placeholder="Your target audience"
-                  disabled
-                  title="This is synced from your account settings"
                 />
               </div>
             </div>
@@ -290,26 +319,17 @@ const InputForm = ({
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <Video className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Video Type</label>
+                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Content Focus</label>
                 </div>
                 <input
                   type="text"
-                  value={videoType}
-                  onChange={(e) => setVideoType(e.target.value)}
+                  value={contentNiche}
+                  onChange={handleContentNicheChange}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Video type"
+                  placeholder="Content focus area"
                 />
               </div>
-            </div>
-
-            {/* Hidden business niche field - used for AI context but not displayed */}
-            <div className="hidden">
-              <Input
-                type="text"
-                value={businessNiche}
-                readOnly
-              />
             </div>
           </>
         );
@@ -318,6 +338,16 @@ const InputForm = ({
 
   return (
     <div>
+      {!isProfileComplete && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+          <h3 className="font-medium mb-1">Your profile is incomplete</h3>
+          <p className="text-sm mb-2">Complete your profile to get personalized idea suggestions.</p>
+          <Button size="sm" variant="outline" onClick={navigateToAccount} className="text-xs">
+            Complete Profile
+          </Button>
+        </div>
+      )}
+      
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4">
         {renderFields()}
         <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
