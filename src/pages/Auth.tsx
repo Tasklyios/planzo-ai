@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +41,6 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [resetSent, setResetSent] = useState(false);
-  const [domainInfo, setDomainInfo] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
