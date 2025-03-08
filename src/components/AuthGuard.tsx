@@ -18,8 +18,6 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     const checkAuth = async () => {
       setIsLoading(true);
       try {
-        console.log("Checking authentication status...");
-        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -31,15 +29,11 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         }
         
         if (!session) {
-          console.log("No session found, redirecting to auth");
           setIsAuthenticated(false);
           navigate("/auth", { state: { from: location.pathname } });
         } else {
-          console.log("Session found, user is authenticated", session.user.id);
-          
           // Store the session access token for edge functions to use
           localStorage.setItem('supabase.auth.token', session.access_token);
-          
           setIsAuthenticated(true);
         }
       } catch (error) {
@@ -55,16 +49,11 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, session ? "session exists" : "no session");
-      
       if (event === "SIGNED_OUT") {
-        console.log("User signed out, redirecting to auth");
         localStorage.removeItem('supabase.auth.token');
         setIsAuthenticated(false);
         navigate("/auth");
       } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        console.log("User signed in or token refreshed", session?.user.id);
-        
         // Update the token in localStorage
         if (session?.access_token) {
           localStorage.setItem('supabase.auth.token', session.access_token);
@@ -81,7 +70,6 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     });
 
     return () => {
-      console.log("Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, [navigate, location]);
@@ -98,7 +86,6 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         <h2 className="text-red-700 text-xl font-semibold mb-2">Authentication Error</h2>
         <p className="text-red-600">{error}</p>
         <p className="text-gray-700 mt-4">
-          This could be because of a configuration issue with authentication.
           Please ensure your domain is allowed in the Supabase authentication settings.
         </p>
       </div>

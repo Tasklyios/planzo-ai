@@ -63,9 +63,6 @@ const Auth = () => {
         description: state.error,
       });
     }
-
-    // Log authentication information for debugging without displaying it
-    console.log("Auth component mounted on domain:", window.location.origin);
   }, [location, toast]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -73,8 +70,6 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      console.log("Attempting authentication on domain:", window.location.origin);
-      
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,
@@ -111,7 +106,6 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      console.log("Sending password reset to domain:", window.location.origin);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth?type=recovery`,
       });
@@ -150,7 +144,6 @@ const Auth = () => {
     }
 
     try {
-      console.log("Resetting password on domain:", window.location.origin);
       const { error } = await supabase.auth.updateUser({
         password: password,
       });
@@ -180,7 +173,6 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      console.log("Starting Google sign-in on domain:", window.location.origin);
       const redirectURL = window.location.origin;
 
       const { error } = await supabase.auth.signInWithOAuth({
