@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,17 +52,7 @@ const Auth = () => {
     if (type === "recovery") {
       setIsResetPassword(true);
     }
-
-    // Check for error state from redirect
-    const state = location.state as { error?: string, from?: string } | null;
-    if (state?.error) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: state.error,
-      });
-    }
-  }, [location, toast]);
+  }, [location]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,9 +63,6 @@ const Auth = () => {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth`
-          }
         });
         if (error) throw error;
         
@@ -90,7 +76,6 @@ const Auth = () => {
         navigate("/dashboard");
       }
     } catch (error: any) {
-      console.error("Authentication error:", error.message);
       toast({
         variant: "destructive",
         title: "Error",
@@ -118,7 +103,6 @@ const Auth = () => {
         description: "Check your email for the password reset link.",
       });
     } catch (error: any) {
-      console.error("Password reset error:", error.message);
       toast({
         variant: "destructive",
         title: "Error",
@@ -160,7 +144,6 @@ const Auth = () => {
         navigate("/dashboard");
       }, 2000);
     } catch (error: any) {
-      console.error("Password update error:", error.message);
       toast({
         variant: "destructive",
         title: "Error",
@@ -173,7 +156,9 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      const redirectURL = window.location.origin;
+      const redirectURL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8080'
+        : window.location.origin;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -187,7 +172,6 @@ const Auth = () => {
       });
       if (error) throw error;
     } catch (error: any) {
-      console.error("Google sign-in error:", error.message);
       toast({
         variant: "destructive",
         title: "Error",
