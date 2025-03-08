@@ -80,15 +80,31 @@ const Auth = () => {
         });
         if (error) throw error;
         
-        // Check if this is the user's first sign-in after confirming email
-        // We'll use localStorage to track onboarding and pricing flow
-        const hasCompletedOnboarding = localStorage.getItem('has_completed_onboarding');
+        // We need to check if this is the first time the user is signing in
+        // First, get the user metadata to see if they have completed onboarding
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (profileError && profileError.code !== 'PGRST116') {
+          // Only throw if it's not a "not found" error
+          throw profileError;
+        }
+        
+        // Check if onboarding is completed either in the profile or localStorage
+        const hasCompletedOnboarding = 
+          (profileData && profileData.onboarding_completed) || 
+          localStorage.getItem('has_completed_onboarding') === 'true';
         
         if (!hasCompletedOnboarding) {
           // First show onboarding
           setShowOnboarding(true);
         } else {
-          const hasSeenPricing = localStorage.getItem('has_seen_pricing');
+          // Check if they've seen pricing
+          const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
+          
           if (!hasSeenPricing) {
             setShowPricing(true);
           } else {
@@ -202,6 +218,7 @@ const Auth = () => {
   };
 
   const handleContinueFree = () => {
+    localStorage.setItem('has_seen_pricing', 'true');
     setShowPricing(false);
     navigate("/dashboard");
   };
