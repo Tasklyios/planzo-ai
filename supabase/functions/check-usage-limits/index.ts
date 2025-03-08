@@ -146,7 +146,7 @@ serve(async (req) => {
       else if (tier === 'plus') maxLimit = 30;
     }
 
-    // For ideas specifically, use the actual count (5) instead of 1
+    // For ideas specifically, use the number 5 instead of 1
     const incrementCount = action === 'ideas' ? 5 : 1;
     
     // Check if user would exceed their limit

@@ -9,6 +9,7 @@ DECLARE
     v_tier subscription_tier;
     v_current_usage integer;
     v_max_limit integer;
+    v_increment_count integer;
 BEGIN
     -- Get user's subscription tier
     SELECT tier INTO v_tier
@@ -44,6 +45,8 @@ BEGIN
             WHEN v_tier = 'business' THEN 99999 -- Should not reach here but added as fallback
             ELSE 5
         END;
+        -- For ideas, increment by 5
+        v_increment_count := 5;
     ELSIF p_action = 'scripts' THEN
         v_max_limit := CASE 
             WHEN v_tier = 'free' THEN 3
@@ -52,6 +55,7 @@ BEGIN
             WHEN v_tier = 'business' THEN 99999 -- Should not reach here but added as fallback
             ELSE 3
         END;
+        v_increment_count := 1;
     ELSIF p_action = 'hooks' THEN
         v_max_limit := CASE 
             WHEN v_tier = 'free' THEN 5
@@ -60,6 +64,9 @@ BEGIN
             WHEN v_tier = 'business' THEN 99999 -- Should not reach here but added as fallback
             ELSE 5
         END;
+        v_increment_count := 1;
+    ELSE
+        v_increment_count := 1;
     END IF;
 
     -- Check if under limit
@@ -72,22 +79,22 @@ BEGIN
     VALUES (
         p_user_id,
         CURRENT_DATE,
-        CASE WHEN p_action = 'ideas' THEN 1 ELSE 0 END,
-        CASE WHEN p_action = 'scripts' THEN 1 ELSE 0 END,
-        CASE WHEN p_action = 'hooks' THEN 1 ELSE 0 END
+        CASE WHEN p_action = 'ideas' THEN v_increment_count ELSE 0 END,
+        CASE WHEN p_action = 'scripts' THEN v_increment_count ELSE 0 END,
+        CASE WHEN p_action = 'hooks' THEN v_increment_count ELSE 0 END
     )
     ON CONFLICT (user_id, date) DO UPDATE
     SET 
         ideas_generated = CASE 
-            WHEN p_action = 'ideas' THEN user_daily_usage.ideas_generated + 1
+            WHEN p_action = 'ideas' THEN user_daily_usage.ideas_generated + v_increment_count
             ELSE user_daily_usage.ideas_generated
         END,
         scripts_generated = CASE 
-            WHEN p_action = 'scripts' THEN user_daily_usage.scripts_generated + 1
+            WHEN p_action = 'scripts' THEN user_daily_usage.scripts_generated + v_increment_count
             ELSE user_daily_usage.scripts_generated
         END,
         hooks_generated = CASE 
-            WHEN p_action = 'hooks' THEN user_daily_usage.hooks_generated + 1
+            WHEN p_action = 'hooks' THEN user_daily_usage.hooks_generated + v_increment_count
             ELSE user_daily_usage.hooks_generated
         END;
 
