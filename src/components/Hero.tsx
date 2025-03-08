@@ -1,7 +1,7 @@
 
 const Hero = () => {
   return (
-    <section className="bg-gradient-to-b from-[#E5F0FF] to-[#33C3F0]/30 pt-24">
+    <section className="bg-gradient-to-b from-primary/10 to-primary/30 pt-24">
       <div className="container mx-auto px-4 py-16">
         <div className="flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1 space-y-8 fade-up">
@@ -13,7 +13,7 @@ const Hero = () => {
             </p>
             <div className="flex gap-4">
               <button className="px-6 py-3 blue-gradient rounded-lg transition-colors">Try for Free</button>
-              <button className="px-6 py-3 border border-[#0073FF] text-[#0073FF] hover:bg-[#E5F0FF] rounded-lg transition-colors">Watch Demo</button>
+              <button className="px-6 py-3 border border-primary text-primary hover:bg-primary/10 rounded-lg transition-colors">Watch Demo</button>
             </div>
           </div>
           <div className="flex-1 fade-up">
