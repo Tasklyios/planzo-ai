@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import PricingDialog from "@/components/pricing/PricingDialog";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const Auth = () => {
   // Force light mode on auth page
@@ -40,6 +42,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [showVerifyEmail, setShowVerifyEmail] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -66,14 +69,24 @@ const Auth = () => {
         });
         if (error) throw error;
         
-        setShowPricing(true); // Show pricing dialog after successful signup
+        // Show email verification message instead of pricing dialog
+        setShowVerifyEmail(true);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
-        navigate("/dashboard");
+        
+        // Check if this is the user's first sign-in after confirming email
+        // We'll use localStorage to track this
+        const isFirstSignIn = !localStorage.getItem('has_seen_pricing');
+        if (isFirstSignIn) {
+          localStorage.setItem('has_seen_pricing', 'true');
+          setShowPricing(true);
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (error: any) {
       toast({
@@ -273,6 +286,15 @@ const Auth = () => {
             </p>
           </div>
 
+          {showVerifyEmail && (
+            <Alert className="mb-6 bg-blue-50 border-blue-200">
+              <AlertTitle className="text-blue-800">Check your email!</AlertTitle>
+              <AlertDescription className="text-blue-700">
+                We've sent a confirmation link to your email address. Please check your inbox and click the link to verify your account.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-4 mb-6">
             <button
               onClick={handleGoogleSignIn}
@@ -424,7 +446,10 @@ const Auth = () => {
             <p className="text-dark/70 dark:text-white/70">
               {isSignUp ? "Already have an account?" : "Don't have an account?"}
               <button
-                onClick={() => setIsSignUp(!isSignUp)}
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setShowVerifyEmail(false); // Reset email verification alert when switching modes
+                }}
                 className="ml-1 text-[#0073FF] hover:underline"
               >
                 {isSignUp ? "Sign In" : "Sign Up"}
