@@ -29,6 +29,14 @@ const renderApp = () => {
     console.log("App successfully rendered");
   } catch (error) {
     console.error("Failed to render app:", error);
+    document.body.innerHTML = `
+      <div style="padding: 20px; font-family: system-ui, sans-serif;">
+        <h2>Application Error</h2>
+        <p>There was an error loading the application. Please try again or contact support.</p>
+        <p>Error details: ${error instanceof Error ? error.message : String(error)}</p>
+        <button onclick="window.location.reload()">Reload Page</button>
+      </div>
+    `;
   }
 };
 

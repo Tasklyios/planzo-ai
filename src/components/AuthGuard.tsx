@@ -88,6 +88,12 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         <p className="text-gray-700 mt-4">
           Please ensure your domain is allowed in the Supabase authentication settings.
         </p>
+        <button 
+          onClick={() => window.location.href = '/auth'} 
+          className="mt-4 bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+        >
+          Return to Login
+        </button>
       </div>
     </div>;
   }
