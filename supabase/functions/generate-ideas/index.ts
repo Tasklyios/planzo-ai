@@ -1,4 +1,3 @@
-
 // Import XHR using the correct syntax for Deno edge functions
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -40,7 +39,8 @@ serve(async (req) => {
       isEcoRelated,
       isEcommerce,
       marketResearch,
-      modelOverride
+      modelOverride,
+      styleProfile // New parameter for style profile
     } = await req.json();
 
     // Start tracking time for performance measurement
@@ -54,7 +54,11 @@ serve(async (req) => {
       customIdeasLength: customIdeas?.length || 0,
       numIdeas: 5, // Force exactly 5 ideas
       isEcoBrand,
-      isEcommerce
+      isEcommerce,
+      contentStyle,
+      contentPersonality,
+      hasStyleProfile: !!styleProfile,
+      styleProfileName: styleProfile?.name
     });
 
     // Construct the prompt differently based on whether it's an eco brand or not
@@ -70,7 +74,8 @@ serve(async (req) => {
       isEcoBrand,
       numIdeas: 5, // Force exactly 5 ideas regardless of input
       isEcommerce,
-      marketResearch
+      marketResearch,
+      styleProfile
     });
 
     // Use a more efficient model and optimize parameters for faster generation
@@ -228,7 +233,8 @@ function constructPrompt({
   isEcoBrand,
   numIdeas,
   isEcommerce,
-  marketResearch
+  marketResearch,
+  styleProfile
 }) {
   // Base system prompt
   let systemPrompt = `You are a viral video idea generator specializing in creating engaging, attention-grabbing content ideas specifically for businesses. Your goal is to help content creators make videos that will perform well on ${platform}.`;
@@ -236,6 +242,23 @@ function constructPrompt({
   // Add eco-brand specific instructions if applicable
   if (isEcoBrand) {
     systemPrompt += `\n\nSPECIAL INSTRUCTIONS: You are generating ideas for an eco-friendly brand. Focus on creating viral-worthy content that highlights sustainability, environmental benefits, and ethical aspects of the products. Include ideas that use trending eco-hashtags, sustainability challenges, and impactful environmental messaging that resonates with eco-conscious consumers.`;
+  }
+
+  // Add style profile information if available
+  if (styleProfile) {
+    systemPrompt += `\n\nSTYLE PROFILE: The user has a style profile named "${styleProfile.name}": ${styleProfile.description}. 
+    The tone should be: ${styleProfile.tone}.
+    Preferred topics: ${styleProfile.topics ? styleProfile.topics.join(', ') : 'No specific topics'}.
+    Topics to avoid: ${styleProfile.avoidTopics ? styleProfile.avoidTopics.join(', ') : 'No topics to avoid'}.`;
+  }
+
+  // Add content style and personality if available
+  if (contentStyle) {
+    systemPrompt += `\n\nCONTENT STYLE: ${contentStyle}`;
+  }
+
+  if (contentPersonality) {
+    systemPrompt += `\n\nCONTENT PERSONALITY: ${contentPersonality}`;
   }
 
   systemPrompt += `\n\nRules for generating ideas:

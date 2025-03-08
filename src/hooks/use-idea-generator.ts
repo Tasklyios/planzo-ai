@@ -1,8 +1,13 @@
-
 import { useState, useEffect, useCallback } from "react";
-import { GeneratedIdea, PreviousIdeasContext } from "@/types/idea";
+import { GeneratedIdea, PreviousIdeasContext, StyleProfile } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+
+interface GenerateIdeasParams {
+  activeStyleProfile?: StyleProfile | null;
+  contentStyle?: string | null;
+  contentPersonality?: string | null;
+}
 
 export const useIdeaGenerator = () => {
   const [niche, setNiche] = useState("");
@@ -127,7 +132,7 @@ export const useIdeaGenerator = () => {
     }
   }, [previousIdeasContext]);
 
-  const generateIdeas = useCallback(async () => {
+  const generateIdeas = useCallback(async (params?: GenerateIdeasParams) => {
     if (!niche) {
       toast({
         title: "Please specify a niche",
@@ -197,6 +202,19 @@ export const useIdeaGenerator = () => {
         return;
       }
       
+      // Extract the style profile data and content customization if provided
+      const styleProfileData = params?.activeStyleProfile ? {
+        name: params.activeStyleProfile.name,
+        description: params.activeStyleProfile.description,
+        tone: params.activeStyleProfile.tone,
+        topics: params.activeStyleProfile.topics,
+        avoidTopics: params.activeStyleProfile.avoid_topics
+      } : null;
+
+      console.log("Style profile data:", styleProfileData);
+      console.log("Content style:", params?.contentStyle);
+      console.log("Content personality:", params?.contentPersonality);
+
       // Now proceed with idea generation if usage limits allow
       console.log("Calling generate-ideas function with auth header");
       const { data, error: generationError } = await supabase.functions.invoke('generate-ideas', {
@@ -207,7 +225,10 @@ export const useIdeaGenerator = () => {
           platform,
           customIdeas,
           previousIdeas: previousIdeasContext,
-          numIdeas: 5
+          numIdeas: 5,
+          styleProfile: styleProfileData,
+          contentStyle: params?.contentStyle,
+          contentPersonality: params?.contentPersonality
         },
         headers: {
           Authorization: authHeader

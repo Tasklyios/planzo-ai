@@ -41,6 +41,8 @@ const Generator = () => {
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [activeStyleProfile, setActiveStyleProfile] = useState<StyleProfile | null>(null);
+  const [contentStyle, setContentStyle] = useState<string | null>(null);
+  const [contentPersonality, setContentPersonality] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -69,21 +71,39 @@ const Generator = () => {
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('active_style_profile_id')
+        .select('active_style_profile_id, content_style, content_personality')
         .eq('id', session.user.id)
         .maybeSingle();
 
-      if (profileError || !profile?.active_style_profile_id) return;
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        return;
+      }
 
-      const { data: styleProfile, error: styleError } = await supabase
-        .from('style_profiles')
-        .select('*')
-        .eq('id', profile.active_style_profile_id)
-        .maybeSingle();
+      // Store content style and personality from profile
+      if (profile) {
+        setContentStyle(profile.content_style || null);
+        setContentPersonality(profile.content_personality || null);
+        
+        // Only fetch style profile if there is an active one
+        if (profile.active_style_profile_id) {
+          const { data: styleProfile, error: styleError } = await supabase
+            .from('style_profiles')
+            .select('*')
+            .eq('id', profile.active_style_profile_id)
+            .maybeSingle();
 
-      if (styleError || !styleProfile) return;
+          if (styleError) {
+            console.error("Error fetching style profile:", styleError);
+            return;
+          }
 
-      setActiveStyleProfile(styleProfile);
+          if (styleProfile) {
+            setActiveStyleProfile(styleProfile);
+            console.log("Active style profile loaded:", styleProfile);
+          }
+        }
+      }
     } catch (error) {
       console.error("Error fetching active style profile:", error);
     }
@@ -189,7 +209,11 @@ const Generator = () => {
 
   const handleRetryGenerate = () => {
     setError(null);
-    generateIdeas();
+    generateIdeas({
+      activeStyleProfile,
+      contentStyle,
+      contentPersonality
+    });
   };
 
   const navigateToStyleProfiles = () => {
@@ -290,7 +314,11 @@ const Generator = () => {
 
           <div className="flex justify-center mb-8">
             <button 
-              onClick={generateIdeas} 
+              onClick={() => generateIdeas({
+                activeStyleProfile,
+                contentStyle,
+                contentPersonality
+              })} 
               disabled={loading} 
               className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white dark:text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
             >
