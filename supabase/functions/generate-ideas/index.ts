@@ -44,65 +44,68 @@ serve(async (req) => {
       );
     }
 
-    // Format the niche based on account type
-    const formattedNiche = accountType === 'ecommerce' ? 
-      `${niche} Products` : 
-      accountType === 'business' ? 
-        `${niche} Business` : 
-        niche;
+    // Create a detailed system prompt that positions the AI as a marketing expert
+    const systemPrompt = `You are an elite marketing strategist and viral content expert specializing in ${platform} content.
 
-    // Create a strong system prompt that encourages original thinking
-    const systemPrompt = `You are an expert content creator who specializes in creating original, valuable video ideas. 
-Your task is to create 5 highly unique video ideas for a ${accountType || 'creator'} in the "${formattedNiche}" niche 
-targeting "${audience || 'their audience'}" for ${platform || 'social media'}.
+Your expertise is creating viral content ideas for ${accountType} creators in the "${niche}" space targeting "${audience}".
 
-MOST IMPORTANT: Be extremely specific, avoid generic titles like "5 tips for..." or "How to..." - instead, create concrete, 
-distinctive ideas that stand out. Each idea should have a unique angle or hook that makes viewers curious.
+CONTENT REQUIREMENTS:
+- Create COMPLETELY ORIGINAL ideas (no templates or formulas!)
+- Each idea must have a unique angle specific to ${niche}
+- Ideas should be attention-grabbing but deliverable
+- Focus on what would actually go viral for this specific creator
 
-Your ideas must be:
-- Highly specific to ${formattedNiche} (not general advice)
-- Actually valuable to ${audience}
-- Practical to implement
-- Have an unexpected or interesting angle
-- Be optimized for ${platform}
+${accountType === 'personal' ? 
+  `For this PERSONAL CREATOR account, focus on personality-driven content that builds authority and connection.` : 
+  accountType === 'business' ? 
+  `For this BUSINESS account, focus on thought leadership, industry expertise, and building brand trust.` :
+  accountType === 'ecommerce' ? 
+  `For this ECOMMERCE account, focus on product storytelling, demonstrations, and converting viewers to customers.` : 
+  ''}
 
-${styleProfile ? `Content style: "${styleProfile.name}": ${styleProfile.description}
-Tone: ${styleProfile.tone}` : ''}
+${styleProfile ? `CREATOR'S UNIQUE STYLE: "${styleProfile.name}": ${styleProfile.description}
+TONE: ${styleProfile.tone}` : ''}
 
-${contentStyle ? `Content style: ${contentStyle}` : ''}
-${contentPersonality ? `Content personality: ${contentPersonality}` : ''}
+${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
+${contentPersonality ? `CONTENT PERSONALITY: ${contentPersonality}` : ''}
 
-Return EXACTLY 5 ideas in a consistent JSON format with title, category, description, and tags.`;
+PLATFORM ADAPTATION: Optimize specifically for ${platform} with the right format, hooks, and engagement tactics.`;
 
-    // Create a detailed user prompt
-    const userPrompt = `Create 5 unique, highly specific video ideas for a ${accountType} creator focused on "${formattedNiche}" 
-targeting "${audience}" for ${platform}.
+    // Create a detailed user prompt with clear instructions
+    const userPrompt = `Create 5 original, viral-potential video ideas for a ${accountType} creator in the "${niche}" niche targeting "${audience}" on ${platform}.
 
-${customIdeas ? `For context (create completely different ideas): ${customIdeas}` : ''}
-    
+IMPORTANT CONTEXT ABOUT THIS CREATOR:
+- Niche: ${niche}
+- Target Audience: ${audience} 
+- Platform: ${platform}
+- Content Type: ${videoType || "Various formats"}
+- Style: ${contentStyle || "Not specified"}
+- Personality: ${contentPersonality || "Not specified"}
+${customIdeas ? `- Creator's Own Ideas: "${customIdeas}"` : ""}
+
 ${previousIdeas && previousIdeas.titles && previousIdeas.titles.length ? 
-  `Don't repeat these ideas: ${previousIdeas.titles.slice(0, 5).join(', ')}` : ''}
+  `DO NOT REPEAT THESE PREVIOUS IDEAS: ${previousIdeas.titles.slice(0, 5).join(', ')}` : ''}
 
-Each idea must include:
-- A highly specific and original title (avoid generic formats like "5 tips for..." or "How to...")
-- A relevant category
-- A detailed description that explains why this idea is valuable and unique
-- 3-5 relevant tags
+Each idea MUST include:
+1. A HIGHLY SPECIFIC title that would make viewers stop scrolling (not generic "How to" or "5 Tips" formulas)
+2. A relevant content category
+3. A detailed description explaining why this idea would perform well with ${audience}
+4. 3-5 relevant hashtags or tags
 
-Format as valid JSON only:
+FORMAT AS VALID JSON ONLY:
 {
   "ideas": [
     {
-      "title": "Specific and original title here",
-      "category": "Appropriate category",
-      "description": "Detailed description explaining the value and uniqueness",
+      "title": "Compelling, specific, original title here",
+      "category": "Content category",
+      "description": "Detailed description of the content and why it would be effective",
       "tags": ["tag1", "tag2", "tag3"]
     },
-    ...more ideas
+    // 4 more ideas
   ]
 }`;
 
-    // Call OpenAI with simpler but effective parameters
+    // Call OpenAI with effective parameters
     console.log('Calling OpenAI API...');
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -118,9 +121,7 @@ Format as valid JSON only:
         ],
         temperature: 0.9,
         max_tokens: 1200,
-        top_p: 1.0,
-        frequency_penalty: 0.5,
-        presence_penalty: 0.5,
+        top_p: 1.0
       }),
     });
 
@@ -144,7 +145,7 @@ Format as valid JSON only:
       );
     }
 
-    // Parse the response - simplified approach
+    // Parse the response
     const rawResponse = data.choices[0].message.content;
     console.log('Raw AI response:', rawResponse);
     
@@ -159,26 +160,109 @@ Format as valid JSON only:
         }
       }
       
-      // If we didn't get valid ideas, provide fallback
-      if (ideas.length === 0) {
-        console.log("Failed to parse ideas from OpenAI response. Using fallback parsing.");
+      // Validate ideas quality
+      if (ideas.length > 0) {
+        // Check if ideas are just templates with the niche plugged in
+        const templatePatterns = [
+          /^5 Tips for/i,
+          /^How to/i,
+          /^Top \d+ Ways/i,
+          /^The Ultimate Guide to/i
+        ];
         
-        // Try to parse each idea section separately
-        const ideaRegex = /(\d+\.\s+)(.+?)(?=\n|$)/g;
-        let match;
-        while ((match = ideaRegex.exec(rawResponse)) !== null) {
-          ideas.push({
-            title: match[2].trim(),
-            category: "General",
-            description: "Generated idea description",
-            tags: ["content", "video", formattedNiche.toLowerCase().replace(/\s+/g, '-')]
+        let templatedIdeasCount = 0;
+        ideas.forEach(idea => {
+          if (templatePatterns.some(pattern => pattern.test(idea.title))) {
+            templatedIdeasCount++;
+          }
+        });
+        
+        // If more than 60% of ideas look templated, regenerate with stricter instructions
+        if (templatedIdeasCount >= Math.floor(ideas.length * 0.6)) {
+          console.log("Detected templated ideas, running fallback with creative examples");
+          
+          // Use more specific instructions with examples
+          const stricterPrompt = `${userPrompt}
+
+IMPORTANT: Your previous ideas were too templated. Create TRULY ORIGINAL ideas like these examples:
+- "I Secretly Recorded My Boss's ${niche} Advice for 30 Days — Here's What Happened"
+- "The ${niche} Technique That Got Me Fired (But Tripled My Income)"
+- "${audience} Are Shocked When This ${niche} Hack Actually Works"
+- "The Embarrassing ${niche} Mistake 90% of ${audience} Make (And How I Fixed It)"
+- "What Top ${niche} Experts Don't Want You to Know About Their Morning Routine"`;
+          
+          const stricterResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: stricterPrompt }
+              ],
+              temperature: 1.0,
+              max_tokens: 1200
+            }),
           });
+          
+          if (stricterResponse.ok) {
+            const stricterData = await stricterResponse.json();
+            const stricterRawResponse = stricterData.choices[0].message.content;
+            console.log('Stricter AI response:', stricterRawResponse);
+            
+            const stricterJsonMatch = stricterRawResponse.match(/\{[\s\S]*\}/);
+            if (stricterJsonMatch) {
+              const stricterParsedData = JSON.parse(stricterJsonMatch[0]);
+              if (stricterParsedData.ideas && Array.isArray(stricterParsedData.ideas)) {
+                ideas = stricterParsedData.ideas;
+              }
+            }
+          }
         }
       }
       
-      // Ensure we have exactly 5 ideas with required fields
+      // If we still don't have 5 valid ideas, add creative fallbacks
       if (ideas.length < 5) {
-        console.log(`Only got ${ideas.length} ideas, creating fallbacks to reach 5`);
+        const fallbackIdeas = [
+          {
+            title: `The ${niche} Secret I Discovered By Accident (${audience} Are Stunned)`,
+            category: "Personal Discovery",
+            description: `Share an unexpected insight or technique you discovered in the ${niche} field that contradicts conventional wisdom but delivers amazing results. Show before/after proof to build credibility.`,
+            tags: ["gamechanging", "discovery", niche.toLowerCase().replace(/\s+/g, '')]
+          },
+          {
+            title: `I Tested The Viral ${niche} Trend For 30 Days (Honest Results)`,
+            category: "Experiment",
+            description: `Document your journey testing a trending ${niche} technique that's popular with ${audience}, showing both the struggles and victories. This transparency creates trust and high engagement.`,
+            tags: ["experiment", "results", "trending"]
+          },
+          {
+            title: `What ${audience} Don't Realize About ${niche} (Industry Insider Reveals All)`,
+            category: "Industry Secrets",
+            description: `Expose common misconceptions or little-known facts about ${niche} that most ${audience} aren't aware of, positioning yourself as an authentic industry insider with valuable perspective.`,
+            tags: ["insider", "secrets", "truth"]
+          },
+          {
+            title: `The ${niche} Framework That Changed Everything For My ${accountType === 'business' ? 'Business' : accountType === 'ecommerce' ? 'Product Sales' : 'Content'}`,
+            category: "Strategy Breakdown",
+            description: `Break down a specific, actionable framework that dramatically improved your results in ${niche}, with concrete examples and steps that ${audience} can immediately implement.`,
+            tags: ["strategy", "framework", "results"]
+          },
+          {
+            title: `Why Most ${audience} Fail With ${niche} (And How To Be Different)`,
+            category: "Problem-Solution",
+            description: `Analyze the common pitfalls that cause most people to struggle with ${niche}, then outline a unique path to success that avoids these mistakes. This contrarian approach builds authority.`,
+            tags: ["mistakes", "solution", "success"]
+          }
+        ];
+        
+        // Add fallback ideas until we have 5
+        while (ideas.length < 5) {
+          ideas.push(fallbackIdeas[ideas.length % fallbackIdeas.length]);
+        }
       }
       
       // Limit to exactly 5 ideas
@@ -186,57 +270,47 @@ Format as valid JSON only:
       
       // Ensure all ideas have required fields
       ideas = ideas.map(idea => ({
-        title: idea.title || `Idea for ${formattedNiche}`,
-        category: idea.category || "General",
-        description: idea.description || `A creative idea for ${formattedNiche}`,
+        title: idea.title || `Viral ${niche} Concept`,
+        category: idea.category || "Creative Content",
+        description: idea.description || `A unique approach to creating content about ${niche} that will resonate with ${audience}.`,
         tags: Array.isArray(idea.tags) && idea.tags.length > 0 ? 
-          idea.tags : ["content", "video", formattedNiche.toLowerCase().replace(/\s+/g, '-')]
+          idea.tags : ["viral", "content", niche.toLowerCase().replace(/\s+/g, '-')]
       }));
-      
-      // If we still don't have 5 ideas, add fallbacks
-      while (ideas.length < 5) {
-        ideas.push({
-          title: `Original ${formattedNiche} Concept ${ideas.length + 1}`,
-          category: "Creative Content",
-          description: `A unique approach to creating content about ${formattedNiche} that will resonate with ${audience}.`,
-          tags: ["original", "content", formattedNiche.toLowerCase().replace(/\s+/g, '-')]
-        });
-      }
       
     } catch (error) {
       console.error("Error parsing ideas:", error);
       
-      // Provide creative fallback ideas specific to the niche
+      // Creative fallback ideas that encourage virality
       ideas = [
         {
-          title: `The Unfiltered Truth About ${formattedNiche} Nobody's Telling You`,
-          category: "Reality Check",
-          description: `Pull back the curtain and reveal the honest, unfiltered realities of ${formattedNiche} that most people keep hidden. This transparent look builds authenticity and trust with ${audience}.`,
-          tags: ["reality", "truth", "behind-the-scenes"]
-        },
-        {
-          title: `I Tried the Most Controversial ${formattedNiche} Method for 30 Days`,
+          title: `I Tested The "Impossible" ${niche} Technique That Everyone Said Wouldn't Work`,
           category: "Experiment",
-          description: `Document a 30-day journey testing a controversial or unusual approach to ${formattedNiche}, showing both successes and failures along the way.`,
-          tags: ["experiment", "challenge", "results"]
+          description: `Document yourself attempting a controversial or challenging ${niche} technique that most experts dismiss, showing surprising results that challenge conventional wisdom. The contrarian angle creates debate and sharing.`,
+          tags: ["experiment", "controversial", "results"]
         },
         {
-          title: `What ${formattedNiche} Will Look Like in 5 Years (Based on Industry Insider Info)`,
-          category: "Trend Analysis",
-          description: `Share exclusive insights and predictions about the future of ${formattedNiche}, giving ${audience} valuable foresight to prepare for upcoming changes.`,
-          tags: ["future", "trends", "predictions"]
+          title: `The ${niche} Mistake I Made That Cost Me $10,000 (And How You Can Avoid It)`,
+          category: "Cautionary Tale",
+          description: `Share a significant failure or mistake in your ${niche} journey, the expensive lesson you learned, and how ${audience} can avoid the same fate. This vulnerability creates trust and high engagement.`,
+          tags: ["mistake", "lesson", "warning"]
         },
         {
-          title: `The ${formattedNiche} Framework That Transformed My Results (With Real Examples)`,
+          title: `What ${audience} Don't Know About ${niche} Could Be Costing Them (Here's Why)`,
+          category: "Industry Insights",
+          description: `Reveal hidden costs or missed opportunities in ${niche} that most ${audience} overlook, providing specific examples and actionable solutions that demonstrate your expertise.`,
+          tags: ["insights", "expertise", "opportunity"]
+        },
+        {
+          title: `The ${niche} Method That Generated $XXX in 30 Days (With Proof)`,
           category: "Case Study",
-          description: `Break down a specific strategy that dramatically improved your results in ${formattedNiche}, with concrete examples and actionable steps for ${audience}.`,
-          tags: ["strategy", "framework", "results"]
+          description: `Breakdown a specific, replicable method in ${niche} that produced exceptional results, showing real evidence and explaining exactly how ${audience} can implement it themselves.`,
+          tags: ["method", "proof", "results"]
         },
         {
-          title: `Why Most ${audience} Fail at ${formattedNiche} (And How to Be Different)`,
-          category: "Problem-Solution",
-          description: `Analyze the common pitfalls that cause most people to struggle with ${formattedNiche}, then outline a clear path to success that avoids these mistakes.`,
-          tags: ["mistakes", "solutions", "success"]
+          title: `Why I Stopped Following ${niche} "Best Practices" (And What I Do Instead)`,
+          category: "Contrarian Approach",
+          description: `Challenge the standard advice in ${niche}, explain why it's ineffective for ${audience}, and present your alternative approach with evidence of better results. This creates curiosity and sharing.`,
+          tags: ["contrarian", "strategy", "results"]
         }
       ];
     }
