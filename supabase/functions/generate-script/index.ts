@@ -110,39 +110,40 @@ serve(async (req) => {
       }
     }
 
-    // Simplified system prompt for better reliability
-    const systemPrompt = `You are a creative script writer for short-form videos who creates original, conversational scripts.
+    // Create a direct, focused system prompt
+    const systemPrompt = `You are a professional script writer for ${userProfile?.account_type || 'personal'} content creators.
 
-Your scripts should:
-- Sound like a real human talking naturally
-- Include pauses, filler words, and self-corrections
-- Be specific to the exact topic
-- Avoid generic templates or formulas
-- Use [brackets] to indicate camera directions or tone
+Your role is to write authentic, conversational scripts that:
+- Sound like a real human speaking naturally (include pauses, filler words, self-corrections)
+- Provide specific, valuable information on the exact topic 
+- Create an engaging narrative structure with clear flow
+- Include [camera directions] or [tone notes] in brackets
+- Avoid generic templates or corporate language
 
-${userProfile?.account_type ? `This is for a ${userProfile.account_type.toUpperCase()} CREATOR.` : ''}
-${userProfile?.content_style ? `Content style: ${userProfile.content_style}` : ''}
-${userProfile?.content_personality ? `Content personality: ${userProfile.content_personality}` : ''}`;
+${userProfile?.content_style ? `CONTENT STYLE: ${userProfile.content_style}` : ''}
+${userProfile?.content_personality ? `PERSONALITY: ${userProfile.content_personality}` : ''}
 
-    // Create simplified but effective user prompt
-    const userPrompt = `
-Write an original, natural-sounding script for a ${timeRange} ${contentStyle || "authentic"} video about:
-"${scriptTitle}"
+Length: ${timeRange}
+Style: ${contentStyle || "authentic and natural"}
 
-${scriptDescription ? `Additional context: ${scriptDescription}` : ''}
-${hook ? `Start with this hook: "${hook}"` : ''}
+Create a completely original script - don't use formulas or templates.`;
 
-REQUIREMENTS:
-- Write how a real person actually speaks (with pauses, filler words, natural rhythm)
-- Create a unique script specific to this topic
-- Include [brackets] for camera directions or actions
-- Avoid marketing-speak or overly polished language
-- Format with natural line breaks for speech rhythms
-- Focus on authenticity rather than perfection
+    // Create a detailed user prompt
+    const userPrompt = `Write an original, natural-sounding script for a ${timeRange} video titled: "${scriptTitle}"
 
-The script should feel like a real person talking, not a corporate message.`;
+${scriptDescription ? `CONTEXT: ${scriptDescription}` : ''}
+${hook ? `START WITH THIS HOOK: "${hook}"` : ''}
 
-    // Call OpenAI API with simplified parameters
+The script must:
+1. Sound like authentic human speech (use natural pauses, filler words, conversational rhythm)
+2. Provide specific value about THIS EXACT TOPIC (not generic advice)
+3. Have a clear beginning, middle, and end
+4. Include [camera directions] or [action notes] in brackets
+5. Feel like a real person talking, not a marketing video
+
+Format with natural line breaks to indicate speaking rhythm. Make it sound like you're having a conversation with the viewer.`;
+
+    // Call OpenAI API with effective parameters
     console.log('Calling OpenAI API for script generation');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -156,11 +157,11 @@ The script should feel like a real person talking, not a corporate message.`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.9,
+        temperature: 0.85,
         max_tokens: 700,
-        top_p: 0.9,
-        frequency_penalty: 0.7, 
-        presence_penalty: 0.7,
+        top_p: 1,
+        frequency_penalty: 0.6,
+        presence_penalty: 0.6,
       }),
     });
 

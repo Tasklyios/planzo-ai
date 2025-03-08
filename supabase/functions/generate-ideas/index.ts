@@ -1,5 +1,4 @@
 
-// Import XHR using the correct syntax for Deno edge functions
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
@@ -21,25 +20,21 @@ serve(async (req) => {
     // Get request data
     const { 
       niche, 
-      audience, 
-      videoType, 
-      platform, 
-      customIdeas, 
-      contentStyle,
-      contentPersonality,
-      previousIdeas,
-      styleProfile,
-      accountType
+      audience = "content creators",
+      videoType = "", 
+      platform = "social media",
+      customIdeas = "",
+      contentStyle = "", 
+      contentPersonality = "",
+      previousIdeas = null,
+      styleProfile = null,
+      accountType = "personal"
     } = await req.json();
 
     console.log('Generating ideas with:', { 
-      niche, audience, videoType, platform,
-      customIdeasLength: customIdeas?.length || 0,
-      contentStyle,
-      contentPersonality,
-      accountType,
-      hasStyleProfile: !!styleProfile,
-      styleProfileName: styleProfile?.name
+      niche, audience, videoType, platform, accountType,
+      hasCustomIdeas: !!customIdeas,
+      hasStyleProfile: !!styleProfile
     });
     
     if (!niche) {
@@ -49,51 +44,66 @@ serve(async (req) => {
       );
     }
 
-    // Simplify all logic for determining niche and prompt construction
-    const nicheToUse = accountType === 'ecommerce' ? 
+    // Format the niche based on account type
+    const formattedNiche = accountType === 'ecommerce' ? 
       `${niche} Products` : 
       accountType === 'business' ? 
         `${niche} Business` : 
         niche;
 
-    // Create a more straightforward system prompt
-    const systemPrompt = `You are an expert content strategist creating highly original, engaging video ideas.
-    
-TASK: Create 5 original video ideas for a ${accountType || 'creator'} in the ${nicheToUse} niche targeting ${audience || 'their audience'}.
+    // Create a strong system prompt that encourages original thinking
+    const systemPrompt = `You are an expert content creator who specializes in creating original, valuable video ideas. 
+Your task is to create 5 highly unique video ideas for a ${accountType || 'creator'} in the "${formattedNiche}" niche 
+targeting "${audience || 'their audience'}" for ${platform || 'social media'}.
 
-YOUR IDEAS MUST BE:
-1. HIGHLY SPECIFIC to ${nicheToUse}
-2. VALUABLE to ${audience || 'the audience'}
-3. DISTINCTIVE with unexpected hooks or angles
-4. OPTIMIZED for ${platform || 'social media'}
-5. PRACTICAL to implement
+MOST IMPORTANT: Be extremely specific, avoid generic titles like "5 tips for..." or "How to..." - instead, create concrete, 
+distinctive ideas that stand out. Each idea should have a unique angle or hook that makes viewers curious.
 
-${styleProfile ? `STYLE: "${styleProfile.name}": ${styleProfile.description}
+Your ideas must be:
+- Highly specific to ${formattedNiche} (not general advice)
+- Actually valuable to ${audience}
+- Practical to implement
+- Have an unexpected or interesting angle
+- Be optimized for ${platform}
+
+${styleProfile ? `Content style: "${styleProfile.name}": ${styleProfile.description}
 Tone: ${styleProfile.tone}` : ''}
 
-${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
-${contentPersonality ? `CONTENT PERSONALITY: ${contentPersonality}` : ''}
+${contentStyle ? `Content style: ${contentStyle}` : ''}
+${contentPersonality ? `Content personality: ${contentPersonality}` : ''}
 
-Respond with exactly 5 unique ideas in JSON format with title, category, description, and tags.`;
+Return EXACTLY 5 ideas in a consistent JSON format with title, category, description, and tags.`;
 
-    // Simplified user prompt
-    const userPrompt = `Create 5 unique, specific video ideas for a ${accountType || 'creator'} focused on ${nicheToUse} for ${audience || 'their audience'}.
+    // Create a detailed user prompt
+    const userPrompt = `Create 5 unique, highly specific video ideas for a ${accountType} creator focused on "${formattedNiche}" 
+targeting "${audience}" for ${platform}.
+
+${customIdeas ? `For context (create completely different ideas): ${customIdeas}` : ''}
     
-${customIdeas ? `Some existing ideas (create completely different ones): ${customIdeas}` : ''}
-    
-${previousIdeas && previousIdeas.titles ? `Don't repeat these ideas: ${previousIdeas.titles.slice(0, 5).join(', ')}` : ''}
+${previousIdeas && previousIdeas.titles && previousIdeas.titles.length ? 
+  `Don't repeat these ideas: ${previousIdeas.titles.slice(0, 5).join(', ')}` : ''}
 
-Each idea must have:
-- An original title (not generic like "5 tips for..." or "How to...")
+Each idea must include:
+- A highly specific and original title (avoid generic formats like "5 tips for..." or "How to...")
 - A relevant category
-- A detailed description (why it's valuable and how it's unique)
+- A detailed description that explains why this idea is valuable and unique
 - 3-5 relevant tags
 
-Format as valid JSON only: 
-{"ideas": [{"title": "", "category": "", "description": "", "tags": []}]}`;
+Format as valid JSON only:
+{
+  "ideas": [
+    {
+      "title": "Specific and original title here",
+      "category": "Appropriate category",
+      "description": "Detailed description explaining the value and uniqueness",
+      "tags": ["tag1", "tag2", "tag3"]
+    },
+    ...more ideas
+  ]
+}`;
 
-    // Use gpt-4o-mini with simplified parameters
-    console.log('Calling OpenAI API with simplified prompt');
+    // Call OpenAI with simpler but effective parameters
+    console.log('Calling OpenAI API...');
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -106,11 +116,11 @@ Format as valid JSON only:
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        temperature: 0.8,
-        max_tokens: 1500, // Reduced to avoid timeouts
-        top_p: 0.9,
-        frequency_penalty: 0.6,
-        presence_penalty: 0.6,
+        temperature: 0.9,
+        max_tokens: 1200,
+        top_p: 1.0,
+        frequency_penalty: 0.5,
+        presence_penalty: 0.5,
       }),
     });
 
@@ -134,13 +144,13 @@ Format as valid JSON only:
       );
     }
 
-    // Parse the generated content
+    // Parse the response - simplified approach
     const rawResponse = data.choices[0].message.content;
     console.log('Raw AI response:', rawResponse);
     
     let ideas = [];
     try {
-      // Try to parse JSON response
+      // Try to extract JSON from the response
       const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsedData = JSON.parse(jsonMatch[0]);
@@ -149,8 +159,11 @@ Format as valid JSON only:
         }
       }
       
-      // If JSON parsing failed, extract ideas from text
+      // If we didn't get valid ideas, provide fallback
       if (ideas.length === 0) {
+        console.log("Failed to parse ideas from OpenAI response. Using fallback parsing.");
+        
+        // Try to parse each idea section separately
         const ideaRegex = /(\d+\.\s+)(.+?)(?=\n|$)/g;
         let match;
         while ((match = ideaRegex.exec(rawResponse)) !== null) {
@@ -158,19 +171,14 @@ Format as valid JSON only:
             title: match[2].trim(),
             category: "General",
             description: "Generated idea description",
-            tags: ["content", "video", nicheToUse.toLowerCase().replace(/\s+/g, '-')]
+            tags: ["content", "video", formattedNiche.toLowerCase().replace(/\s+/g, '-')]
           });
         }
       }
       
-      // Ensure we have 5 ideas
-      while (ideas.length < 5) {
-        ideas.push({
-          title: `Creative ${nicheToUse} Idea ${ideas.length + 1}`,
-          category: "Backup Idea",
-          description: `A compelling ${nicheToUse} video idea tailored for ${audience || 'your audience'}.`,
-          tags: ["content", "video", nicheToUse.toLowerCase().replace(/\s+/g, '-')]
-        });
+      // Ensure we have exactly 5 ideas with required fields
+      if (ideas.length < 5) {
+        console.log(`Only got ${ideas.length} ideas, creating fallbacks to reach 5`);
       }
       
       // Limit to exactly 5 ideas
@@ -178,46 +186,57 @@ Format as valid JSON only:
       
       // Ensure all ideas have required fields
       ideas = ideas.map(idea => ({
-        title: idea.title || `Idea for ${nicheToUse}`,
+        title: idea.title || `Idea for ${formattedNiche}`,
         category: idea.category || "General",
-        description: idea.description || `A creative idea for ${nicheToUse}`,
+        description: idea.description || `A creative idea for ${formattedNiche}`,
         tags: Array.isArray(idea.tags) && idea.tags.length > 0 ? 
-          idea.tags : ["content", "video", nicheToUse.toLowerCase().replace(/\s+/g, '-')]
+          idea.tags : ["content", "video", formattedNiche.toLowerCase().replace(/\s+/g, '-')]
       }));
+      
+      // If we still don't have 5 ideas, add fallbacks
+      while (ideas.length < 5) {
+        ideas.push({
+          title: `Original ${formattedNiche} Concept ${ideas.length + 1}`,
+          category: "Creative Content",
+          description: `A unique approach to creating content about ${formattedNiche} that will resonate with ${audience}.`,
+          tags: ["original", "content", formattedNiche.toLowerCase().replace(/\s+/g, '-')]
+        });
+      }
       
     } catch (error) {
       console.error("Error parsing ideas:", error);
-      // Provide fallback ideas
+      
+      // Provide creative fallback ideas specific to the niche
       ideas = [
         {
-          title: `Behind the Scenes: The Reality of ${nicheToUse}`,
-          category: "Documentary",
-          description: `Take ${audience || 'your audience'} behind the curtain to show the true day-to-day realities of ${nicheToUse}. This transparent look builds trust and satisfies curiosity.`,
-          tags: ["behindthescenes", "reality", "transparent"]
+          title: `The Unfiltered Truth About ${formattedNiche} Nobody's Telling You`,
+          category: "Reality Check",
+          description: `Pull back the curtain and reveal the honest, unfiltered realities of ${formattedNiche} that most people keep hidden. This transparent look builds authenticity and trust with ${audience}.`,
+          tags: ["reality", "truth", "behind-the-scenes"]
         },
         {
-          title: `What I Wish I Knew Before Starting in ${nicheToUse}`,
-          category: "Educational",
-          description: `Share valuable lessons learned and insider knowledge about ${nicheToUse} that will help ${audience || 'your audience'} avoid common pitfalls.`,
-          tags: ["lessons", "advice", "experience"]
+          title: `I Tried the Most Controversial ${formattedNiche} Method for 30 Days`,
+          category: "Experiment",
+          description: `Document a 30-day journey testing a controversial or unusual approach to ${formattedNiche}, showing both successes and failures along the way.`,
+          tags: ["experiment", "challenge", "results"]
         },
         {
-          title: `The Unexpected Benefits of ${nicheToUse}`,
-          category: "Informational",
-          description: `Reveal surprising advantages and positive outcomes of ${nicheToUse} that most people don't realize, providing valuable insights for ${audience || 'your audience'}.`,
-          tags: ["benefits", "surprising", "insights"]
+          title: `What ${formattedNiche} Will Look Like in 5 Years (Based on Industry Insider Info)`,
+          category: "Trend Analysis",
+          description: `Share exclusive insights and predictions about the future of ${formattedNiche}, giving ${audience} valuable foresight to prepare for upcoming changes.`,
+          tags: ["future", "trends", "predictions"]
         },
         {
-          title: `A Day in the Life: ${nicheToUse} Edition`,
-          category: "Lifestyle",
-          description: `Show an authentic, hour-by-hour breakdown of what working in ${nicheToUse} actually looks like, with both challenges and rewards.`,
-          tags: ["dayinthelife", "routine", "authentic"]
+          title: `The ${formattedNiche} Framework That Transformed My Results (With Real Examples)`,
+          category: "Case Study",
+          description: `Break down a specific strategy that dramatically improved your results in ${formattedNiche}, with concrete examples and actionable steps for ${audience}.`,
+          tags: ["strategy", "framework", "results"]
         },
         {
-          title: `Common ${nicheToUse} Myths Debunked`,
-          category: "Educational",
-          description: `Address and correct widespread misconceptions about ${nicheToUse} with evidence-based information to help ${audience || 'your audience'} make better decisions.`,
-          tags: ["mythbusting", "facts", "education"]
+          title: `Why Most ${audience} Fail at ${formattedNiche} (And How to Be Different)`,
+          category: "Problem-Solution",
+          description: `Analyze the common pitfalls that cause most people to struggle with ${formattedNiche}, then outline a clear path to success that avoids these mistakes.`,
+          tags: ["mistakes", "solutions", "success"]
         }
       ];
     }
