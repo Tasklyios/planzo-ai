@@ -169,6 +169,10 @@ export default function Calendar() {
         return;
       }
 
+      // Format the selected date to ISO string for database storage
+      const scheduledDate = new Date(selectedDate);
+      const scheduledISOString = scheduledDate.toISOString();
+
       const { data: videoIdea, error: videoError } = await supabase
         .from("video_ideas")
         .insert({
@@ -179,6 +183,8 @@ export default function Calendar() {
           color: "blue",
           tags: [],
           category: "",
+          scheduled_for: scheduledISOString, // Use the selected date from the calendar
+          is_saved: true
         })
         .select()
         .single();
@@ -187,7 +193,7 @@ export default function Calendar() {
 
       const scheduledPost: ScheduledPost = {
         ...videoIdea,
-        scheduled_for: new Date().toISOString(),
+        scheduled_for: scheduledISOString,
       };
 
       setScheduledPosts(prev => [...prev, scheduledPost]);
