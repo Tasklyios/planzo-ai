@@ -1,3 +1,4 @@
+
 // Import XHR using the correct syntax for Deno edge functions
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -40,26 +41,37 @@ serve(async (req) => {
       isEcommerce,
       marketResearch,
       modelOverride,
-      styleProfile // New parameter for style profile
+      styleProfile, // New parameter for style profile
+      accountType // Add account type
     } = await req.json();
 
     // Start tracking time for performance measurement
     const startTime = Date.now();
     
-    // Detect if this is an eco brand to apply optimizations
-    const isEcoBrand = isEcoRelated || detectEcoBrand(niche, customIdeas);
-
+    // Validate required inputs
+    if (!niche) {
+      return new Response(
+        JSON.stringify({ error: "Niche is required" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+    
     console.log('Generating ideas with:', { 
       niche, audience, videoType, platform,
       customIdeasLength: customIdeas?.length || 0,
       numIdeas: 5, // Always use 5 ideas
-      isEcoBrand,
-      isEcommerce,
       contentStyle,
       contentPersonality,
+      accountType,
       hasStyleProfile: !!styleProfile,
       styleProfileName: styleProfile?.name
     });
+
+    // Always use exactly 5 ideas regardless of what was passed
+    const requestedNumIdeas = 5;
+    
+    // Detect if this is an eco brand to apply optimizations
+    const isEcoBrand = isEcoRelated || detectEcoBrand(niche, customIdeas);
 
     // Construct the prompt differently based on whether it's an eco brand or not
     const prompt = constructPrompt({
@@ -72,16 +84,19 @@ serve(async (req) => {
       contentPersonality,
       previousIdeas,
       isEcoBrand,
-      numIdeas: 5, // Always force exactly 5 ideas
+      numIdeas: requestedNumIdeas, // Always force exactly 5 ideas
       isEcommerce,
       marketResearch,
-      styleProfile
+      styleProfile,
+      accountType
     });
 
     // Use a more efficient model and optimize parameters for faster generation
     const model = modelOverride || "gpt-4o-mini"; // Use provided model or default to gpt-4o-mini
     
     console.log('Using model:', model);
+    console.log('System prompt:', prompt.systemPrompt);
+    console.log('User prompt:', prompt.userPrompt);
     
     const apiRequestBody = {
       model: model,
@@ -132,35 +147,36 @@ serve(async (req) => {
       console.log('Trimmed ideas to 5');
     } else if (ideas.length < 5) {
       // If less than 5 ideas were generated, pad with generic ones up to 5
+      // BUT make them relevant to the niche/audience
       const genericIdeas = [
         {
-          title: "Quick Product Demo",
+          title: `${niche} Quick Demo`,
           category: "Product Showcase",
-          description: "A brief demonstration highlighting key features of your product.",
+          description: `A brief demonstration highlighting key features of your ${niche} offering for ${audience}.`,
           tags: ["product", "demo", "features"]
         },
         {
-          title: "Customer Testimonial",
+          title: `${audience} Testimonial`,
           category: "Social Proof",
-          description: "Share positive feedback from a satisfied customer.",
+          description: `Share positive feedback from a satisfied ${audience} customer about your ${niche} content.`,
           tags: ["testimonial", "review", "customer"]
         },
         {
-          title: "Behind the Scenes",
+          title: `Behind the Scenes: ${niche}`,
           category: "Brand Story",
-          description: "Show how your product is made or your team at work.",
+          description: `Show how your ${niche} content is created specifically for ${audience}.`,
           tags: ["behindthescenes", "process", "team"]
         },
         {
-          title: "How-To Tutorial",
+          title: `How-To: ${niche} Guide`,
           category: "Educational",
-          description: "Step-by-step guide showing how to use your product.",
+          description: `Step-by-step guide showing ${audience} how to get the most value from your ${niche} content.`,
           tags: ["tutorial", "howto", "guide"]
         },
         {
-          title: "Product Comparison",
+          title: `${niche} vs Alternatives`,
           category: "Educational",
-          description: "Compare your product with alternatives to show its advantages.",
+          description: `Compare your ${niche} approach with alternatives to show its unique advantages for ${audience}.`,
           tags: ["comparison", "versus", "better"]
         }
       ];
@@ -186,7 +202,17 @@ serve(async (req) => {
         debug: {
           modelUsed: model,
           timeElapsed,
-          ideasCount: ideas.length
+          ideasCount: ideas.length,
+          inputData: {
+            niche,
+            audience,
+            videoType,
+            platform,
+            contentStyle,
+            contentPersonality,
+            styleProfileName: styleProfile?.name,
+            accountType
+          }
         }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -234,10 +260,24 @@ function constructPrompt({
   numIdeas,
   isEcommerce,
   marketResearch,
-  styleProfile
+  styleProfile,
+  accountType
 }) {
   // Base system prompt
-  let systemPrompt = `You are a viral video idea generator specializing in creating engaging, attention-grabbing content ideas specifically for businesses. Your goal is to help content creators make videos that will perform well on ${platform}.`;
+  let systemPrompt = `You are a viral video idea generator specializing in creating engaging, attention-grabbing content ideas specifically for ${accountType || 'business'} accounts. Your goal is to help content creators make videos that will perform well on ${platform || 'social media'}.`;
+  
+  // Add account type specific context
+  if (accountType) {
+    systemPrompt += `\n\nACCOUNT TYPE: ${accountType}. `;
+    
+    if (accountType === 'personal') {
+      systemPrompt += `Generate ideas for a personal creator in the ${niche} niche targeting ${audience}.`;
+    } else if (accountType === 'ecommerce') {
+      systemPrompt += `Generate ideas for an e-commerce business selling products in the ${niche} category targeting ${audience} customers.`;
+    } else if (accountType === 'business') {
+      systemPrompt += `Generate ideas for a ${niche} business targeting ${audience} clients/customers.`;
+    }
+  }
   
   // Add eco-brand specific instructions if applicable
   if (isEcoBrand) {
@@ -262,12 +302,13 @@ function constructPrompt({
   }
 
   systemPrompt += `\n\nRules for generating ideas:
-1. Focus on short-form video ideas that are likely to go viral
+1. Focus on short-form video ideas that are likely to go viral for ${platform || 'social media'}
 2. Make sure ideas are specific enough to guide content creation
 3. Generate distinctive ideas that don't overlap too much
 4. Each idea should include a clear hook to grab attention in the first few seconds
 5. Format each idea with a catchy title, a category, and a brief description
-6. ALWAYS output only valid JSON in the exact format requested`;
+6. ALWAYS output only valid JSON in the exact format requested
+7. ALWAYS generate EXACTLY ${numIdeas} ideas, no more, no less`;
 
   // Add platform-specific guidance
   if (platform === 'TikTok') {
@@ -291,7 +332,7 @@ function constructPrompt({
   }
 
   // User prompt construction
-  let userPrompt = `Please generate ${numIdeas} unique video ideas for a ${niche} brand targeting ${audience}.`;
+  let userPrompt = `Please generate EXACTLY ${numIdeas} unique video ideas for a ${niche} ${accountType || 'business'} targeting ${audience}.`;
   
   if (videoType) {
     userPrompt += ` The videos should be in the format of ${videoType}.`;
@@ -302,11 +343,11 @@ function constructPrompt({
   }
   
   if (contentPersonality) {
-    userPrompt += ` The brand's content personality is ${contentPersonality}.`;
+    userPrompt += ` The content personality is ${contentPersonality}.`;
   }
   
   if (customIdeas && customIdeas.trim()) {
-    userPrompt += `\n\nHere are some custom ideas to inspire you:\n${customIdeas}`;
+    userPrompt += `\n\nHere are some custom ideas to inspire you (but don't copy them directly):\n${customIdeas}`;
   }
   
   // Add information about previous ideas to avoid repetition
@@ -323,7 +364,7 @@ function constructPrompt({
   }
   
   // Specify the output format
-  userPrompt += `\n\nPlease respond with exactly ${numIdeas} ideas in this JSON format without any explanations or other text:
+  userPrompt += `\n\nPlease respond with EXACTLY ${numIdeas} ideas in this JSON format without any explanations or other text:
   {
     "ideas": [
       {

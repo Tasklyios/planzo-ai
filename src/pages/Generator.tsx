@@ -251,18 +251,26 @@ const Generator = () => {
   // Clear existing ideas before generating new ones
   const handleGenerateIdeas = () => {
     console.log("handleGenerateIdeas called with current account type:", accountType);
-    console.log("Current state - niche:", niche, "audience:", audience, "videoType:", videoType);
+    console.log("Current state - niche:", niche, "audience:", audience, "videoType:", videoType, "platform:", platform);
     console.log("Style profile:", activeStyleProfile);
     console.log("Content style:", contentStyle);
     console.log("Content personality:", contentPersonality);
+    console.log("Custom ideas:", customIdeas);
     
     // Clear existing ideas first
     setIdeas([]);
-    // Then generate new ideas
+    
+    // Then generate new ideas with all required data
     generateIdeas({
       activeStyleProfile,
       contentStyle,
-      contentPersonality
+      contentPersonality,
+      // Explicitly pass the current form values to ensure latest data is used
+      currentNiche: niche,
+      currentAudience: audience,
+      currentVideoType: videoType,
+      currentPlatform: platform,
+      currentCustomIdeas: customIdeas
     });
   };
 

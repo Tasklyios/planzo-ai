@@ -8,6 +8,12 @@ interface GenerateIdeasParams {
   activeStyleProfile?: StyleProfile | null;
   contentStyle?: string | null;
   contentPersonality?: string | null;
+  // Add additional parameters to ensure latest form data is used
+  currentNiche?: string;
+  currentAudience?: string;
+  currentVideoType?: string;
+  currentPlatform?: string;
+  currentCustomIdeas?: string;
 }
 
 export const useIdeaGenerator = () => {
@@ -163,7 +169,15 @@ export const useIdeaGenerator = () => {
   }, [previousIdeasContext]);
 
   const generateIdeas = useCallback(async (params?: GenerateIdeasParams) => {
-    if (!niche) {
+    // Prioritize the current form values passed from Generator.tsx, falling back to state values if not provided
+    const currentNiche = params?.currentNiche || niche;
+    const currentAudience = params?.currentAudience || audience;
+    const currentVideoType = params?.currentVideoType || videoType;
+    const currentPlatform = params?.currentPlatform || platform;
+    const currentCustomIdeas = params?.currentCustomIdeas || customIdeas;
+
+    // Validation check
+    if (!currentNiche) {
       toast({
         title: "Please specify a niche",
         description: "Enter a niche to generate ideas",
@@ -171,6 +185,17 @@ export const useIdeaGenerator = () => {
       });
       return;
     }
+
+    console.log("Generating ideas with CURRENT values:");
+    console.log("Niche:", currentNiche);
+    console.log("Audience:", currentAudience);
+    console.log("Video Type:", currentVideoType);
+    console.log("Platform:", currentPlatform);
+    console.log("Custom Ideas:", currentCustomIdeas);
+    console.log("Content Style:", params?.contentStyle);
+    console.log("Content Personality:", params?.contentPersonality);
+    console.log("Style Profile:", params?.activeStyleProfile);
+    console.log("Account Type:", accountType);
 
     setLoading(true);
     setError(null);
@@ -235,11 +260,10 @@ export const useIdeaGenerator = () => {
       // Extract the style profile data and content customization if provided
       const styleProfileData = params?.activeStyleProfile ? {
         name: params.activeStyleProfile.name,
-        // Map StyleProfile properties correctly
         description: params.activeStyleProfile.content_style || "",
         tone: params.activeStyleProfile.content_personality || "",
-        topics: [],  // These aren't in the StyleProfile type
-        avoidTopics: []  // These aren't in the StyleProfile type
+        topics: params.activeStyleProfile.topics || [],
+        avoidTopics: params.activeStyleProfile.avoid_topics || []
       } : null;
 
       console.log("Style profile data:", styleProfileData);
@@ -265,14 +289,14 @@ export const useIdeaGenerator = () => {
       }
 
       // Now proceed with idea generation if usage limits allow
-      console.log("Calling generate-ideas function with auth header");
+      console.log("Calling generate-ideas function with auth header and current form data");
       const { data, error: generationError } = await supabase.functions.invoke('generate-ideas', {
         body: {
-          niche,
-          audience,
-          videoType,
-          platform,
-          customIdeas,
+          niche: currentNiche,
+          audience: currentAudience,
+          videoType: currentVideoType,
+          platform: currentPlatform,
+          customIdeas: currentCustomIdeas,
           previousIdeas: previousIdeasContext,
           numIdeas: 5, // Explicitly set to 5
           styleProfile: styleProfileData,
