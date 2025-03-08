@@ -65,54 +65,68 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
+        // Sign up - just create the account, don't sign in yet
         const { error } = await supabase.auth.signUp({
           email,
           password,
         });
         if (error) throw error;
         
-        // Show email verification message instead of pricing dialog
+        // Show email verification message
         setShowVerifyEmail(true);
+        
+        toast({
+          title: "Account created!",
+          description: "Please check your email to verify your account.",
+        });
       } else {
+        // Sign in with verified credentials
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
         
+        console.log("Sign in successful, checking onboarding status...");
+        
         // We need to check if this is the first time the user is signing in
-        // First, get the user metadata to see if they have completed onboarding
+        // First, get the user profile to see if they have completed onboarding
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('onboarding_completed')
           .eq('id', data.user.id)
           .single();
           
-        if (profileError && profileError.code !== 'PGRST116') {
-          // Only throw if it's not a "not found" error
-          throw profileError;
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          // Don't throw here, we'll assume they need to complete onboarding
         }
         
-        // Check if onboarding is completed either in the profile or localStorage
-        const hasCompletedOnboarding = 
-          (profileData && profileData.onboarding_completed) || 
-          localStorage.getItem('has_completed_onboarding') === 'true';
+        console.log("Profile data:", profileData);
+        
+        // Check if onboarding is completed
+        const hasCompletedOnboarding = profileData && profileData.onboarding_completed;
         
         if (!hasCompletedOnboarding) {
-          // First show onboarding
+          console.log("User needs to complete onboarding");
+          // Show onboarding
           setShowOnboarding(true);
         } else {
+          console.log("User has completed onboarding, checking pricing");
           // Check if they've seen pricing
           const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
           
           if (!hasSeenPricing) {
+            console.log("User needs to see pricing");
             setShowPricing(true);
           } else {
+            console.log("User has seen pricing, redirecting to dashboard");
             navigate("/dashboard");
           }
         }
       }
     } catch (error: any) {
+      console.error("Auth error:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -224,9 +238,10 @@ const Auth = () => {
   };
 
   const handleOnboardingComplete = () => {
-    localStorage.setItem('has_completed_onboarding', 'true');
+    console.log("Onboarding completed, now showing pricing");
     setShowOnboarding(false);
-    setShowPricing(true); // Show pricing after onboarding
+    // Show pricing after onboarding
+    setShowPricing(true);
   };
 
   if (isResetPassword) {
