@@ -10,16 +10,16 @@ export function Logo({ className = "", size = "medium" }: LogoProps) {
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
   
-  // Size mappings
+  // Size mappings - increased sizes for better visibility
   const sizeMap = {
-    small: "h-6",
-    medium: "h-8",
-    large: "h-10",
+    small: "h-8",
+    medium: "h-10",
+    large: "h-12",
   };
   
   // For now, we only have light mode logo
-  // Later we can add a dark mode logo with: isDarkMode ? "/lovable-uploads/dark-mode-logo.png" : "/lovable-uploads/7eb60153-1396-4d32-917b-878e2f36ae38.png"
-  const logoSrc = "/lovable-uploads/7eb60153-1396-4d32-917b-878e2f36ae38.png";
+  // Later we can add a dark mode logo with: isDarkMode ? "/dark-mode-logo.png" : "/lovable-uploads/75ca2fbe-6154-4257-8093-8e8cc5bf9038.png"
+  const logoSrc = "/lovable-uploads/75ca2fbe-6154-4257-8093-8e8cc5bf9038.png";
   
   return (
     <img 
