@@ -59,6 +59,15 @@ const Auth = () => {
     }
   }, [location]);
 
+  // Check if this is a redirect after email verification
+  const isEmailVerificationRedirect = () => {
+    // When Supabase redirects after email verification, it includes specific parameters
+    const searchParams = new URLSearchParams(location.search);
+    return searchParams.has('error_description') || // Error case
+           (searchParams.has('access_token') && searchParams.has('refresh_token')) || // Success case
+           searchParams.has('token_hash'); // Another potential parameter
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -98,6 +107,13 @@ const Auth = () => {
         if (error) throw error;
         
         console.log("Sign in successful, checking onboarding status...");
+        
+        // Skip onboarding and pricing flows if this is a verification redirect
+        if (isEmailVerificationRedirect()) {
+          console.log("Email verification redirect detected, skipping onboarding/pricing");
+          navigate("/dashboard");
+          return;
+        }
         
         // We need to check if this is the first time the user is signing in
         // First, get the user profile to see if they have completed onboarding
@@ -146,6 +162,53 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  // Check if user is already authenticated on load and after verification
+  useEffect(() => {
+    const checkAuthAndNavigate = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        if (session) {
+          // If this is a verification redirect, skip flows and go to dashboard
+          if (isEmailVerificationRedirect()) {
+            console.log("Auth check: Email verification redirect detected, going to dashboard");
+            navigate("/dashboard");
+            return;
+          }
+          
+          // Check if they have completed onboarding
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+          }
+          
+          // If they've already completed onboarding, check pricing
+          if (profileData?.onboarding_completed) {
+            const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
+            
+            if (!hasSeenPricing) {
+              setShowPricing(true);
+            } else {
+              navigate("/dashboard");
+            }
+          } else {
+            setShowOnboarding(true);
+          }
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
+      }
+    };
+    
+    checkAuthAndNavigate();
+  }, [navigate, location]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
