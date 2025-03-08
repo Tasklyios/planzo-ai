@@ -91,8 +91,8 @@ serve(async (req) => {
       accountType
     });
 
-    // Use a more powerful model for better quality ideas
-    const model = modelOverride || "gpt-4o-mini"; // Use provided model or default to gpt-4o-mini
+    // Always use gpt-4o-mini regardless of any override
+    const model = "gpt-4o-mini";
     
     console.log('Using model:', model);
     console.log('System prompt:', prompt.systemPrompt);

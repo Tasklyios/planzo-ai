@@ -11,6 +11,8 @@ interface HookCategoryCardProps {
   onSaveHook: (hook: HookType) => void;
   isSaving: boolean;
   getHookText: (hook: HookType | SavedHook) => string;
+  accentColor?: string;
+  borderColor?: string;
 }
 
 const HookCategoryCard = ({ 
@@ -18,7 +20,9 @@ const HookCategoryCard = ({
   hooks, 
   onSaveHook, 
   isSaving,
-  getHookText
+  getHookText,
+  accentColor,
+  borderColor
 }: HookCategoryCardProps) => {
   if (!hooks || hooks.length === 0) {
     return (
@@ -46,7 +50,7 @@ const HookCategoryCard = ({
   };
 
   return (
-    <Card>
+    <Card className={`${accentColor ? accentColor : ''} ${borderColor ? borderColor : ''}`}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
