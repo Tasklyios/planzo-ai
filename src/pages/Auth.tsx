@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import PricingDialog from "@/components/pricing/PricingDialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import Onboarding from "@/components/auth/Onboarding";
 
 const Auth = () => {
   // Force light mode on auth page
@@ -43,6 +44,7 @@ const Auth = () => {
   const [showPricing, setShowPricing] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [showVerifyEmail, setShowVerifyEmail] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -79,13 +81,19 @@ const Auth = () => {
         if (error) throw error;
         
         // Check if this is the user's first sign-in after confirming email
-        // We'll use localStorage to track this
-        const isFirstSignIn = !localStorage.getItem('has_seen_pricing');
-        if (isFirstSignIn) {
-          localStorage.setItem('has_seen_pricing', 'true');
-          setShowPricing(true);
+        // We'll use localStorage to track onboarding and pricing flow
+        const hasCompletedOnboarding = localStorage.getItem('has_completed_onboarding');
+        
+        if (!hasCompletedOnboarding) {
+          // First show onboarding
+          setShowOnboarding(true);
         } else {
-          navigate("/dashboard");
+          const hasSeenPricing = localStorage.getItem('has_seen_pricing');
+          if (!hasSeenPricing) {
+            setShowPricing(true);
+          } else {
+            navigate("/dashboard");
+          }
         }
       }
     } catch (error: any) {
@@ -196,6 +204,12 @@ const Auth = () => {
   const handleContinueFree = () => {
     setShowPricing(false);
     navigate("/dashboard");
+  };
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('has_completed_onboarding', 'true');
+    setShowOnboarding(false);
+    setShowPricing(true); // Show pricing after onboarding
   };
 
   if (isResetPassword) {
@@ -459,6 +473,14 @@ const Auth = () => {
         </div>
       </div>
 
+      {/* Onboarding Dialog */}
+      <Onboarding 
+        open={showOnboarding} 
+        onOpenChange={setShowOnboarding}
+        onComplete={handleOnboardingComplete}
+      />
+
+      {/* Pricing Dialog */}
       <PricingDialog 
         open={showPricing}
         onOpenChange={setShowPricing}
