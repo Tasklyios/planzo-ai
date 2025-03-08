@@ -3,6 +3,8 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type UsageType = "ideas" | "scripts" | "hooks";
 
@@ -47,20 +49,35 @@ interface UsageProgressCardProps {
     hooks: { current: number; max: number };
   };
   isLoading?: boolean;
+  onRefresh?: () => void;
 }
 
 const UsageProgressCard = ({
   tierName,
   usageData,
-  isLoading = false
+  isLoading = false,
+  onRefresh
 }: UsageProgressCardProps) => {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Today's Usage</CardTitle>
-        <CardDescription>
-          Your usage limits for {tierName} plan
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <div>
+          <CardTitle>Today's Usage</CardTitle>
+          <CardDescription>
+            Your usage limits for {tierName} plan
+          </CardDescription>
+        </div>
+        {onRefresh && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onRefresh}
+            className="h-8 w-8 p-0"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span className="sr-only">Refresh usage data</span>
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (

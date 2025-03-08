@@ -128,11 +128,15 @@ const Billing = () => {
       
       if (!session) return;
 
+      // Explicitly get the current date in YYYY-MM-DD format for consistency
+      const today = new Date().toISOString().split('T')[0];
+      console.log("Fetching usage data for date:", today);
+
       const { data, error } = await supabase
         .from('user_daily_usage')
         .select('*')
         .eq('user_id', session.user.id)
-        .eq('date', new Date().toISOString().split('T')[0])
+        .eq('date', today)
         .maybeSingle();
 
       if (error) {
@@ -225,18 +229,17 @@ const Billing = () => {
         event: '*',
         schema: 'public',
         table: 'user_daily_usage',
-      }, () => {
-        console.log('Usage data changed, refreshing...');
+      }, (payload) => {
+        console.log('Usage data changed, payload:', payload);
         fetchUsageData();
       })
       .subscribe();
 
-    // Poll for changes every 30 seconds in case webhook fails
+    // Poll for changes every 10 seconds to ensure we have the latest data
     const interval = setInterval(() => {
-      console.log('Polling for subscription changes...');
-      fetchSubscription();
+      console.log('Polling for usage changes...');
       fetchUsageData();
-    }, 30000);
+    }, 10000);
 
     return () => {
       authListener.subscription.unsubscribe();
