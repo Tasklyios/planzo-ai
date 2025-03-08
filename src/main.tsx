@@ -14,4 +14,6 @@ declare global {
 // This prevents the badge from being displayed on the launched website
 window.LOVABLE_BADGE_ENABLED = false;
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Create root and render app
+const root = createRoot(document.getElementById("root")!);
+root.render(<App />);

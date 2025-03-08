@@ -13,3 +13,14 @@
   status = 200
   force = true
 
+# Add headers to ensure proper caching behavior
+[[headers]]
+  for = "/*"
+    [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Add specific headers for static assets
+[[headers]]
+  for = "/assets/*"
+    [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
