@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -204,7 +205,7 @@ const Navbar = () => {
                         to={item.path}
                         className={`flex items-center px-2 py-2 text-sm ${
                           currentPath === item.path
-                            ? "text-[#0073FF] font-medium"
+                            ? "text-primary font-medium"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                         onClick={closeSheet}

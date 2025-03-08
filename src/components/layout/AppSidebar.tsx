@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { 
   Calendar, 
@@ -45,8 +46,8 @@ const SidebarItem = ({ href, icon, label, onClick }: SidebarItemProps) => {
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
         isActive
-          ? "bg-[#0073FF] text-white"
-          : "hover:bg-[#E5F0FF] dark:hover:bg-accent"
+          ? "bg-primary text-white"
+          : "hover:bg-primary/10 dark:hover:bg-accent"
       )}
     >
       {icon}

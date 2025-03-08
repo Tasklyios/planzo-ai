@@ -76,7 +76,7 @@ const Pricing = () => {
                 checked={isYearly} 
                 onChange={() => setIsYearly(!isYearly)}
               />
-              <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[#0073FF]"></div>
+              <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
             </div>
             <span className="text-gray-600">Yearly</span>
             <span className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full">Save 30%</span>
@@ -88,14 +88,14 @@ const Pricing = () => {
               key={tier.name}
               className={`${
                 tier.color === 'primary' 
-                  ? 'bg-gradient-to-br from-[#0073FF] to-[#0073FF]/80 text-white scale-105 shadow-xl' 
+                  ? 'bg-gradient-to-br from-primary to-primary/80 text-white scale-105 shadow-xl' 
                   : 'bg-[#F6F6F6] border border-gray-100 shadow-sm'
               } p-8 rounded-2xl transform transition-all duration-300 hover:-translate-y-2 relative`}
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {tier.color === 'primary' && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-white text-[#0073FF] px-4 py-1 rounded-full text-sm font-semibold">
+                  <span className="bg-white text-primary px-4 py-1 rounded-full text-sm font-semibold">
                     Most Popular
                   </span>
                 </div>
@@ -113,7 +113,7 @@ const Pricing = () => {
               <ul className="space-y-4 mb-8">
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex items-center">
-                    <Check className={`${tier.color === 'primary' ? 'text-white' : 'text-[#0073FF]'} mr-2`} size={20} />
+                    <Check className={`${tier.color === 'primary' ? 'text-white' : 'text-primary'} mr-2`} size={20} />
                     {feature}
                   </li>
                 ))}
@@ -121,7 +121,7 @@ const Pricing = () => {
               <Button 
                 className={`w-full ${
                   tier.color === 'primary' 
-                    ? 'bg-white text-[#0073FF] hover:bg-white/90'
+                    ? 'bg-white text-primary hover:bg-white/90'
                     : 'bg-[#F2F4F8] text-[#222831] hover:bg-gray-200'
                 }`}
                 onClick={() => handleUpgradeClick(tier.name.toLowerCase())}
