@@ -12,6 +12,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -22,8 +23,9 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         
         if (error) {
           console.error("Authentication check error:", error);
+          setError(error.message);
           setIsAuthenticated(false);
-          navigate("/auth", { state: { from: location.pathname } });
+          navigate("/auth", { state: { from: location.pathname, error: error.message } });
           return;
         }
         
@@ -34,6 +36,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         } else {
           console.log("Session found, user is authenticated", session.user.id);
           console.log("Access token is valid:", !!session.access_token);
+          console.log("Current URL:", window.location.href);
           
           // Store the session access token for edge functions to use
           localStorage.setItem('supabase.auth.token', session.access_token);
@@ -42,8 +45,9 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         }
       } catch (error) {
         console.error("Error checking authentication:", error);
+        setError(error instanceof Error ? error.message : "Unknown error");
         setIsAuthenticated(false);
-        navigate("/auth", { state: { from: location.pathname } });
+        navigate("/auth", { state: { from: location.pathname, error: error instanceof Error ? error.message : "Unknown error" } });
       } finally {
         setIsLoading(false);
       }
@@ -86,6 +90,15 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">
       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+    </div>;
+  }
+
+  if (error) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+        <h2 className="text-red-700 text-xl font-semibold mb-2">Authentication Error</h2>
+        <p className="text-red-600">{error}</p>
+      </div>
     </div>;
   }
 

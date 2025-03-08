@@ -28,15 +28,30 @@ const queryClient = new QueryClient();
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Checking authentication status...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Authentication error:", error.message);
+          setAuthError(error.message);
+          setIsAuthenticated(false);
+          return;
+        }
+        
         setIsAuthenticated(!!session);
         console.log("Auth check complete, authenticated:", !!session);
+        if (session) {
+          console.log("User ID:", session.user.id);
+          console.log("Current URL:", window.location.href);
+        }
       } catch (error) {
         console.error("Error checking authentication:", error);
+        setAuthError(error instanceof Error ? error.message : "Unknown authentication error");
         setIsAuthenticated(false);
       }
     };
@@ -51,9 +66,36 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // If still checking auth status, return null or a loading indicator
+  // If still checking auth status, return a loading indicator
   if (isAuthenticated === null) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-600">Loading application...</p>
+      </div>
+    );
+  }
+
+  // If there was an authentication error, show it
+  if (authError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+          <h2 className="text-red-700 text-xl font-semibold mb-2">Authentication Error</h2>
+          <p className="text-red-600 mb-4">{authError}</p>
+          <p className="text-gray-700 mb-4">
+            This could be because the Supabase URL configuration does not include this domain. 
+            Please ensure your Netlify domain is added to the Supabase authentication settings.
+          </p>
+          <button 
+            onClick={() => window.location.href = '/auth'} 
+            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+          >
+            Try to Login Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
