@@ -147,40 +147,40 @@ serve(async (req) => {
       console.log('Trimmed ideas to 5');
     } else if (ideas.length < 5) {
       // If less than 5 ideas were generated, pad with generic ones up to 5
-      // BUT make them relevant to the niche/audience and account type
-      const nicheLabel = getNicheLabel(accountType, niche);
+      // Make sure to use the correct niche based on account type
+      const nicheToUse = determineProperNiche(accountType, niche);
       const audienceTarget = audience || "your target audience";
       
       const genericIdeas = [
         {
-          title: `${nicheLabel} Quick Demo`,
-          category: "Product Showcase",
-          description: `A brief demonstration highlighting key features of your ${nicheLabel} offering for ${audienceTarget}.`,
-          tags: ["product", "demo", "features"]
-        },
-        {
-          title: `${audienceTarget} Testimonial`,
-          category: "Social Proof",
-          description: `Share positive feedback from a satisfied ${audienceTarget} customer about your ${nicheLabel} content.`,
-          tags: ["testimonial", "review", "customer"]
-        },
-        {
-          title: `Behind the Scenes: ${nicheLabel}`,
-          category: "Brand Story",
-          description: `Show how your ${nicheLabel} content is created specifically for ${audienceTarget}.`,
-          tags: ["behindthescenes", "process", "team"]
-        },
-        {
-          title: `How-To: ${nicheLabel} Guide`,
+          title: `${nicheToUse} Tips for Beginners`,
           category: "Educational",
-          description: `Step-by-step guide showing ${audienceTarget} how to get the most value from your ${nicheLabel} content.`,
-          tags: ["tutorial", "howto", "guide"]
+          description: `Share valuable beginner tips for ${audienceTarget} interested in ${nicheToUse}.`,
+          tags: ["tips", "beginners", "educational"]
         },
         {
-          title: `${nicheLabel} vs Alternatives`,
-          category: "Educational",
-          description: `Compare your ${nicheLabel} approach with alternatives to show its unique advantages for ${audienceTarget}.`,
-          tags: ["comparison", "versus", "better"]
+          title: `Day in the Life: ${nicheToUse} Creator`,
+          category: "Behind the Scenes",
+          description: `Show ${audienceTarget} what a typical day looks like for someone creating content about ${nicheToUse}.`,
+          tags: ["dayinthelife", "behindthescenes", "creator"]
+        },
+        {
+          title: `Top 3 Myths About ${nicheToUse}`,
+          category: "Myth Busting",
+          description: `Debunk common misconceptions that ${audienceTarget} might have about ${nicheToUse}.`,
+          tags: ["myths", "factcheck", "education"]
+        },
+        {
+          title: `How ${nicheToUse} Changed My Life`,
+          category: "Personal Story",
+          description: `Share a personal transformation story related to ${nicheToUse} that will inspire ${audienceTarget}.`,
+          tags: ["inspiration", "transformation", "story"]
+        },
+        {
+          title: `${nicheToUse} Q&A: Answering Your FAQs`,
+          category: "Q&A",
+          description: `Answer the most frequently asked questions from ${audienceTarget} about ${nicheToUse}.`,
+          tags: ["faq", "questions", "answers"]
         }
       ];
       
@@ -214,7 +214,8 @@ serve(async (req) => {
             contentStyle,
             contentPersonality,
             styleProfileName: styleProfile?.name,
-            accountType
+            accountType,
+            nicheUsed: determineProperNiche(accountType, niche)
           }
         }
       }),
@@ -229,15 +230,41 @@ serve(async (req) => {
   }
 });
 
+// NEW FUNCTION: Determine the proper niche based on account type
+function determineProperNiche(accountType, providedNiche) {
+  // Default to the provided niche if no account type is specified
+  if (!accountType) return providedNiche;
+  
+  console.log(`Determining proper niche for account type: ${accountType}, provided niche: ${providedNiche}`);
+  
+  // For personal accounts, we should use the niche directly (content niche)
+  if (accountType === 'personal') {
+    return providedNiche; // This should be content_niche from the profile
+  }
+  
+  // For ecommerce accounts, we add "Product" suffix if it's not already there
+  if (accountType === 'ecommerce') {
+    if (!providedNiche.toLowerCase().includes('product')) {
+      return `${providedNiche} Products`;
+    }
+    return providedNiche;
+  }
+  
+  // For business accounts, we add "Business" suffix if it's not already there
+  if (accountType === 'business') {
+    if (!providedNiche.toLowerCase().includes('business')) {
+      return `${providedNiche} Business`;
+    }
+    return providedNiche;
+  }
+  
+  // Fallback to the provided niche
+  return providedNiche;
+}
+
 // Helper function to get a label for the niche based on account type
 function getNicheLabel(accountType, niche) {
-  if (accountType === 'ecommerce') {
-    return `${niche} Product`;
-  } else if (accountType === 'business') {
-    return `${niche} Business`;
-  } else {
-    return niche; // For personal accounts or undefined account types
-  }
+  return determineProperNiche(accountType, niche);
 }
 
 // Helper function to detect if the niche is related to eco brands
@@ -277,6 +304,10 @@ function constructPrompt({
   styleProfile,
   accountType
 }) {
+  // Use the correct niche based on account type
+  const nicheToUse = determineProperNiche(accountType, niche);
+  console.log(`Using niche: ${nicheToUse} for prompt construction (account type: ${accountType})`);
+  
   // Base system prompt
   let systemPrompt = `You are a viral video idea generator specializing in creating engaging, attention-grabbing content ideas specifically for ${accountType || 'business'} accounts. Your goal is to help content creators make videos that will perform well on ${platform || 'social media'}.`;
   
@@ -285,11 +316,11 @@ function constructPrompt({
     systemPrompt += `\n\nACCOUNT TYPE: ${accountType}. `;
     
     if (accountType === 'personal') {
-      systemPrompt += `Generate ideas for a personal creator in the ${niche} niche targeting ${audience}.`;
+      systemPrompt += `Generate ideas for a personal creator in the ${nicheToUse} niche targeting ${audience}.`;
     } else if (accountType === 'ecommerce') {
-      systemPrompt += `Generate ideas for an e-commerce business selling products in the ${niche} category targeting ${audience} customers.`;
+      systemPrompt += `Generate ideas for an e-commerce business selling products in the ${nicheToUse} category targeting ${audience} customers.`;
     } else if (accountType === 'business') {
-      systemPrompt += `Generate ideas for a ${niche} business targeting ${audience} clients/customers.`;
+      systemPrompt += `Generate ideas for a ${nicheToUse} business targeting ${audience} clients/customers.`;
     }
   }
   
@@ -302,7 +333,6 @@ function constructPrompt({
   if (styleProfile) {
     systemPrompt += `\n\nSTYLE PROFILE: The user has a style profile named "${styleProfile.name}": ${styleProfile.description}. 
     The tone should be: ${styleProfile.tone}.`;
-    // Removed references to topics and avoidTopics
   }
 
   // Add content style and personality if available
@@ -345,7 +375,7 @@ function constructPrompt({
   }
 
   // User prompt construction
-  let userPrompt = `Please generate EXACTLY ${numIdeas} unique video ideas for a ${niche} ${accountType || 'business'} targeting ${audience}.`;
+  let userPrompt = `Please generate EXACTLY ${numIdeas} unique video ideas for a ${nicheToUse} ${accountType || 'business'} targeting ${audience}.`;
   
   if (videoType) {
     userPrompt += ` The videos should be in the format of ${videoType}.`;
