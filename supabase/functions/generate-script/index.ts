@@ -110,91 +110,53 @@ serve(async (req) => {
       }
     }
 
-    // Enhanced examples of good and bad scripts
-    const goodExample = `
-Example of a GOOD script (authentic, engaging, conversational):
+    // Enhanced system prompt for the AI
+    const systemPrompt = `You are an elite creative script writer for short-form videos who crafts COMPLETELY ORIGINAL scripts that sound like real humans talking.
 
-[Looking out window] Ugh, another rainy day in Seattle. That's 14 days straight now. 
+Your scripts are highly distinctive, conversational, and natural. They are NEVER generic or formulaic.
 
-[Turning to camera] You know what's weird though? I've actually started to enjoy these rainy mornings.
+KEY PRINCIPLES:
+1. ORIGINALITY - Create something that feels fresh and unique, never recycled
+2. AUTHENTICITY - Write in a genuine, conversational tone with natural speech patterns
+3. SPECIFICITY - Include concrete details and examples that make the script vivid
+4. ENGAGEMENT - Craft compelling hooks and maintain viewer interest
+5. PERSONALITY - Infuse the script with character that fits the creator's style
 
-[Sipping from mug] There's something about the sound of rain hitting the window while I'm wrapped in a blanket with my coffee.
+${userProfile?.account_type ? `You're writing for a ${userProfile.account_type.toUpperCase()} CREATOR who wants to build authentic connections with their audience.` : ''}
+${userProfile?.content_style ? `Content style: ${userProfile.content_style}` : ''}
+${userProfile?.content_personality ? `Content personality: ${userProfile.content_personality}` : ''}`;
 
-My therapist would probably call this "reframing" but I just call it survival. [Laughs]
+    // Create detailed prompt with strong guidance on authenticity
+    const userPrompt = `
+Write a completely original, conversational script for a ${timeRange} ${contentStyle || "authentic"} video about: "${scriptTitle}"
 
-What's something you've learned to appreciate that you used to hate? Drop it in the comments!
+${scriptDescription ? `Additional context: ${scriptDescription}` : ''}
+${hook ? `Start with this specific hook: "${hook}"` : ''}
 
-[Rain sounds intensify]
+ESSENTIAL REQUIREMENTS:
+- Write as if a real person is speaking naturally - include pauses, filler words, self-corrections
+- Use [brackets] to indicate camera directions, actions, or tone changes
+- Create something truly UNIQUE that doesn't follow standard templates
+- Include natural dialogue with personality, avoiding formulaic phrases
+- Make the script specific to this exact topic, not something that could be used for anything
+- Incorporate authentic moments that feel spontaneous (humor, vulnerability, personal observations)
+- Avoid marketing-speak or overly polished language
+- Format with natural line breaks to indicate speech rhythms
+
+NEVER write a script that:
+- Uses generic templates or formulas
+- Sounds like a corporate message or sales pitch
+- Contains clichéd phrases or predictable structure
+- Could apply to multiple topics by just changing a few words
+
+For product videos: Focus on authentic storytelling around specific benefits
+For educational content: Use a conversational teaching style with concrete examples
+For lifestyle content: Include specific personal details and genuine reactions
+
+The final script should feel completely unique and tailored specifically to this topic.
 `;
 
-    const badExample = `
-Example of a BAD script (avoid this generic, sales-pitchy style):
-
-Hey everyone! Have you ever faced a challenge while running? I know I have. But wearing the right sunglasses changed everything for me.
-
-When I put on my sunnies, not only did I block out the glare, but I also found my focus. I could see clearly, push through those tough miles, and I felt unstoppable.
-
-Sunnies became my secret weapon. Now I want to hear from you! How have #SunniesForSuccess helped your run? Let's inspire each other! Share your stories in the comments below!
-`;
-
-    // Create prompt for script generation with emphasis on authentic tone
-    let systemPrompt = `You are an expert scriptwriter for short-form social media videos specialized in creating highly original, authentic, and engaging scripts that sound like real people talking. 
-    
-Your scripts are NEVER generic or templated - they are unique, distinctive, and tailored specifically to the creator's topic, style, and audience.`;
-
-    // Add account type specific instructions if available
-    if (userProfile?.account_type) {
-      if (userProfile.account_type === 'personal') {
-        systemPrompt += `\n\nYou're writing for a PERSONAL CREATOR who wants to showcase their unique personality and build an authentic connection with their audience. The script should feel natural, conversational, and distinctly personal.`;
-      } else if (userProfile.account_type === 'ecommerce') {
-        systemPrompt += `\n\nYou're writing for an E-COMMERCE BUSINESS that needs to showcase their products in a way that feels authentic, not salesy. Focus on storytelling around the product and creating genuine customer connection.`;
-      } else if (userProfile.account_type === 'business') {
-        systemPrompt += `\n\nYou're writing for a BUSINESS that wants to demonstrate authority and expertise while maintaining an approachable, human tone. The script should build trust and position them as leaders in their field.`;
-      }
-    }
-
-    // Add content style and personality if available
-    if (userProfile?.content_style) {
-      systemPrompt += `\n\nContent style: ${userProfile.content_style}`;
-    }
-    
-    if (userProfile?.content_personality) {
-      systemPrompt += `\n\nContent personality: ${userProfile.content_personality}`;
-    }
-
-    // Create user prompt with specific instructions
-    let prompt = `
-      Write a completely original, highly distinctive script for a ${timeRange} ${contentStyle || "authentic"} video about: "${scriptTitle}".
-      
-      ${scriptDescription ? `Additional context: ${scriptDescription}` : ''}
-      ${hook ? `Start with this hook: "${hook}"` : ''}
-      
-      THE SCRIPT MUST:
-      - Be COMPLETELY ORIGINAL and NOT read like a template or generic content
-      - Sound like a real person talking naturally, with personality and imperfections
-      - Include natural speech patterns (pauses, filler words, self-corrections) in [brackets]
-      - Use conversational language that feels authentic
-      - Avoid clichés and generic motivational language
-      - Include specific details that make the content unique and believable
-      - Feel like something a friend would say, not a corporate message
-      - Include moments of authenticity (humor, vulnerability, specific experiences)
-      - Sound nothing like a sales pitch unless explicitly requested
-      - Format script with natural breaks for pacing and emphasis
-      - Include specific, concrete examples rather than generic statements
-      - Use a unique angle or perspective that makes this script different from others on the same topic
-      
-      ${goodExample}
-      
-      DO NOT write a script like this:
-      ${badExample}
-      
-      If this is a product video, focus on authentic storytelling around the product, not generic benefits.
-      For educational content, use a teaching style that's casual and relatable.
-      
-      The final script should be formatted with natural line breaks to indicate pauses and camera directions in [brackets].
-    `;
-
-    // Call OpenAI API with improved parameters for more original content
+    // Call OpenAI API with improved parameters for originality
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -202,16 +164,16 @@ Your scripts are NEVER generic or templated - they are unique, distinctive, and 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',  // Using more powerful model for better originality
+        model: 'gpt-4o-mini',  // Using gpt-4o-mini as specified
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
+          { role: 'user', content: userPrompt }
         ],
-        temperature: 0.9,  // Higher temperature for more creativity and originality
+        temperature: 1.0,  // Higher temperature for more creativity and originality
         max_tokens: 800,   // Adjust based on expected script length
         top_p: 0.95,       // Slightly higher top_p for more diverse outputs
-        frequency_penalty: 0.8,  // Higher frequency penalty to reduce repetitive patterns
-        presence_penalty: 0.8,   // Higher presence penalty to encourage more novel content
+        frequency_penalty: 0.9,  // Higher frequency penalty to reduce repetitive patterns
+        presence_penalty: 0.9,   // Higher presence penalty to encourage more novel content
       }),
     });
 
@@ -235,6 +197,13 @@ Your scripts are NEVER generic or templated - they are unique, distinctive, and 
     }
 
     const script = openAiData.choices[0].message.content.trim();
+    
+    // Check for quality and originality
+    const qualityCheck = validateScriptQuality(script, scriptTitle);
+    if (qualityCheck.issues.length > 0) {
+      console.log("Script quality issues detected:", qualityCheck.issues);
+      // We'll still return the script but log the issues
+    }
 
     console.log('Script generated successfully');
 
@@ -251,3 +220,52 @@ Your scripts are NEVER generic or templated - they are unique, distinctive, and 
     );
   }
 });
+
+// Helper function to check script quality and originality
+function validateScriptQuality(script, title) {
+  const issues = [];
+  
+  // Check script length
+  if (script.length < 200) {
+    issues.push("Script is too short");
+  }
+  
+  // Check for common template patterns
+  const templatePatterns = [
+    /^Hey (guys|everyone|followers)/i,
+    /welcome back to my channel/i,
+    /don't forget to like and subscribe/i,
+    /if you enjoyed this video/i,
+    /in today's video/i
+  ];
+  
+  templatePatterns.forEach(pattern => {
+    if (pattern.test(script)) {
+      issues.push(`Contains generic template pattern: ${pattern}`);
+    }
+  });
+  
+  // Check if script contains the title or key concepts
+  const titleWords = title.toLowerCase().split(/\s+/).filter(word => word.length > 4);
+  let titleWordsFound = 0;
+  
+  titleWords.forEach(word => {
+    if (script.toLowerCase().includes(word)) {
+      titleWordsFound++;
+    }
+  });
+  
+  if (titleWordsFound < Math.min(2, titleWords.length)) {
+    issues.push("Script may not be specific to the requested topic");
+  }
+  
+  // Check for camera directions
+  if (!script.includes('[')) {
+    issues.push("Missing camera directions or action cues");
+  }
+  
+  return {
+    issues,
+    score: 10 - issues.length
+  };
+}
