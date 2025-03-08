@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { GeneratedIdea, PreviousIdeasContext, StyleProfile } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,7 @@ export const useIdeaGenerator = () => {
     descriptions: []
   });
   const [error, setError] = useState<string | null>(null);
+  const [accountType, setAccountType] = useState<string>("personal");
   const { toast } = useToast();
 
   // Use these preferences from localStorage or database
@@ -43,10 +45,24 @@ export const useIdeaGenerator = () => {
 
           if (profile) {
             console.log("Profile data from database:", profile);
-            // Set form values from profile if they exist
-            if (profile.product_niche) setNiche(profile.product_niche);
-            if (profile.target_audience) setAudience(profile.target_audience);
-            if (profile.product_niche) setVideoType(profile.product_niche);
+            // Store account type
+            if (profile.account_type) setAccountType(profile.account_type);
+            
+            // Only set form values from profile if they exist AND are relevant to current account type
+            if (accountType === 'personal') {
+              if (profile.content_niche) setNiche(profile.content_niche);
+              if (profile.target_audience) setAudience(profile.target_audience);
+              if (profile.content_niche) setVideoType(profile.content_niche);
+            } else if (accountType === 'ecommerce') {
+              if (profile.product_niche) setNiche(profile.product_niche);
+              if (profile.target_audience) setAudience(profile.target_audience);
+              if (profile.content_niche) setVideoType(profile.content_niche);
+            } else if (accountType === 'business') {
+              if (profile.business_niche) setNiche(profile.business_niche);
+              if (profile.target_audience) setAudience(profile.target_audience);
+              if (profile.content_niche) setVideoType(profile.content_niche);
+            }
+            
             if (profile.posting_platforms && profile.posting_platforms.length > 0) 
               setPlatform(profile.posting_platforms[0]);
           }
@@ -94,10 +110,24 @@ export const useIdeaGenerator = () => {
 
             if (profile) {
               console.log("Profile data from database:", profile);
-              // Only set values if they're not already set by the user
-              if (!niche && profile.product_niche) setNiche(profile.product_niche);
-              if (!audience && profile.target_audience) setAudience(profile.target_audience);
-              if (!videoType && profile.product_niche) setVideoType(profile.product_niche);
+              // Set account type first
+              if (profile.account_type) setAccountType(profile.account_type);
+              
+              // Only set values if they're not already set by the user AND relevant to current account type
+              if (accountType === 'personal') {
+                if (!niche && profile.content_niche) setNiche(profile.content_niche);
+                if (!audience && profile.target_audience) setAudience(profile.target_audience);
+                if (!videoType && profile.content_niche) setVideoType(profile.content_niche);
+              } else if (accountType === 'ecommerce') {
+                if (!niche && profile.product_niche) setNiche(profile.product_niche);
+                if (!audience && profile.target_audience) setAudience(profile.target_audience);
+                if (!videoType && profile.content_niche) setVideoType(profile.content_niche);
+              } else if (accountType === 'business') {
+                if (!niche && profile.business_niche) setNiche(profile.business_niche);
+                if (!audience && profile.target_audience) setAudience(profile.target_audience);
+                if (!videoType && profile.content_niche) setVideoType(profile.content_niche);
+              }
+              
               if (!platform && profile.posting_platforms && profile.posting_platforms.length > 0) 
                 setPlatform(profile.posting_platforms[0]);
             }
@@ -111,7 +141,7 @@ export const useIdeaGenerator = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [niche, audience, videoType, platform]);
+  }, [niche, audience, videoType, platform, accountType]);
 
   // Setup localStorage change listeners
   useEffect(() => {
@@ -205,16 +235,34 @@ export const useIdeaGenerator = () => {
       // Extract the style profile data and content customization if provided
       const styleProfileData = params?.activeStyleProfile ? {
         name: params.activeStyleProfile.name,
-        // Fix for TypeScript errors - get values from StyleProfile type correctly
-        description: params.activeStyleProfile.description || "",
-        tone: params.activeStyleProfile.tone || "",
-        topics: params.activeStyleProfile.topics || [],
-        avoidTopics: params.activeStyleProfile.avoid_topics || []
+        // Map StyleProfile properties correctly
+        description: params.activeStyleProfile.content_style || "",
+        tone: params.activeStyleProfile.content_personality || "",
+        topics: [],  // These aren't in the StyleProfile type
+        avoidTopics: []  // These aren't in the StyleProfile type
       } : null;
 
       console.log("Style profile data:", styleProfileData);
       console.log("Content style:", params?.contentStyle);
       console.log("Content personality:", params?.contentPersonality);
+      console.log("Current account type:", accountType);
+
+      // Get the latest account type from profile
+      let currentAccountType = accountType;
+      try {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("account_type")
+          .eq("id", session.user.id)
+          .single();
+        
+        if (profileData?.account_type) {
+          currentAccountType = profileData.account_type;
+          console.log("Updated account type from database:", currentAccountType);
+        }
+      } catch (error) {
+        console.error("Error fetching latest account type:", error);
+      }
 
       // Now proceed with idea generation if usage limits allow
       console.log("Calling generate-ideas function with auth header");
@@ -229,7 +277,8 @@ export const useIdeaGenerator = () => {
           numIdeas: 5, // Explicitly set to 5
           styleProfile: styleProfileData,
           contentStyle: params?.contentStyle,
-          contentPersonality: params?.contentPersonality
+          contentPersonality: params?.contentPersonality,
+          accountType: currentAccountType // Pass the current account type
         },
         headers: {
           Authorization: authHeader
@@ -333,7 +382,7 @@ export const useIdeaGenerator = () => {
     } finally {
       setLoading(false);
     }
-  }, [niche, audience, videoType, platform, customIdeas, previousIdeasContext, toast]);
+  }, [niche, audience, videoType, platform, customIdeas, previousIdeasContext, toast, accountType]);
 
   return {
     niche,
@@ -353,6 +402,8 @@ export const useIdeaGenerator = () => {
     previousIdeasContext,
     setPreviousIdeasContext,
     error,
-    setError
+    setError,
+    accountType,
+    setAccountType
   };
 };

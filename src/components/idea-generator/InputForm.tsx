@@ -45,6 +45,7 @@ const InputForm = ({
   const [contentNiche, setContentNiche] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
   const [businessNiche, setBusinessNiche] = useState("");
+  const [lastFetchedAccountType, setLastFetchedAccountType] = useState<string | null>(null);
 
   useEffect(() => {
     getAccountType();
@@ -64,41 +65,48 @@ const InputForm = ({
       if (error) throw error;
       
       if (profile) {
-        setAccountType(profile.account_type as AccountType);
+        // Check if account type changed since last fetch
+        const newAccountType = profile.account_type as AccountType;
+        const accountTypeChanged = lastFetchedAccountType !== null && lastFetchedAccountType !== newAccountType;
         
-        // Store product niche, content niche, business niche and target audience
+        setAccountType(newAccountType);
+        setLastFetchedAccountType(newAccountType);
+        
+        console.log(`Current account type: ${newAccountType}${accountTypeChanged ? ' (changed from ' + lastFetchedAccountType + ')' : ''}`);
+        
+        // Store values based on account type
         if (profile.account_type === 'ecommerce') {
           setProductNiche(profile.product_niche || "");
           setContentNiche(profile.content_niche || "");
           setTargetAudience(profile.target_audience || "");
           
-          // Update parent component state with the values from profile
-          // This ensures the AI gets all this information for context
-          setNiche(profile.product_niche || ""); // Set product niche to niche for AI
-          if (profile.content_niche) {
-            setContentNiche(profile.content_niche);
-          }
-          if (profile.target_audience) {
-            setTargetAudience(profile.target_audience);
-            setAudience(profile.target_audience);
+          // If account type changed, we need to update the parent component state
+          if (accountTypeChanged) {
+            // Update with ecommerce-specific values
+            setNiche(profile.product_niche || ""); // For ecommerce, use product niche
+            setVideoType(profile.content_niche || "");
+            setAudience(profile.target_audience || "");
           }
         } else if (profile.account_type === 'business') {
           setBusinessNiche(profile.business_niche || "");
           setContentNiche(profile.content_niche || "");
           setTargetAudience(profile.target_audience || "");
           
-          // Update parent component state with the values from profile
-          // Now we set businessNiche value to niche for AI context but don't display the field
-          if (profile.business_niche) {
-            setBusinessNiche(profile.business_niche);
-            setNiche(profile.business_niche); // Set business niche to niche for AI context
+          // If account type changed, update with business-specific values
+          if (accountTypeChanged) {
+            setNiche(profile.business_niche || ""); // For business, use business niche
+            setVideoType(profile.content_niche || "");
+            setAudience(profile.target_audience || "");
           }
-          if (profile.content_niche) {
-            setContentNiche(profile.content_niche);
-          }
-          if (profile.target_audience) {
-            setTargetAudience(profile.target_audience);
-            setAudience(profile.target_audience);
+        } else if (profile.account_type === 'personal') {
+          setContentNiche(profile.content_niche || "");
+          setTargetAudience(profile.target_audience || "");
+          
+          // If account type changed, update with personal-specific values
+          if (accountTypeChanged) {
+            setNiche(profile.content_niche || ""); // For personal, use content niche
+            setVideoType(profile.content_niche || "");
+            setAudience(profile.target_audience || "");
           }
         }
       }
@@ -109,13 +117,51 @@ const InputForm = ({
     }
   };
 
+  // Add listener for account type changes
+  useEffect(() => {
+    // Set up an interval to periodically check for account type changes
+    const intervalId = setInterval(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return;
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('account_type')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) throw error;
+        
+        if (profile && profile.account_type !== accountType) {
+          console.log(`Account type changed from ${accountType} to ${profile.account_type}, refreshing...`);
+          // Account type changed, refresh all data
+          getAccountType();
+        }
+      } catch (error) {
+        console.error("Error checking account type changes:", error);
+      }
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(intervalId);
+  }, [accountType]);
+
   // Handle content niche changes for ecommerce accounts
   const handleContentNicheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setContentNiche(newValue);
+    
+    // Only update parent videoType if this is the appropriate field for current account type
+    if (accountType === 'ecommerce' || accountType === 'business') {
+      setVideoType(newValue);
+    } else if (accountType === 'personal') {
+      // For personal accounts, content niche is both the niche and video type
+      setNiche(newValue);
+      setVideoType(newValue);
+    }
   };
 
-  // Handle target audience changes for ecommerce accounts
+  // Handle target audience changes
   const handleTargetAudienceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setTargetAudience(newValue);
@@ -143,8 +189,8 @@ const InputForm = ({
                 </div>
                 <input
                   type="text"
-                  value={niche}
-                  onChange={(e) => setNiche(e.target.value)}
+                  value={contentNiche}
+                  onChange={handleContentNicheChange}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
                   placeholder="Your content niche"
                 />
@@ -159,8 +205,8 @@ const InputForm = ({
                 </div>
                 <input
                   type="text"
-                  value={audience}
-                  onChange={(e) => setAudience(e.target.value)}
+                  value={targetAudience}
+                  onChange={handleTargetAudienceChange}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
                   placeholder="Your target audience"
                 />
@@ -260,11 +306,9 @@ const InputForm = ({
                 <input
                   type="text"
                   value={contentNiche}
-                  readOnly
+                  onChange={handleContentNicheChange}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
                   placeholder="Your content focus"
-                  disabled
-                  title="This is synced from your account settings"
                 />
               </div>
             </div>
@@ -278,11 +322,9 @@ const InputForm = ({
                 <input
                   type="text"
                   value={targetAudience}
-                  readOnly
+                  onChange={handleTargetAudienceChange}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
                   placeholder="Your target audience"
-                  disabled
-                  title="This is synced from your account settings"
                 />
               </div>
             </div>

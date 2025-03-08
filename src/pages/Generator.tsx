@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -34,7 +35,8 @@ const Generator = () => {
     previousIdeasContext,
     setPreviousIdeasContext,
     error,
-    setError
+    setError,
+    accountType
   } = useIdeaGenerator();
 
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
@@ -63,6 +65,13 @@ const Generator = () => {
     fetchActiveStyleProfile();
   }, [setPreviousIdeasContext]);
 
+  // Add listener for account type changes to refresh data
+  useEffect(() => {
+    console.log(`Generator component detected account type: ${accountType}`);
+    // Refresh active style profile when account type changes
+    fetchActiveStyleProfile();
+  }, [accountType]);
+
   const fetchActiveStyleProfile = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -70,7 +79,7 @@ const Generator = () => {
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('active_style_profile_id, content_style, content_personality')
+        .select('active_style_profile_id, content_style, content_personality, account_type')
         .eq('id', session.user.id)
         .maybeSingle();
 
@@ -81,6 +90,7 @@ const Generator = () => {
 
       // Store content style and personality from profile
       if (profile) {
+        console.log("Fetched profile data:", profile);
         setContentStyle(profile.content_style || null);
         setContentPersonality(profile.content_personality || null);
         
@@ -240,6 +250,12 @@ const Generator = () => {
 
   // Clear existing ideas before generating new ones
   const handleGenerateIdeas = () => {
+    console.log("handleGenerateIdeas called with current account type:", accountType);
+    console.log("Current state - niche:", niche, "audience:", audience, "videoType:", videoType);
+    console.log("Style profile:", activeStyleProfile);
+    console.log("Content style:", contentStyle);
+    console.log("Content personality:", contentPersonality);
+    
     // Clear existing ideas first
     setIdeas([]);
     // Then generate new ideas
