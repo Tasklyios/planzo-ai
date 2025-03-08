@@ -17,9 +17,11 @@ export function Logo({ className = "", size = "medium" }: LogoProps) {
     large: "h-10", // ~40px (reduced from h-12 which is 48px)
   };
   
-  // For now, we only have light mode logo
-  // Later we can add a dark mode logo with: isDarkMode ? "/dark-mode-logo.png" : "/lovable-uploads/8c458d9d-037f-4dbe-8a47-782b5bd31a4a.png"
-  const logoSrc = "/lovable-uploads/8c458d9d-037f-4dbe-8a47-782b5bd31a4a.png";
+  // Use different logo sources based on theme
+  const lightLogoSrc = "/lovable-uploads/8c458d9d-037f-4dbe-8a47-782b5bd31a4a.png";
+  const darkLogoSrc = "/lovable-uploads/76ed71b9-cb94-48eb-acd1-a0326fc07c10.png";
+  
+  const logoSrc = isDarkMode ? darkLogoSrc : lightLogoSrc;
   
   return (
     <img 
