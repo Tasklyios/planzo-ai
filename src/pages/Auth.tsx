@@ -65,12 +65,22 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
+        console.log("Signing up with email:", email);
         // Sign up - just create the account, don't sign in yet
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              // Set default user metadata to ensure profile creation works
+              account_type: 'personal'
+            }
+          }
         });
+        
         if (error) throw error;
+        
+        console.log("Sign up successful, user created:", data?.user?.id);
         
         // Show email verification message
         setShowVerifyEmail(true);
