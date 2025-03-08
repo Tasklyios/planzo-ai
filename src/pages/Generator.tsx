@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -141,9 +140,11 @@ const Generator = () => {
         error: updateError
       } = await supabase.from("video_ideas")
         .update({
-          scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString()
+          scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
+          is_saved: true // Always save the idea when adding to calendar
         })
-        .eq("id", addingToCalendar.idea.id);
+        .eq("id", addingToCalendar.idea.id)
+        .eq("user_id", userId);
       
       if (updateError) {
         console.error("Error adding to calendar:", updateError);
@@ -152,7 +153,7 @@ const Generator = () => {
       
       setIdeas(prevIdeas => prevIdeas.map(idea => 
         idea.id === addingToCalendar.idea.id 
-          ? { ...idea, scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString() } 
+          ? { ...idea, scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(), is_saved: true } 
           : idea
       ));
       
@@ -161,6 +162,9 @@ const Generator = () => {
         description: "Idea added to calendar successfully"
       });
       setAddingToCalendar(null);
+      
+      // Navigate to calendar page after adding
+      navigate("/calendar");
     } catch (error: any) {
       console.error("Error adding to calendar:", error);
       toast({
@@ -186,17 +190,33 @@ const Generator = () => {
       
       const newSavedState = !ideaToUpdate.is_saved;
       
+      // Get the current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to save ideas",
+          variant: "destructive"
+        });
+        navigate("/auth");
+        return;
+      }
+      
+      console.log("Updating bookmark for idea:", ideaId, "to:", newSavedState);
+      
       const {
         error
       } = await supabase.from("video_ideas").update({
         is_saved: newSavedState
-      }).eq("id", ideaId);
+      }).eq("id", ideaId)
+        .eq("user_id", session.user.id);
       
       if (error) {
         console.error("Bookmark update error:", error);
         throw new Error(`Error updating bookmark: ${error.message}`);
       }
       
+      // Update the local state to reflect the change
       setIdeas(prevIdeas => prevIdeas.map(idea => idea.id === ideaId ? {
         ...idea,
         is_saved: newSavedState

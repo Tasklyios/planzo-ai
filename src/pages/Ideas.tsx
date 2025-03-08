@@ -19,8 +19,20 @@ export default function Ideas() {
 
   const fetchSavedIdeas = async () => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session?.user.id) return;
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      
+      if (!sessionData.session?.user.id) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to view your saved ideas",
+          variant: "destructive"
+        });
+        navigate("/auth");
+        return;
+      }
+
+      console.log("Fetching saved ideas for user:", sessionData.session.user.id);
 
       const { data, error } = await supabase
         .from("video_ideas")
@@ -29,6 +41,8 @@ export default function Ideas() {
         .eq("is_saved", true);
 
       if (error) throw error;
+      
+      console.log("Fetched saved ideas:", data);
       
       const transformedIdeas = (data || []).map(idea => ({
         ...idea,
@@ -51,7 +65,7 @@ export default function Ideas() {
       console.error("Error fetching saved ideas:", error);
       toast({
         title: "Error",
-        description: "Failed to load saved ideas",
+        description: "Failed to load saved ideas: " + (error.message || "Unknown error"),
         variant: "destructive",
       });
     }
@@ -63,15 +77,29 @@ export default function Ideas() {
 
   const handleBookmarkToggle = async (ideaId: string) => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        navigate("/auth");
+        return;
+      }
+      
+      // Find the idea in the current state
+      const ideaToRemove = ideas.find(idea => idea.id === ideaId);
+      if (!ideaToRemove) return;
+      
+      // Optimistically update UI
       setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== ideaId));
 
+      // Update the database
       const { error } = await supabase
         .from("video_ideas")
         .update({ is_saved: false })
-        .eq("id", ideaId);
+        .eq("id", ideaId)
+        .eq("user_id", sessionData.session.user.id);
 
       if (error) {
-        await fetchSavedIdeas(); // Reload ideas on error
+        // If there's an error, revert the optimistic update
+        await fetchSavedIdeas();
         throw error;
       }
 
@@ -83,7 +111,7 @@ export default function Ideas() {
       console.error("Error updating bookmark:", error);
       toast({
         title: "Error",
-        description: "Failed to update bookmark status",
+        description: "Failed to update bookmark status: " + (error.message || "Unknown error"),
         variant: "destructive",
       });
     }
@@ -105,7 +133,7 @@ export default function Ideas() {
         .from("video_ideas")
         .update({
           scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
-          is_saved: false
+          is_saved: true // Keep saved when adding to calendar
         })
         .eq("id", addingToCalendar.idea.id)
         .eq("user_id", userId);
@@ -118,13 +146,15 @@ export default function Ideas() {
       });
 
       setAddingToCalendar(null);
+      // Remove from this page since it's now in the calendar
       setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== addingToCalendar.idea.id));
+      // Navigate to calendar to see the added idea
       navigate("/calendar");
     } catch (error: any) {
       console.error("Error adding to calendar:", error);
       toast({
         title: "Error",
-        description: "Failed to add idea to calendar",
+        description: "Failed to add idea to calendar: " + (error.message || "Unknown error"),
         variant: "destructive",
       });
     }
@@ -174,6 +204,7 @@ export default function Ideas() {
             setEditingIdeaId(null);
             // Remove the query parameter when closing
             navigate('/ideas', { replace: true });
+            // Refresh the ideas list after editing
             fetchSavedIdeas();
           }}
         />
