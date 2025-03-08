@@ -209,14 +209,6 @@ const Auth = () => {
     navigate("/dashboard");
   };
 
-  // For debugging only
-  const displayDomainDebugInfo = () => (
-    <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-500">
-      <p>Current domain: {domainInfo}</p>
-      <p>Current URL: {window.location.href}</p>
-    </div>
-  );
-
   if (isResetPassword) {
     return (
       <div className="min-h-screen bg-[#f3f3f3] flex items-center justify-center p-4">
@@ -279,8 +271,6 @@ const Auth = () => {
               )}
             </button>
           </form>
-
-          {/* {displayDomainDebugInfo()} */}
         </div>
       </div>
     );
@@ -465,8 +455,6 @@ const Auth = () => {
               </button>
             </p>
           </div>
-
-          {/* {displayDomainDebugInfo()} */}
         </div>
       </div>
 
