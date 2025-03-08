@@ -147,36 +147,39 @@ serve(async (req) => {
       console.log('Trimmed ideas to 5');
     } else if (ideas.length < 5) {
       // If less than 5 ideas were generated, pad with generic ones up to 5
-      // BUT make them relevant to the niche/audience
+      // BUT make them relevant to the niche/audience and account type
+      const nicheLabel = getNicheLabel(accountType, niche);
+      const audienceTarget = audience || "your target audience";
+      
       const genericIdeas = [
         {
-          title: `${niche} Quick Demo`,
+          title: `${nicheLabel} Quick Demo`,
           category: "Product Showcase",
-          description: `A brief demonstration highlighting key features of your ${niche} offering for ${audience}.`,
+          description: `A brief demonstration highlighting key features of your ${nicheLabel} offering for ${audienceTarget}.`,
           tags: ["product", "demo", "features"]
         },
         {
-          title: `${audience} Testimonial`,
+          title: `${audienceTarget} Testimonial`,
           category: "Social Proof",
-          description: `Share positive feedback from a satisfied ${audience} customer about your ${niche} content.`,
+          description: `Share positive feedback from a satisfied ${audienceTarget} customer about your ${nicheLabel} content.`,
           tags: ["testimonial", "review", "customer"]
         },
         {
-          title: `Behind the Scenes: ${niche}`,
+          title: `Behind the Scenes: ${nicheLabel}`,
           category: "Brand Story",
-          description: `Show how your ${niche} content is created specifically for ${audience}.`,
+          description: `Show how your ${nicheLabel} content is created specifically for ${audienceTarget}.`,
           tags: ["behindthescenes", "process", "team"]
         },
         {
-          title: `How-To: ${niche} Guide`,
+          title: `How-To: ${nicheLabel} Guide`,
           category: "Educational",
-          description: `Step-by-step guide showing ${audience} how to get the most value from your ${niche} content.`,
+          description: `Step-by-step guide showing ${audienceTarget} how to get the most value from your ${nicheLabel} content.`,
           tags: ["tutorial", "howto", "guide"]
         },
         {
-          title: `${niche} vs Alternatives`,
+          title: `${nicheLabel} vs Alternatives`,
           category: "Educational",
-          description: `Compare your ${niche} approach with alternatives to show its unique advantages for ${audience}.`,
+          description: `Compare your ${nicheLabel} approach with alternatives to show its unique advantages for ${audienceTarget}.`,
           tags: ["comparison", "versus", "better"]
         }
       ];
@@ -225,6 +228,17 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to get a label for the niche based on account type
+function getNicheLabel(accountType, niche) {
+  if (accountType === 'ecommerce') {
+    return `${niche} Product`;
+  } else if (accountType === 'business') {
+    return `${niche} Business`;
+  } else {
+    return niche; // For personal accounts or undefined account types
+  }
+}
 
 // Helper function to detect if the niche is related to eco brands
 function detectEcoBrand(niche, customIdeas) {

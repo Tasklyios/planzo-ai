@@ -52,19 +52,31 @@ export const useIdeaGenerator = () => {
           if (profile) {
             console.log("Profile data from database:", profile);
             // Store account type
-            if (profile.account_type) setAccountType(profile.account_type);
+            if (profile.account_type) {
+              console.log("Setting account type to:", profile.account_type);
+              setAccountType(profile.account_type);
+            }
             
             // Only set form values from profile if they exist AND are relevant to current account type
-            if (accountType === 'personal') {
-              if (profile.content_niche) setNiche(profile.content_niche);
+            if (profile.account_type === 'personal') {
+              if (profile.content_niche) {
+                console.log("Setting personal niche to content_niche:", profile.content_niche);
+                setNiche(profile.content_niche);
+              }
               if (profile.target_audience) setAudience(profile.target_audience);
               if (profile.content_niche) setVideoType(profile.content_niche);
-            } else if (accountType === 'ecommerce') {
-              if (profile.product_niche) setNiche(profile.product_niche);
+            } else if (profile.account_type === 'ecommerce') {
+              if (profile.product_niche) {
+                console.log("Setting ecommerce niche to product_niche:", profile.product_niche);
+                setNiche(profile.product_niche);
+              }
               if (profile.target_audience) setAudience(profile.target_audience);
               if (profile.content_niche) setVideoType(profile.content_niche);
-            } else if (accountType === 'business') {
-              if (profile.business_niche) setNiche(profile.business_niche);
+            } else if (profile.account_type === 'business') {
+              if (profile.business_niche) {
+                console.log("Setting business niche to business_niche:", profile.business_niche);
+                setNiche(profile.business_niche);
+              }
               if (profile.target_audience) setAudience(profile.target_audience);
               if (profile.content_niche) setVideoType(profile.content_niche);
             }
@@ -117,23 +129,33 @@ export const useIdeaGenerator = () => {
             if (profile) {
               console.log("Profile data from database:", profile);
               // Set account type first
-              if (profile.account_type) setAccountType(profile.account_type);
-              
-              // Only set values if they're not already set by the user AND relevant to current account type
-              if (accountType === 'personal') {
-                if (!niche && profile.content_niche) setNiche(profile.content_niche);
-                if (!audience && profile.target_audience) setAudience(profile.target_audience);
-                if (!videoType && profile.content_niche) setVideoType(profile.content_niche);
-              } else if (accountType === 'ecommerce') {
-                if (!niche && profile.product_niche) setNiche(profile.product_niche);
-                if (!audience && profile.target_audience) setAudience(profile.target_audience);
-                if (!videoType && profile.content_niche) setVideoType(profile.content_niche);
-              } else if (accountType === 'business') {
-                if (!niche && profile.business_niche) setNiche(profile.business_niche);
-                if (!audience && profile.target_audience) setAudience(profile.target_audience);
-                if (!videoType && profile.content_niche) setVideoType(profile.content_niche);
+              if (profile.account_type) {
+                console.log("Setting account type to:", profile.account_type);
+                setAccountType(profile.account_type);
               }
               
+              // Only set values if they're not already set by the user AND relevant to current account type
+              const currentAccountType = profile.account_type || 'personal';
+              
+              if (currentAccountType === 'personal') {
+                if (!niche && profile.content_niche) {
+                  console.log("Setting personal niche to content_niche:", profile.content_niche);
+                  setNiche(profile.content_niche);
+                }
+              } else if (currentAccountType === 'ecommerce') {
+                if (!niche && profile.product_niche) {
+                  console.log("Setting ecommerce niche to product_niche:", profile.product_niche);
+                  setNiche(profile.product_niche);
+                }
+              } else if (currentAccountType === 'business') {
+                if (!niche && profile.business_niche) {
+                  console.log("Setting business niche to business_niche:", profile.business_niche);
+                  setNiche(profile.business_niche);
+                }
+              }
+              
+              if (!audience && profile.target_audience) setAudience(profile.target_audience);
+              if (!videoType && profile.content_niche) setVideoType(profile.content_niche);
               if (!platform && profile.posting_platforms && profile.posting_platforms.length > 0) 
                 setPlatform(profile.posting_platforms[0]);
             }

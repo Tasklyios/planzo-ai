@@ -69,45 +69,33 @@ const InputForm = ({
         const newAccountType = profile.account_type as AccountType;
         const accountTypeChanged = lastFetchedAccountType !== null && lastFetchedAccountType !== newAccountType;
         
+        console.log(`InputForm: Account type is ${newAccountType}${accountTypeChanged ? ' (changed from ' + lastFetchedAccountType + ')' : ''}`);
+        
         setAccountType(newAccountType);
         setLastFetchedAccountType(newAccountType);
         
-        console.log(`Current account type: ${newAccountType}${accountTypeChanged ? ' (changed from ' + lastFetchedAccountType + ')' : ''}`);
+        // Store values in component state
+        setProductNiche(profile.product_niche || "");
+        setContentNiche(profile.content_niche || "");
+        setBusinessNiche(profile.business_niche || "");
+        setTargetAudience(profile.target_audience || "");
         
-        // Store values based on account type
-        if (profile.account_type === 'ecommerce') {
-          setProductNiche(profile.product_niche || "");
-          setContentNiche(profile.content_niche || "");
-          setTargetAudience(profile.target_audience || "");
-          
-          // If account type changed, we need to update the parent component state
-          if (accountTypeChanged) {
-            // Update with ecommerce-specific values
-            setNiche(profile.product_niche || ""); // For ecommerce, use product niche
-            setVideoType(profile.content_niche || "");
-            setAudience(profile.target_audience || "");
+        // If account type changed, update parent component state with appropriate values for the new account type
+        if (accountTypeChanged || !niche) {
+          if (newAccountType === 'personal') {
+            console.log("Setting niche to content_niche for personal account:", profile.content_niche);
+            setNiche(profile.content_niche || "");
+          } else if (newAccountType === 'ecommerce') {
+            console.log("Setting niche to product_niche for ecommerce account:", profile.product_niche);
+            setNiche(profile.product_niche || "");
+          } else if (newAccountType === 'business') {
+            console.log("Setting niche to business_niche for business account:", profile.business_niche);
+            setNiche(profile.business_niche || "");
           }
-        } else if (profile.account_type === 'business') {
-          setBusinessNiche(profile.business_niche || "");
-          setContentNiche(profile.content_niche || "");
-          setTargetAudience(profile.target_audience || "");
           
-          // If account type changed, update with business-specific values
-          if (accountTypeChanged) {
-            setNiche(profile.business_niche || ""); // For business, use business niche
-            setVideoType(profile.content_niche || "");
-            setAudience(profile.target_audience || "");
-          }
-        } else if (profile.account_type === 'personal') {
-          setContentNiche(profile.content_niche || "");
-          setTargetAudience(profile.target_audience || "");
-          
-          // If account type changed, update with personal-specific values
-          if (accountTypeChanged) {
-            setNiche(profile.content_niche || ""); // For personal, use content niche
-            setVideoType(profile.content_niche || "");
-            setAudience(profile.target_audience || "");
-          }
+          // These are common regardless of account type
+          setVideoType(profile.content_niche || "");
+          setAudience(profile.target_audience || "");
         }
       }
     } catch (error) {
@@ -146,18 +134,42 @@ const InputForm = ({
     return () => clearInterval(intervalId);
   }, [accountType]);
 
-  // Handle content niche changes for ecommerce accounts
+  // Handle content niche changes
   const handleContentNicheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setContentNiche(newValue);
     
-    // Only update parent videoType if this is the appropriate field for current account type
-    if (accountType === 'ecommerce' || accountType === 'business') {
-      setVideoType(newValue);
-    } else if (accountType === 'personal') {
-      // For personal accounts, content niche is both the niche and video type
+    // Only update parent niche if this is relevant for the current account type
+    if (accountType === 'personal') {
+      console.log("Setting niche to contentNiche:", newValue);
+      setNiche(newValue); // For personal accounts, content niche is the niche
+    }
+    
+    // Always update video type regardless of account type
+    setVideoType(newValue);
+  };
+
+  // Handle product niche changes (for ecommerce accounts)
+  const handleProductNicheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setProductNiche(newValue);
+    
+    // Only update parent niche if this is an ecommerce account
+    if (accountType === 'ecommerce') {
+      console.log("Setting niche to productNiche:", newValue);
       setNiche(newValue);
-      setVideoType(newValue);
+    }
+  };
+
+  // Handle business niche changes (for business accounts)
+  const handleBusinessNicheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setBusinessNiche(newValue);
+    
+    // Only update parent niche if this is a business account
+    if (accountType === 'business') {
+      console.log("Setting niche to businessNiche:", newValue);
+      setNiche(newValue);
     }
   };
 
@@ -237,7 +249,39 @@ const InputForm = ({
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
+                  <Package2 className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Product Niche</label>
+                </div>
+                <input
+                  type="text"
+                  value={productNiche}
+                  onChange={handleProductNicheChange}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Your product niche"
+                />
+              </div>
+            </div>
+
+            <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <Users className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Target Audience</label>
+                </div>
+                <input
+                  type="text"
+                  value={targetAudience}
+                  onChange={handleTargetAudienceChange}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Your target audience"
+                />
+              </div>
+            </div>
+
+            <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <Video className="text-[#4F92FF] w-4 h-4" />
                   <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
                 </div>
                 <input
@@ -249,6 +293,27 @@ const InputForm = ({
                 />
               </div>
             </div>
+          </>
+        );
+
+      case 'business':
+        return (
+          <>
+            <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <Building2 className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Business Niche</label>
+                </div>
+                <input
+                  type="text"
+                  value={businessNiche}
+                  onChange={handleBusinessNicheChange}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Your business niche"
+                />
+              </div>
+            </div>
 
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
               <div className="flex flex-col items-center w-full">
@@ -270,37 +335,6 @@ const InputForm = ({
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
                   <Video className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Video Type</label>
-                </div>
-                <input
-                  type="text"
-                  value={videoType}
-                  onChange={(e) => setVideoType(e.target.value)}
-                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Video type"
-                />
-              </div>
-            </div>
-
-            {/* Hidden product niche field - not displayed but used for AI context */}
-            <div className="hidden">
-              <Input
-                type="text"
-                value={productNiche}
-                readOnly
-              />
-            </div>
-          </>
-        );
-
-      case 'business':
-        return (
-          <>
-            {/* For business accounts, we only show content niche, target audience and video type fields */}
-            <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col items-center w-full">
-                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
                   <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
                 </div>
                 <input
@@ -308,50 +342,9 @@ const InputForm = ({
                   value={contentNiche}
                   onChange={handleContentNicheChange}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Your content focus"
+                  placeholder="Your content niche"
                 />
               </div>
-            </div>
-
-            <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col items-center w-full">
-                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <Users className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Target Audience</label>
-                </div>
-                <input
-                  type="text"
-                  value={targetAudience}
-                  onChange={handleTargetAudienceChange}
-                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Your target audience"
-                />
-              </div>
-            </div>
-
-            <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col items-center w-full">
-                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <Video className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Video Type</label>
-                </div>
-                <input
-                  type="text"
-                  value={videoType}
-                  onChange={(e) => setVideoType(e.target.value)}
-                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Video type"
-                />
-              </div>
-            </div>
-
-            {/* Hidden business niche field - used for AI context but not displayed */}
-            <div className="hidden">
-              <Input
-                type="text"
-                value={businessNiche}
-                readOnly
-              />
             </div>
           </>
         );
