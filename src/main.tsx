@@ -14,6 +14,22 @@ declare global {
 // This prevents the badge from being displayed on the launched website
 window.LOVABLE_BADGE_ENABLED = false;
 
-// Create root and render app
-const root = createRoot(document.getElementById("root")!);
-root.render(<App />);
+// Add error handling for better debugging of issues on production
+const renderApp = () => {
+  try {
+    const rootElement = document.getElementById("root");
+    if (!rootElement) {
+      console.error("Root element not found in the DOM");
+      return;
+    }
+    
+    const root = createRoot(rootElement);
+    root.render(<App />);
+    
+    console.log("App successfully rendered");
+  } catch (error) {
+    console.error("Failed to render app:", error);
+  }
+};
+
+renderApp();

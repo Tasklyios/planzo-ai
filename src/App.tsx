@@ -31,18 +31,30 @@ function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsAuthenticated(!!session);
+        console.log("Auth check complete, authenticated:", !!session);
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        setIsAuthenticated(false);
+      }
     };
 
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, !!session);
       setIsAuthenticated(!!session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // If still checking auth status, return null or a loading indicator
+  if (isAuthenticated === null) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
