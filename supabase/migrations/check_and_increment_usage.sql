@@ -18,6 +18,30 @@ BEGIN
 
     -- Business tier users always return true (unlimited usage)
     IF v_tier = 'business' THEN
+        -- Still increment usage for tracking purposes
+        INSERT INTO public.user_daily_usage (user_id, date, ideas_generated, scripts_generated, hooks_generated)
+        VALUES (
+            p_user_id,
+            CURRENT_DATE,
+            CASE WHEN p_action = 'ideas' THEN 5 ELSE 0 END,
+            CASE WHEN p_action = 'scripts' THEN 1 ELSE 0 END,
+            CASE WHEN p_action = 'hooks' THEN 1 ELSE 0 END
+        )
+        ON CONFLICT (user_id, date) DO UPDATE
+        SET 
+            ideas_generated = CASE 
+                WHEN p_action = 'ideas' THEN user_daily_usage.ideas_generated + 5
+                ELSE user_daily_usage.ideas_generated
+            END,
+            scripts_generated = CASE 
+                WHEN p_action = 'scripts' THEN user_daily_usage.scripts_generated + 1
+                ELSE user_daily_usage.scripts_generated
+            END,
+            hooks_generated = CASE 
+                WHEN p_action = 'hooks' THEN user_daily_usage.hooks_generated + 1
+                ELSE user_daily_usage.hooks_generated
+            END;
+        
         RETURN true;
     END IF;
 
@@ -42,7 +66,7 @@ BEGIN
             WHEN v_tier = 'free' THEN 5
             WHEN v_tier = 'pro' THEN 20
             WHEN v_tier = 'plus' THEN 50
-            WHEN v_tier = 'business' THEN 99999 -- Should not reach here but added as fallback
+            WHEN v_tier = 'business' THEN 999 -- Should not reach here but added as fallback
             ELSE 5
         END;
         -- For ideas, increment by 5
@@ -52,7 +76,7 @@ BEGIN
             WHEN v_tier = 'free' THEN 3
             WHEN v_tier = 'pro' THEN 10
             WHEN v_tier = 'plus' THEN 25
-            WHEN v_tier = 'business' THEN 99999 -- Should not reach here but added as fallback
+            WHEN v_tier = 'business' THEN 999 -- Should not reach here but added as fallback
             ELSE 3
         END;
         v_increment_count := 1;
@@ -61,7 +85,7 @@ BEGIN
             WHEN v_tier = 'free' THEN 5
             WHEN v_tier = 'pro' THEN 15
             WHEN v_tier = 'plus' THEN 30
-            WHEN v_tier = 'business' THEN 99999 -- Should not reach here but added as fallback
+            WHEN v_tier = 'business' THEN 999 -- Should not reach here but added as fallback
             ELSE 5
         END;
         v_increment_count := 1;

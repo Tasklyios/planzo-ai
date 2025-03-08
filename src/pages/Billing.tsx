@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { CreditCard, AlertCircle, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -304,6 +303,11 @@ const Billing = () => {
     }
   };
 
+  const handleRefreshUsage = () => {
+    console.log("Manually refreshing usage data...");
+    fetchUsageData();
+  };
+
   if (loading && !refreshing) {
     return (
       <div className="container mx-auto p-6">
@@ -402,6 +406,7 @@ const Billing = () => {
             tierName={subscription?.tier || 'Free'} 
             usageData={usageData}
             isLoading={usageLoading} 
+            onRefresh={handleRefreshUsage}
           />
         </div>
 

@@ -99,19 +99,11 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    // For business tier, always allow
-    if (subscriptionData?.tier === 'business') {
-      return new Response(
-        JSON.stringify({
-          canProceed: true,
-          message: 'Business tier has unlimited usage'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    console.log('User subscription tier:', subscriptionData?.tier);
 
-    // Default to free tier if no subscription found
+    // For business tier, always allow but still track usage
     const tier = subscriptionData?.tier || 'free';
+    const isBusiness = tier === 'business';
 
     // Check current usage
     const { data: usageData, error: usageError } = await supabase
@@ -136,31 +128,36 @@ serve(async (req) => {
       if (tier === 'free') maxLimit = 5;
       else if (tier === 'pro') maxLimit = 20;
       else if (tier === 'plus') maxLimit = 50;
+      else if (tier === 'business') maxLimit = 999; // Using 999 for business tier
     } else if (action === 'scripts') {
       if (tier === 'free') maxLimit = 3;
       else if (tier === 'pro') maxLimit = 10;
       else if (tier === 'plus') maxLimit = 25;
+      else if (tier === 'business') maxLimit = 999;
     } else if (action === 'hooks') {
       if (tier === 'free') maxLimit = 5;
       else if (tier === 'pro') maxLimit = 15;
       else if (tier === 'plus') maxLimit = 30;
+      else if (tier === 'business') maxLimit = 999;
     }
 
     // For ideas specifically, use the number 5 instead of 1
     const incrementCount = action === 'ideas' ? 5 : 1;
     
-    // Check if user would exceed their limit
-    if (currentUsage + incrementCount > maxLimit) {
+    // Check if user would exceed their limit (but always let business tier proceed)
+    if (!isBusiness && currentUsage + incrementCount > maxLimit) {
       return new Response(
         JSON.stringify({
           canProceed: false,
-          message: `You've reached your daily limit for ${action}. Upgrade your plan for more.`
+          message: `You've reached your daily limit for ${action}. Upgrade your plan for more.`,
+          currentUsage,
+          maxLimit
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Increment usage counter with the correct count
+    // Increment usage counter with the correct count (even for business tier)
     const usage = {
       user_id: user.id,
       date: new Date().toISOString().split('T')[0],
