@@ -74,7 +74,7 @@ serve(async (req) => {
     const isEcoBrand = isEcoRelated || detectEcoBrand(niche, customIdeas);
 
     // Construct the prompt differently based on whether it's an eco brand or not
-    const prompt = constructPrompt({
+    const prompt = constructAdvancedPrompt({
       niche,
       audience,
       videoType,
@@ -91,7 +91,7 @@ serve(async (req) => {
       accountType
     });
 
-    // Use a more efficient model and optimize parameters for faster generation
+    // Use a more powerful model for better quality ideas
     const model = modelOverride || "gpt-4o-mini"; // Use provided model or default to gpt-4o-mini
     
     console.log('Using model:', model);
@@ -104,11 +104,11 @@ serve(async (req) => {
         { role: "system", content: prompt.systemPrompt },
         { role: "user", content: prompt.userPrompt }
       ],
-      temperature: isEcoBrand ? 0.7 : 0.8, // Slightly more creative for eco brands
-      max_tokens: 1500,
-      top_p: 0.95,
-      frequency_penalty: 0.5,
-      presence_penalty: 0.5,
+      temperature: 0.85, // Increased for more creativity
+      max_tokens: 2000, // Increased for more detailed responses
+      top_p: 0.98,
+      frequency_penalty: 0.6,
+      presence_penalty: 0.6,
     };
 
     // Call the OpenAI API
@@ -146,49 +146,9 @@ serve(async (req) => {
       ideas = ideas.slice(0, 5);
       console.log('Trimmed ideas to 5');
     } else if (ideas.length < 5) {
-      // If less than 5 ideas were generated, pad with generic ones up to 5
-      // Make sure to use the correct niche based on account type
-      const nicheToUse = determineProperNiche(accountType, niche);
-      const audienceTarget = audience || "your target audience";
-      
-      const genericIdeas = [
-        {
-          title: `${nicheToUse} Tips for Beginners`,
-          category: "Educational",
-          description: `Share valuable beginner tips for ${audienceTarget} interested in ${nicheToUse}.`,
-          tags: ["tips", "beginners", "educational"]
-        },
-        {
-          title: `Day in the Life: ${nicheToUse} Creator`,
-          category: "Behind the Scenes",
-          description: `Show ${audienceTarget} what a typical day looks like for someone creating content about ${nicheToUse}.`,
-          tags: ["dayinthelife", "behindthescenes", "creator"]
-        },
-        {
-          title: `Top 3 Myths About ${nicheToUse}`,
-          category: "Myth Busting",
-          description: `Debunk common misconceptions that ${audienceTarget} might have about ${nicheToUse}.`,
-          tags: ["myths", "factcheck", "education"]
-        },
-        {
-          title: `How ${nicheToUse} Changed My Life`,
-          category: "Personal Story",
-          description: `Share a personal transformation story related to ${nicheToUse} that will inspire ${audienceTarget}.`,
-          tags: ["inspiration", "transformation", "story"]
-        },
-        {
-          title: `${nicheToUse} Q&A: Answering Your FAQs`,
-          category: "Q&A",
-          description: `Answer the most frequently asked questions from ${audienceTarget} about ${nicheToUse}.`,
-          tags: ["faq", "questions", "answers"]
-        }
-      ];
-      
-      while (ideas.length < 5) {
-        ideas.push(genericIdeas[ideas.length % genericIdeas.length]);
-      }
-      
-      console.log('Padded ideas to reach 5');
+      // If less than 5 ideas were generated, create compelling fallbacks
+      ideas = createCompellingFallbackIdeas(ideas, niche, audience, accountType, platform, videoType);
+      console.log('Created compelling fallback ideas to reach 5 total');
     }
     
     console.log('Final ideas count:', ideas.length);
@@ -230,7 +190,7 @@ serve(async (req) => {
   }
 });
 
-// NEW FUNCTION: Determine the proper niche based on account type
+// Helper function to determine the proper niche based on account type
 function determineProperNiche(accountType, providedNiche) {
   // Default to the provided niche if no account type is specified
   if (!accountType) return providedNiche;
@@ -262,9 +222,249 @@ function determineProperNiche(accountType, providedNiche) {
   return providedNiche;
 }
 
-// Helper function to get a label for the niche based on account type
-function getNicheLabel(accountType, niche) {
-  return determineProperNiche(accountType, niche);
+// Helper function to create compelling fallback ideas when AI generates fewer than 5
+function createCompellingFallbackIdeas(existingIdeas, niche, audience, accountType, platform, videoType) {
+  const nicheToUse = determineProperNiche(accountType, niche);
+  const audienceTarget = audience || "your target audience";
+  
+  // More specific and high-performing fallback templates based on platform and account type
+  const fallbackTemplates = [];
+  
+  // Personal account fallbacks
+  if (accountType === 'personal') {
+    fallbackTemplates.push(
+      {
+        title: `A Day in My Life as a ${nicheToUse} Creator`,
+        category: "Lifestyle",
+        description: `Take ${audienceTarget} behind the scenes of your daily routine, showing authentic moments that make your ${nicheToUse} content unique.`,
+        tags: ["dayinthelife", "creator", "behindthescenes"]
+      },
+      {
+        title: `What I Wish I Knew Before Starting in ${nicheToUse}`,
+        category: "Educational",
+        description: `Share valuable insights and lessons learned that will resonate with ${audienceTarget} who are interested in ${nicheToUse}.`,
+        tags: ["lessons", "advice", "experience"]
+      },
+      {
+        title: `The Truth About ${nicheToUse} Nobody Talks About`,
+        category: "Reveal",
+        description: `Create an honest, myth-busting video that reveals the hidden realities of ${nicheToUse} that will surprise ${audienceTarget}.`,
+        tags: ["truth", "exposed", "reality"]
+      },
+      {
+        title: `5 ${nicheToUse} Hacks That Changed Everything`,
+        category: "Tips & Tricks",
+        description: `Demonstrate game-changing hacks that will genuinely help ${audienceTarget} solve common problems in ${nicheToUse}.`,
+        tags: ["hacks", "tips", "solutions"]
+      },
+      {
+        title: `Answering ${nicheToUse} Questions You're Too Afraid to Ask`,
+        category: "Q&A",
+        description: `Address taboo or uncomfortable questions about ${nicheToUse} that ${audienceTarget} want answers to but rarely see discussed.`,
+        tags: ["questions", "taboo", "answers"]
+      }
+    );
+  }
+  // Ecommerce account fallbacks
+  else if (accountType === 'ecommerce') {
+    fallbackTemplates.push(
+      {
+        title: `${nicheToUse} Unboxing: First Impressions`,
+        category: "Product Reveal",
+        description: `Create an authentic unboxing experience that showcases your product's packaging, first impressions, and immediate value to ${audienceTarget}.`,
+        tags: ["unboxing", "review", "firstimpressions"]
+      },
+      {
+        title: `${nicheToUse} vs. Competitors: Honest Comparison`,
+        category: "Comparison",
+        description: `Compare your ${nicheToUse} with competitors, highlighting unique advantages while being honest about differences that matter to ${audienceTarget}.`,
+        tags: ["comparison", "review", "honest"]
+      },
+      {
+        title: `3 Unexpected Ways to Use Our ${nicheToUse}`,
+        category: "Product Tips",
+        description: `Demonstrate creative, non-obvious ways to use your products that add extra value for ${audienceTarget} and showcase versatility.`,
+        tags: ["hacks", "howto", "creative"]
+      },
+      {
+        title: `Real Customer Transformations with ${nicheToUse}`,
+        category: "Testimonial",
+        description: `Feature authentic before-and-after results from real customers using your ${nicheToUse}, specifically chosen to resonate with ${audienceTarget}.`,
+        tags: ["results", "transformation", "testimonial"]
+      },
+      {
+        title: `Behind the Scenes: How We Make ${nicheToUse}`,
+        category: "Brand Story",
+        description: `Take ${audienceTarget} behind the scenes of your product creation process, building trust through transparency and craftsmanship.`,
+        tags: ["behindthescenes", "making", "craftsmanship"]
+      }
+    );
+  }
+  // Business account fallbacks
+  else if (accountType === 'business') {
+    fallbackTemplates.push(
+      {
+        title: `How We Solved This ${nicheToUse} Challenge for a Client`,
+        category: "Case Study",
+        description: `Share a compelling success story that demonstrates your expertise in solving real problems for clients in the ${nicheToUse} industry.`,
+        tags: ["casestudy", "success", "solution"]
+      },
+      {
+        title: `${nicheToUse} Industry Trends You Can't Ignore`,
+        category: "Industry Insights",
+        description: `Provide valuable industry analysis and predictions that position your business as a thought leader for ${audienceTarget}.`,
+        tags: ["trends", "insights", "industry"]
+      },
+      {
+        title: `A Day Working with Our ${nicheToUse} Team`,
+        category: "Company Culture",
+        description: `Showcase your team's expertise and workplace culture to build trust and connection with ${audienceTarget}.`,
+        tags: ["team", "behindthescenes", "culture"]
+      },
+      {
+        title: `${nicheToUse} Mistakes Costing You Money (And How to Fix Them)`,
+        category: "Problem Solving",
+        description: `Identify common pain points for ${audienceTarget} and demonstrate how your business solutions address these costly issues.`,
+        tags: ["mistakes", "solutions", "roi"]
+      },
+      {
+        title: `Client Transformation: ${nicheToUse} Success Story`,
+        category: "Testimonial",
+        description: `Feature a detailed client success story with specific metrics and outcomes that prove your ${nicheToUse} business delivers results for ${audienceTarget}.`,
+        tags: ["success", "transformation", "results"]
+      }
+    );
+  }
+  // Generic fallbacks (used if account type is not specified)
+  else {
+    fallbackTemplates.push(
+      {
+        title: `${nicheToUse} Secrets Experts Don't Share`,
+        category: "Insider Knowledge",
+        description: `Reveal valuable insider information about ${nicheToUse} that will give ${audienceTarget} an advantage others don't have.`,
+        tags: ["secrets", "insider", "tips"]
+      },
+      {
+        title: `Is ${nicheToUse} Worth It? Honest Review`,
+        category: "Review",
+        description: `Provide a balanced, authentic assessment of ${nicheToUse} that helps ${audienceTarget} make informed decisions.`,
+        tags: ["review", "honest", "worthit"]
+      },
+      {
+        title: `I Tried ${nicheToUse} for 30 Days - Here's What Happened`,
+        category: "Challenge",
+        description: `Document a 30-day journey with ${nicheToUse}, showing real results and experiences that will resonate with ${audienceTarget}.`,
+        tags: ["challenge", "results", "journey"]
+      },
+      {
+        title: `${nicheToUse} Myth-Busting: What Really Works`,
+        category: "Educational",
+        description: `Debunk common misconceptions about ${nicheToUse} with evidence-based information that helps ${audienceTarget} avoid mistakes.`,
+        tags: ["mythbusting", "facts", "education"]
+      },
+      {
+        title: `The Future of ${nicheToUse}: Trends for 2025`,
+        category: "Trends",
+        description: `Provide forward-looking insights about ${nicheToUse} that position you as a thought leader for ${audienceTarget}.`,
+        tags: ["future", "trends", "predictions"]
+      }
+    );
+  }
+  
+  // Add platform-specific optimizations
+  if (platform) {
+    for (let template of fallbackTemplates) {
+      if (platform.toLowerCase().includes('tiktok')) {
+        template.title = addTiktokFlair(template.title);
+        template.tags.push('tiktok', 'viral');
+      } else if (platform.toLowerCase().includes('instagram')) {
+        template.title = addInstagramFlair(template.title);
+        template.tags.push('instagram', 'reels');
+      } else if (platform.toLowerCase().includes('youtube')) {
+        template.title = addYoutubeFlair(template.title);
+        template.tags.push('youtube', 'shorts');
+      }
+    }
+  }
+  
+  // Add existing ideas first
+  const finalIdeas = [...existingIdeas];
+  
+  // Fill remaining slots with fallback templates
+  while (finalIdeas.length < 5) {
+    // Get a fallback that's not too similar to existing ideas
+    const usedTitles = finalIdeas.map(idea => idea.title.toLowerCase());
+    
+    let uniqueTemplateFound = false;
+    let templateIndex = 0;
+    
+    // Try to find a template that's not too similar to existing ideas
+    while (!uniqueTemplateFound && templateIndex < fallbackTemplates.length) {
+      const template = fallbackTemplates[templateIndex];
+      const isTooSimilar = usedTitles.some(title => 
+        title.includes(template.title.toLowerCase().substring(0, 10)) || 
+        template.title.toLowerCase().includes(title.substring(0, 10))
+      );
+      
+      if (!isTooSimilar) {
+        finalIdeas.push(template);
+        uniqueTemplateFound = true;
+      }
+      
+      templateIndex++;
+      
+      // If we've gone through all templates and none are unique enough,
+      // just add the next one with a slight modification
+      if (templateIndex >= fallbackTemplates.length && !uniqueTemplateFound) {
+        const template = fallbackTemplates[finalIdeas.length % fallbackTemplates.length];
+        const modifiedTemplate = {
+          ...template,
+          title: `${template.title} (Updated for ${new Date().getFullYear()})`,
+          description: `New perspective: ${template.description}`
+        };
+        finalIdeas.push(modifiedTemplate);
+        uniqueTemplateFound = true;
+      }
+    }
+  }
+  
+  return finalIdeas;
+}
+
+// Helper functions for platform-specific title optimization
+function addTiktokFlair(title) {
+  const tiktokPrefixes = ["POV: ", "Tell me you're ", "When you ", "#", "I didn't know ", "They didn't tell me "];
+  const usePrefix = Math.random() > 0.5;
+  
+  if (usePrefix) {
+    const prefix = tiktokPrefixes[Math.floor(Math.random() * tiktokPrefixes.length)];
+    if (prefix === "#") {
+      return title.replace(/\s+/g, '') + " #viral #fyp";
+    }
+    return prefix + title;
+  }
+  
+  return title;
+}
+
+function addInstagramFlair(title) {
+  if (title.length > 50) {
+    return title.substring(0, 50) + "...";
+  }
+  if (Math.random() > 0.7) {
+    return "✨ " + title + " ✨";
+  }
+  return title;
+}
+
+function addYoutubeFlair(title) {
+  if (Math.random() > 0.7) {
+    return title + " (You Won't Believe What Happened!)";
+  }
+  if (Math.random() > 0.5) {
+    return title + " | Life-Changing Results";
+  }
+  return title;
 }
 
 // Helper function to detect if the niche is related to eco brands
@@ -287,8 +487,8 @@ function detectEcoBrand(niche, customIdeas) {
   return nicheMatches || customIdeasMatches;
 }
 
-// Helper function to construct the prompt
-function constructPrompt({ 
+// Enhanced prompt construction for better idea generation
+function constructAdvancedPrompt({ 
   niche,
   audience,
   videoType,
@@ -308,77 +508,131 @@ function constructPrompt({
   const nicheToUse = determineProperNiche(accountType, niche);
   console.log(`Using niche: ${nicheToUse} for prompt construction (account type: ${accountType})`);
   
-  // Base system prompt
-  let systemPrompt = `You are a viral video idea generator specializing in creating engaging, attention-grabbing content ideas specifically for ${accountType || 'business'} accounts. Your goal is to help content creators make videos that will perform well on ${platform || 'social media'}.`;
+  // Base system prompt with detailed instructions for high-quality idea generation
+  let systemPrompt = `You are an expert viral content strategist specializing in creating high-performing video concepts for ${platform || 'social media'}.
+
+Your task is to generate EXCEPTIONALLY CREATIVE and HIGHLY SPECIFIC video ideas for a ${accountType || 'business'} in the ${nicheToUse} niche that targets ${audience || 'their audience'}.`;
   
-  // Add account type specific context
+  // Add account type specific context with detailed instructions
   if (accountType) {
-    systemPrompt += `\n\nACCOUNT TYPE: ${accountType}. `;
+    systemPrompt += `\n\nACCOUNT TYPE DETAILS:`;
     
     if (accountType === 'personal') {
-      systemPrompt += `Generate ideas for a personal creator in the ${nicheToUse} niche targeting ${audience}.`;
+      systemPrompt += `\nThis is a PERSONAL CREATOR account in the ${nicheToUse} niche. 
+Focus on authentic, personality-driven content that:
+- Showcases the creator's unique expertise and perspective
+- Builds a personal connection with ${audience}
+- Uses first-person narratives and personal experiences
+- Creates opportunities for the creator to demonstrate their unique value and insights`;
     } else if (accountType === 'ecommerce') {
-      systemPrompt += `Generate ideas for an e-commerce business selling products in the ${nicheToUse} category targeting ${audience} customers.`;
+      systemPrompt += `\nThis is an E-COMMERCE BUSINESS selling ${nicheToUse}.
+Focus on product-centric content that:
+- Demonstrates product benefits in unexpected, attention-grabbing ways
+- Shows real results and transformations using the products
+- Creates desire through creative demonstrations and use cases
+- Differentiates these products from competitors with unique angles`;
     } else if (accountType === 'business') {
-      systemPrompt += `Generate ideas for a ${nicheToUse} business targeting ${audience} clients/customers.`;
+      systemPrompt += `\nThis is a ${nicheToUse} BUSINESS targeting ${audience} clients/customers.
+Focus on authority-building content that:
+- Demonstrates expertise and thought leadership in the ${nicheToUse} space
+- Provides exceptional value that positions this business as the go-to solution
+- Addresses specific pain points of ${audience}
+- Shows proven results and case studies in a compelling way`;
     }
   }
   
-  // Add eco-brand specific instructions if applicable
-  if (isEcoBrand) {
-    systemPrompt += `\n\nSPECIAL INSTRUCTIONS: You are generating ideas for an eco-friendly brand. Focus on creating viral-worthy content that highlights sustainability, environmental benefits, and ethical aspects of the products. Include ideas that use trending eco-hashtags, sustainability challenges, and impactful environmental messaging that resonates with eco-conscious consumers.`;
+  // Enhanced platform-specific guidance
+  if (platform) {
+    systemPrompt += `\n\nPLATFORM-SPECIFIC STRATEGY FOR ${platform.toUpperCase()}:`;
+    
+    if (platform === 'TikTok') {
+      systemPrompt += `
+- Create ideas that hook viewers in the FIRST 2 SECONDS
+- Utilize pattern interrupts, unexpected twists, and information gaps
+- Incorporate trending audio, transitions, and formats when relevant
+- Design content that prompts strong viewer emotional reactions (surprise, curiosity, validation)
+- Include "storytime" or multi-part series potential for high-performing ideas
+- Focus on concepts that work well with TikTok's informal, authentic aesthetic`;
+    } else if (platform === 'Instagram Reels') {
+      systemPrompt += `
+- Develop visually striking concepts that stand out in a crowded feed
+- Create ideas that work well with Instagram's more polished, aspirational aesthetic
+- Include concepts with strong visual transitions and reveal moments
+- Design content that's both entertaining AND educational for higher reach
+- Focus on ideas that showcase personality while maintaining higher production value
+- Incorporate opportunities for location tagging and product showcasing`;
+    } else if (platform === 'YouTube Shorts') {
+      systemPrompt += `
+- Create ideas that combine entertainment with substantial value/education
+- Design concepts that can lead viewers to longer-form content
+- Focus on searchable topics with clear, specific titles
+- Include ideas that demonstrate expertise and build channel authority
+- Develop concepts that work well with YouTube's recommendation algorithm
+- Incorporate highly specific, niche-focused keywords into the content concepts`;
+    }
   }
-
-  // Add style profile information if available
+  
+  // Add style profile information with concrete applications
   if (styleProfile) {
-    systemPrompt += `\n\nSTYLE PROFILE: The user has a style profile named "${styleProfile.name}": ${styleProfile.description}. 
-    The tone should be: ${styleProfile.tone}.`;
+    systemPrompt += `\n\nSTYLE PROFILE: "${styleProfile.name}": ${styleProfile.description}
+Tone: ${styleProfile.tone}
+
+Apply this style to every idea by:
+- Using language and concepts that match this specific tone
+- Creating scenarios and hooks that align with this style
+- Developing concepts where this style creates maximum viewer engagement`;
   }
 
-  // Add content style and personality if available
+  // Add content style and personality with specific applications
   if (contentStyle) {
-    systemPrompt += `\n\nCONTENT STYLE: ${contentStyle}`;
+    systemPrompt += `\n\nCONTENT STYLE: ${contentStyle}
+Apply this style by creating ideas that specifically demonstrate this approach in action.`;
   }
 
   if (contentPersonality) {
-    systemPrompt += `\n\nCONTENT PERSONALITY: ${contentPersonality}`;
+    systemPrompt += `\n\nCONTENT PERSONALITY: ${contentPersonality}
+Ensure all ideas allow this personality to shine through with specific content angles.`;
   }
 
-  systemPrompt += `\n\nRules for generating ideas:
-1. Focus on short-form video ideas that are likely to go viral for ${platform || 'social media'}
-2. Make sure ideas are specific enough to guide content creation
-3. Generate distinctive ideas that don't overlap too much
-4. Each idea should include a clear hook to grab attention in the first few seconds
-5. Format each idea with a catchy title, a category, and a brief description
-6. ALWAYS output only valid JSON in the exact format requested
-7. ALWAYS generate EXACTLY ${numIdeas} ideas, no more, no less`;
+  // Viral content strategy guidance
+  systemPrompt += `\n\nVIRAL CONTENT STRATEGY:
+1. Create ULTRA-SPECIFIC ideas (not generic templates) with concrete angles and examples
+2. Focus on high-engagement triggers: curiosity gaps, unexpected revelations, emotional resonance
+3. Incorporate current social media trends when relevant to the niche
+4. Design ideas with built-in shareability factors (controversy, validation, identity, utility)
+5. Create hooks that use psychological triggers (curiosity, surprise, validation, fear of missing out)
+6. Develop ideas that have a clear "aha moment" or emotional payoff
+7. Ensure each idea has a specific, UNIQUE angle (not just templates with the niche plugged in)`;
 
-  // Add platform-specific guidance
-  if (platform === 'TikTok') {
-    systemPrompt += `\n\nFor TikTok: Focus on trends, hooks that grab attention in the first 3 seconds, and content that encourages engagement through comments, shares, or user participation.`;
-  } else if (platform === 'Instagram Reels') {
-    systemPrompt += `\n\nFor Instagram Reels: Focus on visually appealing content, aesthetic presentation, lifestyle elements, and product showcases that look polished and professional.`;
-  } else if (platform === 'YouTube Shorts') {
-    systemPrompt += `\n\nFor YouTube Shorts: Focus on informative, educational, or highly entertaining content that provides value and encourages channel subscription.`;
-  }
-  
-  // Add eco-brand specific viral tactics
+  // Add eco-brand specific viral tactics if applicable
   if (isEcoBrand) {
-    systemPrompt += `\n\nViral tactics for eco brands:
-1. Before/after transformation videos showing environmental impact
-2. Shocking statistics or facts presented visually
-3. "Did you know" sustainability facts that surprise viewers
-4. Behind-the-scenes of sustainable production processes
-5. Quick product demos highlighting eco-benefits
-6. Sustainable life hacks using the products
-7. Environmental impact comparisons (your product vs conventional)`;
+    systemPrompt += `\n\nECO-FRIENDLY CONTENT STRATEGY:
+- Create before/after transformation videos showing environmental impact
+- Design concepts that educate viewers on surprising eco-facts
+- Develop "behind-the-scenes" ideas showing sustainable processes
+- Create comparative concepts showing eco vs. conventional alternatives
+- Design myth-busting content about sustainability misconceptions`;
   }
+
+  // Output format instructions
+  systemPrompt += `\n\nOUTPUT INSTRUCTIONS:
+1. Generate EXACTLY ${numIdeas} UNIQUE video ideas
+2. Each idea must be SPECIFIC to ${nicheToUse} and ${audience}, not a generic template
+3. Include a catchy, platform-appropriate title for each idea
+4. Assign each idea a relevant category that describes the content type
+5. Write a detailed description explaining what makes this idea compelling
+6. Include 3-5 relevant tags for each idea
+7. Format output as valid JSON only, no explanation text`;
 
   // User prompt construction
-  let userPrompt = `Please generate EXACTLY ${numIdeas} unique video ideas for a ${nicheToUse} ${accountType || 'business'} targeting ${audience}.`;
+  let userPrompt = `Create ${numIdeas} highly creative and SPECIFIC viral video ideas for a ${accountType || 'business'} focused on ${nicheToUse} targeting ${audience || 'their audience'}.`;
   
   if (videoType) {
     userPrompt += ` The videos should be in the format of ${videoType}.`;
+  }
+  
+  if (platform) {
+    userPrompt += ` Optimize these ideas specifically for ${platform} with appropriate hooks and formats.`;
   }
   
   if (contentStyle) {
@@ -389,13 +643,15 @@ function constructPrompt({
     userPrompt += ` The content personality is ${contentPersonality}.`;
   }
   
+  // Add custom ideas as inspiration with specific instructions
   if (customIdeas && customIdeas.trim()) {
-    userPrompt += `\n\nHere are some custom ideas to inspire you (but don't copy them directly):\n${customIdeas}`;
+    userPrompt += `\n\nHere are some custom ideas to use as inspiration (build upon these themes but create completely new concepts):
+${customIdeas}`;
   }
   
   // Add information about previous ideas to avoid repetition
   if (previousIdeas && previousIdeas.titles && previousIdeas.titles.length > 0) {
-    userPrompt += `\n\nPlease do NOT repeat or closely match these previously generated ideas:`;
+    userPrompt += `\n\nAVOID creating ideas similar to these previously generated ideas:`;
     for (let i = 0; i < Math.min(previousIdeas.titles.length, 10); i++) {
       userPrompt += `\n- ${previousIdeas.titles[i]}`;
     }
@@ -407,13 +663,13 @@ function constructPrompt({
   }
   
   // Specify the output format
-  userPrompt += `\n\nPlease respond with EXACTLY ${numIdeas} ideas in this JSON format without any explanations or other text:
+  userPrompt += `\n\nPlease respond with EXACTLY ${numIdeas} highly specific and creative ideas in this JSON format:
   {
     "ideas": [
       {
-        "title": "Catchy Title Here",
-        "category": "Category Name Here",
-        "description": "Brief description of the video idea here",
+        "title": "Specific, Attention-Grabbing Title Here",
+        "category": "Content Category",
+        "description": "Detailed description of the video idea with specific angles",
         "tags": ["tag1", "tag2", "tag3"]
       },
       ...
