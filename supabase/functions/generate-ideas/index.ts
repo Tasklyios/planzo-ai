@@ -35,7 +35,7 @@ serve(async (req) => {
       contentStyle,
       contentPersonality,
       previousIdeas,
-      numIdeas = 5, // Default to 5 but override with exactly 5 below
+      numIdeas = 5, // Default to 5
       isEcoRelated,
       isEcommerce,
       marketResearch,
@@ -52,7 +52,7 @@ serve(async (req) => {
     console.log('Generating ideas with:', { 
       niche, audience, videoType, platform,
       customIdeasLength: customIdeas?.length || 0,
-      numIdeas: 5, // Force exactly 5 ideas
+      numIdeas: 5, // Always use 5 ideas
       isEcoBrand,
       isEcommerce,
       contentStyle,
@@ -72,7 +72,7 @@ serve(async (req) => {
       contentPersonality,
       previousIdeas,
       isEcoBrand,
-      numIdeas: 5, // Force exactly 5 ideas regardless of input
+      numIdeas: 5, // Always force exactly 5 ideas
       isEcommerce,
       marketResearch,
       styleProfile
@@ -126,7 +126,7 @@ serve(async (req) => {
     // Process and validate the response
     let ideas = parseAndValidateIdeas(rawResponse, isEcoBrand);
     
-    // Ensure we return exactly 5 ideas
+    // Ensure we return exactly 5 ideas - no more, no less
     if (ideas.length > 5) {
       ideas = ideas.slice(0, 5);
       console.log('Trimmed ideas to 5');
@@ -181,7 +181,7 @@ serve(async (req) => {
     // Return the ideas with additional debug info
     return new Response(
       JSON.stringify({ 
-        ideas, 
+        ideas: ideas.slice(0, 5), // Ensure we only return 5 ideas
         rawResponse,
         debug: {
           modelUsed: model,

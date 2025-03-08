@@ -205,10 +205,11 @@ export const useIdeaGenerator = () => {
       // Extract the style profile data and content customization if provided
       const styleProfileData = params?.activeStyleProfile ? {
         name: params.activeStyleProfile.name,
-        description: params.activeStyleProfile.description,
-        tone: params.activeStyleProfile.tone,
-        topics: params.activeStyleProfile.topics,
-        avoidTopics: params.activeStyleProfile.avoid_topics
+        // Fix for TypeScript errors - get values from StyleProfile type correctly
+        description: params.activeStyleProfile.description || "",
+        tone: params.activeStyleProfile.tone || "",
+        topics: params.activeStyleProfile.topics || [],
+        avoidTopics: params.activeStyleProfile.avoid_topics || []
       } : null;
 
       console.log("Style profile data:", styleProfileData);
@@ -225,7 +226,7 @@ export const useIdeaGenerator = () => {
           platform,
           customIdeas,
           previousIdeas: previousIdeasContext,
-          numIdeas: 5,
+          numIdeas: 5, // Explicitly set to 5
           styleProfile: styleProfileData,
           contentStyle: params?.contentStyle,
           contentPersonality: params?.contentPersonality
@@ -252,7 +253,9 @@ export const useIdeaGenerator = () => {
       }
 
       // Format and clean up the ideas for display
-      const formattedIdeas = data.ideas.map((idea: any) => ({
+      // Ensure we only use exactly 5 ideas
+      const limitedIdeas = data.ideas.slice(0, 5);
+      const formattedIdeas = limitedIdeas.map((idea: any) => ({
         id: crypto.randomUUID(), // Add temporary client-side ID
         title: typeof idea.title === 'string' ? idea.title.replace(/^"|"$/g, '') : 'Untitled Idea',
         category: typeof idea.category === 'string' ? idea.category.replace(/^"|"$/g, '') : 'General',
@@ -309,7 +312,8 @@ export const useIdeaGenerator = () => {
               setIdeas(formattedIdeas);  // Fall back to the generated ideas without IDs
             } else {
               console.log("Fetched saved ideas:", savedIdeas);
-              setIdeas(savedIdeas);
+              // Ensure we only display 5 ideas
+              setIdeas(savedIdeas.slice(0, 5));
             }
           }
         } catch (dbError) {

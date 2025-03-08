@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -239,6 +238,18 @@ const Generator = () => {
     return Array.isArray(ideas) && ideas.length > 0;
   };
 
+  // Clear existing ideas before generating new ones
+  const handleGenerateIdeas = () => {
+    // Clear existing ideas first
+    setIdeas([]);
+    // Then generate new ideas
+    generateIdeas({
+      activeStyleProfile,
+      contentStyle,
+      contentPersonality
+    });
+  };
+
   return <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 pt-8 pb-12 py-0">
         <section className="mb-8">
@@ -314,11 +325,7 @@ const Generator = () => {
 
           <div className="flex justify-center mb-8">
             <button 
-              onClick={() => generateIdeas({
-                activeStyleProfile,
-                contentStyle,
-                contentPersonality
-              })} 
+              onClick={handleGenerateIdeas} 
               disabled={loading} 
               className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white dark:text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
             >
