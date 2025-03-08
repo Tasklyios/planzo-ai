@@ -55,7 +55,6 @@ const GeneratedHooksGrid = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <HookCategoryCard 
             title="Question Hooks"
-            subtitle="Engage viewers with thought-provoking questions"
             hooks={questionHooks}
             onSaveHook={onSaveHook}
             isSaving={isSaving}
@@ -66,7 +65,6 @@ const GeneratedHooksGrid = ({
           
           <HookCategoryCard 
             title="Statistic Hooks"
-            subtitle="Capture attention with surprising facts and data"
             hooks={statisticHooks}
             onSaveHook={onSaveHook}
             isSaving={isSaving}
@@ -79,7 +77,6 @@ const GeneratedHooksGrid = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <HookCategoryCard 
             title="Story Hooks"
-            subtitle="Connect emotionally through narrative and experiences"
             hooks={storyHooks}
             onSaveHook={onSaveHook}
             isSaving={isSaving}
@@ -90,7 +87,6 @@ const GeneratedHooksGrid = ({
           
           <HookCategoryCard 
             title="Challenge Hooks"
-            subtitle="Motivate viewers to take action or prove a point"
             hooks={challengeHooks}
             onSaveHook={onSaveHook}
             isSaving={isSaving}

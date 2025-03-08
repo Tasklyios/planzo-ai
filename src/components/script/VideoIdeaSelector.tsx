@@ -5,7 +5,7 @@ import { GeneratedIdea } from "@/types/idea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Loader2, CheckCircle, Star, Tag } from "lucide-react";
+import { Search, Loader2, CheckCircle, Star, Tag, Sparkles } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -120,6 +120,14 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
       qualityScore += 1;
     }
     
+    // Add points for specificity in title
+    if (idea.title.includes("exactly") || 
+        idea.title.includes("specific") || 
+        idea.title.match(/\d+\s+ways/i) ||
+        idea.title.match(/in\s+\d+\s+days/i)) {
+      qualityScore += 1;
+    }
+    
     return qualityScore >= 4 ? "high" : qualityScore >= 2 ? "medium" : "standard";
   };
 
@@ -180,7 +188,7 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium line-clamp-1">{idea.title}</h4>
                         {quality === "high" && (
-                          <Star className={`h-4 w-4 ${qualityColor} fill-current`} />
+                          <Sparkles className={`h-4 w-4 ${qualityColor} fill-current`} />
                         )}
                       </div>
                       

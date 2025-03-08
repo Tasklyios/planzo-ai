@@ -90,6 +90,26 @@ serve(async (req) => {
     const scriptTitle = savedIdea ? savedIdea.title : title;
     const scriptDescription = savedIdea ? savedIdea.description : description;
 
+    // Get user information to personalize the script generation
+    let userProfile = null;
+    if (userId) {
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('content_style, content_personality, account_type')
+          .eq('id', userId)
+          .maybeSingle();
+          
+        if (!profileError && profile) {
+          userProfile = profile;
+          console.log("User profile retrieved:", userProfile);
+        }
+      } catch (error) {
+        console.error("Error retrieving user profile:", error);
+        // Non-blocking error - continue with generation
+      }
+    }
+
     // Enhanced examples of good and bad scripts
     const goodExample = `
 Example of a GOOD script (authentic, engaging, conversational):
@@ -118,13 +138,39 @@ Sunnies became my secret weapon. Now I want to hear from you! How have #SunniesF
 `;
 
     // Create prompt for script generation with emphasis on authentic tone
+    let systemPrompt = `You are an expert scriptwriter for short-form social media videos specialized in creating highly original, authentic, and engaging scripts that sound like real people talking. 
+    
+Your scripts are NEVER generic or templated - they are unique, distinctive, and tailored specifically to the creator's topic, style, and audience.`;
+
+    // Add account type specific instructions if available
+    if (userProfile?.account_type) {
+      if (userProfile.account_type === 'personal') {
+        systemPrompt += `\n\nYou're writing for a PERSONAL CREATOR who wants to showcase their unique personality and build an authentic connection with their audience. The script should feel natural, conversational, and distinctly personal.`;
+      } else if (userProfile.account_type === 'ecommerce') {
+        systemPrompt += `\n\nYou're writing for an E-COMMERCE BUSINESS that needs to showcase their products in a way that feels authentic, not salesy. Focus on storytelling around the product and creating genuine customer connection.`;
+      } else if (userProfile.account_type === 'business') {
+        systemPrompt += `\n\nYou're writing for a BUSINESS that wants to demonstrate authority and expertise while maintaining an approachable, human tone. The script should build trust and position them as leaders in their field.`;
+      }
+    }
+
+    // Add content style and personality if available
+    if (userProfile?.content_style) {
+      systemPrompt += `\n\nContent style: ${userProfile.content_style}`;
+    }
+    
+    if (userProfile?.content_personality) {
+      systemPrompt += `\n\nContent personality: ${userProfile.content_personality}`;
+    }
+
+    // Create user prompt with specific instructions
     let prompt = `
-      Write a script for a ${timeRange} ${contentStyle || "authentic"} video about: "${scriptTitle}".
+      Write a completely original, highly distinctive script for a ${timeRange} ${contentStyle || "authentic"} video about: "${scriptTitle}".
       
       ${scriptDescription ? `Additional context: ${scriptDescription}` : ''}
       ${hook ? `Start with this hook: "${hook}"` : ''}
       
       THE SCRIPT MUST:
+      - Be COMPLETELY ORIGINAL and NOT read like a template or generic content
       - Sound like a real person talking naturally, with personality and imperfections
       - Include natural speech patterns (pauses, filler words, self-corrections) in [brackets]
       - Use conversational language that feels authentic
@@ -134,6 +180,8 @@ Sunnies became my secret weapon. Now I want to hear from you! How have #SunniesF
       - Include moments of authenticity (humor, vulnerability, specific experiences)
       - Sound nothing like a sales pitch unless explicitly requested
       - Format script with natural breaks for pacing and emphasis
+      - Include specific, concrete examples rather than generic statements
+      - Use a unique angle or perspective that makes this script different from others on the same topic
       
       ${goodExample}
       
@@ -146,7 +194,7 @@ Sunnies became my secret weapon. Now I want to hear from you! How have #SunniesF
       The final script should be formatted with natural line breaks to indicate pauses and camera directions in [brackets].
     `;
 
-    // Call OpenAI API
+    // Call OpenAI API with improved parameters for more original content
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -154,16 +202,16 @@ Sunnies became my secret weapon. Now I want to hear from you! How have #SunniesF
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',  // Using more powerful model for better originality
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are an expert scriptwriter for short-form social media videos. You create authentic, engaging, and high-performing scripts that sound like real people talking, not corporate content.' 
-          },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.8, // Slightly higher temperature for more creativity
-        max_tokens: 800, // Adjust based on expected script length
+        temperature: 0.9,  // Higher temperature for more creativity and originality
+        max_tokens: 800,   // Adjust based on expected script length
+        top_p: 0.95,       // Slightly higher top_p for more diverse outputs
+        frequency_penalty: 0.8,  // Higher frequency penalty to reduce repetitive patterns
+        presence_penalty: 0.8,   // Higher presence penalty to encourage more novel content
       }),
     });
 
