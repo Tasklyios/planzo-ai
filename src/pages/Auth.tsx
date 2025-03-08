@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,10 +64,8 @@ const Auth = () => {
       });
     }
 
-    // Log domain information for debugging
-    const currentDomain = window.location.origin;
-    setDomainInfo(currentDomain);
-    console.log("Auth component mounted on domain:", currentDomain);
+    // Log authentication information for debugging without displaying it
+    console.log("Auth component mounted on domain:", window.location.origin);
   }, [location, toast]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -283,7 +280,7 @@ const Auth = () => {
             </button>
           </form>
 
-          {displayDomainDebugInfo()}
+          {/* {displayDomainDebugInfo()} */}
         </div>
       </div>
     );
@@ -469,7 +466,7 @@ const Auth = () => {
             </p>
           </div>
 
-          {displayDomainDebugInfo()}
+          {/* {displayDomainDebugInfo()} */}
         </div>
       </div>
 

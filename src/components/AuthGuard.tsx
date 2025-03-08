@@ -19,8 +19,6 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       setIsLoading(true);
       try {
         console.log("Checking authentication status...");
-        console.log("Current domain:", window.location.origin);
-        console.log("Current URL:", window.location.href);
         
         const { data: { session }, error } = await supabase.auth.getSession();
         
@@ -38,8 +36,6 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           navigate("/auth", { state: { from: location.pathname } });
         } else {
           console.log("Session found, user is authenticated", session.user.id);
-          console.log("Access token is valid:", !!session.access_token);
-          console.log("Current URL:", window.location.href);
           
           // Store the session access token for edge functions to use
           localStorage.setItem('supabase.auth.token', session.access_token);
@@ -102,8 +98,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         <h2 className="text-red-700 text-xl font-semibold mb-2">Authentication Error</h2>
         <p className="text-red-600">{error}</p>
         <p className="text-gray-700 mt-4">
-          This could be because the Supabase URL configuration doesn't include this domain ({window.location.origin}).
-          Please ensure your domain is added to the Supabase authentication settings.
+          This could be because of a configuration issue with authentication.
+          Please ensure your domain is allowed in the Supabase authentication settings.
         </p>
       </div>
     </div>;
