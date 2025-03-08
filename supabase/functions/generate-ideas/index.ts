@@ -91,7 +91,7 @@ serve(async (req) => {
       accountType
     });
 
-    // Always use gpt-4o-mini regardless of any override
+    // Always use gpt-4o-mini as specified
     const model = "gpt-4o-mini";
     
     console.log('Using model:', model);
@@ -104,11 +104,12 @@ serve(async (req) => {
         { role: "system", content: prompt.systemPrompt },
         { role: "user", content: prompt.userPrompt }
       ],
-      temperature: 0.85, // Increased for more creativity
-      max_tokens: 2000, // Increased for more detailed responses
-      top_p: 0.98,
-      frequency_penalty: 0.6,
-      presence_penalty: 0.6,
+      // Improved parameters for better quality and creativity
+      temperature: 0.9, // Higher temperature for more creative ideas
+      max_tokens: 2500, // Increased token limit for more detailed responses
+      top_p: 0.95, // Slightly higher top_p for more diverse ideas
+      frequency_penalty: 0.8, // Higher to reduce repetitiveness
+      presence_penalty: 0.8, // Higher to encourage novel content
     };
 
     // Call the OpenAI API
@@ -508,150 +509,251 @@ function constructAdvancedPrompt({
   const nicheToUse = determineProperNiche(accountType, niche);
   console.log(`Using niche: ${nicheToUse} for prompt construction (account type: ${accountType})`);
   
-  // Base system prompt with detailed instructions for high-quality idea generation
-  let systemPrompt = `You are an expert viral content strategist specializing in creating high-performing video concepts for ${platform || 'social media'}.
+  // Enhanced system prompt with detailed instructions for high-quality idea generation
+  let systemPrompt = `You are an expert content strategist and creative director specializing in developing highly original, engaging, and strategically effective video concepts for ${platform || 'social media'}.
 
-Your task is to generate EXCEPTIONALLY CREATIVE and HIGHLY SPECIFIC video ideas for a ${accountType || 'business'} in the ${nicheToUse} niche that targets ${audience || 'their audience'}.`;
-  
-  // Add account type specific context with detailed instructions
+Your expertise is in creating ideas that are:
+1. TRULY ORIGINAL - not generic templates or formulas seen across social media
+2. HIGHLY SPECIFIC to the client's exact niche and audience
+3. STRATEGICALLY VALUABLE with clear goals and audience impact
+4. CREATIVELY INNOVATIVE with unique angles that stand out
+5. DATA-INFORMED based on what performs well on each platform
+
+Your task is to generate ${numIdeas} EXCEPTIONAL video ideas for a ${accountType || 'business'} in the ${nicheToUse} niche targeting ${audience || 'their audience'}.`;
+
+  // Add detailed account type specific context with concrete examples and considerations
   if (accountType) {
     systemPrompt += `\n\nACCOUNT TYPE DETAILS:`;
     
     if (accountType === 'personal') {
       systemPrompt += `\nThis is a PERSONAL CREATOR account in the ${nicheToUse} niche. 
 Focus on authentic, personality-driven content that:
-- Showcases the creator's unique expertise and perspective
-- Builds a personal connection with ${audience}
-- Uses first-person narratives and personal experiences
-- Creates opportunities for the creator to demonstrate their unique value and insights`;
+- Showcases the creator's unique expertise and personal journey in ${nicheToUse}
+- Creates genuine emotional connections with ${audience} through storytelling
+- Positions them as a trustworthy, relatable authority in ${nicheToUse}
+- Differentiates them from other creators in the same space through unique content angles
+- Leverages personal experiences to create content that cannot be easily replicated
+
+STRONG EXAMPLES:
+- "My 3 Biggest ${nicheToUse} Mistakes That Cost Me $XX,XXX" (specific, authentic, valuable)
+- "What ${audience} Don't Know About ${nicheToUse}: Industry Secrets Revealed" (insider knowledge)
+- "I Tried This Unconventional ${nicheToUse} Approach For 30 Days - Unexpected Results" (unique experiment)
+
+WEAK EXAMPLES TO AVOID:
+- "5 Tips for ${nicheToUse}" (too generic, thousands of similar videos exist)
+- "How To Succeed in ${nicheToUse}" (lacks specificity and unique angle)
+- "${nicheToUse} Tutorial" (too broad, no unique value proposition)`;
     } else if (accountType === 'ecommerce') {
       systemPrompt += `\nThis is an E-COMMERCE BUSINESS selling ${nicheToUse}.
 Focus on product-centric content that:
-- Demonstrates product benefits in unexpected, attention-grabbing ways
-- Shows real results and transformations using the products
-- Creates desire through creative demonstrations and use cases
-- Differentiates these products from competitors with unique angles`;
+- Showcases products solving specific, relatable problems for ${audience}
+- Demonstrates unexpected benefits and use cases that differentiate these products
+- Creates desire through creative demonstration formats and authentic customer stories
+- Leverages social proof in innovative ways that build instant credibility
+- Uses before/after transformations with specific, measurable improvements
+
+STRONG EXAMPLES:
+- "We Asked ${audience} Their Biggest ${nicheToUse} Frustration - Watch How Our Product Solved It In 30 Seconds" (problem-solution format)
+- "This ${nicheToUse} Hack Using Our Product Went Viral - Here's The Science Behind Why It Works" (trend + education)
+- "3 Unexpected Ways Our Customers Use Our ${nicheToUse} That We Never Designed For" (surprising uses)
+
+WEAK EXAMPLES TO AVOID:
+- "Check Out Our New ${nicheToUse}" (lacks specific benefit or hook)
+- "Why Our ${nicheToUse} Is Better" (generic claim without specificity)
+- "${nicheToUse} Product Review" (too generic, lacks emotional appeal)`;
     } else if (accountType === 'business') {
       systemPrompt += `\nThis is a ${nicheToUse} BUSINESS targeting ${audience} clients/customers.
 Focus on authority-building content that:
-- Demonstrates expertise and thought leadership in the ${nicheToUse} space
-- Provides exceptional value that positions this business as the go-to solution
-- Addresses specific pain points of ${audience}
-- Shows proven results and case studies in a compelling way`;
+- Demonstrates specific, measurable results achieved for clients (with real data)
+- Provides exceptional value that positions this business as the definitive expert
+- Addresses highly specific pain points ${audience} face that competitors miss
+- Shows proprietary frameworks or methodologies that create superior outcomes
+- Leverages client success stories in compelling narrative formats
+
+STRONG EXAMPLES:
+- "The Exact ${nicheToUse} Strategy That Increased Our Client's ROI by 287% (Case Study)" (specific results)
+- "The 3 Critical ${nicheToUse} Mistakes 90% of ${audience} Make (And Our Proven Fix)" (problem-solution)
+- "Behind-The-Scenes: Our Proprietary ${nicheToUse} Process That Outperforms The Industry Standard by 47%" (unique methodology)
+
+WEAK EXAMPLES TO AVOID:
+- "Why You Need ${nicheToUse} Services" (too generic, lacks specific value)
+- "Benefits of Working With Our ${nicheToUse} Company" (generic, company-centric)
+- "${nicheToUse} Tips for Success" (doesn't demonstrate unique expertise)`;
     }
   }
   
-  // Enhanced platform-specific guidance
+  // Enhanced platform-specific guidance with platform-native content strategies
   if (platform) {
     systemPrompt += `\n\nPLATFORM-SPECIFIC STRATEGY FOR ${platform.toUpperCase()}:`;
     
-    if (platform === 'TikTok') {
+    if (platform.toLowerCase().includes('tiktok')) {
       systemPrompt += `
-- Create ideas that hook viewers in the FIRST 2 SECONDS
-- Utilize pattern interrupts, unexpected twists, and information gaps
-- Incorporate trending audio, transitions, and formats when relevant
-- Design content that prompts strong viewer emotional reactions (surprise, curiosity, validation)
-- Include "storytime" or multi-part series potential for high-performing ideas
-- Focus on concepts that work well with TikTok's informal, authentic aesthetic`;
-    } else if (platform === 'Instagram Reels') {
+TikTok requires ideas that:
+- Hook viewers in the FIRST 1-2 SECONDS with a provocative statement or visual
+- Use pattern interrupts and unexpected twists to maintain attention
+- Have clearly defined emotional triggers (curiosity, surprise, validation, controversy)
+- Can be executed in clear, rapidly-paced segments under 60 seconds
+- Feel authentic and "in-the-moment" rather than overly produced
+- Include opportunities for trending sounds, transitions, or formats
+- Have potential for user engagement (comments, stitches, duets)
+
+TIKTOK FORMAT EXAMPLES:
+- "What they don't tell you about..." (insider revelations)
+- "POV: When you discover..." (relatable scenarios)
+- "I wasn't going to share this but..." (exclusive information)
+- "This ${nicheToUse} hack changed everything..." (transformation)
+- "The real reason why..." (myth-busting)`;
+    } else if (platform.toLowerCase().includes('instagram')) {
       systemPrompt += `
-- Develop visually striking concepts that stand out in a crowded feed
-- Create ideas that work well with Instagram's more polished, aspirational aesthetic
-- Include concepts with strong visual transitions and reveal moments
-- Design content that's both entertaining AND educational for higher reach
-- Focus on ideas that showcase personality while maintaining higher production value
-- Incorporate opportunities for location tagging and product showcasing`;
-    } else if (platform === 'YouTube Shorts') {
+Instagram Reels requires ideas that:
+- Have strong visual appeal and aesthetic consistency with the brand
+- Balance entertainment value with educational substance
+- Include visually striking transitions or reveal moments
+- Can work well with text overlays for key points
+- Are polished but still authentic (higher production value than TikTok)
+- Incorporate trending audio where appropriate but not at expense of brand voice
+- Have save-worthy information that users will return to
+
+INSTAGRAM FORMAT EXAMPLES:
+- "3 ${nicheToUse} secrets I wish I knew sooner..." (valuable insights)
+- "This before & after ${nicheToUse} transformation..." (visual impact)
+- "Watch how we created this..." (process reveal)
+- "Did you know this about ${nicheToUse}?" (educational surprise)
+- "Save this ${nicheToUse} guide for later..." (valuable resource)`;
+    } else if (platform.toLowerCase().includes('youtube')) {
       systemPrompt += `
-- Create ideas that combine entertainment with substantial value/education
-- Design concepts that can lead viewers to longer-form content
-- Focus on searchable topics with clear, specific titles
-- Include ideas that demonstrate expertise and build channel authority
-- Develop concepts that work well with YouTube's recommendation algorithm
-- Incorporate highly specific, niche-focused keywords into the content concepts`;
+YouTube Shorts requires ideas that:
+- Combine entertainment with substantial educational value
+- Use searchable concepts that align with what users actively seek information on
+- Have clear, direct titles that promise specific value
+- Build channel authority and potentially drive viewers to longer content
+- Include strong calls-to-action for subscribing or watching more
+- Can stand alone as valuable content but hint at deeper expertise
+- Appeal to both algorithm discovery and direct search
+
+YOUTUBE FORMAT EXAMPLES:
+- "This is why your ${nicheToUse} isn't working..." (problem identification)
+- "The truth about ${nicheToUse} that experts hide..." (contrarian insight)
+- "I tested every ${nicheToUse} technique so you don't have to..." (experimentation)
+- "One ${nicheToUse} change that improves results by X%..." (specific improvement)
+- "The only ${nicheToUse} hack that actually works..." (definitive solution)`;
     }
   }
   
-  // Add style profile information with concrete applications
+  // Add style profile information with concrete applications and examples
   if (styleProfile) {
     systemPrompt += `\n\nSTYLE PROFILE: "${styleProfile.name}": ${styleProfile.description}
 Tone: ${styleProfile.tone}
 
 Apply this style to every idea by:
-- Using language and concepts that match this specific tone
-- Creating scenarios and hooks that align with this style
-- Developing concepts where this style creates maximum viewer engagement`;
+- Using language, pacing and concepts that embody this specific tone
+- Creating scenarios and hooks that naturally align with this style
+- Developing concepts where this style creates maximum viewer engagement and differentiates content
+- Ensuring creative flourishes match this style's aesthetic and emotional qualities
+
+Content created with this style should feel distinctively different from generic content and immediately recognizable as fitting this brand voice.`;
   }
 
-  // Add content style and personality with specific applications
+  // Add content style and personality with specific applications and examples
   if (contentStyle) {
     systemPrompt += `\n\nCONTENT STYLE: ${contentStyle}
-Apply this style by creating ideas that specifically demonstrate this approach in action.`;
+Apply this style by creating ideas that specifically:
+- Embody the pacing, energy and aesthetic qualities of the "${contentStyle}" approach
+- Use hooks, transitions, and payoffs typical of this specific style
+- Align with viewer expectations for "${contentStyle}" content while adding unique twists
+- Stand out among other "${contentStyle}" content through distinctive angles`;
   }
 
   if (contentPersonality) {
     systemPrompt += `\n\nCONTENT PERSONALITY: ${contentPersonality}
-Ensure all ideas allow this personality to shine through with specific content angles.`;
+Ensure all ideas showcase this personality by:
+- Crafting content angles that naturally highlight these personality traits
+- Creating scenarios where this personality shines through authentically
+- Designing hooks and premises that play to the strengths of this personality type
+- Differentiating from others in the ${nicheToUse} space through this unique personality lens`;
   }
 
-  // Viral content strategy guidance
-  systemPrompt += `\n\nVIRAL CONTENT STRATEGY:
-1. Create ULTRA-SPECIFIC ideas (not generic templates) with concrete angles and examples
-2. Focus on high-engagement triggers: curiosity gaps, unexpected revelations, emotional resonance
-3. Incorporate current social media trends when relevant to the niche
-4. Design ideas with built-in shareability factors (controversy, validation, identity, utility)
-5. Create hooks that use psychological triggers (curiosity, surprise, validation, fear of missing out)
-6. Develop ideas that have a clear "aha moment" or emotional payoff
-7. Ensure each idea has a specific, UNIQUE angle (not just templates with the niche plugged in)`;
+  // Enhanced viral content strategy guidance with specific tactics
+  systemPrompt += `\n\nADVANCED CONTENT STRATEGY:
+1. CREATE ULTRA-SPECIFIC IDEAS with concrete scenarios, examples, and unique hooks
+2. IDENTIFY VIEWER PAIN POINTS AND DESIRES that competitors are missing
+3. USE PSYCHOLOGICAL TRIGGERS strategically: curiosity gaps, unexpected revelations, identity reinforcement
+4. CRAFT "AHA MOMENT" PREMISES where viewers experience a perspective shift
+5. DESIGN IDEAS WITH SPECIFIC SHAREABILITY FACTORS (practical value, emotional impact, identity signaling)
+6. INCORPORATE "CONTENT GAPS" - address questions in ${nicheToUse} that have high interest but low quality content
+7. DEVELOP "CONTENT FRANCHISES" - ideas that could become signature series for this creator/brand
+8. FOCUS ON TANGIBLE TRANSFORMATIONS with measurable before/after states
+9. CREATE IDEAS THAT NATURALLY INVITE ENGAGEMENT through debate, opinion, or experience sharing
 
-  // Add eco-brand specific viral tactics if applicable
+Each idea must be:
+- UNIQUELY VALUABLE: Provides genuine utility or insight not easily found elsewhere
+- SPECIFICALLY CRAFTED: Tailored precisely for the intersection of this niche, audience, and platform
+- CREATIVELY DISTINCTIVE: Uses unexpected angles, formats, or premises to stand out
+- STRATEGICALLY SOUND: Designed to achieve clear business/creator goals (authority, engagement, conversion)`;
+
+  // Add eco-brand specific viral tactics if applicable with specific examples
   if (isEcoBrand) {
     systemPrompt += `\n\nECO-FRIENDLY CONTENT STRATEGY:
-- Create before/after transformation videos showing environmental impact
-- Design concepts that educate viewers on surprising eco-facts
-- Develop "behind-the-scenes" ideas showing sustainable processes
-- Create comparative concepts showing eco vs. conventional alternatives
-- Design myth-busting content about sustainability misconceptions`;
+- Create before/after transformation scenarios showing specific environmental impact metrics
+- Design "myth vs. reality" concepts about common sustainability misconceptions
+- Develop "behind-the-scenes" ideas revealing sustainable processes with unexpected details
+- Create comparative demonstrations showing eco vs. conventional alternatives with measurable differences
+- Design educational content that makes complex sustainability concepts simple and actionable
+
+ECO-CONTENT EXAMPLES:
+- "We measured the actual environmental impact of our ${nicheToUse} vs. traditional options (the results shocked us)"
+- "The unexpected truth about 'eco-friendly' ${nicheToUse} claims - what labels don't tell you"
+- "How we transformed our ${nicheToUse} process to reduce waste by X% (behind-the-scenes)"`;
   }
 
-  // Output format instructions
+  // Enhanced output format instructions with quality criteria
   systemPrompt += `\n\nOUTPUT INSTRUCTIONS:
-1. Generate EXACTLY ${numIdeas} UNIQUE video ideas
-2. Each idea must be SPECIFIC to ${nicheToUse} and ${audience}, not a generic template
-3. Include a catchy, platform-appropriate title for each idea
-4. Assign each idea a relevant category that describes the content type
-5. Write a detailed description explaining what makes this idea compelling
-6. Include 3-5 relevant tags for each idea
-7. Format output as valid JSON only, no explanation text`;
+1. Generate EXACTLY ${numIdeas} COMPLETELY UNIQUE video ideas (no thematic repetition)
+2. Each idea must be SPECIFICALLY TAILORED to ${nicheToUse} and ${audience} - avoid generic templates
+3. Include a compelling, platform-appropriate title for each idea (optimized for the viewer psychology of that platform)
+4. Assign each idea a relevant content category that indicates the content type and strategy
+5. Write a detailed description (4-5 sentences) explaining:
+   - The specific premise and hook
+   - Why this idea will resonate with the audience
+   - How it differentiates from typical content in this space
+   - The strategic value and expected outcome
+6. Include 3-5 relevant, searchable tags for each idea
+7. Format output as valid JSON only, no explanation text
 
-  // User prompt construction
-  let userPrompt = `Create ${numIdeas} highly creative and SPECIFIC viral video ideas for a ${accountType || 'business'} focused on ${nicheToUse} targeting ${audience || 'their audience'}.`;
+QUALITY CHECK: Before submitting, ensure each idea:
+- Has a unique angle not represented in the other ideas
+- Contains specific details that couldn't apply to any other niche
+- Would genuinely stand out among thousands of similar videos
+- Delivers clear value aligned with audience needs and platform behavior`;
+
+  // User prompt construction with enhanced specificity
+  let userPrompt = `Create ${numIdeas} highly creative, original, and SPECIFIC video ideas for a ${accountType || 'business'} focused on ${nicheToUse} targeting ${audience || 'their audience'}.`;
   
   if (videoType) {
-    userPrompt += ` The videos should be in the format of ${videoType}.`;
+    userPrompt += ` The videos should be in the ${videoType} format, specifically leveraging the strengths of this format for this niche.`;
   }
   
   if (platform) {
-    userPrompt += ` Optimize these ideas specifically for ${platform} with appropriate hooks and formats.`;
+    userPrompt += ` These ideas need to be specifically designed for ${platform}, using native hooks, formats, and engagement patterns that perform well on this platform.`;
   }
   
   if (contentStyle) {
-    userPrompt += ` The content style should be ${contentStyle}.`;
+    userPrompt += ` The content style should be "${contentStyle}" - apply this style authentically rather than formulaically.`;
   }
   
   if (contentPersonality) {
-    userPrompt += ` The content personality is ${contentPersonality}.`;
+    userPrompt += ` The content personality is "${contentPersonality}" - ensure this personality is showcased through the specific angles and approaches.`;
   }
   
-  // Add custom ideas as inspiration with specific instructions
+  // Add custom ideas as inspiration with improved instructions
   if (customIdeas && customIdeas.trim()) {
-    userPrompt += `\n\nHere are some custom ideas to use as inspiration (build upon these themes but create completely new concepts):
+    userPrompt += `\n\nHere are some existing ideas for context (create COMPLETELY DIFFERENT concepts, but understand the business from these):
 ${customIdeas}`;
   }
   
   // Add information about previous ideas to avoid repetition
   if (previousIdeas && previousIdeas.titles && previousIdeas.titles.length > 0) {
-    userPrompt += `\n\nAVOID creating ideas similar to these previously generated ideas:`;
+    userPrompt += `\n\nDo NOT create ideas similar to these previously created ideas:`;
     for (let i = 0; i < Math.min(previousIdeas.titles.length, 10); i++) {
       userPrompt += `\n- ${previousIdeas.titles[i]}`;
     }
@@ -659,22 +761,24 @@ ${customIdeas}`;
   
   // Request specific eco-friendly content if applicable
   if (isEcoBrand) {
-    userPrompt += `\n\nThis is an eco-friendly brand, so focus on sustainability aspects, environmental benefits, and create ideas that educate and inspire viewers about eco-conscious living while highlighting the products.`;
+    userPrompt += `\n\nThis is an eco-friendly brand, so focus on sustainability aspects, environmental benefits, and create ideas that educate and inspire viewers about eco-conscious living while highlighting the offerings in an authentic way.`;
   }
   
-  // Specify the output format
-  userPrompt += `\n\nPlease respond with EXACTLY ${numIdeas} highly specific and creative ideas in this JSON format:
+  // Specify the output format with enhanced example
+  userPrompt += `\n\nRespond with EXACTLY ${numIdeas} highly specific, creative, and strategically sound ideas in this JSON format:
   {
     "ideas": [
       {
-        "title": "Specific, Attention-Grabbing Title Here",
-        "category": "Content Category",
-        "description": "Detailed description of the video idea with specific angles",
-        "tags": ["tag1", "tag2", "tag3"]
+        "title": "Specific, Compelling Title Optimized for Platform",
+        "category": "Content Category/Strategy",
+        "description": "Detailed description of the premise, hook, audience value, and strategic purpose. Include specific details that make this idea unique to this niche and audience. Explain why this idea will stand out and drive results.",
+        "tags": ["relevant-tag", "niche-specific", "searchable"]
       },
       ...
     ]
-  }`;
+  }
+  
+Remember that each idea must be COMPLETELY UNIQUE with a distinct angle, highly specific to ${nicheToUse} and ${audience}, and optimized for ${platform || 'the platform'}. Generic templates or formulas will not be effective.`;
   
   return { systemPrompt, userPrompt };
 }
