@@ -1,7 +1,5 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { 
-  Sparkles, 
   Calendar, 
   Film, 
   Grid3X3, 
@@ -22,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { Logo } from "@/components/ui/logo";
 import { 
   Collapsible,
   CollapsibleContent,
@@ -106,10 +105,9 @@ const AppSidebar = () => {
   return (
     <div className="w-64 border-r h-screen flex flex-col fixed">
       <div className="px-4 py-4 h-16 flex items-center">
-        <h1 className="text-xl font-bold flex items-center">
-          <Sparkles className="w-5 h-5 mr-2 text-[#0073FF]" />
-          <span className="text-[#0073FF]">Planzo AI</span>
-        </h1>
+        <Link to="/dashboard" className="flex items-center">
+          <Logo size="medium" />
+        </Link>
       </div>
       
       {/* Main navigation - scrollable area */}

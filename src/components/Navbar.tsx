@@ -18,6 +18,7 @@ import {
   BookmarkIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/ui/logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,11 +85,14 @@ const Navbar = () => {
     <header className={`fixed w-full ${isLandingPage ? 'bg-white' : 'bg-card/80 backdrop-blur-sm'} border-b border-border z-50`}>
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
-          <div className={`text-2xl font-bold ${isLandingPage ? 'text-[#0073FF]' : 'text-[#0073FF]'}`}>Planzo AI</div>
+          <Link to="/" className="flex items-center">
+            <Logo size="medium" />
+          </Link>
         </div>
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant={isLandingPage ? "outline" : "ghost"} className={isLandingPage ? "text-[#333333]" : ""}>Overview</Button>
@@ -146,6 +150,7 @@ const Navbar = () => {
           />
         </div>
 
+        
         <div className="flex items-center space-x-4">
           {!isIndexPage && <ThemeToggle />}
           <div className="hidden md:block">
@@ -183,10 +188,13 @@ const Navbar = () => {
               </Button>
             </SheetTrigger>
             <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Menu</SheetTitle>
+              <SheetHeader className="flex items-center">
+                <SheetTitle className="flex justify-start">
+                  <Logo size="medium" />
+                </SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-4 mt-4">
+                
                 {MENU_CATEGORIES.map((category, idx) => (
                   <div key={category.title} className="space-y-2">
                     <h3 className="text-xs uppercase font-medium text-muted-foreground">{category.title}</h3>
