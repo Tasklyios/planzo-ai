@@ -287,9 +287,8 @@ function constructPrompt({
   // Add style profile information if available
   if (styleProfile) {
     systemPrompt += `\n\nSTYLE PROFILE: The user has a style profile named "${styleProfile.name}": ${styleProfile.description}. 
-    The tone should be: ${styleProfile.tone}.
-    Preferred topics: ${styleProfile.topics ? styleProfile.topics.join(', ') : 'No specific topics'}.
-    Topics to avoid: ${styleProfile.avoidTopics ? styleProfile.avoidTopics.join(', ') : 'No topics to avoid'}.`;
+    The tone should be: ${styleProfile.tone}.`;
+    // Removed references to topics and avoidTopics
   }
 
   // Add content style and personality if available

@@ -261,9 +261,8 @@ export const useIdeaGenerator = () => {
       const styleProfileData = params?.activeStyleProfile ? {
         name: params.activeStyleProfile.name,
         description: params.activeStyleProfile.content_style || "",
-        tone: params.activeStyleProfile.content_personality || "",
-        topics: params.activeStyleProfile.topics || [],
-        avoidTopics: params.activeStyleProfile.avoid_topics || []
+        tone: params.activeStyleProfile.content_personality || ""
+        // Remove references to non-existent properties (topics and avoid_topics)
       } : null;
 
       console.log("Style profile data:", styleProfileData);
