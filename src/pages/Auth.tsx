@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +41,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [domainInfo, setDomainInfo] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -52,17 +54,37 @@ const Auth = () => {
     if (type === "recovery") {
       setIsResetPassword(true);
     }
-  }, [location]);
+
+    // Check for error state from redirect
+    const state = location.state as { error?: string, from?: string } | null;
+    if (state?.error) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: state.error,
+      });
+    }
+
+    // Log domain information for debugging
+    const currentDomain = window.location.origin;
+    setDomainInfo(currentDomain);
+    console.log("Auth component mounted on domain:", currentDomain);
+  }, [location, toast]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      console.log("Attempting authentication on domain:", window.location.origin);
+      
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth`
+          }
         });
         if (error) throw error;
         
@@ -76,6 +98,7 @@ const Auth = () => {
         navigate("/dashboard");
       }
     } catch (error: any) {
+      console.error("Authentication error:", error.message);
       toast({
         variant: "destructive",
         title: "Error",
@@ -91,6 +114,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      console.log("Sending password reset to domain:", window.location.origin);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth?type=recovery`,
       });
@@ -103,6 +127,7 @@ const Auth = () => {
         description: "Check your email for the password reset link.",
       });
     } catch (error: any) {
+      console.error("Password reset error:", error.message);
       toast({
         variant: "destructive",
         title: "Error",
@@ -128,6 +153,7 @@ const Auth = () => {
     }
 
     try {
+      console.log("Resetting password on domain:", window.location.origin);
       const { error } = await supabase.auth.updateUser({
         password: password,
       });
@@ -144,6 +170,7 @@ const Auth = () => {
         navigate("/dashboard");
       }, 2000);
     } catch (error: any) {
+      console.error("Password update error:", error.message);
       toast({
         variant: "destructive",
         title: "Error",
@@ -156,9 +183,8 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     try {
-      const redirectURL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:8080'
-        : window.location.origin;
+      console.log("Starting Google sign-in on domain:", window.location.origin);
+      const redirectURL = window.location.origin;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -172,6 +198,7 @@ const Auth = () => {
       });
       if (error) throw error;
     } catch (error: any) {
+      console.error("Google sign-in error:", error.message);
       toast({
         variant: "destructive",
         title: "Error",
@@ -184,6 +211,14 @@ const Auth = () => {
     setShowPricing(false);
     navigate("/dashboard");
   };
+
+  // For debugging only
+  const displayDomainDebugInfo = () => (
+    <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-500">
+      <p>Current domain: {domainInfo}</p>
+      <p>Current URL: {window.location.href}</p>
+    </div>
+  );
 
   if (isResetPassword) {
     return (
@@ -247,6 +282,8 @@ const Auth = () => {
               )}
             </button>
           </form>
+
+          {displayDomainDebugInfo()}
         </div>
       </div>
     );
@@ -431,6 +468,8 @@ const Auth = () => {
               </button>
             </p>
           </div>
+
+          {displayDomainDebugInfo()}
         </div>
       </div>
 

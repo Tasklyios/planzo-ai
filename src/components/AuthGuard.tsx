@@ -19,6 +19,9 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       setIsLoading(true);
       try {
         console.log("Checking authentication status...");
+        console.log("Current domain:", window.location.origin);
+        console.log("Current URL:", window.location.href);
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -98,6 +101,10 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
         <h2 className="text-red-700 text-xl font-semibold mb-2">Authentication Error</h2>
         <p className="text-red-600">{error}</p>
+        <p className="text-gray-700 mt-4">
+          This could be because the Supabase URL configuration doesn't include this domain ({window.location.origin}).
+          Please ensure your domain is added to the Supabase authentication settings.
+        </p>
       </div>
     </div>;
   }
