@@ -13,6 +13,14 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type AccountType = 'personal' | 'ecommerce' | 'business';
 
@@ -34,6 +42,16 @@ const accountTypes = [
   },
 ];
 
+const platformOptions = [
+  { id: 'instagram', label: 'Instagram' },
+  { id: 'tiktok', label: 'TikTok' },
+  { id: 'youtube', label: 'YouTube' },
+  { id: 'linkedin', label: 'LinkedIn' },
+  { id: 'twitter', label: 'Twitter/X' },
+  { id: 'facebook', label: 'Facebook' },
+  { id: 'pinterest', label: 'Pinterest' },
+];
+
 interface OnboardingProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,7 +66,19 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
   const [contentStyle, setContentStyle] = useState('');
   const [inspirationSources, setInspirationSources] = useState('');
   const [brandName, setBrandName] = useState('');
+  
+  // Common fields for all account types
+  const [contentNiche, setContentNiche] = useState('');
   const [targetAudience, setTargetAudience] = useState('');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  
+  // Business specific fields
+  const [businessDescription, setBusinessDescription] = useState('');
+  const [businessNiche, setBusinessNiche] = useState('');
+  
+  // E-commerce specific
+  const [productNiche, setProductNiche] = useState('');
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -63,6 +93,16 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     setStep(2);
   };
 
+  const handlePlatformChange = (platform: string) => {
+    setSelectedPlatforms((current) => {
+      if (current.includes(platform)) {
+        return current.filter((p) => p !== platform);
+      } else {
+        return [...current, platform];
+      }
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -75,17 +115,30 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
         return;
       }
 
+      // Base profile data common to all account types
+      const profileData: Record<string, any> = {
+        account_type: selectedType,
+        content_personality: personality,
+        content_style: contentStyle,
+        inspiration_sources: inspirationSources,
+        content_niche: contentNiche,
+        target_audience: targetAudience,
+        posting_platforms: selectedPlatforms,
+        brand_name: brandName,
+        onboarding_completed: true,
+      };
+
+      // Add specific fields based on account type
+      if (selectedType === 'business') {
+        profileData.business_description = businessDescription;
+        profileData.business_niche = businessNiche;
+      } else if (selectedType === 'ecommerce') {
+        profileData.product_niche = productNiche;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          account_type: selectedType,
-          content_personality: personality,
-          content_style: contentStyle,
-          inspiration_sources: inspirationSources,
-          brand_name: brandName,
-          target_audience: targetAudience,
-          onboarding_completed: true,
-        })
+        .update(profileData)
         .eq('id', session.user.id);
 
       if (error) throw error;
@@ -104,6 +157,83 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const renderAccountTypeSpecificFields = () => {
+    switch (selectedType) {
+      case 'personal':
+        return (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="contentNiche">Content Niche</Label>
+              <Input
+                id="contentNiche"
+                placeholder="What topics do you create content about?"
+                value={contentNiche}
+                onChange={(e) => setContentNiche(e.target.value)}
+              />
+            </div>
+          </>
+        );
+      case 'business':
+        return (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="businessDescription">Tell us what your business does</Label>
+              <Textarea
+                id="businessDescription"
+                placeholder="Describe your business and its main offerings"
+                value={businessDescription}
+                onChange={(e) => setBusinessDescription(e.target.value)}
+                className="min-h-[80px]"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="businessNiche">Business Niche</Label>
+              <Input
+                id="businessNiche"
+                placeholder="E.g., SaaS, Consulting, Retail, etc."
+                value={businessNiche}
+                onChange={(e) => setBusinessNiche(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contentNiche">Content Niche</Label>
+              <Input
+                id="contentNiche"
+                placeholder="What topics will your content focus on?"
+                value={contentNiche}
+                onChange={(e) => setContentNiche(e.target.value)}
+              />
+            </div>
+          </>
+        );
+      case 'ecommerce':
+        return (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="productNiche">What do you sell?</Label>
+              <Input
+                id="productNiche"
+                placeholder="Describe your products or product categories"
+                value={productNiche}
+                onChange={(e) => setProductNiche(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contentNiche">Content Niche</Label>
+              <Input
+                id="contentNiche"
+                placeholder="What topics will your content focus on?"
+                value={contentNiche}
+                onChange={(e) => setContentNiche(e.target.value)}
+              />
+            </div>
+          </>
+        );
+      default:
+        return null;
     }
   };
 
@@ -161,7 +291,7 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
             <>
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-dark mb-2">
-                  Tell us about your content style
+                  Tell us about your content
                 </h1>
                 <p className="text-dark/70">
                   This helps our AI understand your unique voice and create more personalized content ideas.
@@ -178,6 +308,9 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                     onChange={(e) => setBrandName(e.target.value)}
                   />
                 </div>
+                
+                {/* Render fields specific to the selected account type */}
+                {renderAccountTypeSpecificFields()}
 
                 <div className="space-y-2">
                   <Label htmlFor="targetAudience">Target Audience</Label>
@@ -187,6 +320,27 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                     value={targetAudience}
                     onChange={(e) => setTargetAudience(e.target.value)}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Posting Platforms</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {platformOptions.map((platform) => (
+                      <div key={platform.id} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={platform.id} 
+                          checked={selectedPlatforms.includes(platform.id)} 
+                          onCheckedChange={() => handlePlatformChange(platform.id)}
+                        />
+                        <Label 
+                          htmlFor={platform.id} 
+                          className="cursor-pointer"
+                        >
+                          {platform.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
