@@ -141,8 +141,8 @@ serve(async (req) => {
       else if (tier === 'business') maxLimit = 999;
     }
 
-    // For ideas specifically, use the number 5 instead of 1
-    const incrementCount = action === 'ideas' ? 5 : 1;
+    // For ideas specifically, use the number 1 instead of 5 for increment
+    const incrementCount = (action === 'ideas') ? 1 : 1;
     
     // Check if user would exceed their limit (but always let business tier proceed)
     if (!isBusiness && currentUsage + incrementCount > maxLimit) {
