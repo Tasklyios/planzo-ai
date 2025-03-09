@@ -9,12 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, Link as LinkIcon, ThumbsUp, Zap } from "lucide-react";
+import { AlertCircle, CheckCircle, UserRound, ThumbsUp, Zap } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { StyleProfile } from "@/types/idea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const FindYourStyle = () => {
-  const [links, setLinks] = useState<string[]>([""]);
+  const [usernames, setUsernames] = useState<string[]>([""]);
+  const [platform, setPlatform] = useState<string>("tiktok");
   const [notes, setNotes] = useState("");
   const [profileName, setProfileName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,39 +24,30 @@ const FindYourStyle = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const addLinkField = () => {
-    setLinks([...links, ""]);
+  const addUsernameField = () => {
+    setUsernames([...usernames, ""]);
   };
 
-  const updateLink = (index: number, value: string) => {
-    const updatedLinks = [...links];
-    updatedLinks[index] = value;
-    setLinks(updatedLinks);
+  const updateUsername = (index: number, value: string) => {
+    const updatedUsernames = [...usernames];
+    updatedUsernames[index] = value;
+    setUsernames(updatedUsernames);
   };
 
-  const removeLink = (index: number) => {
-    if (links.length > 1) {
-      const updatedLinks = [...links];
-      updatedLinks.splice(index, 1);
-      setLinks(updatedLinks);
+  const removeUsername = (index: number) => {
+    if (usernames.length > 1) {
+      const updatedUsernames = [...usernames];
+      updatedUsernames.splice(index, 1);
+      setUsernames(updatedUsernames);
     }
   };
 
-  const validateLinks = () => {
-    // Filter out empty links
-    const filteredLinks = links.filter(link => link.trim() !== "");
+  const validateUsernames = () => {
+    // Filter out empty usernames
+    const filteredUsernames = usernames.filter(username => username.trim() !== "");
     
-    if (filteredLinks.length === 0) {
-      setError("Please add at least one valid content link");
-      return false;
-    }
-
-    // Basic URL validation
-    const urlPattern = /^(https?:\/\/)?(www\.)?(youtube\.com|tiktok\.com|instagram\.com)\/([a-zA-Z0-9_\-\.]+)/;
-    const invalidLinks = filteredLinks.filter(link => !urlPattern.test(link));
-    
-    if (invalidLinks.length > 0) {
-      setError("Please provide valid YouTube, TikTok, or Instagram links");
+    if (filteredUsernames.length === 0) {
+      setError("Please add at least one valid username");
       return false;
     }
 
@@ -64,7 +56,7 @@ const FindYourStyle = () => {
   };
 
   const analyzeContent = async () => {
-    if (!validateLinks()) return;
+    if (!validateUsernames()) return;
 
     setLoading(true);
     setError(null);
@@ -84,12 +76,13 @@ const FindYourStyle = () => {
         return;
       }
 
-      // Filter out empty links
-      const filteredLinks = links.filter(link => link.trim() !== "");
+      // Filter out empty usernames
+      const filteredUsernames = usernames.filter(username => username.trim() !== "");
 
       const { data, error } = await supabase.functions.invoke('analyze-content-style', {
         body: {
-          links: filteredLinks,
+          usernames: filteredUsernames,
+          platform,
           notes: notes.trim(),
           userId
         }
@@ -108,7 +101,7 @@ const FindYourStyle = () => {
       
       // Set a default name for the style profile if user hasn't provided one
       if (!profileName) {
-        setProfileName(`My Style ${new Date().toLocaleDateString()}`);
+        setProfileName(`My ${platform.charAt(0).toUpperCase() + platform.slice(1)} Style`);
       }
 
       toast({
@@ -225,32 +218,50 @@ const FindYourStyle = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-2">Find Your Content Style</h1>
       <p className="text-muted-foreground mb-8">
-        Analyze your favorite content or your own videos to discover your unique style
+        Analyze creators' content to discover the style you want to emulate
       </p>
 
       <div className="grid gap-8 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Content Links</CardTitle>
+            <CardTitle>Content Creators</CardTitle>
             <CardDescription>
-              Add links to videos or content that represents the style you want to analyze
+              Add usernames of content creators whose style you want to analyze
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {links.map((link, index) => (
+            <div className="space-y-2">
+              <Label htmlFor="platform">Platform</Label>
+              <Select 
+                value={platform} 
+                onValueChange={setPlatform}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tiktok">TikTok</SelectItem>
+                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="youtube">YouTube</SelectItem>
+                  <SelectItem value="twitter">Twitter/X</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {usernames.map((username, index) => (
               <div key={index} className="flex items-center gap-2">
-                <LinkIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <UserRound className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                 <Input
-                  value={link}
-                  onChange={(e) => updateLink(index, e.target.value)}
-                  placeholder="Paste YouTube, TikTok or Instagram link"
+                  value={username}
+                  onChange={(e) => updateUsername(index, e.target.value)}
+                  placeholder={`@username on ${platform}`}
                   className="flex-1"
                 />
-                {links.length > 1 && (
+                {usernames.length > 1 && (
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => removeLink(index)}
+                    onClick={() => removeUsername(index)}
                     className="flex-shrink-0"
                   >
                     Remove
@@ -261,10 +272,10 @@ const FindYourStyle = () => {
             
             <Button 
               variant="outline" 
-              onClick={addLinkField}
+              onClick={addUsernameField}
               className="w-full"
             >
-              Add Another Link
+              Add Another Username
             </Button>
 
             <div className="space-y-2">
@@ -273,7 +284,7 @@ const FindYourStyle = () => {
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Describe what you like about these videos or your content goals..."
+                placeholder="Describe what you like about these creators or your content goals..."
                 className="min-h-[100px]"
               />
             </div>
@@ -364,7 +375,7 @@ const FindYourStyle = () => {
             ) : (
               <div className="h-[300px] flex flex-col items-center justify-center text-center p-4 text-muted-foreground">
                 <ThumbsUp className="h-12 w-12 mb-4 opacity-20" />
-                <p>Add links to your favorite content or your own videos and hit analyze to discover your content style</p>
+                <p>Add usernames of your favorite content creators and hit analyze to discover your content style</p>
               </div>
             )}
           </CardContent>

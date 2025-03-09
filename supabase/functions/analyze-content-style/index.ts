@@ -14,41 +14,30 @@ serve(async (req) => {
   }
 
   try {
-    const { links, notes, userId } = await req.json();
+    const { usernames, platform, notes, userId } = await req.json();
     
-    if (!links || !Array.isArray(links) || links.length === 0) {
+    if (!usernames || !Array.isArray(usernames) || usernames.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'No valid links provided' }),
+        JSON.stringify({ error: 'No valid usernames provided' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Extract information about the links
-    // Here we're just constructing basic information for demonstration
-    // In a real implementation, you would analyze the actual content
-    const linkInfo = links.map(link => {
-      let platform = 'unknown';
+    // Map social platform usernames to platform type
+    const formattedUsernames = usernames.map(username => {
+      const formattedUsername = username.startsWith('@') ? username : `@${username}`;
       
-      if (link.includes('youtube.com') || link.includes('youtu.be')) {
-        platform = 'YouTube';
-      } else if (link.includes('tiktok.com')) {
-        platform = 'TikTok';
-      } else if (link.includes('instagram.com')) {
-        platform = 'Instagram';
-      }
-      
-      return { url: link, platform };
+      return {
+        username: formattedUsername,
+        platform: platform || 'unknown'
+      };
     });
 
-    console.log("Analyzing content style for links:", linkInfo);
+    console.log("Analyzing content style for usernames:", formattedUsernames);
+    console.log("Platform:", platform);
     console.log("User notes:", notes);
 
-    // In a production environment, we would use:
-    // 1. Video analysis API to extract transcriptions and visual elements
-    // 2. NLP to analyze tone, style, and subject matter
-    // 3. OpenAI to synthesize findings into a coherent style guide
-
-    // For demonstration purposes, we'll use OpenAI directly with the links and notes
+    // Get OpenAI API key from environment
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!openAIApiKey) {
@@ -59,13 +48,13 @@ serve(async (req) => {
     }
 
     const userPrompt = `
-    I need to analyze content style based on these links:
-    ${links.join('\n')}
+    I need to analyze content style based on these social media usernames on ${platform || "social media"}:
+    ${usernames.join('\n')}
     
     Additional context from the user:
     ${notes || "No additional notes provided."}
     
-    Please analyze the content style that likely exists in these videos and provide:
+    Please analyze the typical content style of creators with these usernames and provide:
     1. A concise content style description (1-2 sentences)
     2. A content personality description (1-2 sentences)
     3. 3-5 key strengths of this content style
@@ -88,7 +77,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a content style analyst specializing in social media content. You help analyze links to videos and provide insights about content style, personality, and strengths. Always return valid JSON.'
+            content: 'You are a content style analyst specializing in social media content. You help analyze social media usernames and provide insights about their likely content style, personality, and strengths. Always return valid JSON.'
           },
           {
             role: 'user',
@@ -160,11 +149,6 @@ serve(async (req) => {
         ]
       };
     }
-
-    // In a full implementation, we would:
-    // 1. Save this analysis to the user's profile in the database
-    // 2. Process video transcripts to extract more specific style elements
-    // 3. Analyze visual components like editing style, pacing, etc.
 
     return new Response(
       JSON.stringify(styleAnalysis),
