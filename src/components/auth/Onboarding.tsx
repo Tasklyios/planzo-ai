@@ -13,13 +13,6 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue 
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 
 type AccountType = 'personal' | 'ecommerce' | 'business';
@@ -62,12 +55,9 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState<AccountType>('personal');
-  const [personality, setPersonality] = useState('');
-  const [contentStyle, setContentStyle] = useState('');
-  const [inspirationSources, setInspirationSources] = useState('');
   const [brandName, setBrandName] = useState('');
   
-  // Common fields for all account types
+  // Personal brand specific fields
   const [contentNiche, setContentNiche] = useState('');
   const [targetAudience, setTargetAudience] = useState('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
@@ -78,6 +68,11 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
   
   // E-commerce specific
   const [productNiche, setProductNiche] = useState('');
+  
+  // Content personality fields (common for all account types, but asked after initial type-specific questions)
+  const [personality, setPersonality] = useState('');
+  const [contentStyle, setContentStyle] = useState('');
+  const [inspirationSources, setInspirationSources] = useState('');
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -118,22 +113,29 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
       // Base profile data common to all account types
       const profileData: Record<string, any> = {
         account_type: selectedType,
-        content_personality: personality,
-        content_style: contentStyle,
-        inspiration_sources: inspirationSources,
-        content_niche: contentNiche,
         target_audience: targetAudience,
         posting_platforms: selectedPlatforms,
         brand_name: brandName,
         onboarding_completed: true,
       };
 
+      // Add content personality fields in final step
+      if (step === 3) {
+        profileData.content_personality = personality;
+        profileData.content_style = contentStyle;
+        profileData.inspiration_sources = inspirationSources;
+      }
+
       // Add specific fields based on account type
-      if (selectedType === 'business') {
+      if (selectedType === 'personal') {
+        profileData.content_niche = contentNiche;
+      } else if (selectedType === 'business') {
         profileData.business_description = businessDescription;
         profileData.business_niche = businessNiche;
+        profileData.content_niche = contentNiche;
       } else if (selectedType === 'ecommerce') {
         profileData.product_niche = productNiche;
+        profileData.content_niche = contentNiche;
       }
 
       const { error } = await supabase
@@ -160,7 +162,44 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     }
   };
 
-  const renderAccountTypeSpecificFields = () => {
+  const handleStepChange = async (nextStep: number) => {
+    // Only validate when moving to next step, not when going back
+    if (nextStep > step) {
+      // Validate step 2 based on account type
+      if (step === 2) {
+        if (selectedType === 'personal' && (!contentNiche || !targetAudience || selectedPlatforms.length === 0)) {
+          toast({
+            variant: "destructive",
+            title: "Missing information",
+            description: "Please fill out all required fields",
+          });
+          return;
+        }
+        
+        if (selectedType === 'business' && (!businessDescription || !businessNiche || !contentNiche || !targetAudience || selectedPlatforms.length === 0)) {
+          toast({
+            variant: "destructive",
+            title: "Missing information",
+            description: "Please fill out all required fields",
+          });
+          return;
+        }
+        
+        if (selectedType === 'ecommerce' && (!productNiche || !contentNiche || !targetAudience || selectedPlatforms.length === 0)) {
+          toast({
+            variant: "destructive",
+            title: "Missing information",
+            description: "Please fill out all required fields",
+          });
+          return;
+        }
+      }
+    }
+    
+    setStep(nextStep);
+  };
+
+  const renderTypeSpecificFields = () => {
     switch (selectedType) {
       case 'personal':
         return (
@@ -172,7 +211,38 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                 placeholder="What topics do you create content about?"
                 value={contentNiche}
                 onChange={(e) => setContentNiche(e.target.value)}
+                required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="targetAudience">Target Audience</Label>
+              <Input
+                id="targetAudience"
+                placeholder="Who is your content for? (e.g., 25-34 year-old fitness enthusiasts)"
+                value={targetAudience}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Posting Platforms</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {platformOptions.map((platform) => (
+                  <div key={platform.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={platform.id} 
+                      checked={selectedPlatforms.includes(platform.id)} 
+                      onCheckedChange={() => handlePlatformChange(platform.id)}
+                    />
+                    <Label 
+                      htmlFor={platform.id} 
+                      className="cursor-pointer"
+                    >
+                      {platform.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         );
@@ -180,13 +250,14 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
         return (
           <>
             <div className="space-y-2">
-              <Label htmlFor="businessDescription">Tell us what your business does</Label>
+              <Label htmlFor="businessDescription">Business Description (what your business does)</Label>
               <Textarea
                 id="businessDescription"
                 placeholder="Describe your business and its main offerings"
                 value={businessDescription}
                 onChange={(e) => setBusinessDescription(e.target.value)}
                 className="min-h-[80px]"
+                required
               />
             </div>
             <div className="space-y-2">
@@ -196,6 +267,7 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                 placeholder="E.g., SaaS, Consulting, Retail, etc."
                 value={businessNiche}
                 onChange={(e) => setBusinessNiche(e.target.value)}
+                required
               />
             </div>
             <div className="space-y-2">
@@ -205,7 +277,38 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                 placeholder="What topics will your content focus on?"
                 value={contentNiche}
                 onChange={(e) => setContentNiche(e.target.value)}
+                required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="targetAudience">Target Audience</Label>
+              <Input
+                id="targetAudience"
+                placeholder="Who is your content for? (e.g., 25-34 year-old fitness enthusiasts)"
+                value={targetAudience}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Posting Platforms</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {platformOptions.map((platform) => (
+                  <div key={platform.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={platform.id} 
+                      checked={selectedPlatforms.includes(platform.id)} 
+                      onCheckedChange={() => handlePlatformChange(platform.id)}
+                    />
+                    <Label 
+                      htmlFor={platform.id} 
+                      className="cursor-pointer"
+                    >
+                      {platform.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         );
@@ -213,12 +316,13 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
         return (
           <>
             <div className="space-y-2">
-              <Label htmlFor="productNiche">What do you sell?</Label>
+              <Label htmlFor="productNiche">Product Niche (what you sell)</Label>
               <Input
                 id="productNiche"
                 placeholder="Describe your products or product categories"
                 value={productNiche}
                 onChange={(e) => setProductNiche(e.target.value)}
+                required
               />
             </div>
             <div className="space-y-2">
@@ -228,13 +332,86 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                 placeholder="What topics will your content focus on?"
                 value={contentNiche}
                 onChange={(e) => setContentNiche(e.target.value)}
+                required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="targetAudience">Target Audience</Label>
+              <Input
+                id="targetAudience"
+                placeholder="Who is your content for? (e.g., 25-34 year-old fitness enthusiasts)"
+                value={targetAudience}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Posting Platforms</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {platformOptions.map((platform) => (
+                  <div key={platform.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={platform.id} 
+                      checked={selectedPlatforms.includes(platform.id)} 
+                      onCheckedChange={() => handlePlatformChange(platform.id)}
+                    />
+                    <Label 
+                      htmlFor={platform.id} 
+                      className="cursor-pointer"
+                    >
+                      {platform.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         );
       default:
         return null;
     }
+  };
+
+  const renderContentPersonalityFields = () => {
+    return (
+      <>
+        <div className="space-y-2">
+          <Label htmlFor="personality">What's your content personality?</Label>
+          <Textarea
+            id="personality"
+            placeholder="E.g., Energetic and funny, Professional and educational, Casual and relatable..."
+            value={personality}
+            onChange={(e) => setPersonality(e.target.value)}
+            className="min-h-[80px]"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="style">How would you describe your content style?</Label>
+          <Textarea
+            id="style"
+            placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences, Quick tips and tricks with engaging visuals..."
+            value={contentStyle}
+            onChange={(e) => setContentStyle(e.target.value)}
+            className="min-h-[80px]"
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="inspiration">What sources inspire your content?</Label>
+          <Textarea
+            id="inspiration"
+            placeholder="E.g., Industry blogs, competitor channels, news sites, social media trends..."
+            value={inspirationSources}
+            onChange={(e) => setInspirationSources(e.target.value)}
+            className="min-h-[80px]"
+            required
+          />
+        </div>
+      </>
+    );
   };
 
   return (
@@ -253,6 +430,16 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
               </div>
 
               <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className="space-y-8">
+                <div className="space-y-2">
+                  <Label htmlFor="brandName">Brand or Channel Name</Label>
+                  <Input
+                    id="brandName"
+                    placeholder="Enter your brand or channel name"
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
+                  />
+                </div>
+                
                 <RadioGroup
                   value={selectedType}
                   onValueChange={(value) => setSelectedType(value as AccountType)}
@@ -281,17 +468,50 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={loading}
+                  disabled={loading || !selectedType}
                 >
                   Continue <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
+              </form>
+            </>
+          ) : step === 2 ? (
+            <>
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-bold text-dark mb-2">
+                  Tell us about your {selectedType === 'personal' ? 'content' : selectedType === 'business' ? 'business' : 'e-commerce store'}
+                </h1>
+                <p className="text-dark/70">
+                  Help us understand your {selectedType === 'personal' ? 'content focus' : selectedType === 'business' ? 'business needs' : 'e-commerce goals'}
+                </p>
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); handleStepChange(3); }} className="space-y-6">
+                {renderTypeSpecificFields()}
+
+                <div className="flex gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setStep(1)}
+                    className="w-full"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    Continue <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </form>
             </>
           ) : (
             <>
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-dark mb-2">
-                  Tell us about your content
+                  Tell us about your content style
                 </h1>
                 <p className="text-dark/70">
                   This helps our AI understand your unique voice and create more personalized content ideas.
@@ -299,88 +519,13 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="brandName">Brand or Channel Name</Label>
-                  <Input
-                    id="brandName"
-                    placeholder="Enter your brand or channel name"
-                    value={brandName}
-                    onChange={(e) => setBrandName(e.target.value)}
-                  />
-                </div>
-                
-                {/* Render fields specific to the selected account type */}
-                {renderAccountTypeSpecificFields()}
-
-                <div className="space-y-2">
-                  <Label htmlFor="targetAudience">Target Audience</Label>
-                  <Input
-                    id="targetAudience"
-                    placeholder="Who is your content for? (e.g., 25-34 year-old fitness enthusiasts)"
-                    value={targetAudience}
-                    onChange={(e) => setTargetAudience(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Posting Platforms</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {platformOptions.map((platform) => (
-                      <div key={platform.id} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={platform.id} 
-                          checked={selectedPlatforms.includes(platform.id)} 
-                          onCheckedChange={() => handlePlatformChange(platform.id)}
-                        />
-                        <Label 
-                          htmlFor={platform.id} 
-                          className="cursor-pointer"
-                        >
-                          {platform.label}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="personality">What's your content personality?</Label>
-                  <Textarea
-                    id="personality"
-                    placeholder="E.g., Energetic and funny, Professional and educational, Casual and relatable..."
-                    value={personality}
-                    onChange={(e) => setPersonality(e.target.value)}
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="style">How would you describe your content style?</Label>
-                  <Textarea
-                    id="style"
-                    placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences, Quick tips and tricks with engaging visuals..."
-                    value={contentStyle}
-                    onChange={(e) => setContentStyle(e.target.value)}
-                    className="min-h-[80px]"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="inspiration">What sources inspire your content?</Label>
-                  <Textarea
-                    id="inspiration"
-                    placeholder="E.g., Industry blogs, competitor channels, news sites, social media trends..."
-                    value={inspirationSources}
-                    onChange={(e) => setInspirationSources(e.target.value)}
-                    className="min-h-[80px]"
-                  />
-                </div>
+                {renderContentPersonalityFields()}
 
                 <div className="flex gap-4">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setStep(1)}
+                    onClick={() => setStep(2)}
                     className="w-full"
                   >
                     Back
