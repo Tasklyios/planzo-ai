@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { ChevronRight } from "lucide-react";
 import {
   Dialog,
@@ -45,6 +46,9 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
   const [selectedType, setSelectedType] = useState<AccountType>('personal');
   const [personality, setPersonality] = useState('');
   const [contentStyle, setContentStyle] = useState('');
+  const [inspirationSources, setInspirationSources] = useState('');
+  const [brandName, setBrandName] = useState('');
+  const [targetAudience, setTargetAudience] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -77,6 +81,9 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
           account_type: selectedType,
           content_personality: personality,
           content_style: contentStyle,
+          inspiration_sources: inspirationSources,
+          brand_name: brandName,
+          target_audience: targetAudience,
           onboarding_completed: true,
         })
         .eq('id', session.user.id);
@@ -163,13 +170,33 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
+                  <Label htmlFor="brandName">Brand or Channel Name</Label>
+                  <Input
+                    id="brandName"
+                    placeholder="Enter your brand or channel name"
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="targetAudience">Target Audience</Label>
+                  <Input
+                    id="targetAudience"
+                    placeholder="Who is your content for? (e.g., 25-34 year-old fitness enthusiasts)"
+                    value={targetAudience}
+                    onChange={(e) => setTargetAudience(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="personality">What's your content personality?</Label>
                   <Textarea
                     id="personality"
                     placeholder="E.g., Energetic and funny, Professional and educational, Casual and relatable..."
                     value={personality}
                     onChange={(e) => setPersonality(e.target.value)}
-                    className="min-h-[100px]"
+                    className="min-h-[80px]"
                   />
                 </div>
 
@@ -180,7 +207,18 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                     placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences, Quick tips and tricks with engaging visuals..."
                     value={contentStyle}
                     onChange={(e) => setContentStyle(e.target.value)}
-                    className="min-h-[100px]"
+                    className="min-h-[80px]"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="inspiration">What sources inspire your content?</Label>
+                  <Textarea
+                    id="inspiration"
+                    placeholder="E.g., Industry blogs, competitor channels, news sites, social media trends..."
+                    value={inspirationSources}
+                    onChange={(e) => setInspirationSources(e.target.value)}
+                    className="min-h-[80px]"
                   />
                 </div>
 

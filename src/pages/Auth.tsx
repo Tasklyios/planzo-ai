@@ -125,7 +125,9 @@ const Auth = () => {
           
         if (profileError) {
           console.error("Error fetching profile:", profileError);
-          // Don't throw here, we'll assume they need to complete onboarding
+          // If profile error, force show onboarding
+          setShowOnboarding(true);
+          return;
         }
         
         console.log("Profile data:", profileData);
@@ -187,6 +189,9 @@ const Auth = () => {
             
           if (profileError) {
             console.error("Error fetching profile:", profileError);
+            // Force show onboarding if we can't determine status
+            setShowOnboarding(true);
+            return;
           }
           
           // If they've already completed onboarding, check pricing
@@ -199,6 +204,7 @@ const Auth = () => {
               navigate("/dashboard");
             }
           } else {
+            // Ensure onboarding is shown if not completed
             setShowOnboarding(true);
           }
         }
@@ -578,7 +584,7 @@ const Auth = () => {
         </div>
       </div>
 
-      {/* Onboarding Dialog */}
+      {/* Onboarding Dialog - Now with enhanced fields */}
       <Onboarding 
         open={showOnboarding} 
         onOpenChange={setShowOnboarding}
