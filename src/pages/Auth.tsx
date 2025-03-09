@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail, CheckCircle } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import {
   Dialog,
@@ -45,6 +45,7 @@ const Auth = () => {
   const [resetSent, setResetSent] = useState(false);
   const [showVerifyEmail, setShowVerifyEmail] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -67,6 +68,43 @@ const Auth = () => {
            (searchParams.has('access_token') && searchParams.has('refresh_token')) || // Success case
            searchParams.has('token_hash'); // Another potential parameter
   };
+
+  // Check if this is a successful email verification
+  useEffect(() => {
+    const checkEmailVerification = async () => {
+      if (isEmailVerificationRedirect()) {
+        const searchParams = new URLSearchParams(location.search);
+        
+        // Check for error first
+        if (searchParams.has('error_description')) {
+          toast({
+            variant: "destructive",
+            title: "Verification Error",
+            description: searchParams.get('error_description'),
+          });
+          return;
+        }
+        
+        // If we have access_token and refresh_token, it's a successful verification
+        if (searchParams.has('access_token') && searchParams.has('refresh_token')) {
+          setIsEmailVerified(true);
+          
+          // Sign out the user if they're automatically signed in after verification
+          // so they can explicitly sign in and trigger the onboarding flow
+          const { error } = await supabase.auth.signOut();
+          if (error) console.error("Error signing out after verification:", error);
+          
+          // Show toast message
+          toast({
+            title: "Email Verified",
+            description: "Your email has been verified. Please sign in with your credentials.",
+          });
+        }
+      }
+    };
+    
+    checkEmailVerification();
+  }, [location, toast]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,13 +145,6 @@ const Auth = () => {
         if (error) throw error;
         
         console.log("Sign in successful, checking onboarding status...");
-        
-        // Skip onboarding and pricing flows if this is a verification redirect
-        if (isEmailVerificationRedirect()) {
-          console.log("Email verification redirect detected, skipping onboarding/pricing");
-          navigate("/dashboard");
-          return;
-        }
         
         // We need to check if this is the first time the user is signing in
         // First, get the user profile to see if they have completed onboarding
@@ -173,10 +204,9 @@ const Auth = () => {
         if (error) throw error;
         
         if (session) {
-          // If this is a verification redirect, skip flows and go to dashboard
+          // If this is a verification redirect, don't automatically redirect
           if (isEmailVerificationRedirect()) {
-            console.log("Auth check: Email verification redirect detected, going to dashboard");
-            navigate("/dashboard");
+            console.log("Auth check: Email verification redirect detected");
             return;
           }
           
@@ -213,8 +243,11 @@ const Auth = () => {
       }
     };
     
-    checkAuthAndNavigate();
-  }, [navigate, location]);
+    // Only check auth if not on email verification page
+    if (!isEmailVerified) {
+      checkAuthAndNavigate();
+    }
+  }, [navigate, location, isEmailVerified]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -385,6 +418,37 @@ const Auth = () => {
               )}
             </button>
           </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Email verification success message
+  if (isEmailVerified) {
+    return (
+      <div className="min-h-screen bg-[#f3f3f3] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 shadow-xl fade-up">
+          <div className="text-center mb-8">
+            <CheckCircle className="text-green-500 w-16 h-16 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-[#333333] mb-2">
+              Email Verified!
+            </h1>
+            <p className="text-[#555555]">
+              Thanks for verifying your email. You can now sign in with your new account.
+            </p>
+          </div>
+
+          <Button 
+            className="w-full"
+            onClick={() => {
+              setIsEmailVerified(false);
+              setIsSignUp(false); // Ensure we're on sign in mode
+              // Clear any URL parameters
+              window.history.replaceState({}, document.title, "/auth");
+            }}
+          >
+            Sign In Now
+          </Button>
         </div>
       </div>
     );

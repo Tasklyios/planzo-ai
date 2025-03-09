@@ -69,10 +69,17 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         
         setIsAuthenticated(true);
         
-        // Redirect to dashboard if user signs in and isn't already on a protected route
-        const currentPath = location.pathname;
-        if (currentPath === "/" || currentPath === "/auth") {
-          navigate("/dashboard");
+        // Skip redirect for verification, otherwise redirect to dashboard if user signs in
+        const isEmailVerification = location.pathname === '/auth' && 
+                                   (location.search.includes('access_token') || 
+                                    location.search.includes('error_description') ||
+                                    location.search.includes('token_hash'));
+        
+        if (!isEmailVerification) {
+          const currentPath = location.pathname;
+          if (currentPath === "/" || currentPath === "/auth") {
+            navigate("/dashboard");
+          }
         }
       }
     });
