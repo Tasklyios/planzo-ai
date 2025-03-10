@@ -37,6 +37,7 @@ export type Database = {
         Row: {
           account_type: string
           active_style_profile_id: string | null
+          brand_name: string | null
           business_niche: string | null
           content_niche: string | null
           content_personality: string | null
@@ -51,6 +52,7 @@ export type Database = {
         Insert: {
           account_type: string
           active_style_profile_id?: string | null
+          brand_name?: string | null
           business_niche?: string | null
           content_niche?: string | null
           content_personality?: string | null
@@ -65,6 +67,7 @@ export type Database = {
         Update: {
           account_type?: string
           active_style_profile_id?: string | null
+          brand_name?: string | null
           business_niche?: string | null
           content_niche?: string | null
           content_personality?: string | null
