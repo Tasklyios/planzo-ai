@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -123,7 +122,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
       if (step === 3) {
         profileData.content_personality = personality;
         profileData.content_style = contentStyle;
-        profileData.inspiration_sources = inspirationSources;
       }
 
       // Add specific fields based on account type
@@ -394,18 +392,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
             placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences, Quick tips and tricks with engaging visuals..."
             value={contentStyle}
             onChange={(e) => setContentStyle(e.target.value)}
-            className="min-h-[80px]"
-            required
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="inspiration">What sources inspire your content?</Label>
-          <Textarea
-            id="inspiration"
-            placeholder="E.g., Industry blogs, competitor channels, news sites, social media trends..."
-            value={inspirationSources}
-            onChange={(e) => setInspirationSources(e.target.value)}
             className="min-h-[80px]"
             required
           />
