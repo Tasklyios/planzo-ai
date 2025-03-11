@@ -91,39 +91,42 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    if (isLoggingOut) return; // Prevent multiple clicks
+    if (isLoggingOut) return;
     
     try {
       setIsLoggingOut(true);
       
-      // First, clean up local storage before attempting signout
+      // First, clear local storage
       localStorage.removeItem('supabase.auth.token');
       
-      try {
-        // Try to sign out, but don't block on errors
-        await supabase.auth.signOut();
-      } catch (signOutError) {
-        console.error("Sign out API call failed:", signOutError);
-        // Continue with logout process even if API call fails
+      // Attempt to sign out
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        throw error;
       }
       
-      // Always navigate to auth page and show success message
-      navigate("/auth", { replace: true });
+      // Wait for auth state to update before showing success message
+      const { data: { session } } = await supabase.auth.getSession();
       
-      toast({
-        title: "Logged out successfully",
-        description: "You have been logged out of your account.",
-      });
+      if (!session) {
+        // Only show success message if session is actually cleared
+        toast({
+          title: "Logged out successfully",
+          description: "You have been logged out of your account.",
+        });
+        navigate("/auth", { replace: true });
+      } else {
+        throw new Error("Failed to clear session");
+      }
+      
     } catch (error) {
       console.error("Error in logout process:", error);
       
-      // Force navigation to auth page as fallback
-      navigate("/auth", { replace: true });
-      
       toast({
         variant: "destructive",
-        title: "There was an issue logging out",
-        description: "You've been redirected to the login page.",
+        title: "Logout failed",
+        description: "Please try again or refresh the page.",
       });
     } finally {
       setIsLoggingOut(false);
@@ -232,4 +235,3 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
 };
 
 export default AppSidebar;
-
