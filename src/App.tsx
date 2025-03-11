@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -129,6 +128,9 @@ function App() {
                   <Route path="/calendar" element={<Calendar />} />
                   <Route path="/account" element={<Account />} />
                   <Route path="/billing" element={<Billing />} />
+                  
+                  {/* Catch any other routes that should be protected */}
+                  <Route path="*" element={<NotFound />} />
                 </Route>
               </Route>
               <Route path="*" element={<NotFound />} />
