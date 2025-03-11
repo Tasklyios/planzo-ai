@@ -63,7 +63,6 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
   };
 
   const borderColorClass = colorClasses[color || 'blue'] || colorClasses.blue;
-  const cardWidth = 342; // Column width (350px) - 8px for spacing/borders
 
   return (
     <>
@@ -82,14 +81,10 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
             style={{
               ...provided.draggableProps.style,
               width: "100%",
-              maxWidth: `${cardWidth}px`, 
               transform: snapshot.isDragging 
                 ? provided.draggableProps.style?.transform
                 : provided.draggableProps.style?.transform,
-              cursor: snapshot.isDragging ? "grabbing" : "grab",
-              transformOrigin: "top left",
-              left: snapshot.isDragging ? 0 : undefined,
-              top: snapshot.isDragging ? 0 : undefined
+              cursor: snapshot.isDragging ? "grabbing" : "grab"
             }}
           >
             <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
