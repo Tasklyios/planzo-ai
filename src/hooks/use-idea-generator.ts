@@ -1,13 +1,10 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { GeneratedIdea, PreviousIdeasContext, StyleProfile } from "@/types/idea";
+import { GeneratedIdea, PreviousIdeasContext } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
 interface GenerateIdeasParams {
-  activeStyleProfile?: StyleProfile | null;
-  contentStyle?: string | null;
-  contentPersonality?: string | null;
   // Add additional parameters to ensure latest form data is used
   currentNiche?: string;
   currentAudience?: string;
@@ -214,9 +211,6 @@ export const useIdeaGenerator = () => {
     console.log("Video Type:", currentVideoType);
     console.log("Platform:", currentPlatform);
     console.log("Custom Ideas:", currentCustomIdeas);
-    console.log("Content Style:", params?.contentStyle);
-    console.log("Content Personality:", params?.contentPersonality);
-    console.log("Style Profile:", params?.activeStyleProfile);
     console.log("Account Type:", accountType);
 
     setLoading(true);
@@ -278,19 +272,6 @@ export const useIdeaGenerator = () => {
         setLoading(false);
         return;
       }
-      
-      // Extract the style profile data and content customization if provided
-      const styleProfileData = params?.activeStyleProfile ? {
-        name: params.activeStyleProfile.name,
-        description: params.activeStyleProfile.content_style || "",
-        tone: params.activeStyleProfile.content_personality || ""
-        // Remove references to non-existent properties (topics and avoid_topics)
-      } : null;
-
-      console.log("Style profile data:", styleProfileData);
-      console.log("Content style:", params?.contentStyle);
-      console.log("Content personality:", params?.contentPersonality);
-      console.log("Current account type:", accountType);
 
       // Get the latest account type from profile
       let currentAccountType = accountType;
@@ -320,9 +301,6 @@ export const useIdeaGenerator = () => {
           customIdeas: currentCustomIdeas,
           previousIdeas: previousIdeasContext,
           numIdeas: 5, // Explicitly set to 5
-          styleProfile: styleProfileData,
-          contentStyle: params?.contentStyle,
-          contentPersonality: params?.contentPersonality,
           accountType: currentAccountType // Pass the current account type
         },
         headers: {

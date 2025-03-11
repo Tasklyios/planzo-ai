@@ -12,7 +12,6 @@ import {
   LightbulbIcon,
   BookOpen,
   Anchor,
-  Palette,
   LayoutPanelLeft,
   BookmarkIcon
 } from "lucide-react";
@@ -159,11 +158,6 @@ const AppSidebar = () => {
             href="/saved-hooks"
             icon={<BookmarkIcon className="w-5 h-5" />}
             label="Saved Hooks"
-          />
-          <SidebarItem
-            href="/find-your-style"
-            icon={<Palette className="w-5 h-5" />}
-            label="Content Style"
           />
         </SidebarCategory>
       </div>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -11,9 +12,9 @@ import IdeasGrid from "@/components/idea-generator/IdeasGrid";
 import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
-import { AddToCalendarIdea, PreviousIdeasContext, StyleProfile } from "@/types/idea";
+import { AddToCalendarIdea, PreviousIdeasContext } from "@/types/idea";
 import { Badge } from "@/components/ui/badge";
-import { Paintbrush, AlertCircle, Zap } from "lucide-react";
+import { AlertCircle, Zap } from "lucide-react";
 
 const Generator = () => {
   const {
@@ -40,9 +41,6 @@ const Generator = () => {
 
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
-  const [activeStyleProfile, setActiveStyleProfile] = useState<StyleProfile | null>(null);
-  const [contentStyle, setContentStyle] = useState<string | null>(null);
-  const [contentPersonality, setContentPersonality] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -60,62 +58,12 @@ const Generator = () => {
         console.error("Error parsing previous ideas context:", error);
       }
     }
-    
-    fetchActiveStyleProfile();
   }, [setPreviousIdeasContext]);
 
   // Add listener for account type changes to refresh data
   useEffect(() => {
     console.log(`Generator component detected account type: ${accountType}`);
-    // Refresh active style profile when account type changes
-    fetchActiveStyleProfile();
   }, [accountType]);
-
-  const fetchActiveStyleProfile = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('active_style_profile_id, content_style, content_personality, account_type')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-        return;
-      }
-
-      // Store content style and personality from profile
-      if (profile) {
-        console.log("Fetched profile data:", profile);
-        setContentStyle(profile.content_style || null);
-        setContentPersonality(profile.content_personality || null);
-        
-        // Only fetch style profile if there is an active one
-        if (profile.active_style_profile_id) {
-          const { data: styleProfile, error: styleError } = await supabase
-            .from('style_profiles')
-            .select('*')
-            .eq('id', profile.active_style_profile_id)
-            .maybeSingle();
-
-          if (styleError) {
-            console.error("Error fetching style profile:", styleError);
-            return;
-          }
-
-          if (styleProfile) {
-            setActiveStyleProfile(styleProfile);
-            console.log("Active style profile loaded:", styleProfile);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching active style profile:", error);
-    }
-  };
 
   const handleAddToCalendar = async () => {
     if (!addingToCalendar?.idea) return;
@@ -238,16 +186,7 @@ const Generator = () => {
 
   const handleRetryGenerate = () => {
     setError(null);
-    generateIdeas({
-      activeStyleProfile,
-      contentStyle,
-      contentPersonality
-    });
-  };
-
-  const navigateToStyleProfiles = () => {
-    navigate('/account');
-    localStorage.setItem('accountActiveTab', 'styles');
+    generateIdeas();
   };
 
   const navigateToBilling = () => {
@@ -272,9 +211,6 @@ const Generator = () => {
   const handleGenerateIdeas = () => {
     console.log("handleGenerateIdeas called with current account type:", accountType);
     console.log("Current state - niche:", niche, "audience:", audience, "videoType:", videoType, "platform:", platform);
-    console.log("Style profile:", activeStyleProfile);
-    console.log("Content style:", contentStyle);
-    console.log("Content personality:", contentPersonality);
     console.log("Custom ideas:", customIdeas);
     
     // Clear existing ideas first
@@ -282,9 +218,6 @@ const Generator = () => {
     
     // Then generate new ideas with all required data
     generateIdeas({
-      activeStyleProfile,
-      contentStyle,
-      contentPersonality,
       // Explicitly pass the current form values to ensure latest data is used
       currentNiche: niche,
       currentAudience: audience,
@@ -298,24 +231,6 @@ const Generator = () => {
       <main className="container mx-auto px-4 pt-8 pb-12 py-0">
         <section className="mb-8">
           <GeneratorHeader />
-          
-          {activeStyleProfile && (
-            <div className="mb-6 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-primary/10 hover:bg-primary/15">
-                  <Paintbrush className="h-3.5 w-3.5 mr-1.5" />
-                  Style: {activeStyleProfile.name}
-                </Badge>
-              </div>
-              <Button 
-                variant="link" 
-                onClick={navigateToStyleProfiles}
-                className="text-sm"
-              >
-                Change Style Profile
-              </Button>
-            </div>
-          )}
           
           <InputForm 
             niche={niche} 

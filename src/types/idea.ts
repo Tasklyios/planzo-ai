@@ -29,7 +29,7 @@ export interface GeneratedIdea {
   platform?: string;
   color?: string;
   is_saved?: boolean;
-  scheduled_for?: string;  // Make sure this is marked as optional
+  scheduled_for?: string;
 }
 
 export interface PreviousIdeasContext {
@@ -67,16 +67,6 @@ export interface PlannerColumn {
   user_id?: string;
   created_at?: string;
   order?: number;
-}
-
-export interface StyleProfile {
-  id: string;
-  name: string;
-  content_style: string | null;
-  content_personality: string | null;
-  created_at: string;
-  is_active: boolean;
-  user_id: string;
 }
 
 export interface ContentIdeaProtocol {

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,11 +69,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
   // E-commerce specific
   const [productNiche, setProductNiche] = useState('');
   
-  // Content personality fields (common for all account types, but asked after initial type-specific questions)
-  const [personality, setPersonality] = useState('');
-  const [contentStyle, setContentStyle] = useState('');
-  const [inspirationSources, setInspirationSources] = useState('');
-  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -117,12 +113,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
         brand_name: brandName,
         onboarding_completed: true,
       };
-
-      // Add content personality fields in final step
-      if (step === 3) {
-        profileData.content_personality = personality;
-        profileData.content_style = contentStyle;
-      }
 
       // Add specific fields based on account type
       if (selectedType === 'personal') {
@@ -370,36 +360,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     }
   };
 
-  const renderContentPersonalityFields = () => {
-    return (
-      <>
-        <div className="space-y-2">
-          <Label htmlFor="personality">What's your content personality?</Label>
-          <Textarea
-            id="personality"
-            placeholder="E.g., Energetic and funny, Professional and educational, Casual and relatable..."
-            value={personality}
-            onChange={(e) => setPersonality(e.target.value)}
-            className="min-h-[80px]"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="style">How would you describe your content style?</Label>
-          <Textarea
-            id="style"
-            placeholder="E.g., Tutorial-based with step-by-step instructions, Story-driven content with personal experiences, Quick tips and tricks with engaging visuals..."
-            value={contentStyle}
-            onChange={(e) => setContentStyle(e.target.value)}
-            className="min-h-[80px]"
-            required
-          />
-        </div>
-      </>
-    );
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl p-0 gap-0">
@@ -460,7 +420,7 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                 </Button>
               </form>
             </>
-          ) : step === 2 ? (
+          ) : (
             <>
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-dark mb-2">
@@ -471,7 +431,7 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                 </p>
               </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); handleStepChange(3); }} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 {renderTypeSpecificFields()}
 
                 <div className="flex gap-4">
@@ -479,39 +439,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                     type="button"
                     variant="outline"
                     onClick={() => setStep(1)}
-                    className="w-full"
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={loading}
-                  >
-                    Continue <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </form>
-            </>
-          ) : (
-            <>
-              <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-dark mb-2">
-                  Tell us about your content style
-                </h1>
-                <p className="text-dark/70">
-                  This helps our AI understand your unique voice and create more personalized content ideas.
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {renderContentPersonalityFields()}
-
-                <div className="flex gap-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(2)}
                     className="w-full"
                   >
                     Back
