@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.1";
@@ -24,11 +25,11 @@ serve(async (req) => {
     }
 
     // Get the request body
-    const { topic, audience, details, isEcommerce, optimizeForViral, brandMarketResearch } = await req.json();
+    const { topic, audience, details } = await req.json();
 
-    if (!topic || !audience) {
+    if (!topic) {
       return new Response(
-        JSON.stringify({ error: 'Missing required parameters: topic and audience' }),
+        JSON.stringify({ error: 'Missing required parameter: topic' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -38,29 +39,17 @@ serve(async (req) => {
 
 You understand audience psychology, engagement triggers, and platform-specific trends. Your hooks are designed to maximize curiosity, emotional response, and viewer retention in the critical first few seconds of a video.`;
 
-    let userPrompt = `Generate 8 different hooks about ${topic} for ${audience}`;
+    let userPrompt = `Generate 8 different hooks about ${topic}`;
+    
+    if (audience && audience.trim()) {
+      userPrompt += ` for ${audience}`;
+    }
 
     if (details && details.trim()) {
       userPrompt += `\nAdditional context: ${details}`;
     }
 
-    // Add ecommerce-specific guidance if applicable
-    if (isEcommerce) {
-      userPrompt += `\n\nThis is for an ecommerce brand selling physical products. Focus on:
-      - Product demonstrations
-      - Before/after results
-      - Social proof and testimonials
-      - Limited time offers`;
-      
-      if (brandMarketResearch) {
-        userPrompt += `\n\nSuccessful tactics for similar brands include: ${brandMarketResearch.successfulTactics.join(', ')}`;
-        userPrompt += `\n\nPopular content types: ${brandMarketResearch.contentTypes.join(', ')}`;
-      }
-    }
-
-    userPrompt += `\n\nEach hook should be short (1-2 sentences), attention-grabbing, and designed to make viewers stop scrolling.
-    
-    Create 2 hooks for each of these categories:
+    userPrompt += `\n\nCreate 2 hooks for each of these categories:
     1. QUESTION hooks: Hooks that pose an intriguing question to the viewer
     2. STATISTIC hooks: Hooks that lead with a surprising statistic or fact
     3. STORY hooks: Hooks that begin with a mini-story or scenario
@@ -77,8 +66,8 @@ You understand audience psychology, engagement triggers, and platform-specific t
     
     DO NOT include any text outside of the JSON format. Your entire response should be valid JSON.`;
 
-    // Call the OpenAI API with updated Planzo AI personality
-    console.log('Calling OpenAI API for hook generation with Planzo AI personality...');
+    // Call the OpenAI API
+    console.log('Calling OpenAI API for hook generation...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -86,7 +75,7 @@ You understand audience psychology, engagement triggers, and platform-specific t
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -149,10 +138,10 @@ You understand audience psychology, engagement triggers, and platform-specific t
       } else {
         // Create default hooks if all parsing fails
         hooks = [
-          { hook: "Did you know that 80% of people who try our product become repeat customers?", explanation: "Statistic hook that grabs attention with a specific number" },
-          { hook: "Have you ever wondered why some people succeed while others fail?", explanation: "Question hook that engages curiosity" },
-          { hook: "I used to struggle with this every day until I discovered this simple trick", explanation: "Story hook that creates relatability" },
-          { hook: "Everything you've been told about this industry is wrong. Here's why.", explanation: "Challenge hook that creates controversy" }
+          { hook: "Did you know that most people get this wrong about your topic?", explanation: "Question hook that creates curiosity" },
+          { hook: "I tried this for 30 days straight. Here's what happened.", explanation: "Story hook that builds interest" },
+          { hook: "Everything you've been told about this is wrong. Here's why.", explanation: "Challenge hook that creates controversy" },
+          { hook: "Only 1% of people know this game-changing tip.", explanation: "Statistic hook that grabs attention" }
         ];
       }
     }
