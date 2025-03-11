@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { GeneratedIdea, PreviousIdeasContext } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
@@ -292,6 +291,13 @@ export const useIdeaGenerator = () => {
 
       // Now proceed with idea generation if usage limits allow
       console.log("Calling generate-ideas function with auth header and current form data");
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+
+      // Include business description in the request if it exists
       const { data, error: generationError } = await supabase.functions.invoke('generate-ideas', {
         body: {
           niche: currentNiche,
@@ -300,8 +306,9 @@ export const useIdeaGenerator = () => {
           platform: currentPlatform,
           customIdeas: currentCustomIdeas,
           previousIdeas: previousIdeasContext,
-          numIdeas: 5, // Explicitly set to 5
-          accountType: currentAccountType // Pass the current account type
+          numIdeas: 5,
+          accountType: currentAccountType,
+          businessDescription: profile?.business_description || "" // Add business description
         },
         headers: {
           Authorization: authHeader

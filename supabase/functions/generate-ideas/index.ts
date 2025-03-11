@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
@@ -28,13 +27,15 @@ serve(async (req) => {
       contentPersonality = "",
       previousIdeas = null,
       styleProfile = null,
-      accountType = "personal"
+      accountType = "personal",
+      businessDescription = ""
     } = await req.json();
 
     console.log('Generating ideas with:', { 
       niche, audience, videoType, platform, accountType,
       hasCustomIdeas: !!customIdeas,
-      hasStyleProfile: !!styleProfile
+      hasStyleProfile: !!styleProfile,
+      hasBusinessDescription: !!businessDescription
     });
     
     if (!niche) {
@@ -55,6 +56,9 @@ serve(async (req) => {
     const systemPrompt = `You are Planzo AI, a specialist in creating viral-worthy video ideas for social media. You excel at crafting engaging content concepts for platforms like TikTok, YouTube Shorts, and Instagram Reels.
 
 You understand trends, audience psychology, and engagement strategies to craft compelling content that maximizes views, shares, and watch time.
+
+${validAccountType === 'business' && businessDescription ? 
+  `BUSINESS CONTEXT: This is for a business in the ${niche} niche. Business description: ${businessDescription}` : ''}
 
 Your ONLY task is to output exactly 5 content ideas in a structured format without ANY introduction, greeting, or conclusion text.
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { LayersIcon, Users, Video, Smartphone, Package2, Building2, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +44,7 @@ const InputForm = ({
   const [contentNiche, setContentNiche] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
   const [businessNiche, setBusinessNiche] = useState("");
+  const [businessDescription, setBusinessDescription] = useState("");
   const [lastFetchedAccountType, setLastFetchedAccountType] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,14 +58,13 @@ const InputForm = ({
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('account_type, product_niche, content_niche, business_niche, target_audience')
+        .select('account_type, product_niche, content_niche, business_niche, target_audience, business_description')
         .eq('id', session.user.id)
         .single();
 
       if (error) throw error;
       
       if (profile) {
-        // Check if account type changed since last fetch
         const newAccountType = profile.account_type as AccountType;
         const accountTypeChanged = lastFetchedAccountType !== null && lastFetchedAccountType !== newAccountType;
         
@@ -74,13 +73,12 @@ const InputForm = ({
         setAccountType(newAccountType);
         setLastFetchedAccountType(newAccountType);
         
-        // Store values in component state
         setProductNiche(profile.product_niche || "");
         setContentNiche(profile.content_niche || "");
         setBusinessNiche(profile.business_niche || "");
         setTargetAudience(profile.target_audience || "");
+        setBusinessDescription(profile.business_description || "");
         
-        // If account type changed, update parent component state with appropriate values for the new account type
         if (accountTypeChanged || !niche) {
           if (newAccountType === 'personal') {
             console.log("Setting niche to content_niche for personal account:", profile.content_niche);
@@ -93,7 +91,6 @@ const InputForm = ({
             setNiche(profile.business_niche || "");
           }
           
-          // These are common regardless of account type
           setVideoType(profile.content_niche || "");
           setAudience(profile.target_audience || "");
         }
@@ -105,9 +102,7 @@ const InputForm = ({
     }
   };
 
-  // Add listener for account type changes
   useEffect(() => {
-    // Set up an interval to periodically check for account type changes
     const intervalId = setInterval(async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -123,61 +118,52 @@ const InputForm = ({
         
         if (profile && profile.account_type !== accountType) {
           console.log(`Account type changed from ${accountType} to ${profile.account_type}, refreshing...`);
-          // Account type changed, refresh all data
           getAccountType();
         }
       } catch (error) {
         console.error("Error checking account type changes:", error);
       }
-    }, 5000); // Check every 5 seconds
+    }, 5000);
 
     return () => clearInterval(intervalId);
   }, [accountType]);
 
-  // Handle content niche changes
   const handleContentNicheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setContentNiche(newValue);
     
-    // Only update parent niche if this is relevant for the current account type
     if (accountType === 'personal') {
       console.log("Setting niche to contentNiche:", newValue);
-      setNiche(newValue); // For personal accounts, content niche is the niche
+      setNiche(newValue);
     }
     
-    // Always update video type regardless of account type
     setVideoType(newValue);
   };
 
-  // Handle product niche changes (for ecommerce accounts)
   const handleProductNicheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setProductNiche(newValue);
     
-    // Only update parent niche if this is an ecommerce account
     if (accountType === 'ecommerce') {
       console.log("Setting niche to productNiche:", newValue);
       setNiche(newValue);
     }
   };
 
-  // Handle business niche changes (for business accounts)
   const handleBusinessNicheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setBusinessNiche(newValue);
     
-    // Only update parent niche if this is a business account
     if (accountType === 'business') {
       console.log("Setting niche to businessNiche:", newValue);
       setNiche(newValue);
     }
   };
 
-  // Handle target audience changes
   const handleTargetAudienceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setTargetAudience(newValue);
-    setAudience(newValue); // Update parent component state
+    setAudience(newValue);
   };
 
   if (loading) {
@@ -318,6 +304,22 @@ const InputForm = ({
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                  <Building2 className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Business Description</label>
+                </div>
+                <textarea
+                  value={businessDescription}
+                  onChange={(e) => setBusinessDescription(e.target.value)}
+                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
+                  placeholder="Describe what your business does"
+                  rows={2}
+                />
+              </div>
+            </div>
+
+            <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
                   <Users className="text-[#4F92FF] w-4 h-4" />
                   <label className="text-xs md:text-sm font-medium text-foreground">Target Audience</label>
                 </div>
@@ -399,3 +401,4 @@ const InputForm = ({
 }
 
 export default InputForm;
+
