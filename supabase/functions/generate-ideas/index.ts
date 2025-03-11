@@ -281,6 +281,83 @@ FOR PERSONAL BRAND CREATORS:
         }
       }
       
+      // For ecommerce accounts, check if we're still mentioning products too much
+      if (validAccountType === 'ecommerce' && ideas.length > 0) {
+        // Count how many ideas mention products
+        const productMentionKeywords = [
+          'product', 'our', 'we sell', 'buy', 'purchase', 'shop', 
+          'item', 'merchandise', 'goods', 'offering', 'selling'
+        ];
+        
+        let productMentionCount = 0;
+        ideas.forEach(idea => {
+          const combinedText = (idea.title + ' ' + idea.description).toLowerCase();
+          if (productMentionKeywords.some(keyword => combinedText.includes(keyword.toLowerCase()))) {
+            productMentionCount++;
+          }
+        });
+        
+        // If more than 2 ideas mention products, we need to replace some with pure value ideas
+        if (productMentionCount > 2 && ideas.length >= 5) {
+          console.log(`Too many product mentions (${productMentionCount}/5), generating pure value replacement ideas`);
+          
+          // Create pure value ecommerce ideas that definitely don't mention products
+          const pureValueIdeas = [
+            {
+              title: `The Science Behind Optimal ${niche} Performance That Nobody Talks About`,
+              category: "Educational Content",
+              description: `Dive into the scientific research and expert insights about optimizing ${niche} performance. This educational deep-dive provides your audience with valuable information they can immediately apply, establishing your brand as a knowledge authority without mentioning any products.`,
+              tags: ["sciencebacked", "expertinsights", niche.toLowerCase().replace(/\s+/g, '')]
+            },
+            {
+              title: `5 ${niche} Experts Share Their Morning Routines For Peak Performance`,
+              category: "Industry Insights",
+              description: `Interview five respected ${niche} experts about their morning routines and how they prepare for peak performance. This content provides tremendous value to your audience by sharing practical wisdom from industry leaders, helping them improve their own routines.`,
+              tags: ["morningroutine", "expertadvice", "industryinsights"]
+            },
+            {
+              title: `The Hidden Psychology Behind ${niche} Success (Based on Research)`,
+              category: "Educational Content",
+              description: `Explore the psychological factors that separate successful ${niche} practitioners from the average. This research-backed content delivers genuine insights that your audience can apply immediately, positioning your brand as a thought leader focused on helping others succeed.`,
+              tags: ["psychology", "success", "researchbacked"]
+            },
+            {
+              title: `We Asked 100 ${audience} About Their Biggest ${niche} Challenges - Here's What We Learned`,
+              category: "Community Research",
+              description: `Share the results of surveying 100 members of your target audience about their biggest challenges with ${niche}. This community-focused content demonstrates that you understand your audience deeply and care about solving their problems, not just selling to them.`,
+              tags: ["communityinsights", "challenges", "research"]
+            },
+            {
+              title: `The Unconventional ${niche} Techniques That Transformed My Results`,
+              category: "Expert Techniques",
+              description: `Share lesser-known but effective techniques for ${niche} that most people overlook. Focus purely on delivering actionable advice that will help your audience get better results without any product promotion, establishing your brand as a generous expert.`,
+              tags: ["techniques", "unconventional", "results"]
+            }
+          ];
+          
+          // Calculate how many product-mentioning ideas we need to replace
+          const ideasToReplaceCount = Math.min(productMentionCount - 2, pureValueIdeas.length);
+          
+          // Identify which ideas mention products so we can replace them
+          const ideaIndicesWithProductMentions = [];
+          ideas.forEach((idea, index) => {
+            const combinedText = (idea.title + ' ' + idea.description).toLowerCase();
+            if (productMentionKeywords.some(keyword => combinedText.includes(keyword.toLowerCase()))) {
+              ideaIndicesWithProductMentions.push(index);
+            }
+          });
+          
+          // Replace the required number of product-mentioning ideas with pure value ideas
+          for (let i = 0; i < ideasToReplaceCount; i++) {
+            if (i < ideaIndicesWithProductMentions.length) {
+              ideas[ideaIndicesWithProductMentions[i]] = pureValueIdeas[i];
+            }
+          }
+          
+          console.log(`Replaced ${ideasToReplaceCount} product-mentioning ideas with pure value ideas`);
+        }
+      }
+      
       // Enhanced fallback ideas for each account type
       if (ideas.length < 5) {
         let fallbackIdeas = [];
