@@ -1,3 +1,4 @@
+
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
 import { Plus, ZoomIn, ZoomOut } from "lucide-react";
@@ -590,11 +591,12 @@ export default function ContentPlanner() {
         </div>
       </div>
 
-      <style jsx global>{`
+      {/* Fix: Use standard style tag instead of jsx global */}
+      <style dangerouslySetInnerHTML={{ __html: `
         .dragging {
           cursor: grabbing !important;
         }
-      `}</style>
+      `}} />
 
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <Droppable droppableId="columns" direction="horizontal" type="column">
