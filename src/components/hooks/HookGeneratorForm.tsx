@@ -33,8 +33,8 @@ const HookGeneratorForm = ({
       <div className="md:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle>Hook Generator</CardTitle>
-            <CardDescription>Tell us what your content is about and we'll create engaging hooks</CardDescription>
+            <CardTitle>Viral Hook Generator</CardTitle>
+            <CardDescription>Create attention-grabbing hooks that stop users from scrolling</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -61,7 +61,7 @@ const HookGeneratorForm = ({
                 id="details" 
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
-                placeholder="Add any specific details or requirements for your hooks" 
+                placeholder="Add any specific details, key messages, or emotional tone for your hooks" 
               />
             </div>
           </CardContent>
@@ -79,7 +79,7 @@ const HookGeneratorForm = ({
               ) : (
                 <>
                   <Zap className="mr-2 h-4 w-4" />
-                  Generate Hooks
+                  Generate Viral Hooks
                 </>
               )}
             </Button>
@@ -91,24 +91,24 @@ const HookGeneratorForm = ({
         <Card>
           <CardHeader>
             <CardTitle>Hook Types</CardTitle>
-            <CardDescription>Different styles for different platforms</CardDescription>
+            <CardDescription>Different styles proven to boost engagement</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="bg-muted rounded-lg p-3">
               <h3 className="font-medium">Question Hooks</h3>
-              <p className="text-sm text-muted-foreground">Engage your audience with thought-provoking questions</p>
+              <p className="text-sm text-muted-foreground">Trigger curiosity with thought-provoking questions</p>
             </div>
             <div className="bg-muted rounded-lg p-3">
               <h3 className="font-medium">Statistic Hooks</h3>
-              <p className="text-sm text-muted-foreground">Grab attention with surprising facts and numbers</p>
+              <p className="text-sm text-muted-foreground">Create pattern-interrupts with surprising data points</p>
             </div>
             <div className="bg-muted rounded-lg p-3">
               <h3 className="font-medium">Story Hooks</h3>
-              <p className="text-sm text-muted-foreground">Begin with a compelling narrative or anecdote</p>
+              <p className="text-sm text-muted-foreground">Build emotional connection with relatable narratives</p>
             </div>
             <div className="bg-muted rounded-lg p-3">
               <h3 className="font-medium">Challenge Hooks</h3>
-              <p className="text-sm text-muted-foreground">Address common misconceptions or beliefs</p>
+              <p className="text-sm text-muted-foreground">Create polarizing reactions by challenging assumptions</p>
             </div>
           </CardContent>
         </Card>

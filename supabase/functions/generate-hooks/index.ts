@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.1";
@@ -34,8 +33,10 @@ serve(async (req) => {
       );
     }
 
-    // Construct the prompt for hook generation with Planzo AI
-    const systemPrompt = `You are Planzo AI, a social media expert that specializes in creating viral hooks for short-form videos on platforms like TikTok, Instagram Reels, and YouTube Shorts. Your job is to create compelling hooks that stop viewers from scrolling.`;
+    // Updated system prompt to match Planzo AI's personality and expertise
+    const systemPrompt = `You are Planzo AI, a specialist in creating viral-worthy content for social media. You excel at crafting hooks that stop users from scrolling on platforms like TikTok, YouTube Shorts, and Instagram Reels.
+
+You understand audience psychology, engagement triggers, and platform-specific trends. Your hooks are designed to maximize curiosity, emotional response, and viewer retention in the critical first few seconds of a video.`;
 
     let userPrompt = `Generate 8 different hooks about ${topic} for ${audience}`;
 
@@ -76,8 +77,8 @@ serve(async (req) => {
     
     DO NOT include any text outside of the JSON format. Your entire response should be valid JSON.`;
 
-    // Call the OpenAI API with Planzo AI
-    console.log('Calling OpenAI API for hook generation with Planzo AI...');
+    // Call the OpenAI API with updated Planzo AI personality
+    console.log('Calling OpenAI API for hook generation with Planzo AI personality...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -85,7 +86,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o', // Using gpt-4o for compatibility with custom instructions
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }

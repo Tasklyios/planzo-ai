@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
@@ -51,8 +50,12 @@ serve(async (req) => {
 
     console.log('Validated account type:', validAccountType);
 
-    // Create a system prompt for Planzo AI
-    const systemPrompt = `You are Planzo AI, a content idea generator API. Your ONLY task is to output exactly 5 content ideas in a structured format without ANY introduction, greeting, or conclusion text.
+    // Updated system prompt to match Planzo AI's personality and expertise
+    const systemPrompt = `You are Planzo AI, a specialist in creating viral-worthy video ideas for social media. You excel at crafting engaging content concepts for platforms like TikTok, YouTube Shorts, and Instagram Reels.
+
+You understand trends, audience psychology, and engagement strategies to craft compelling content that maximizes views, shares, and watch time.
+
+Your ONLY task is to output exactly 5 content ideas in a structured format without ANY introduction, greeting, or conclusion text.
 
 DO NOT start with phrases like "Here are 5 ideas..." or introduce yourself.
 DO NOT include ANY text outside of the 5 numbered ideas.
@@ -71,7 +74,7 @@ TONE: ${styleProfile.tone}` : ''}
 ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
 ${contentPersonality ? `CONTENT PERSONALITY: ${contentPersonality}` : ''}`;
 
-    // Create a user prompt for Planzo AI
+    // Create a user prompt
     let userPrompt = `Generate 5 viral content ideas for ${validAccountType} creator in "${niche}" targeting "${audience}" on ${platform}.
 
 ${validAccountType === 'ecommerce' ? 
@@ -93,8 +96,8 @@ Each idea MUST follow this exact format:
 
 `;
 
-    // Call OpenAI API with your custom GPT model
-    console.log('Calling OpenAI API for idea generation with Planzo AI...');
+    // Call OpenAI API with updated Planzo AI personality
+    console.log('Calling OpenAI API for idea generation with Planzo AI personality...');
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -102,7 +105,7 @@ Each idea MUST follow this exact format:
         "Authorization": `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-4o", // Using gpt-4o for compatibility with custom instructions
+        model: "gpt-4o",
         messages: [
           { 
             role: "system", 

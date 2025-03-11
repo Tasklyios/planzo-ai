@@ -115,8 +115,9 @@ serve(async (req) => {
     // Detect if this is an ecommerce product-focused content or not
     const isProductFocused = detectProductFocus(scriptTitle, scriptDescription, scriptCategory);
     
-    // Create a system prompt for Planzo AI
-    let systemPrompt = `You are Planzo AI, a script API that produces short-form video scripts. 
+    // Updated system prompt to match Planzo AI's personality and expertise
+    let systemPrompt = `You are Planzo AI, a specialist in creating viral-worthy scripts for social media videos. You excel at crafting engaging scripts for platforms like TikTok, YouTube Shorts, and Instagram Reels.
+
 ONLY output the script text with no introduction or conclusion. 
 DO NOT prefix with phrases like "Here's a script" or "Script for". 
 START DIRECTLY with the script content.
@@ -204,8 +205,8 @@ Format with line breaks to indicate speaking rhythm.
 Include [camera directions] or [action notes] in brackets where needed.
 BE CONCISE - focus on high-impact statements and specific value.`;
 
-    // Call OpenAI API with Planzo AI
-    console.log('Calling OpenAI API for script generation with Planzo AI');
+    // Call OpenAI API with updated Planzo AI personality
+    console.log('Calling OpenAI API for script generation with Planzo AI personality');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -213,7 +214,7 @@ BE CONCISE - focus on high-impact statements and specific value.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o', // Using gpt-4o for compatibility with custom instructions
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
