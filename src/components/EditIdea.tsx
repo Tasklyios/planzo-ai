@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Wand2, Trash2 } from "lucide-react";
 import { Check } from "lucide-react";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 interface EditIdeaProps {
   ideaId: string | null;
@@ -24,6 +25,8 @@ interface IdeaData {
   platform?: string;
   color?: string;
   script?: string;
+  hook_text?: string;
+  hook_category?: string;
   scheduled_for?: string | null;
   is_saved?: boolean;
   status?: string;
@@ -123,6 +126,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           platform: idea.platform,
           color: idea.color || 'blue',
           script: idea.script,
+          hook_text: idea.hook_text,
+          hook_category: idea.hook_category,
           scheduled_for: idea.scheduled_for,
           is_saved: true, // Always save when editing
           status: idea.status || "ideas"
@@ -291,6 +296,27 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
               onChange={(e) => setIdea({ ...idea, tags: e.target.value.split(",").map(t => t.trim()) })}
             />
           </div>
+
+          {idea.hook_text && (
+            <div className="grid gap-2">
+              <label>Hook</label>
+              <div className="relative">
+                <Textarea
+                  value={idea.hook_text}
+                  onChange={(e) => setIdea({ ...idea, hook_text: e.target.value })}
+                  className="pr-16"
+                />
+                {idea.hook_category && (
+                  <Badge 
+                    className="absolute top-2 right-2"
+                    variant="outline"
+                  >
+                    {idea.hook_category}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-2">
             <div className="flex justify-between items-center">

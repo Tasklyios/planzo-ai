@@ -1,16 +1,22 @@
+
 import React, { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { generateHooks, saveHook, getSavedHooks, deleteSavedHook } from '@/services/hookService';
 import { HookType, SavedHook } from '@/types/hooks';
+import { GeneratedIdea } from '@/types/idea';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import HookGeneratorForm from '@/components/hooks/HookGeneratorForm';
 import GeneratedHooksGrid from '@/components/hooks/GeneratedHooksGrid';
 import SavedHooksView from '@/components/hooks/SavedHooksView';
+import SavedIdeaSelector from '@/components/hooks/SavedIdeaSelector';
+import ApplyHookToIdea from '@/components/hooks/ApplyHookToIdea';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const Hooks = () => {
   const { toast } = useToast();
@@ -23,6 +29,8 @@ const Hooks = () => {
   const [activeTab, setActiveTab] = useState('generate');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIdea, setSelectedIdea] = useState<GeneratedIdea | null>(null);
+  const [selectedHook, setSelectedHook] = useState<HookType | null>(null);
 
   // Fetch saved hooks
   const { data: savedHooks, isLoading: isFetchingHooks } = useQuery({
@@ -69,11 +77,11 @@ const Hooks = () => {
   });
 
   const handleGenerateHooks = async () => {
-    if (!topic || !audience) {
+    if (!topic && !selectedIdea) {
       toast({
         variant: "destructive",
         title: "Missing information",
-        description: "Please provide both topic and target audience.",
+        description: "Please provide a topic or select a saved idea.",
       });
       return;
     }
@@ -81,7 +89,13 @@ const Hooks = () => {
     setIsGenerating(true);
     setError(null);
     try {
-      const hooks = await generateHooks(topic, audience, details);
+      // If an idea is selected, use its title and description
+      const topicToUse = selectedIdea ? selectedIdea.title : topic;
+      const detailsToUse = selectedIdea ? 
+        `${selectedIdea.description}\n\nTags: ${selectedIdea.tags?.join(', ')}` : 
+        details;
+      
+      const hooks = await generateHooks(topicToUse, audience, detailsToUse);
       console.log("Hooks received from service:", hooks);
       setGeneratedHooks(hooks);
     } catch (error: any) {
@@ -109,6 +123,8 @@ const Hooks = () => {
 
   const handleSaveHook = (hook: HookType) => {
     saveHookMutation.mutate(hook);
+    // Set the selected hook when saving
+    setSelectedHook(hook);
   };
 
   const handleDeleteHook = (id: string) => {
@@ -131,6 +147,35 @@ const Hooks = () => {
     return '';
   };
 
+  const handleSelectIdea = (idea: GeneratedIdea) => {
+    setSelectedIdea(idea);
+    
+    // Populate the form with the idea's information
+    setTopic(idea.title);
+    
+    if (idea.tags && idea.tags.length > 0) {
+      // Try to extract audience information from tags
+      const audienceTags = idea.tags.filter(tag => 
+        tag.toLowerCase().includes('audience') || 
+        tag.toLowerCase().includes('demographic')
+      );
+      
+      if (audienceTags.length > 0) {
+        setAudience(audienceTags.join(', '));
+      }
+    }
+    
+    setDetails(idea.description);
+    
+    // If we have a selected hook already, we might want to compare it with the idea
+    console.log("Selected idea for hook generation:", idea);
+  };
+
+  const handleSelectHook = (hook: HookType) => {
+    setSelectedHook(hook);
+    console.log("Selected hook to apply to idea:", hook);
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex flex-col gap-2">
@@ -145,16 +190,49 @@ const Hooks = () => {
         </TabsList>
         
         <TabsContent value="generate" className="space-y-4">
-          <HookGeneratorForm 
-            topic={topic}
-            setTopic={setTopic}
-            audience={audience}
-            setAudience={setAudience}
-            details={details}
-            setDetails={setDetails}
-            handleGenerateHooks={handleGenerateHooks}
-            isGenerating={isGenerating}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <HookGeneratorForm 
+                topic={topic}
+                setTopic={setTopic}
+                audience={audience}
+                setAudience={setAudience}
+                details={details}
+                setDetails={setDetails}
+                handleGenerateHooks={handleGenerateHooks}
+                isGenerating={isGenerating}
+              />
+            </div>
+            
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Video Idea</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <SavedIdeaSelector onIdeaSelect={handleSelectIdea} />
+                  
+                  {selectedIdea && (
+                    <div className="mt-4 space-y-2">
+                      <Badge>{selectedIdea.category}</Badge>
+                      <h3 className="font-medium">{selectedIdea.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedIdea.description.substring(0, 100)}
+                        {selectedIdea.description.length > 100 ? '...' : ''}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {selectedIdea && selectedHook && (
+                    <ApplyHookToIdea 
+                      idea={selectedIdea} 
+                      hook={selectedHook} 
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
 
           {error && (
             <Alert variant="destructive" className="mb-4">
@@ -207,9 +285,10 @@ const Hooks = () => {
             savedHooks={savedHooks}
             isFetchingHooks={isFetchingHooks}
             handleDeleteHook={handleDeleteHook}
-            isDeleting={deleteHookMutation.isPending}
             filterHooksByCategory={filterHooksByCategory}
             getHookText={getHookText}
+            onSelectHook={handleSelectHook}
+            selectedIdea={selectedIdea}
           />
         </TabsContent>
       </Tabs>

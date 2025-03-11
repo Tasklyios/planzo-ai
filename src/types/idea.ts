@@ -28,6 +28,8 @@ export interface GeneratedIdea {
   tags: string[];
   platform?: string;
   color?: string;
+  hook_text?: string;
+  hook_category?: string;
   is_saved?: boolean;
   scheduled_for?: string;
 }
