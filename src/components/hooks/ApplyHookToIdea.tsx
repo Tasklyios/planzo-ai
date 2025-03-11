@@ -22,10 +22,13 @@ const ApplyHookToIdea = ({ idea, hook }: ApplyHookToIdeaProps) => {
     mutationFn: async () => {
       if (!idea || !hook) return null;
       
+      // Get the hook text from the correct property based on the hook type
+      const hookText = hook.hook_text;
+      
       const { data, error } = await supabase
         .from('video_ideas')
         .update({ 
-          hook_text: hook.hook_text || hook.hook || '',
+          hook_text: hookText,
           hook_category: hook.category 
         })
         .eq('id', idea.id)

@@ -340,6 +340,8 @@ export type Database = {
           color: string | null
           created_at: string | null
           description: string
+          hook_category: string | null
+          hook_text: string | null
           id: string
           is_ad: boolean | null
           is_saved: boolean | null
@@ -357,6 +359,8 @@ export type Database = {
           color?: string | null
           created_at?: string | null
           description: string
+          hook_category?: string | null
+          hook_text?: string | null
           id?: string
           is_ad?: boolean | null
           is_saved?: boolean | null
@@ -374,6 +378,8 @@ export type Database = {
           color?: string | null
           created_at?: string | null
           description?: string
+          hook_category?: string | null
+          hook_text?: string | null
           id?: string
           is_ad?: boolean | null
           is_saved?: boolean | null
