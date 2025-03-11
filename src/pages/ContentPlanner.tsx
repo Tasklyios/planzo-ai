@@ -1,6 +1,6 @@
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlannerColumn } from "@/components/planner/PlannerColumn";
 import { PlannerCard } from "@/components/planner/PlannerCard";
@@ -15,7 +15,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -550,59 +549,100 @@ export default function ContentPlanner() {
     // Refresh data after a column is deleted
     fetchColumnsAndIdeas();
   };
+  
+  // Add new state for zoom level
+  const [zoomLevel, setZoomLevel] = useState(100);
+
+  // Add zoom control functions
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 10, 150)); // Max zoom 150%
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 10, 50)); // Min zoom 50%
+  };
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Content Planner</h1>
-        <Dialog open={addColumnDialogOpen} onOpenChange={setAddColumnDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2" />
-              Add Column
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 mr-4 bg-accent/50 rounded-lg p-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleZoomOut}
+              className="h-8 w-8"
+            >
+              <ZoomOut className="h-4 w-4" />
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Column</DialogTitle>
-              <DialogDescription>
-                Create a new column to organize your content workflow.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleAddColumn)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Column Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter column title..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setAddColumnDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">Add Column</Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+            <span className="text-sm font-medium w-12 text-center">
+              {zoomLevel}%
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleZoomIn}
+              className="h-8 w-8"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+          </div>
+          <Dialog open={addColumnDialogOpen} onOpenChange={setAddColumnDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2" />
+                Add Column
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Column</DialogTitle>
+                <DialogDescription>
+                  Create a new column to organize your content workflow.
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleAddColumn)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Column Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter column title..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setAddColumnDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">Add Column</Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <Droppable droppableId="columns" direction="horizontal" type="column">
           {(provided) => (
             <div 
-              className="flex gap-4 overflow-x-auto pb-4" 
+              className="flex gap-4 overflow-x-auto pb-4 transition-transform duration-200" 
               ref={provided.innerRef}
               {...provided.droppableProps}
+              style={{
+                transform: `scale(${zoomLevel / 100})`,
+                transformOrigin: 'top left',
+                width: `${100 * (100 / zoomLevel)}%`,
+                minWidth: '100%'
+              }}
             >
               {columns.map((column, index) => (
                 <PlannerColumn 
