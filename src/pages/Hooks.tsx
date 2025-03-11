@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,14 +30,13 @@ const Hooks = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedIdea, setSelectedIdea] = useState<GeneratedIdea | null>(null);
   const [selectedHook, setSelectedHook] = useState<HookType | null>(null);
+  const [useSavedIdea, setUseSavedIdea] = useState(false);
 
-  // Fetch saved hooks
   const { data: savedHooks, isLoading: isFetchingHooks } = useQuery({
     queryKey: ['savedHooks'],
     queryFn: getSavedHooks,
   });
 
-  // Save hook mutation
   const saveHookMutation = useMutation({
     mutationFn: saveHook,
     onSuccess: () => {
@@ -57,7 +55,6 @@ const Hooks = () => {
     },
   });
 
-  // Delete hook mutation
   const deleteHookMutation = useMutation({
     mutationFn: deleteSavedHook,
     onSuccess: () => {
@@ -77,11 +74,11 @@ const Hooks = () => {
   });
 
   const handleGenerateHooks = async () => {
-    if (!topic && !selectedIdea) {
+    if ((!topic && !selectedIdea) || (useSavedIdea && !selectedIdea)) {
       toast({
         variant: "destructive",
         title: "Missing information",
-        description: "Please provide a topic or select a saved idea.",
+        description: useSavedIdea ? "Please select a saved idea." : "Please provide a topic.",
       });
       return;
     }
@@ -89,14 +86,12 @@ const Hooks = () => {
     setIsGenerating(true);
     setError(null);
     try {
-      // If an idea is selected, use its title and description
       const topicToUse = selectedIdea ? selectedIdea.title : topic;
       const detailsToUse = selectedIdea ? 
         `${selectedIdea.description}\n\nTags: ${selectedIdea.tags?.join(', ')}` : 
         details;
       
       const hooks = await generateHooks(topicToUse, audience, detailsToUse);
-      console.log("Hooks received from service:", hooks);
       setGeneratedHooks(hooks);
     } catch (error: any) {
       console.error("Failed to generate hooks:", error);
@@ -123,7 +118,6 @@ const Hooks = () => {
 
   const handleSaveHook = (hook: HookType) => {
     saveHookMutation.mutate(hook);
-    // Set the selected hook when saving
     setSelectedHook(hook);
   };
 
@@ -140,7 +134,6 @@ const Hooks = () => {
     });
   };
 
-  // Function to get the hook text regardless of whether it's a HookType or SavedHook
   const getHookText = (hook: HookType | SavedHook): string => {
     if ('hook_text' in hook) return hook.hook_text;
     if ('hook' in hook) return hook.hook;
@@ -150,11 +143,9 @@ const Hooks = () => {
   const handleSelectIdea = (idea: GeneratedIdea) => {
     setSelectedIdea(idea);
     
-    // Populate the form with the idea's information
     setTopic(idea.title);
     
     if (idea.tags && idea.tags.length > 0) {
-      // Try to extract audience information from tags
       const audienceTags = idea.tags.filter(tag => 
         tag.toLowerCase().includes('audience') || 
         tag.toLowerCase().includes('demographic')
@@ -166,9 +157,6 @@ const Hooks = () => {
     }
     
     setDetails(idea.description);
-    
-    // If we have a selected hook already, we might want to compare it with the idea
-    console.log("Selected idea for hook generation:", idea);
   };
 
   const handleSelectHook = (hook: HookType) => {
@@ -201,6 +189,10 @@ const Hooks = () => {
                 setDetails={setDetails}
                 handleGenerateHooks={handleGenerateHooks}
                 isGenerating={isGenerating}
+                useSavedIdea={useSavedIdea}
+                setUseSavedIdea={setUseSavedIdea}
+                onIdeaSelect={handleSelectIdea}
+                selectedIdea={selectedIdea}
               />
             </div>
             
