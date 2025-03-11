@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { 
   Calendar, 
@@ -88,12 +89,24 @@ interface AppSidebarProps {
 const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      setIsLoggingOut(true);
       
+      // First, clean up local storage
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Attempt to sign out
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        throw error;
+      }
+      
+      // Force navigation to auth page even if signOut had an error
       navigate("/auth");
       
       toast({
@@ -101,11 +114,18 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
         description: "You have been logged out of your account.",
       });
     } catch (error: any) {
+      console.error("Error in logout process:", error);
+      
+      // Force navigation to auth page as fallback
+      navigate("/auth");
+      
       toast({
         variant: "destructive",
-        title: "Error logging out",
-        description: error.message,
+        title: "There was an issue logging out",
+        description: "You've been redirected to the login page.",
       });
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -198,10 +218,11 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
               handleLogout();
               if (onNavItemClick) onNavItemClick();
             }}
+            disabled={isLoggingOut}
             className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full hover:bg-primary/10 dark:hover:bg-accent"
           >
             <LogOut className="w-5 h-5" />
-            Logout
+            {isLoggingOut ? "Logging out..." : "Logout"}
           </button>
         </div>
       </div>

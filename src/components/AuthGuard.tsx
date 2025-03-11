@@ -51,6 +51,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
 
     checkAuth();
 
+    // Set up subscription to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, session ? "session exists" : "no session");
       
