@@ -82,10 +82,13 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
               ...provided.draggableProps.style,
               width: snapshot.isDragging ? "calc(100% - 8px)" : undefined,
               transform: snapshot.isDragging 
-                ? `${provided.draggableProps.style?.transform} rotate(1deg)` 
+                ? provided.draggableProps.style?.transform
                 : provided.draggableProps.style?.transform,
-              // Add a new property to improve cursor alignment
-              cursor: snapshot.isDragging ? "grabbing" : "grab"
+              cursor: snapshot.isDragging ? "grabbing" : "grab",
+              // Set a fixed positioning reference for drag alignment
+              transformOrigin: "top left",
+              left: snapshot.isDragging ? 0 : undefined,
+              top: snapshot.isDragging ? 0 : undefined
             }}
           >
             <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">

@@ -1,4 +1,3 @@
-
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
 import { Plus, ZoomIn, ZoomOut } from "lucide-react";
@@ -197,11 +196,13 @@ export default function ContentPlanner() {
   const onDragStart = () => {
     setIsDragging(true);
     document.body.classList.add('dragging');
+    document.body.setAttribute('data-dragging', 'true');
   };
 
   const onDragEnd = async (result: DropResult) => {
     setIsDragging(false);
     document.body.classList.remove('dragging');
+    document.body.removeAttribute('data-dragging');
     
     const { source, destination, type, draggableId } = result;
     
@@ -591,10 +592,15 @@ export default function ContentPlanner() {
         </div>
       </div>
 
-      {/* Fix: Use standard style tag instead of jsx global */}
       <style dangerouslySetInnerHTML={{ __html: `
         .dragging {
           cursor: grabbing !important;
+        }
+        [data-dragging="true"] * {
+          cursor: grabbing !important;
+        }
+        .react-beautiful-dnd-draggable {
+          transition: transform 0.2s;
         }
       `}} />
 
