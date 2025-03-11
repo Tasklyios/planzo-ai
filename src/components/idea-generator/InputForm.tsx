@@ -215,7 +215,7 @@ const InputForm = ({
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
                   <Video className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Type</label>
+                  <label className="text-xs md:text-sm font-medium text-foreground">Video Type</label>
                 </div>
                 <input
                   type="text"
@@ -401,4 +401,3 @@ const InputForm = ({
 }
 
 export default InputForm;
-
