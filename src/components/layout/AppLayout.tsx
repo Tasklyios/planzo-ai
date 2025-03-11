@@ -4,7 +4,7 @@ import AppSidebar from "./AppSidebar";
 import { SearchBar } from "@/components/SearchBar";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useMobile } from "@/hooks/use-mobile";
 import { 
   Sheet,
   SheetContent,
@@ -17,7 +17,7 @@ interface AppLayoutProps {
 
 const AppLayout = ({ children }: AppLayoutProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMobile();
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -57,3 +57,4 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 };
 
 export default AppLayout;
+
