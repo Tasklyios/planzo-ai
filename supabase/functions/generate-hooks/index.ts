@@ -34,8 +34,8 @@ serve(async (req) => {
       );
     }
 
-    // Construct the prompt for hook generation
-    const systemPrompt = `You are a social media expert that specializes in creating viral hooks for short-form videos on platforms like TikTok, Instagram Reels, and YouTube Shorts. Your job is to create compelling hooks that stop viewers from scrolling.`;
+    // Construct the prompt for hook generation with Planzo AI
+    const systemPrompt = `You are Planzo AI, a social media expert that specializes in creating viral hooks for short-form videos on platforms like TikTok, Instagram Reels, and YouTube Shorts. Your job is to create compelling hooks that stop viewers from scrolling.`;
 
     let userPrompt = `Generate 8 different hooks about ${topic} for ${audience}`;
 
@@ -76,8 +76,8 @@ serve(async (req) => {
     
     DO NOT include any text outside of the JSON format. Your entire response should be valid JSON.`;
 
-    // Call the OpenAI API
-    console.log('Calling OpenAI API for hook generation...');
+    // Call the OpenAI API with Planzo AI
+    console.log('Calling OpenAI API for hook generation with Planzo AI...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -85,7 +85,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o', // Using gpt-4o for compatibility with custom instructions
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }

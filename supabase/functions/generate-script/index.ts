@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.1";
@@ -116,8 +115,8 @@ serve(async (req) => {
     // Detect if this is an ecommerce product-focused content or not
     const isProductFocused = detectProductFocus(scriptTitle, scriptDescription, scriptCategory);
     
-    // Create a focused system prompt for script writing - simplified to avoid introductions
-    let systemPrompt = `You are a script API that produces short-form video scripts. 
+    // Create a system prompt for Planzo AI
+    let systemPrompt = `You are Planzo AI, a script API that produces short-form video scripts. 
 ONLY output the script text with no introduction or conclusion. 
 DO NOT prefix with phrases like "Here's a script" or "Script for". 
 START DIRECTLY with the script content.
@@ -205,8 +204,8 @@ Format with line breaks to indicate speaking rhythm.
 Include [camera directions] or [action notes] in brackets where needed.
 BE CONCISE - focus on high-impact statements and specific value.`;
 
-    // Call OpenAI API with creative parameters
-    console.log('Calling OpenAI API for script generation');
+    // Call OpenAI API with Planzo AI
+    console.log('Calling OpenAI API for script generation with Planzo AI');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -214,7 +213,7 @@ BE CONCISE - focus on high-impact statements and specific value.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o', // Using gpt-4o for compatibility with custom instructions
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -265,7 +264,7 @@ BE CONCISE - focus on high-impact statements and specific value.`;
 });
 
 // Helper function to detect if content is product-focused
-function detectProductFocus(title: string, description: string, category: string): boolean {
+function detectProductFocus(title, description, category) {
   const combinedText = (title + ' ' + description + ' ' + category).toLowerCase();
   
   // Product-focused categories

@@ -51,8 +51,8 @@ serve(async (req) => {
 
     console.log('Validated account type:', validAccountType);
 
-    // Create a very direct, stricter system prompt to avoid introductory text
-    const systemPrompt = `You are a content idea generator API. Your ONLY task is to output exactly 5 content ideas in a structured format without ANY introduction, greeting, or conclusion text.
+    // Create a system prompt for Planzo AI
+    const systemPrompt = `You are Planzo AI, a content idea generator API. Your ONLY task is to output exactly 5 content ideas in a structured format without ANY introduction, greeting, or conclusion text.
 
 DO NOT start with phrases like "Here are 5 ideas..." or introduce yourself.
 DO NOT include ANY text outside of the 5 numbered ideas.
@@ -71,7 +71,7 @@ TONE: ${styleProfile.tone}` : ''}
 ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
 ${contentPersonality ? `CONTENT PERSONALITY: ${contentPersonality}` : ''}`;
 
-    // Create a simple, direct user prompt
+    // Create a user prompt for Planzo AI
     let userPrompt = `Generate 5 viral content ideas for ${validAccountType} creator in "${niche}" targeting "${audience}" on ${platform}.
 
 ${validAccountType === 'ecommerce' ? 
@@ -93,8 +93,8 @@ Each idea MUST follow this exact format:
 
 `;
 
-    // Call OpenAI with your custom GPT model
-    console.log('Calling OpenAI API for idea generation with custom GPT model...');
+    // Call OpenAI API with your custom GPT model
+    console.log('Calling OpenAI API for idea generation with Planzo AI...');
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -102,10 +102,16 @@ Each idea MUST follow this exact format:
         "Authorization": `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-4o", // Using gpt-4o as it's a versatile model that can handle custom instructions well
+        model: "gpt-4o", // Using gpt-4o for compatibility with custom instructions
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
+          { 
+            role: "system", 
+            content: systemPrompt 
+          },
+          { 
+            role: "user", 
+            content: userPrompt 
+          }
         ],
         temperature: 1.2, // Higher temperature for more creativity and variety
         max_tokens: 1200,
