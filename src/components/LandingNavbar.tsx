@@ -7,6 +7,13 @@ import { Logo } from "@/components/ui/logo";
 const LandingNavbar = () => {
   const navigate = useNavigate();
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <header className="fixed w-full bg-white border-b border-border z-50">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -18,15 +25,27 @@ const LandingNavbar = () => {
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
-          <Link to="#features">
-            <Button variant="ghost" className="text-[#333333]">Features</Button>
-          </Link>
-          <Link to="#how-it-works">
-            <Button variant="ghost" className="text-[#333333]">How it works</Button>
-          </Link>
-          <Link to="#pricing">
-            <Button variant="ghost" className="text-[#333333]">Pricing</Button>
-          </Link>
+          <Button 
+            variant="ghost" 
+            className="text-[#333333]"
+            onClick={() => scrollToSection('features')}
+          >
+            Features
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="text-[#333333]"
+            onClick={() => scrollToSection('how-it-works')}
+          >
+            How it works
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="text-[#333333]"
+            onClick={() => scrollToSection('pricing')}
+          >
+            Pricing
+          </Button>
           
           <Button 
             variant="default" 
