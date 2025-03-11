@@ -80,7 +80,8 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
             )}
             style={{
               ...provided.draggableProps.style,
-              width: snapshot.isDragging ? "calc(100% - 8px)" : undefined,
+              // Fix the width to maintain consistent size during drag
+              width: "calc(100% - 8px)",
               transform: snapshot.isDragging 
                 ? provided.draggableProps.style?.transform
                 : provided.draggableProps.style?.transform,
