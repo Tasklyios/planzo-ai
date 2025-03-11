@@ -6,80 +6,69 @@ import {
   Split,
   Image,
   Download,
-  Speaker
+  Calendar,
+  Lightbulb,
+  Sparkles,
+  Target
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 const Features = () => {
   const features = [
     {
-      icon: <MessageSquare className="text-[#0073FF]" size={24} />,
-      title: "Fake Texts Videos",
-      description: "Have an idea for a convo that would go viral? Make it into a full video in just a few clicks.",
-      image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/messages-screenshot.png"
+      icon: <Lightbulb className="text-primary h-8 w-8" />,
+      title: "AI Idea Generator",
+      description: "Get endless viral-worthy video ideas specifically designed for your niche and audience.",
     },
     {
-      icon: <Mic className="text-[#0073FF]" size={24} />,
-      title: "Generate AI Voiceovers",
-      description: "It's never been easier to make the AI-narrated videos you see on your timeline.",
-      image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/voiceover-interface.png"
+      icon: <BookOpen className="text-primary h-8 w-8" />,
+      title: "Script Generator",
+      description: "Create engaging scripts optimized for short-form video performance with a few clicks.",
     },
     {
-      icon: <BookOpen className="text-[#0073FF]" size={24} />,
-      title: "Create Reddit Story Videos",
-      description: "Write your own script or generate one auto-magically from a Reddit link.",
-      image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/reddit-interface.png"
+      icon: <Mic className="text-primary h-8 w-8" />,
+      title: "AI Voiceovers",
+      description: "Generate natural-sounding voiceovers for your videos in multiple languages and styles.",
     },
     {
-      icon: <Split className="text-[#0073FF]" size={24} />,
-      title: "Create Split-Screen Videos",
-      description: "Make your clips more engaging by showing them beside premium gameplay.",
-      image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/split-screen.png"
+      icon: <Calendar className="text-primary h-8 w-8" />,
+      title: "Content Calendar",
+      description: "Plan and schedule your content with an intuitive drag-and-drop calendar interface.",
     },
     {
-      icon: <Image className="text-[#0073FF]" size={24} />,
-      title: "Text-to-Image Videos",
-      description: "Generate images for your videos with text prompts.",
-      image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/text-to-image.png"
+      icon: <Target className="text-primary h-8 w-8" />,
+      title: "Trend Analysis",
+      description: "Stay ahead with AI-powered insights on trending topics in your content niche.",
     },
     {
-      icon: <Download className="text-[#0073FF]" size={24} />,
-      title: "Download TikTok & Youtube Videos",
-      description: "Avoid sketchy sites and get content for your next video.",
-      image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/download-interface.png"
+      icon: <Sparkles className="text-primary h-8 w-8" />,
+      title: "Hook Generator",
+      description: "Create attention-grabbing hooks that stop the scroll and increase engagement.",
     }
   ];
 
   return (
-    <section className="bg-gray-50 py-16">
+    <section className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Everything You Need to Create
+            <span className="block">Viral-Worthy Content</span>
+          </h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Our all-in-one platform gives creators the tools they need to ideate, create, and plan engaging video content
+          </p>
+        </div>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {features.map((feature, index) => (
-            <Card 
-              key={index}
-              className="overflow-hidden hover:shadow-lg transition-shadow duration-300 fade-up"
-              style={{ animationDelay: `${index * 100}ms` }}
+            <div 
+              key={index} 
+              className="bg-white border border-gray-100 rounded-xl p-8 hover:shadow-md transition-shadow"
             >
-              <CardHeader>
-                <div className="flex items-center gap-2 mb-2">
-                  {feature.icon}
-                  <CardTitle className="text-xl text-navy-blue">
-                    {feature.title}
-                  </CardTitle>
-                </div>
-                <CardDescription className="text-gray-600">
-                  {feature.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <img
-                  src={feature.image}
-                  alt={feature.title}
-                  className="w-full h-48 object-cover rounded-b-lg"
-                  loading="lazy"
-                />
-              </CardContent>
-            </Card>
+              <div className="mb-5">{feature.icon}</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+              <p className="text-gray-600">{feature.description}</p>
+            </div>
           ))}
         </div>
       </div>
