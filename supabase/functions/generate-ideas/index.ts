@@ -51,23 +51,36 @@ serve(async (req) => {
 
     console.log('Validated account type:', validAccountType);
 
-    // Create a detailed system prompt that positions the AI as a marketing expert
+    // Enhanced system prompt with more specific guidance
     const systemPrompt = `You are an elite marketing strategist and viral content expert specializing in ${platform} content.
 
 Your expertise is creating viral content ideas for ${validAccountType} creators in the "${niche}" space targeting "${audience}".
 
 CONTENT REQUIREMENTS:
-- Create COMPLETELY ORIGINAL ideas (no templates or formulas!)
+- Create COMPLETELY ORIGINAL ideas that would be considered high-quality and professional 
 - Each idea must have a unique angle specific to ${niche}
-- Ideas should be attention-grabbing but deliverable
-- Focus on what would actually go viral for this specific creator
+- Ideas should be attention-grabbing, value-driven, and achievable
+- Focus on what would actually go viral for this specific creator while maintaining credibility
 
 ${validAccountType === 'personal' ? 
-  `For this PERSONAL CREATOR account, focus on personality-driven content that builds authority and connection.` : 
+  `For this PERSONAL CREATOR account:
+  - Focus on building professional authority and genuine connection
+  - Include a mix of formats: storytelling, tutorials, insider knowledge, and list-style content
+  - Ideas should showcase expertise without appearing forced or inauthentic
+  - Balance entertainment value with professional insights` : 
   validAccountType === 'business' ? 
-  `For this BUSINESS account, focus on thought leadership, industry expertise, and building brand trust.` :
+  `For this BUSINESS account:
+  - Focus on thought leadership, industry expertise, and building brand trust
+  - Ideas should position the business as an authority while providing genuine value
+  - Include a mix of educational content, behind-the-scenes, and industry insights
+  - Prioritize ideas that establish credibility and trust with potential clients` :
   validAccountType === 'ecommerce' ? 
-  `For this ECOMMERCE account, focus on product storytelling, demonstrations, and converting viewers to customers.` : 
+  `For this ECOMMERCE account:
+  - Include a balance of direct product promotion and pure value-focused content
+  - 60% of ideas should focus purely on helping the audience without explicit product mentions
+  - 40% of ideas should showcase products in natural, problem-solving contexts
+  - Prioritize educational content that positions the brand as an industry leader
+  - Focus on building an engaged community around the niche, not just selling products` : 
   ''}
 
 ${styleProfile ? `CREATOR'S UNIQUE STYLE: "${styleProfile.name}": ${styleProfile.description}
@@ -78,7 +91,7 @@ ${contentPersonality ? `CONTENT PERSONALITY: ${contentPersonality}` : ''}
 
 PLATFORM ADAPTATION: Optimize specifically for ${platform} with the right format, hooks, and engagement tactics.`;
 
-    // Create a detailed user prompt with clear instructions
+    // Enhanced user prompt with clearer instructions
     const userPrompt = `Create 5 original, viral-potential video ideas for a ${validAccountType} creator in the "${niche}" niche targeting "${audience}" on ${platform}.
 
 IMPORTANT CONTEXT ABOUT THIS CREATOR:
@@ -93,13 +106,32 @@ ${customIdeas ? `- Creator's Own Ideas: "${customIdeas}"` : ""}
 ${previousIdeas && previousIdeas.titles && previousIdeas.titles.length ? 
   `DO NOT REPEAT THESE PREVIOUS IDEAS: ${previousIdeas.titles.slice(0, 5).join(', ')}` : ''}
 
+${validAccountType === 'personal' ? 
+  `FOR PERSONAL BRANDS:
+  - Create a MIX of content formats: storytelling (1-2 ideas), educational/tutorial (1-2 ideas), and list-based (1-2 ideas)
+  - Ideas must be professional, credible, and authentic - avoid anything that seems forced or gimmicky
+  - Each idea should showcase expertise while still being entertaining
+  - Focus on ideas that build meaningful connection with ${audience}` :
+  validAccountType === 'ecommerce' ? 
+  `FOR ECOMMERCE BRANDS:
+  - Include 3 ideas that focus ONLY on helping the audience with no direct product promotion
+  - Include 2 ideas that naturally showcase products as solutions to audience problems
+  - All ideas should establish the brand as a trusted authority in the ${niche} space
+  - Focus on educational content that genuinely helps ${audience}
+  - Avoid overly promotional angles - prioritize building trust and engagement` :
+  validAccountType === 'business' ? 
+  `FOR BUSINESS BRANDS:
+  - Ideas should establish industry authority and thought leadership
+  - Include case studies, insider knowledge, and educational content
+  - Focus on building trust and credibility with potential clients
+  - Demonstrate expertise without being overly technical or jargon-heavy` : ''
+}
+
 Each idea MUST include:
 1. A HIGHLY SPECIFIC title that would make viewers stop scrolling (not generic "How to" or "5 Tips" formulas)
 2. A relevant content category
 3. A detailed description explaining why this idea would perform well with ${audience}
 4. 3-5 relevant hashtags or tags
-
-IF THIS IS AN ECOMMERCE ACCOUNT FOR ${niche.toUpperCase()}, focus on product demos, unboxings, behind-the-scenes, customer testimonials, and other content that highlights your products in action.
 
 FORMAT AS VALID JSON ONLY:
 {
@@ -190,35 +222,41 @@ FORMAT AS VALID JSON ONLY:
         if (templatedIdeasCount >= Math.floor(ideas.length * 0.6)) {
           console.log("Detected templated ideas, running fallback with creative examples");
           
-          // Use more specific instructions with examples tailored to account type
+          // Enhanced fallback examples based on account type
           let exampleIdeas = "";
           
           if (validAccountType === 'ecommerce') {
             exampleIdeas = `
-- "I Tested Our ${niche} Products in Extreme Conditions — The Results Shocked Customers"
-- "What Happens When a Pro Athlete Tries Our ${niche} Products for 30 Days"
-- "The ${niche} Product Feature That's Making Competitors Nervous"
-- "We Let ${audience} Design Our Next ${niche} Product and This Happened"
-- "Behind-the-Scenes: How We Actually Make Our Best-Selling ${niche} Product"`;
+- "We Asked Olympians How They Use Our ${niche} Products - They Didn't Hold Back"
+- "The ${niche} Ritual That All Pro Athletes Swear By (No Products Required)"
+- "I Spent 30 Days Testing Every ${niche} Hack So You Don't Have To"
+- "The Surprising Connection Between ${niche} and Mental Performance That No One's Talking About"
+- "We Let ${audience} Design Our Next ${niche} Innovation and The Results Are Fascinating"`;
           } else if (validAccountType === 'business') {
             exampleIdeas = `
-- "I Analyzed 50 ${niche} Businesses That Failed — Here's the Pattern They Missed"
-- "The Controversial ${niche} Strategy That Tripled Our Revenue Last Quarter"
-- "We Invited Our Biggest ${niche} Competitor for an Interview — Here's What They Revealed"
-- "The ${niche} Framework That Changed How We Run Our Entire Business"
-- "Leaked: Internal Documents Show How Top ${niche} Companies Really Make Decisions"`;
+- "The Client Strategy We Refused to Share With Our ${niche} Competitors Until Now"
+- "What 100 Successful ${niche} Professionals Have in Common - Our 3-Year Research Study"
+- "The Unconventional ${niche} Framework That Cut Our Client's Costs by 40%"
+- "Behind Closed Doors: How Top ${niche} Firms Actually Make Strategic Decisions"
+- "The ${niche} Analysis Method That Changed How We Approach Every Client Project"`;
           } else {
             exampleIdeas = `
-- "I Secretly Recorded My Boss's ${niche} Advice for 30 Days — Here's What Happened"
-- "The ${niche} Technique That Got Me Fired (But Tripled My Income)"
-- "${audience} Are Shocked When This ${niche} Hack Actually Works"
-- "The Embarrassing ${niche} Mistake 90% of ${audience} Make (And How I Fixed It)"
-- "What Top ${niche} Experts Don't Want You to Know About Their Morning Routine"`;
+- "The ${niche} Technique I Discovered After Losing My Biggest Client (Changed Everything)"
+- "Inside My ${niche} Process: The 15-Minute Routine That Transformed My Results"
+- "Why Everything You've Heard About ${niche} is Wrong - My 10-Year Journey"
+- "The Counterintuitive ${niche} Approach That Doubled My Productivity"
+- "I Studied 50 ${niche} Experts' Morning Routines - The Common Thread Nobody Talks About"`;
           }
           
           const stricterPrompt = `${userPrompt}
 
-IMPORTANT: Your previous ideas were too templated. Create TRULY ORIGINAL ideas like these examples:${exampleIdeas}`;
+IMPORTANT: Your previous ideas were too templated. Create TRULY ORIGINAL ideas like these examples:${exampleIdeas}
+
+IMPORTANT GUIDELINES:
+- For personal brands, include a mix of formats (storytelling, educational, list-based)
+- For ecommerce brands, include both pure value content (3 ideas) and product showcase content (2 ideas)
+- For business brands, focus on thought leadership and expertise demonstration
+- All ideas should feel professional, credible, and authentic`;
           
           const stricterResponse = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -253,107 +291,112 @@ IMPORTANT: Your previous ideas were too templated. Create TRULY ORIGINAL ideas l
         }
       }
       
-      // If we still don't have 5 valid ideas, add creative fallbacks
+      // Enhanced fallback ideas for each account type
       if (ideas.length < 5) {
         let fallbackIdeas = [];
         
         if (validAccountType === 'ecommerce') {
           fallbackIdeas = [
+            // Pure value ideas (no product promotion)
             {
-              title: `The "${niche} Challenge" That Made Our Product Go Viral Overnight`,
-              category: "Product Challenge",
-              description: `Create a challenge that showcases your ${niche} products in action, inviting customers and influencers to participate. Document the results and highlight the unique benefits that make your products stand out from competitors.`,
-              tags: ["challenge", niche.toLowerCase().replace(/\s+/g, ''), "productdemo"]
+              title: `The ${niche} Training Approach That Elite Athletes Never Share Publicly`,
+              category: "Expert Insights",
+              description: `Break down an advanced training approach used by professionals in the ${niche} world that everyday enthusiasts can adapt. This positions your brand as having insider knowledge while providing pure value to ${audience} without mentioning products.`,
+              tags: ["expertinsights", "trainingtips", niche.toLowerCase().replace(/\s+/g, '')]
             },
             {
-              title: `We Asked Professional Athletes What They REALLY Think About Our ${niche} Products`,
-              category: "Expert Review",
-              description: `Invite professional athletes or experts in the ${niche} field to honestly review your products. Their credibility will build trust with ${audience}, and their authentic feedback (both positive and constructive) will demonstrate your brand's confidence.`,
-              tags: ["expertreview", "honestfeedback", "productinsights"]
+              title: `What ${audience} Get Wrong About ${niche} Recovery (According to Science)`,
+              category: "Myth Busting",
+              description: `Debunk common misconceptions about recovery in the ${niche} space using scientific evidence and expert insights. This educational content builds authority and trust with your audience without pushing products directly.`,
+              tags: ["mythbusting", "recovery", "sciencebacked"]
             },
             {
-              title: `The Secret Manufacturing Process Behind Our Best-Selling ${niche} Product`,
-              category: "Behind-the-Scenes",
-              description: `Take viewers through the complete production journey of your most popular ${niche} product, revealing quality control measures, sustainable practices, or proprietary techniques that justify its value to ${audience}.`,
-              tags: ["behindthescenes", "qualitymatters", "madewithcare"]
+              title: `I Interviewed 50 ${niche} Coaches About Their #1 Mental Performance Hack`,
+              category: "Community Insights",
+              description: `Share valuable insights from industry professionals about the mental side of ${niche} performance. This community-focused content positions your brand as connected and knowledgeable while providing immense value.`,
+              tags: ["mentalperformance", "experttips", "community"]
+            },
+            // Product-focused ideas
+            {
+              title: `We Asked Pro ${niche} Athletes to Brutally Critique Our Products (Their Feedback Changed Everything)`,
+              category: "Product Development",
+              description: `Show authentic feedback from professional athletes about your ${niche} products, highlighting both praise and criticism. This transparent approach builds trust with ${audience} while naturally showcasing your products and commitment to quality.`,
+              tags: ["honestfeedback", "productdevelopment", "athletetested"]
             },
             {
-              title: `We Tested Our ${niche} Product Against 5 Competitors (Surprising Results)`,
-              category: "Product Comparison",
-              description: `Conduct a fair, transparent comparison between your ${niche} product and top competitors, focusing on performance metrics that matter most to ${audience}. This builds credibility while highlighting your product's advantages.`,
-              tags: ["comparison", "producttest", "seeinisbelieving"]
-            },
-            {
-              title: `How One Customer Used Our ${niche} Product to Achieve [Remarkable Result]`,
-              category: "Customer Success Story",
-              description: `Feature a detailed case study of a real customer who achieved impressive results using your ${niche} product. Document their journey with before/after content and include their authentic testimonial about the experience.`,
-              tags: ["successstory", "realresults", "customertestimonial"]
+              title: `The Unconventional ${niche} Test: How Our Products Perform in Extreme Conditions`,
+              category: "Product Performance",
+              description: `Document putting your ${niche} products through unusual or extreme testing scenarios to demonstrate durability, effectiveness, and quality. This entertaining yet informative content naturally showcases product benefits in a non-promotional way.`,
+              tags: ["producttesting", "extremeconditions", "qualityproof"]
             }
           ];
         } else if (validAccountType === 'business') {
           fallbackIdeas = [
             {
-              title: `The Controversial ${niche} Strategy That Doubled Our Client Results in 30 Days`,
-              category: "Business Strategy",
-              description: `Share an unconventional approach your business took that produced exceptional results in the ${niche} space, explaining both the strategy and the data behind its success. This positions your business as innovative and results-driven.`,
-              tags: ["strategy", "innovation", "results"]
+              title: `The ${niche} Framework We Use With Fortune 500 Clients (Full Breakdown)`,
+              category: "Business Methodology",
+              description: `Provide an in-depth look at a proprietary framework or methodology your business uses with top clients. This positions your business as having enterprise-level expertise while providing actionable insights to ${audience}.`,
+              tags: ["methodology", "framework", "expertinsights"]
             },
             {
-              title: `Inside Our ${niche} Consulting Process: How We Transformed a Struggling Business`,
+              title: `What Our Research of 100+ ${niche} Companies Revealed About Growth Patterns`,
+              category: "Industry Research",
+              description: `Share original research findings from analyzing companies in the ${niche} space, highlighting patterns and insights that aren't commonly discussed. This establishes your business as a thought leader with unique, data-driven perspectives.`,
+              tags: ["research", "industrytrends", "datadriveninsights"]
+            },
+            {
+              title: `Behind Our Most Successful ${niche} Project: The Strategy That Changed Everything`,
               category: "Case Study",
-              description: `Create a detailed walkthrough of your business methodology using a real (potentially anonymized) client example, showing how your expertise solved complex ${niche} problems for a client that ${audience} can relate to.`,
-              tags: ["casestudy", "transformation", "expertise"]
+              description: `Present a detailed case study of your most impactful project, breaking down the strategy, challenges, and results. This practical demonstration of your expertise shows potential clients what you can achieve for them.`,
+              tags: ["casestudy", "successstory", "strategy"]
             },
             {
-              title: `The ${niche} Industry Report That Our Competitors Don't Want You to See`,
-              category: "Industry Insights",
-              description: `Present original research or analysis on the ${niche} industry that provides valuable insights for ${audience}. This demonstrates your business's thought leadership and deep understanding of market dynamics.`,
-              tags: ["research", "industrytrends", "marketanalysis"]
+              title: `The Unconventional ${niche} Approach That Our Competitors Refuse to Try`,
+              category: "Innovative Methodology",
+              description: `Explain a unique or contrarian approach your business takes to ${niche} challenges that differentiates you from competitors. This positions your business as innovative and forward-thinking in the industry.`,
+              tags: ["innovation", "differentiation", "thoughtleadership"]
             },
             {
-              title: `We Asked Our Top ${niche} Clients One Question: "What Actually Works?"`,
-              category: "Expert Roundup",
-              description: `Compile insights from your most successful clients about what truly works in the ${niche} space, creating an authoritative resource that positions your business as connected to real-world results and insider knowledge.`,
-              tags: ["expertadvice", "realworld", "successstrategies"]
-            },
-            {
-              title: `The Hidden Economics of ${niche}: What Most Business Owners Miss About Profitability`,
-              category: "Business Education",
-              description: `Break down the economic factors affecting profitability in the ${niche} industry that are commonly overlooked, providing actionable insights that demonstrate your business's strategic expertise to ${audience}.`,
-              tags: ["profitability", "businessinsights", "strategy"]
+              title: `Inside Our ${niche} Decision-Making Process: How We Help Clients Navigate Uncertainty`,
+              category: "Business Insights",
+              description: `Provide a transparent look at how your business approaches complex decisions in the ${niche} space, offering a window into your strategic thinking process that builds credibility with ${audience}.`,
+              tags: ["decisionmaking", "strategy", "transparency"]
             }
           ];
         } else {
           fallbackIdeas = [
+            // Storytelling format
             {
-              title: `The ${niche} Secret I Discovered By Accident (${audience} Are Stunned)`,
-              category: "Personal Discovery",
-              description: `Share an unexpected insight or technique you discovered in the ${niche} field that contradicts conventional wisdom but delivers amazing results. Show before/after proof to build credibility.`,
-              tags: ["gamechanging", "discovery", niche.toLowerCase().replace(/\s+/g, '')]
+              title: `The ${niche} Mistake That Nearly Ended My Career (And The Comeback Strategy)`,
+              category: "Personal Story",
+              description: `Share a vulnerable yet professional story about a significant setback in your ${niche} journey and the strategic approach that helped you recover. This narrative format builds authentic connection while demonstrating resilience and expertise.`,
+              tags: ["comeback", "lessonslearned", "strategy"]
             },
             {
-              title: `I Tested The Viral ${niche} Trend For 30 Days (Honest Results)`,
-              category: "Experiment",
-              description: `Document your journey testing a trending ${niche} technique that's popular with ${audience}, showing both the struggles and victories. This transparency creates trust and high engagement.`,
-              tags: ["experiment", "results", "trending"]
+              title: `My 10-Year ${niche} Evolution: The Unexpected Turning Points That Changed Everything`,
+              category: "Journey Reflection",
+              description: `Document the key milestones and pivotal moments in your professional development in the ${niche} space, highlighting insights gained along the way. This reflection-based content builds credibility and relatability with ${audience}.`,
+              tags: ["journey", "growth", "milestones"]
+            },
+            // Educational/tutorial format
+            {
+              title: `The ${niche} System I Created After Working With 100+ Clients (Full Breakdown)`,
+              category: "Methodology Tutorial",
+              description: `Provide a detailed walkthrough of a proven system or framework you've developed from extensive experience. This educational content positions you as an authority while delivering actionable value to ${audience}.`,
+              tags: ["system", "methodology", "expertinsights"]
+            },
+            // List-based format
+            {
+              title: `5 Counter-Intuitive ${niche} Principles I Discovered After Analyzing Top Performers`,
+              category: "Research Insights",
+              description: `Share evidence-based insights from studying successful people in the ${niche} space that challenge conventional wisdom. This list-format content demonstrates your analytical thinking and research-backed expertise.`,
+              tags: ["research", "principles", "success"]
             },
             {
-              title: `What ${audience} Don't Realize About ${niche} (Industry Insider Reveals All)`,
-              category: "Industry Secrets",
-              description: `Expose common misconceptions or little-known facts about ${niche} that most ${audience} aren't aware of, positioning yourself as an authentic industry insider with valuable perspective.`,
-              tags: ["insider", "secrets", "truth"]
-            },
-            {
-              title: `The ${niche} Framework That Changed Everything For My ${validAccountType === 'business' ? 'Business' : validAccountType === 'ecommerce' ? 'Product Sales' : 'Content'}`,
-              category: "Strategy Breakdown",
-              description: `Break down a specific, actionable framework that dramatically improved your results in ${niche}, with concrete examples and steps that ${audience} can immediately implement.`,
-              tags: ["strategy", "framework", "results"]
-            },
-            {
-              title: `Why Most ${audience} Fail With ${niche} (And How To Be Different)`,
-              category: "Problem-Solution",
-              description: `Analyze the common pitfalls that cause most people to struggle with ${niche}, then outline a unique path to success that avoids these mistakes. This contrarian approach builds authority.`,
-              tags: ["mistakes", "solution", "success"]
+              title: `The 3-Part ${niche} Framework That Transformed My Results (And Client Outcomes)`,
+              category: "Framework Breakdown",
+              description: `Break down a specific, actionable framework that's delivered measurable results, with examples and implementation steps. This structured approach showcases your systematic expertise while providing immediate value.`,
+              tags: ["framework", "results", "implementation"]
             }
           ];
         }
@@ -379,73 +422,76 @@ IMPORTANT: Your previous ideas were too templated. Create TRULY ORIGINAL ideas l
     } catch (error) {
       console.error("Error parsing ideas:", error);
       
-      // Creative fallback ideas that encourage virality - tailored to account type
+      // Enhanced creative fallback ideas that ensure professionalism and value
       let fallbackIdeas = [];
       
       if (validAccountType === 'ecommerce') {
         fallbackIdeas = [
+          // Pure value content (no product promotion)
           {
-            title: `"Honest Review: I Gave Our ${niche} Products to Professional Athletes for 30 Days"`,
-            category: "Product Testing",
-            description: `Document what happens when professional athletes use your ${niche} products for a month, showing authentic reactions, performance improvements, and honest feedback that demonstrates product quality to potential customers.`,
-            tags: ["honestreviews", "producttesting", "athleteapproved"]
+            title: `The Overlooked ${niche} Training Technique That Transformed Elite Athletes' Performance`,
+            category: "Expert Training",
+            description: `Share an effective but underutilized training approach in the ${niche} space that delivers surprising results. This educational content positions your brand as knowledgeable and helpful without mentioning products directly.`,
+            tags: ["trainingtips", "performanceenhancement", "expertadvice"]
           },
           {
-            title: `"The ${niche} Design Process: How We Created Our Most Controversial Product Yet"`,
+            title: `What Science Really Says About ${niche} Recovery: Debunking Common Myths`,
+            category: "Educational Content",
+            description: `Present evidence-based information about recovery in the ${niche} space, correcting misconceptions that might be holding your audience back. This demonstrates your brand's commitment to accuracy and education.`,
+            tags: ["sciencebacked", "recovery", "mythbusting"]
+          },
+          {
+            title: `The ${niche} Mental Performance Strategies Used by Olympic Athletes`,
+            category: "Performance Psychology",
+            description: `Explore the psychological aspects of ${niche} performance based on techniques used by top competitors. This valuable content helps your audience improve without any product promotion.`,
+            tags: ["mentalstrength", "performancepsychology", "mindset"]
+          },
+          // Product-focused content
+          {
+            title: `How We Redesigned Our ${niche} Products Based on Feedback from 1,000+ Users`,
             category: "Product Development",
-            description: `Take viewers behind the scenes of developing your most innovative or unconventional ${niche} product, showing the challenges, failures, and breakthroughs that led to the final design.`,
-            tags: ["behindthescenes", "productdesign", "innovation"]
+            description: `Document your product development process, highlighting how customer feedback shapes improvements. This transparent approach builds trust while naturally showcasing your products' evolution and benefits.`,
+            tags: ["productdevelopment", "customerdriven", "innovation"]
           },
           {
-            title: `"We Let Our Customers Decide: Choosing Our Next ${niche} Product Line (Live Results)"`,
-            category: "Community Engagement",
-            description: `Create a voting system where your audience helps choose features, designs, or entirely new products for your ${niche} brand, building engagement and pre-launch anticipation.`,
-            tags: ["communitydriven", "customerdecision", "newproduct"]
-          },
-          {
-            title: `"${niche} Myth-Busting: Testing Our Products Against Common Claims"`,
-            category: "Product Demonstration",
-            description: `Address common myths or questions about ${niche} products by conducting on-camera tests that prove or disprove claims, establishing your brand as transparent and educational.`,
-            tags: ["mythbusting", "producttests", "provenit"]
-          },
-          {
-            title: `"The Unexpected Ways Our Customers Are Using Our ${niche} Products (Beyond the Obvious)"`,
-            category: "Customer Spotlight",
-            description: `Showcase creative, unexpected applications of your ${niche} products discovered by customers, demonstrating versatility and inspiring new purchase motivations.`,
-            tags: ["customercreativity", "multiuse", "inspiration"]
+            title: `Real ${audience} Put Our ${niche} Products to the Test: Unfiltered Results`,
+            category: "Product Testing",
+            description: `Feature authentic testing scenarios with real customers using your products in their daily ${niche} activities. This genuine approach demonstrates product benefits through real-world application rather than direct promotion.`,
+            tags: ["realresults", "customertesting", "authenticity"]
           }
         ];
       } else {
         fallbackIdeas = [
+          // Mix of formats for personal brands
           {
-            title: `I Tested The "Impossible" ${niche} Technique That Everyone Said Wouldn't Work`,
-            category: "Experiment",
-            description: `Document yourself attempting a controversial or challenging ${niche} technique that most experts dismiss, showing surprising results that challenge conventional wisdom. The contrarian angle creates debate and sharing.`,
-            tags: ["experiment", "controversial", "results"]
+            title: `The ${niche} Strategy That Transformed My Business After a Major Setback`,
+            category: "Personal Story",
+            description: `Share a professional yet personal story about overcoming a significant challenge in your ${niche} journey, focusing on the strategic approach that led to success. This narrative builds connection while demonstrating expertise and resilience.`,
+            tags: ["strategy", "resilience", "growth"]
           },
           {
-            title: `The ${niche} Mistake I Made That Cost Me $10,000 (And How You Can Avoid It)`,
-            category: "Cautionary Tale",
-            description: `Share a significant failure or mistake in your ${niche} journey, the expensive lesson you learned, and how ${audience} can avoid the same fate. This vulnerability creates trust and high engagement.`,
-            tags: ["mistake", "lesson", "warning"]
+            title: `Behind the Scenes: My Exact ${niche} Process That Delivers Consistent Results`,
+            category: "Methodology Breakdown",
+            description: `Provide a detailed look at your professional workflow or methodology, offering actionable insights that ${audience} can implement. This transparent approach builds trust and positions you as a generous expert.`,
+            tags: ["process", "behindthescenes", "methodology"]
           },
           {
-            title: `What ${audience} Don't Know About ${niche} Could Be Costing Them (Here's Why)`,
-            category: "Industry Insights",
-            description: `Reveal hidden costs or missed opportunities in ${niche} that most ${audience} overlook, providing specific examples and actionable solutions that demonstrate your expertise.`,
-            tags: ["insights", "expertise", "opportunity"]
+            title: `3 Counterintuitive ${niche} Principles I Discovered After Working With Top Performers`,
+            category: "Expert Insights",
+            description: `Share unexpected but effective principles you've identified through professional experience, challenging conventional wisdom with evidence-based alternatives. This thought leadership content establishes your innovative expertise.`,
+            tags: ["principles", "expertise", "innovation"]
           },
           {
-            title: `The ${niche} Method That Generated $XXX in 30 Days (With Proof)`,
-            category: "Case Study",
-            description: `Breakdown a specific, replicable method in ${niche} that produced exceptional results, showing real evidence and explaining exactly how ${audience} can implement it themselves.`,
-            tags: ["method", "proof", "results"]
+            title: `The ${niche} Analysis Framework That Completely Changed My Client Approach`,
+            category: "Professional Framework",
+            description: `Break down a specific analytical framework you use in your professional work, with examples of how it leads to better outcomes. This structured content demonstrates your systematic expertise and delivers immediate value.`,
+            tags: ["framework", "analysis", "professional"]
           },
           {
-            title: `Why I Stopped Following ${niche} "Best Practices" (And What I Do Instead)`,
-            category: "Contrarian Approach",
-            description: `Challenge the standard advice in ${niche}, explain why it's ineffective for ${audience}, and present your alternative approach with evidence of better results. This creates curiosity and sharing.`,
-            tags: ["contrarian", "strategy", "results"]
+            title: `What My Research of 50+ Successful ${niche} Cases Revealed About Sustainable Growth`,
+            category: "Research Findings",
+            description: `Present insights from your analysis of successful examples in the ${niche} space, focusing on patterns and principles that lead to long-term results. This research-based content establishes your authority and analytical thinking.`,
+            tags: ["research", "growthstrategy", "analysis"]
           }
         ];
       }
