@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { 
   Calendar, 
@@ -90,17 +89,13 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    if (isMobile && onNavItemClick) {
-      onNavItemClick();
-    }
-  };
-
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       navigate("/auth");
+      
       toast({
         title: "Logged out successfully",
         description: "You have been logged out of your account.",
@@ -125,7 +120,6 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
         </Link>
       </div>
       
-      {/* Main navigation - scrollable area */}
       <div className="flex-1 px-4 py-4 space-y-3 overflow-y-auto">
         <SidebarCategory title="Overview" defaultOpen={true}>
           <SidebarItem
@@ -185,7 +179,6 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
         </SidebarCategory>
       </div>
       
-      {/* User account section - always visible at bottom */}
       <div className="mt-auto px-4 py-4 border-t border-border">
         <div className="space-y-1">
           <SidebarItem
@@ -200,15 +193,16 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
             label="Billing"
             onClick={onNavItemClick}
           />
-          <SidebarItem
-            href="#"
+          <button
             onClick={() => {
               handleLogout();
               if (onNavItemClick) onNavItemClick();
             }}
-            icon={<LogOut className="w-5 h-5" />}
-            label="Logout"
-          />
+            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full hover:bg-primary/10 dark:hover:bg-accent"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
         </div>
       </div>
     </div>
