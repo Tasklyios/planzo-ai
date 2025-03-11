@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.1";
@@ -116,77 +115,57 @@ serve(async (req) => {
     // Detect if this is an ecommerce product-focused content or not
     const isProductFocused = detectProductFocus(scriptTitle, scriptDescription, scriptCategory);
     
-    // Create a focused system prompt for script writing based on account type
-    let systemPrompt = `You are a master script writer specializing in creating engaging content for ${userProfile?.account_type || 'content creators'}.
+    // Create a focused system prompt for script writing
+    let systemPrompt = `You are a script writer creating engaging ${timeRange} content about "${scriptTitle}" in a conversational, authentic style.
 
-Your goal is to write a conversational, authentic script that:
-
-1. Sounds exactly like natural human speech (include filler words, pauses, self-corrections)
-2. Delivers valuable, specific information on the exact topic
-3. Uses a clear narrative structure with proper flow 
-4. Includes [directional notes] or [action cues] in brackets
-5. Matches the requested content style and personality
-6. Is optimized for the specified length: ${timeRange}
-
-IMPORTANT GUIDELINES:
-- Write in a CONVERSATIONAL tone as if speaking to a friend
-- Do NOT use corporate language or generic templates
-- Include natural speaking patterns (um, like, you know, etc. in moderation)
-- Add personality and originality to make the script unique
-- Write with line breaks to indicate speaking rhythm`;
+Your script should:
+1. Sound like natural human speech with filler words and pauses
+2. Provide valuable, specific information 
+3. Have a clear structure with proper flow
+4. Include [action notes] in brackets when needed
+5. Match the requested style and personality
+`;
 
     // Tailor the script based on account type and if it's for an ecommerce product
     if (accountType === 'ecommerce') {
       // Check if this is a "pure value" idea (non-product)
       if (!isProductFocused) {
         systemPrompt += `
-
 CRITICAL FOR VALUE-FIRST ECOMMERCE CONTENT:
-- This script is for PURE VALUE CONTENT that should NOT mention any products
-- Focus 100% on providing valuable, educational content about ${scriptTitle}
+- Focus 100% on providing valuable, educational content 
 - Avoid ANY selling language or product references
 - Do NOT include phrases like "our product", "we sell", "check out", etc.
-- Position the content as educational expertise, not selling
 - Write as if you are an independent expert educator, not a brand
-- The goal is to build trust and authority through genuine value
-- ZERO product mentions, ZERO brand mentions, ZERO selling language`;
+`;
       } else {
         systemPrompt += `
-
 FOR PRODUCT-RELATED ECOMMERCE CONTENT:
 - Balance education (80%) with subtle product references (20%)
 - Focus primarily on solving audience problems and providing value
-- When mentioning products, focus on solutions not features
-- Keep product mentions natural and integrated into value content
-- Avoid pushy sales language - be helpful and solution-oriented
-- Never sound like you're "selling" - maintain an authentic, helpful tone`;
+- Keep product mentions natural and integrated
+`;
       }
     } else if (accountType === 'personal') {
       systemPrompt += `
-
 FOR PERSONAL CREATOR CONTENT:
-- Focus on authentic storytelling and connecting with the audience
-- Be personal, vulnerable and relatable while maintaining expertise
-- Share genuine insights, experiences, and lessons learned
+- Be personal, vulnerable and relatable
+- Share genuine insights and experiences
 - Use stories to illustrate points rather than just facts
-- Create content that feels uniquely yours rather than generic`;
+`;
     } else if (accountType === 'business') {
       systemPrompt += `
-
 FOR BUSINESS CONTENT:
-- Balance professionalism with authentic, human connection
-- Focus on building trust, authority, and credibility
-- Include specific examples, case studies, and evidence
-- Maintain a consistent brand voice while being conversational
-- Position the business as a helpful guide solving real problems`;
+- Balance professionalism with authentic connection
+- Focus on building trust and credibility
+- Include specific examples and evidence
+`;
     }
 
     systemPrompt += `
-
 ${userProfile?.content_style ? `CONTENT STYLE: ${userProfile.content_style}` : contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
 ${userProfile?.content_personality ? `PERSONALITY: ${userProfile.content_personality}` : ''}`;
 
-    // Create a detailed user prompt with specific guides based on content type
+    // Create a detailed user prompt
     let userPrompt = `Write a natural, engaging script for a ${timeRange} video titled: "${scriptTitle}"
 
 ${scriptDescription ? `TOPIC CONTEXT: ${scriptDescription}` : ''}
@@ -200,61 +179,27 @@ ${hook ? `START WITH THIS HOOK: "${hook}"` : ''}`;
       if (scriptCategory.toLowerCase().includes("myth") || scriptCategory.toLowerCase().includes("bust")) {
         userPrompt += `
 For this myth-busting content:
-- Start with a common misconception that many believe
-- Build tension around why this myth is so prevalent
-- Use authoritative but friendly tone when presenting the truth
-- Include specific evidence or examples that disprove the myth
-- End with actionable advice based on the correct information`;
+- Start with a common misconception
+- Build tension around why this myth is prevalent
+- Present the truth with evidence
+- End with actionable advice`;
       } 
       else if (scriptCategory.toLowerCase().includes("behind") || scriptCategory.toLowerCase().includes("scenes")) {
         userPrompt += `
 For this behind-the-scenes content:
-- Start by building curiosity about what people don't normally see
-- Use lots of specific details that create vivid imagery
-- Share genuine challenges and how they were overcome
-- Include moments of vulnerability or authenticity
-- End by connecting the behind-the-scenes reality to a broader lesson`;
-      }
-      else if (scriptCategory.toLowerCase().includes("data") || scriptCategory.toLowerCase().includes("analysis")) {
-        userPrompt += `
-For this data-driven content:
-- Start with an intriguing finding or pattern that hooks attention
-- Explain your methodology briefly but clearly
-- Focus on surprising insights rather than just listing statistics
-- Humanize the data by connecting it to real-world implications
-- End with actionable conclusions based on what the data reveals`;
-      }
-      else if (scriptCategory.toLowerCase().includes("story") || scriptCategory.toLowerCase().includes("personal")) {
-        userPrompt += `
-For this storytelling content:
-- Start in the middle of action or with a compelling question
-- Include sensory details and emotional moments
-- Create a clear narrative arc with tension and resolution
-- Use dialogue or internal thoughts to make the story dynamic
-- End by connecting the story to a meaningful lesson or takeaway`;
-      }
-      else if (scriptCategory.toLowerCase().includes("review") || scriptCategory.toLowerCase().includes("guide")) {
-        userPrompt += `
-For this review/guide content:
-- Start by establishing your credibility and experience
-- Focus on specific, detailed observations rather than general statements
-- Balance positives and negatives for authenticity
-- Include practical examples of when/how/why something works
-- End with clear recommendations or next steps for the viewer`;
+- Start by building curiosity
+- Use specific details that create vivid imagery
+- Share genuine challenges and solutions
+- Include moments of authenticity`;
       }
     }
 
     // Add final guidelines for all scripts
     userPrompt += `
 
-The script must:
-1. Sound like authentic human speech with natural conversational flow
-2. Provide specific value about THIS EXACT TOPIC (not generic advice)
-3. Have a clear beginning, middle, and end
-4. Include [camera directions] or [action notes] in brackets where needed
-5. Feel like a real person talking, not a generic marketing video
-
-Format with natural line breaks to indicate speaking rhythm. Make it sound like you're having a genuine conversation with the viewer.`;
+Make the script sound like authentic human speech with natural flow.
+Format with line breaks to indicate speaking rhythm.
+Include [camera directions] or [action notes] in brackets where needed.`;
 
     // Call OpenAI API with creative parameters
     console.log('Calling OpenAI API for script generation');
