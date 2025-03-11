@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
@@ -59,11 +58,13 @@ Your expertise is creating viral content ideas for ${validAccountType} creators 
 ${validAccountType === 'ecommerce' ? 
   `FOR ECOMMERCE BRANDS - CRITICAL GUIDELINES:
   - Create ideas that build trust and authority WITHOUT mentioning products
-  - 70% of ideas should focus purely on helping the audience with NO product references
-  - 30% of ideas can naturally showcase products as solutions
-  - Focus on educational content that establishes expertise in ${niche}
+  - AT LEAST 70% of ideas must focus purely on helping the audience with ABSOLUTELY NO product references
+  - MAXIMUM 30% of ideas can naturally showcase products as solutions
+  - Focus heavily on educational content that establishes expertise in ${niche}
   - Build an engaged community by providing pure value first
-  - Position the brand as a trusted advisor, not just a seller` : 
+  - Position the brand as a trusted advisor, not a seller
+  - The best ecommerce content marketing NEVER looks like marketing - it looks like pure value
+  - For pure value ideas, DO NOT use words like "our", "we", "product", "item", "offering" or "selling"` : 
   validAccountType === 'personal' ? 
   `For this PERSONAL CREATOR account:
   - Focus on creating professional, straight-to-the-point content that avoids cringy or gimmicky approaches
@@ -92,15 +93,16 @@ PLATFORM ADAPTATION: Optimize specifically for ${platform} with the right format
 
 ${validAccountType === 'ecommerce' ? 
   `FOR ECOMMERCE BRANDS - IMPORTANT:
-  - Create 3-4 ideas that focus PURELY on helping ${audience} with NO product mentions:
+  - Create AT LEAST 4 ideas that focus PURELY on helping ${audience} with ABSOLUTELY NO product mentions:
     * Educational content about ${niche} trends/techniques
     * Industry insights and expert advice
     * Community-focused content
     * Tips and strategies that provide immediate value
-  - Only 1-2 ideas should involve products, and these must be naturally integrated
-  - ALL ideas must establish the brand as a trusted authority in ${niche}
+  - AT MOST 1 idea should involve products, and this must be naturally integrated
+  - Your goal is to build authority in the ${niche} space WITHOUT selling
   - Focus on content that genuinely helps your audience succeed
-  - Build trust through expertise and generosity, not selling` :
+  - Build trust through expertise and generosity, not selling
+  - Don't use words like "our", "we sell", "product", "offering", etc. in the pure value ideas` :
   validAccountType === 'personal' ? 
   `FOR PERSONAL BRANDS - IMPORTANT GUIDELINES:
   - Create a DIVERSE MIX of formats with NO REPETITION:
@@ -281,199 +283,135 @@ FOR PERSONAL BRAND CREATORS:
         }
       }
       
-      // For ecommerce accounts, check if we're still mentioning products too much
+      // For ecommerce accounts, significantly enhance product mention detection and replacement
       if (validAccountType === 'ecommerce' && ideas.length > 0) {
-        // Count how many ideas mention products
+        // Expanded product mention keywords to catch more selling language
         const productMentionKeywords = [
-          'product', 'our', 'we sell', 'buy', 'purchase', 'shop', 
-          'item', 'merchandise', 'goods', 'offering', 'selling'
+          'product', 'our', 'we sell', 'buy', 'purchase', 'shop', 'item', 'merch', 'merchandise',
+          'goods', 'offering', 'selling', 'sale', 'discount', 'deal', 'collection', 'line',
+          'catalog', 'available', 'shipping', 'sold', 'store', 'checkout', 'order', 'brand', 
+          'company', 'business', 'we', 'us', 'try', 'promo', 'promotion', 'customer', 'pricing',
+          'introducing', 'new release', 'launched', 'limited edition', 'bestseller', 'trending'
         ];
         
+        // Count how many ideas mention products or selling language
         let productMentionCount = 0;
-        ideas.forEach(idea => {
+        const ideasWithProductMentions = [];
+        
+        ideas.forEach((idea, index) => {
           const combinedText = (idea.title + ' ' + idea.description).toLowerCase();
           if (productMentionKeywords.some(keyword => combinedText.includes(keyword.toLowerCase()))) {
             productMentionCount++;
+            ideasWithProductMentions.push(index);
           }
         });
         
-        // If more than 2 ideas mention products, we need to replace some with pure value ideas
-        if (productMentionCount > 2 && ideas.length >= 5) {
-          console.log(`Too many product mentions (${productMentionCount}/5), generating pure value replacement ideas`);
+        console.log(`Detected ${productMentionCount}/5 ideas with product mentions`);
+        
+        // Comprehensive library of pure value ideas with NO product mentions
+        const pureValueIdeas = [
+          {
+            title: `The Science Behind ${niche} Success That Nobody's Talking About`,
+            category: "Educational Content",
+            description: `Dive into scientific research and expert insights about what truly leads to success in ${niche}. This educational deep-dive provides your audience with valuable information they can immediately apply, establishing you as a knowledge authority without any product promotion.`,
+            tags: ["sciencebacked", "expertinsights", niche.toLowerCase().replace(/\s+/g, '')]
+          },
+          {
+            title: `5 ${niche} Secrets from Top Industry Coaches`,
+            category: "Expert Insights",
+            description: `Share advanced training principles and insider knowledge that top ${niche} coaches typically reserve for their elite clients. This positions you as having deep expertise while providing immense value to the audience with actionable advice they can implement immediately.`,
+            tags: ["coachingsecrets", "expertadvice", "insiderknowledge"]
+          },
+          {
+            title: `The Truth About ${niche} Recovery: Science vs. Popular Myths`,
+            category: "Myth Busting",
+            description: `Break down common misconceptions about recovery in the ${niche} space using scientific research and expert insights. This educational content builds credibility while genuinely helping your audience improve their results without selling anything.`,
+            tags: ["sciencebacked", "recovery", "mythbusting"]
+          },
+          {
+            title: `What 50 Elite ${niche} Professionals Revealed About Their Mental Game`,
+            category: "Research & Insights",
+            description: `Share valuable insights from top performers about the mental aspects of ${niche} performance. This research-focused content positions you as well-connected while providing unique value to your audience on an often overlooked topic.`,
+            tags: ["mentalperformance", "eliteinsights", "mindset"]
+          },
+          {
+            title: `The Unconventional ${niche} Framework That Changed Everything for Me`,
+            category: "Methodology",
+            description: `Present a specific methodology or framework for achieving better results in ${niche}, focusing purely on educational value. This content establishes you as a systematic thinker and provides actionable steps your audience can follow.`,
+            tags: ["framework", "methodology", "gamechangers"]
+          },
+          {
+            title: `I Tracked ${audience}'s ${niche} Habits for 30 Days - Here's What I Learned`,
+            category: "Research Study",
+            description: `Share insights from a month-long study tracking patterns and behaviors in the ${niche} space. This data-driven content demonstrates your commitment to understanding the audience's needs while providing valuable insights they can't find elsewhere.`,
+            tags: ["researchstudy", "datadriveninsights", "habittracking"]
+          },
+          {
+            title: `The ${niche} Technique That Olympic Athletes Swear By`,
+            category: "Expert Technique",
+            description: `Break down a specific technique used by elite athletes that your audience can apply to improve their own ${niche} performance. This technique-focused content provides immediate practical value without any product mentions.`,
+            tags: ["elitetechnique", "olympiclevel", "performanceenhancement"]
+          },
+          {
+            title: `What Really Happens to Your Body During ${niche} Training (Visualized)`,
+            category: "Scientific Explainer",
+            description: `Create a visual explanation of the physiological processes that occur during ${niche} training. This educational content helps your audience understand the "why" behind effective practices, building trust in your expertise.`,
+            tags: ["science", "bodymechanics", "visualexplainer"]
+          },
+          {
+            title: `The ${niche} Mistakes Even Professionals Make (And How to Avoid Them)`,
+            category: "Expert Tips",
+            description: `Identify common mistakes made by professionals in the ${niche} space and provide specific advice on how to avoid them. This practical content positions you as having expert-level knowledge while providing immediate value.`,
+            tags: ["commonmistakes", "expertadvice", "improvementtips"]
+          },
+          {
+            title: `I Asked 100 ${audience} About Their Biggest ${niche} Challenge - Here's What They Said`,
+            category: "Community Research",
+            description: `Share the results of surveying members of your target audience about their greatest struggles with ${niche}. This community-focused content demonstrates that you understand your audience deeply and care about solving their problems.`,
+            tags: ["communityinsights", "challenges", "research"]
+          }
+        ];
+        
+        // If we have more than 1 product-mentioning idea (or more than 20% of total), replace the excess
+        const maxAllowedProductIdeas = Math.min(1, Math.floor(ideas.length * 0.2));
+        const excessProductIdeas = Math.max(0, productMentionCount - maxAllowedProductIdeas);
+        
+        if (excessProductIdeas > 0) {
+          console.log(`Replacing ${excessProductIdeas} excess product-mentioning ideas with pure value ideas`);
           
-          // Create pure value ecommerce ideas that definitely don't mention products
-          const pureValueIdeas = [
-            {
-              title: `The Science Behind Optimal ${niche} Performance That Nobody Talks About`,
-              category: "Educational Content",
-              description: `Dive into the scientific research and expert insights about optimizing ${niche} performance. This educational deep-dive provides your audience with valuable information they can immediately apply, establishing your brand as a knowledge authority without mentioning any products.`,
-              tags: ["sciencebacked", "expertinsights", niche.toLowerCase().replace(/\s+/g, '')]
-            },
-            {
-              title: `5 ${niche} Experts Share Their Morning Routines For Peak Performance`,
-              category: "Industry Insights",
-              description: `Interview five respected ${niche} experts about their morning routines and how they prepare for peak performance. This content provides tremendous value to your audience by sharing practical wisdom from industry leaders, helping them improve their own routines.`,
-              tags: ["morningroutine", "expertadvice", "industryinsights"]
-            },
-            {
-              title: `The Hidden Psychology Behind ${niche} Success (Based on Research)`,
-              category: "Educational Content",
-              description: `Explore the psychological factors that separate successful ${niche} practitioners from the average. This research-backed content delivers genuine insights that your audience can apply immediately, positioning your brand as a thought leader focused on helping others succeed.`,
-              tags: ["psychology", "success", "researchbacked"]
-            },
-            {
-              title: `We Asked 100 ${audience} About Their Biggest ${niche} Challenges - Here's What We Learned`,
-              category: "Community Research",
-              description: `Share the results of surveying 100 members of your target audience about their biggest challenges with ${niche}. This community-focused content demonstrates that you understand your audience deeply and care about solving their problems, not just selling to them.`,
-              tags: ["communityinsights", "challenges", "research"]
-            },
-            {
-              title: `The Unconventional ${niche} Techniques That Transformed My Results`,
-              category: "Expert Techniques",
-              description: `Share lesser-known but effective techniques for ${niche} that most people overlook. Focus purely on delivering actionable advice that will help your audience get better results without any product promotion, establishing your brand as a generous expert.`,
-              tags: ["techniques", "unconventional", "results"]
-            }
-          ];
+          // Sort product-mentioning ideas by index to replace in order
+          ideasWithProductMentions.sort((a, b) => a - b);
           
-          // Calculate how many product-mentioning ideas we need to replace
-          const ideasToReplaceCount = Math.min(productMentionCount - 2, pureValueIdeas.length);
+          // Keep only the first allowable product ideas, replace the rest
+          const ideasToReplace = ideasWithProductMentions.slice(maxAllowedProductIdeas);
           
-          // Identify which ideas mention products so we can replace them
-          const ideaIndicesWithProductMentions = [];
-          ideas.forEach((idea, index) => {
-            const combinedText = (idea.title + ' ' + idea.description).toLowerCase();
-            if (productMentionKeywords.some(keyword => combinedText.includes(keyword.toLowerCase()))) {
-              ideaIndicesWithProductMentions.push(index);
-            }
+          // Replace excess product ideas with pure value ideas
+          ideasToReplace.forEach((ideaIndex, i) => {
+            // Get a pure value idea, ensuring variety
+            const pureValueIdeaIndex = i % pureValueIdeas.length;
+            ideas[ideaIndex] = pureValueIdeas[pureValueIdeaIndex];
           });
           
-          // Replace the required number of product-mentioning ideas with pure value ideas
-          for (let i = 0; i < ideasToReplaceCount; i++) {
-            if (i < ideaIndicesWithProductMentions.length) {
-              ideas[ideaIndicesWithProductMentions[i]] = pureValueIdeas[i];
-            }
+          console.log(`After replacement: Should have at most ${maxAllowedProductIdeas} product ideas`);
+        }
+        
+        // Double-check to ensure we now have the right ratio
+        let finalProductCount = 0;
+        ideas.forEach(idea => {
+          const combinedText = (idea.title + ' ' + idea.description).toLowerCase();
+          if (productMentionKeywords.some(keyword => combinedText.includes(keyword.toLowerCase()))) {
+            finalProductCount++;
           }
+        });
+        
+        console.log(`Final check: ${finalProductCount}/${ideas.length} ideas mention products`);
+        
+        // If all ideas are still product-focused after our first attempt, do a complete replacement
+        if (finalProductCount >= 4) {
+          console.log("Critical failure: Still too many product mentions. Performing complete replacement");
           
-          console.log(`Replaced ${ideasToReplaceCount} product-mentioning ideas with pure value ideas`);
-        }
-      }
-      
-      // Enhanced fallback ideas for each account type
-      if (ideas.length < 5) {
-        let fallbackIdeas = [];
-        
-        if (validAccountType === 'ecommerce') {
-          fallbackIdeas = [
-            // Pure value ideas (no product promotion)
-            {
-              title: `What ${niche} Coaches Never Tell Their Students (Insider Training Secrets)`,
-              category: "Expert Education",
-              description: `Share advanced training principles and insider knowledge that coaches typically reserve for their top clients. This positions your brand as having deep expertise while providing immense value to the audience without any product promotion.`,
-              tags: ["trainingtips", "expertadvice", "insiderknowledge"]
-            },
-            {
-              title: `The Truth About ${niche} Recovery: Science vs. Popular Myths`,
-              category: "Myth Busting",
-              description: `Break down common misconceptions about recovery in the ${niche} space using scientific research and expert insights. This educational content builds credibility while genuinely helping your audience improve their results.`,
-              tags: ["sciencebacked", "recovery", "mythbusting"]
-            },
-            {
-              title: `I Interviewed 50 Elite ${niche} Athletes About Their Mental Game`,
-              category: "Research & Insights",
-              description: `Share valuable insights from top performers about the mental aspects of ${niche} performance. This community-focused content positions your brand as well-connected while providing unique value to your audience.`,
-              tags: ["mentalperformance", "eliteinsights", "mindset"]
-            },
-            // Product-focused ideas (but still value-first)
-            {
-              title: `Behind The Scenes: How Elite Athletes Train With Our ${niche} Equipment`,
-              category: "Product Showcase",
-              description: `Document professional athletes using your products in their actual training routines, showing both the benefits and practical applications. This natural product integration builds credibility while providing valuable training insights.`,
-              tags: ["behindthescenes", "elitetraining", "productinsights"]
-            },
-            {
-              title: `The Complete ${niche} Gear Guide (Including Competitors' Products)`,
-              category: "Product Education",
-              description: `Create an unbiased, comprehensive guide to all ${niche} equipment options, including competitor products. This transparent approach builds trust while naturally positioning your products within the broader market context.`,
-              tags: ["gearguide", "productcomparison", "honestreviews"]
-            }
-          ];
-        } else if (validAccountType === 'business') {
-          fallbackIdeas = [
-            {
-              title: `The ${niche} Framework We Use With Fortune 500 Clients (Full Breakdown)`,
-              category: "Business Methodology",
-              description: `Provide an in-depth look at a proprietary framework or methodology your business uses with top clients. This positions your business as having enterprise-level expertise while providing actionable insights to ${audience}.`,
-              tags: ["methodology", "framework", "expertinsights"]
-            },
-            {
-              title: `What Our Research of 100+ ${niche} Companies Revealed About Growth Patterns`,
-              category: "Industry Research",
-              description: `Share original research findings from analyzing companies in the ${niche} space, highlighting patterns and insights that aren't commonly discussed. This establishes your business as a thought leader with unique, data-driven perspectives.`,
-              tags: ["research", "industrytrends", "datadriveninsights"]
-            },
-            {
-              title: `Behind Our Most Successful ${niche} Project: The Strategy That Changed Everything`,
-              category: "Case Study",
-              description: `Present a detailed case study of your most impactful project, breaking down the strategy, challenges, and results. This practical demonstration of your expertise shows potential clients what you can achieve for them.`,
-              tags: ["casestudy", "successstory", "strategy"]
-            },
-            {
-              title: `The Unconventional ${niche} Approach That Our Competitors Refuse to Try`,
-              category: "Innovative Methodology",
-              description: `Explain a unique or contrarian approach your business takes to ${niche} challenges that differentiates you from competitors. This positions your business as innovative and forward-thinking in the industry.`,
-              tags: ["innovation", "differentiation", "thoughtleadership"]
-            },
-            {
-              title: `Inside Our ${niche} Decision-Making Process: How We Help Clients Navigate Uncertainty`,
-              category: "Business Insights",
-              description: `Provide a transparent look at how your business approaches complex decisions in the ${niche} space, offering a window into your strategic thinking process that builds credibility with ${audience}.`,
-              tags: ["decisionmaking", "strategy", "transparency"]
-            }
-          ];
-        } else {
-          // Personal brand content formats with high viral potential
-          fallbackIdeas = [
-            // Storytelling format - professional and authentic
-            {
-              title: `What I Learned After Losing My Biggest ${niche} Client (And How It Made Me Better)`,
-              category: "Storytelling",
-              description: `Share a professional yet vulnerable narrative about overcoming a significant challenge in your ${niche} journey, focusing on the valuable lessons and growth that resulted. This narrative builds authentic connection while demonstrating resilience and expertise in a way that's relatable to ${audience}.`,
-              tags: ["professionaljourney", "growthstory", niche.toLowerCase().replace(/\s+/g, '')]
-            },
-            // Day in the life format
-            {
-              title: `Behind-the-Scenes: My Actual ${niche} Workday From Start to Finish`,
-              category: "Day in the Life",
-              description: `Document your authentic daily routine as a ${niche} professional, showing both the glamorous and challenging aspects of your work. This transparent look into your process builds trust and satisfies viewers' curiosity about what success in this field actually requires.`,
-              tags: ["behindthescenes", "dayinthelife", "workroutine"]
-            },
-            // List-based format with a compelling angle
-            {
-              title: `5 ${niche} Techniques That Successful Professionals Never Share Publicly`,
-              category: "List-Based Content",
-              description: `Reveal specific, actionable techniques used by top performers in the ${niche} space that aren't commonly discussed. This insider content positions you as an authority with valuable knowledge while delivering practical value to ${audience} in an easily digestible format.`,
-              tags: ["insidertips", "expertstrategies", "successsecrets"]
-            },
-            // Educational/tutorial format
-            {
-              title: `The ${niche} Framework I Developed After Working With 100+ Clients`,
-              category: "Educational Content",
-              description: `Break down your professional methodology into a clear, actionable framework that viewers can apply to their own work. This educational content showcases your systematic expertise while providing immediate value, establishing you as a generous thought leader in the ${niche} space.`,
-              tags: ["framework", "methodology", "expertinsights"]
-            },
-            // Trend analysis format
-            {
-              title: `Why The Latest ${niche} Trend Is Actually Problematic (And What To Do Instead)`,
-              category: "Trend Analysis",
-              description: `Provide a thoughtful, well-reasoned critique of a current trend in the ${niche} space, offering alternative approaches based on your professional experience. This contrarian perspective demonstrates critical thinking and positions you as someone who prioritizes effectiveness over following the crowd.`,
-              tags: ["trendanalysis", "industryinsights", "professionalperspective"]
-            }
-          ];
-        }
-        
-        // Add fallback ideas until we have 5
-        while (ideas.length < 5) {
-          ideas.push(fallbackIdeas[ideas.length % fallbackIdeas.length]);
+          // Use the first 5 pure value ideas to completely replace the set
+          ideas = pureValueIdeas.slice(0, 5);
         }
       }
       
@@ -492,10 +430,44 @@ FOR PERSONAL BRAND CREATORS:
     } catch (error) {
       console.error("Error parsing ideas:", error);
       
-      // Enhanced creative fallback ideas for personal brands with diverse formats
+      // Enhanced pure value fallback ideas for ecommerce with absolutely no product mentions
       let fallbackIdeas = [];
       
-      if (validAccountType === 'personal') {
+      if (validAccountType === 'ecommerce') {
+        fallbackIdeas = [
+          {
+            title: `What ${niche} Coaches Never Tell Their Students (Insider Training Secrets)`,
+            category: "Expert Education",
+            description: `Share advanced training principles and insider knowledge that coaches typically reserve for their top clients. This positions you as having deep expertise while providing immense value to the audience without any product promotion.`,
+            tags: ["trainingtips", "expertadvice", "insiderknowledge"]
+          },
+          {
+            title: `The Truth About ${niche} Recovery: Science vs. Popular Myths`,
+            category: "Myth Busting",
+            description: `Break down common misconceptions about recovery in the ${niche} space using scientific evidence and expert insights. This educational content builds authority and trust with your audience without pushing products directly.`,
+            tags: ["mythbusting", "recovery", "sciencebacked"]
+          },
+          {
+            title: `I Interviewed 50 ${niche} Coaches About Their #1 Mental Performance Hack`,
+            category: "Community Insights",
+            description: `Share valuable insights from industry professionals about the mental side of ${niche} performance. This community-focused content positions you as connected and knowledgeable while providing immense value.`,
+            tags: ["mentalperformance", "experttips", "community"]
+          },
+          {
+            title: `The ${niche} Framework That Transformed My Results in Just 30 Days`,
+            category: "Educational Content",
+            description: `Present a step-by-step framework for achieving better results in ${niche}, based on personal experience and expert knowledge. This educational content provides immediate actionable value for your audience.`,
+            tags: ["framework", "methodology", "resultsdriven"]
+          },
+          {
+            title: `5 ${niche} Myths Debunked By Scientific Research`,
+            category: "Educational Content",
+            description: `Tackle persistent myths in the ${niche} industry with evidence-based explanations. This science-backed content positions you as a knowledge authority committed to truth and helps your audience avoid common misconceptions.`,
+            tags: ["sciencebacked", "mythbusting", "researchbased"]
+          }
+        ];
+      } else if (validAccountType === 'personal') {
+        // Previously defined personal fallback ideas
         fallbackIdeas = [
           // Storytelling format
           {
@@ -531,41 +503,6 @@ FOR PERSONAL BRAND CREATORS:
             category: "Trend Analysis",
             description: `Offer a nuanced perspective on a current trend in the ${niche} space, drawing on your professional expertise to highlight overlooked aspects. This critical analysis showcases your industry knowledge and independent thinking, establishing you as a thoughtful authority.`,
             tags: ["trendanalysis", "industryinsights", "expertperspective"]
-          }
-        ];
-      } else if (validAccountType === 'ecommerce') {
-        fallbackIdeas = [
-          // Pure value ideas (no product promotion)
-          {
-            title: `What ${niche} Coaches Never Tell Their Students (Insider Training Secrets)`,
-            category: "Expert Education",
-            description: `Share advanced training principles and insider knowledge that coaches typically reserve for their top clients. This positions your brand as having deep expertise while providing immense value to the audience without any product promotion.`,
-            tags: ["trainingtips", "expertadvice", "insiderknowledge"]
-          },
-          {
-            title: `The Truth About ${niche} Recovery: Science vs. Popular Myths`,
-            category: "Myth Busting",
-            description: `Break down common misconceptions about recovery in the ${niche} space using scientific evidence and expert insights. This educational content builds authority and trust with your audience without pushing products directly.`,
-            tags: ["mythbusting", "recovery", "sciencebacked"]
-          },
-          {
-            title: `I Interviewed 50 ${niche} Coaches About Their #1 Mental Performance Hack`,
-            category: "Community Insights",
-            description: `Share valuable insights from industry professionals about the mental side of ${niche} performance. This community-focused content positions your brand as connected and knowledgeable while providing immense value.`,
-            tags: ["mentalperformance", "experttips", "community"]
-          },
-          // Product-focused ideas
-          {
-            title: `We Asked Pro ${niche} Athletes to Brutally Critique Our Products (Their Feedback Changed Everything)`,
-            category: "Product Development",
-            description: `Show authentic feedback from professional athletes about your ${niche} products, highlighting both praise and criticism. This transparent approach builds trust with ${audience} while naturally showcasing your products and commitment to quality.`,
-            tags: ["honestfeedback", "productdevelopment", "athletetested"]
-          },
-          {
-            title: `The Unconventional ${niche} Test: How Our Products Perform in Extreme Conditions`,
-            category: "Product Performance",
-            description: `Document putting your ${niche} products through unusual or extreme testing scenarios to demonstrate durability, effectiveness, and quality. This entertaining yet informative content naturally showcases product benefits in a non-promotional way.`,
-            tags: ["producttesting", "extremeconditions", "qualityproof"]
           }
         ];
       } else {

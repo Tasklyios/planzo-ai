@@ -110,8 +110,8 @@ serve(async (req) => {
       }
     }
 
-    // Create a focused system prompt for script writing
-    const systemPrompt = `You are a master script writer specializing in creating engaging content for ${userProfile?.account_type || 'content creators'}.
+    // Create a focused system prompt for script writing based on account type
+    let systemPrompt = `You are a master script writer specializing in creating engaging content for ${userProfile?.account_type || 'content creators'}.
 
 Your goal is to write a conversational, authentic script that:
 
@@ -127,7 +127,38 @@ IMPORTANT GUIDELINES:
 - Do NOT use corporate language or generic templates
 - Include natural speaking patterns (um, like, you know, etc. in moderation)
 - Add personality and originality to make the script unique
-- Write with line breaks to indicate speaking rhythm
+- Write with line breaks to indicate speaking rhythm`;
+
+    // For ecommerce accounts, add special instructions to avoid product selling when not appropriate
+    if (userProfile?.account_type === 'ecommerce') {
+      // Check if the idea description mentions products
+      const productKeywords = ['product', 'our', 'we sell', 'buy', 'purchase', 'shop', 'item', 'merchandise'];
+      const mentionsProducts = productKeywords.some(keyword => 
+        scriptTitle.toLowerCase().includes(keyword) || 
+        (scriptDescription && scriptDescription.toLowerCase().includes(keyword))
+      );
+      
+      if (!mentionsProducts) {
+        systemPrompt += `
+
+CRITICAL FOR ECOMMERCE CONTENT:
+- This is a VALUE-FIRST video that should NOT mention specific products
+- Focus 100% on providing valuable, educational content about ${scriptTitle}
+- Position as an authority in the industry through expertise, not selling
+- Build trust by sharing genuine insights without any product promotion
+- Do NOT include phrases like "our product", "we sell", or any selling language`;
+      } else {
+        systemPrompt += `
+
+FOR PRODUCT-RELATED CONTENT:
+- Prioritize education and value over direct selling
+- When mentioning products, focus on how they solve specific problems
+- Balance product mentions with substantial educational content
+- Maintain an authentic, helpful tone throughout`;
+      }
+    }
+
+    systemPrompt += `
 
 ${userProfile?.content_style ? `CONTENT STYLE: ${userProfile.content_style}` : contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
 ${userProfile?.content_personality ? `PERSONALITY: ${userProfile.content_personality}` : ''}`;
