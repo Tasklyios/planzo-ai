@@ -23,7 +23,6 @@ import { ToastProvider } from "@/hooks/use-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Onboarding from "@/components/auth/Onboarding";
 
-// Create a client
 const queryClient = new QueryClient();
 
 function App() {
@@ -37,7 +36,6 @@ function App() {
       setIsAuthenticated(!!session);
       
       if (session) {
-        // Check if onboarding is needed
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('onboarding_completed')
@@ -57,7 +55,6 @@ function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
       
-      // If user just signed in, check if they need onboarding
       if (event === 'SIGNED_IN' && session) {
         const checkOnboarding = async () => {
           const { data: profile, error } = await supabase
@@ -82,13 +79,20 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const currentDomain = window.location.hostname;
+    if (currentDomain === 'planzo.netlify.app') {
+      const currentPath = window.location.pathname;
+      const currentSearch = window.location.search;
+      window.location.href = `https://planzoai.com${currentPath}${currentSearch}`;
+    }
+  }, []);
+
   const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
     
-    // Optionally check if pricing dialog should be shown
     const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
     if (!hasSeenPricing) {
-      // Handle pricing dialog here if needed
     }
   };
 
@@ -106,7 +110,6 @@ function App() {
         <ToastProvider>
           <Router>
             <Routes>
-              {/* Redirect to dashboard if authenticated and trying to access landing page */}
               <Route 
                 path="/" 
                 element={isAuthenticated ? <Navigate to="/dashboard" /> : <Index />} 
@@ -129,7 +132,6 @@ function App() {
                   <Route path="/account" element={<Account />} />
                   <Route path="/billing" element={<Billing />} />
                   
-                  {/* Catch any other routes that should be protected */}
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Route>
@@ -137,7 +139,6 @@ function App() {
             </Routes>
             <Toaster />
             
-            {/* Global Onboarding Dialog */}
             {isAuthenticated && (
               <Onboarding 
                 open={showOnboarding} 

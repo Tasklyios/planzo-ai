@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +14,17 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import Onboarding from "@/components/auth/Onboarding";
 
 const Auth = () => {
+  // Domain redirect check
+  useEffect(() => {
+    const currentDomain = window.location.hostname;
+    if (currentDomain === 'planzo.netlify.app') {
+      // Preserve the current path and query parameters when redirecting
+      const currentPath = window.location.pathname;
+      const currentSearch = window.location.search;
+      window.location.href = `https://planzoai.com${currentPath}${currentSearch}`;
+    }
+  }, []);
+
   // Force light mode on auth page
   useEffect(() => {
     // Save current theme preference
@@ -666,3 +676,4 @@ const Auth = () => {
 };
 
 export default Auth;
+
