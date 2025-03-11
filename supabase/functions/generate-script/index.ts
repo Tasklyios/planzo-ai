@@ -129,10 +129,16 @@ IMPORTANT GUIDELINES:
 - Add personality and originality to make the script unique
 - Write with line breaks to indicate speaking rhythm`;
 
-    // For ecommerce accounts, add special instructions to avoid product selling when not appropriate
+    // For ecommerce accounts, add special instructions
     if (userProfile?.account_type === 'ecommerce') {
-      // Check if the idea description mentions products
-      const productKeywords = ['product', 'our', 'we sell', 'buy', 'purchase', 'shop', 'item', 'merchandise'];
+      // Check if the idea description or title contains any product keywords
+      const productKeywords = [
+        'product', 'our', 'we sell', 'buy', 'purchase', 'shop', 'item', 'merchandise',
+        'collection', 'line', 'brand', 'stock', 'deal', 'discount', 'promo', 'promotion',
+        'limited edition', 'exclusive', 'new release', 'launch', 'introducing', 'featuring',
+        'showcase', 'try', 'get yours', 'shipping', 'order', 'available', 'sold'
+      ];
+      
       const mentionsProducts = productKeywords.some(keyword => 
         scriptTitle.toLowerCase().includes(keyword) || 
         (scriptDescription && scriptDescription.toLowerCase().includes(keyword))
@@ -146,15 +152,18 @@ CRITICAL FOR ECOMMERCE CONTENT:
 - Focus 100% on providing valuable, educational content about ${scriptTitle}
 - Position as an authority in the industry through expertise, not selling
 - Build trust by sharing genuine insights without any product promotion
-- Do NOT include phrases like "our product", "we sell", or any selling language`;
+- Do NOT include phrases like "our product", "we sell", or any selling language
+- Treat this content as if you were an independent expert educator, not a brand`;
       } else {
         systemPrompt += `
 
 FOR PRODUCT-RELATED CONTENT:
 - Prioritize education and value over direct selling
 - When mentioning products, focus on how they solve specific problems
-- Balance product mentions with substantial educational content
-- Maintain an authentic, helpful tone throughout`;
+- Balance product mentions with substantial educational content (at least 70% education)
+- Maintain an authentic, helpful tone throughout
+- Avoid pushy sales language and instead focus on genuine benefits
+- Talk about products as solutions to specific problems`;
       }
     }
 
