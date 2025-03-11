@@ -75,14 +75,14 @@ const SavedHooks = () => {
   const categories = getCategories();
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6 px-4 sm:px-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold">Saved Hooks</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Saved Hooks</h1>
         <p className="text-muted-foreground">Manage your collection of saved hooks for scripts</p>
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3 sm:pb-4">
           <CardTitle>Your Saved Hooks</CardTitle>
           <CardDescription>
             Use these hooks in your scripts or copy them for other content
@@ -111,27 +111,29 @@ const SavedHooks = () => {
           ) : (
             <div className="space-y-4">
               <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-                <TabsList className="mb-4 flex flex-wrap">
-                  <TabsTrigger value="all">All Hooks</TabsTrigger>
-                  {categories.map(category => (
-                    <TabsTrigger key={category} value={category} className="capitalize">
-                      {category}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+                <div className="overflow-x-auto pb-2">
+                  <TabsList className="mb-4 flex">
+                    <TabsTrigger value="all">All</TabsTrigger>
+                    {categories.map(category => (
+                      <TabsTrigger key={category} value={category} className="capitalize">
+                        {category}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
 
                 <TabsContent value={activeCategory} className="mt-0">
                   <div className="grid gap-3">
                     {filteredHooks.map((hook: SavedHook) => (
                       <div 
                         key={hook.id} 
-                        className="p-4 border rounded-md flex justify-between items-start gap-4"
+                        className="p-3 sm:p-4 border rounded-md flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4"
                       >
                         <div>
                           <p className="text-sm font-medium mb-1 capitalize">{hook.category} Hook</p>
-                          <p>{hook.hook}</p>
+                          <p className="text-sm sm:text-base">{hook.hook}</p>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex gap-2 shrink-0 self-end sm:self-start">
                           <Button
                             variant="ghost"
                             size="icon"

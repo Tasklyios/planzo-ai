@@ -29,14 +29,14 @@ const HookGeneratorForm = ({
   isGenerating
 }: HookGeneratorFormProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="md:col-span-2">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="lg:col-span-2">
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3 sm:pb-4">
             <CardTitle>Viral Hook Generator</CardTitle>
             <CardDescription>Create attention-grabbing hooks that stop users from scrolling</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             <div className="space-y-2">
               <Label htmlFor="topic">What's your content about?</Label>
               <Input 
@@ -65,6 +65,7 @@ const HookGeneratorForm = ({
                 onChange={(e) => setDetails(e.target.value)}
                 placeholder="Add any specific details, key messages, or emotional tone for your hooks" 
                 disabled={isGenerating}
+                className="min-h-24"
               />
             </div>
           </CardContent>
@@ -90,13 +91,13 @@ const HookGeneratorForm = ({
         </Card>
       </div>
 
-      <div>
+      <div className="hidden sm:block">
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3 sm:pb-4">
             <CardTitle>Hook Types</CardTitle>
             <CardDescription>Different styles proven to boost engagement</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             <div className="bg-muted rounded-lg p-3">
               <h3 className="font-medium">Question Hooks</h3>
               <p className="text-sm text-muted-foreground">Trigger curiosity with thought-provoking questions</p>

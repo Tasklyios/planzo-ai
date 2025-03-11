@@ -81,9 +81,21 @@ const SidebarCategory = ({ title, children, defaultOpen = false }: SidebarCatego
   );
 }
 
-const AppSidebar = () => {
+interface AppSidebarProps {
+  isMobile?: boolean;
+  onNavItemClick?: () => void;
+}
+
+const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (isMobile && onNavItemClick) {
+      onNavItemClick();
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -103,9 +115,12 @@ const AppSidebar = () => {
   };
 
   return (
-    <div className="w-64 border-r h-screen flex flex-col fixed">
+    <div className={cn(
+      "border-r h-screen flex flex-col",
+      isMobile ? "w-full" : "w-64 fixed"
+    )}>
       <div className="px-4 py-4 h-16 flex items-center">
-        <Link to="/dashboard" className="flex items-center">
+        <Link to="/dashboard" className="flex items-center" onClick={onNavItemClick}>
           <Logo size="medium" />
         </Link>
       </div>
@@ -117,16 +132,19 @@ const AppSidebar = () => {
             href="/dashboard"
             icon={<Grid3X3 className="w-5 h-5" />}
             label="Dashboard"
+            onClick={onNavItemClick}
           />
           <SidebarItem
             href="/planner"
             icon={<LayoutPanelLeft className="w-5 h-5" />}
             label="Content Planner"
+            onClick={onNavItemClick}
           />
           <SidebarItem
             href="/calendar"
             icon={<Calendar className="w-5 h-5" />}
             label="Calendar"
+            onClick={onNavItemClick}
           />
         </SidebarCategory>
         
@@ -135,16 +153,19 @@ const AppSidebar = () => {
             href="/generator"
             icon={<LightbulbIcon className="w-5 h-5" />}
             label="Generate Ideas"
+            onClick={onNavItemClick}
           />
           <SidebarItem
             href="/script"
             icon={<BookOpen className="w-5 h-5" />}
             label="Generate Scripts"
+            onClick={onNavItemClick}
           />
           <SidebarItem
             href="/hooks"
             icon={<Anchor className="w-5 h-5" />}
             label="Generate Hooks"
+            onClick={onNavItemClick}
           />
         </SidebarCategory>
         
@@ -153,11 +174,13 @@ const AppSidebar = () => {
             href="/ideas"
             icon={<Film className="w-5 h-5" />}
             label="Saved Ideas"
+            onClick={onNavItemClick}
           />
           <SidebarItem
             href="/saved-hooks"
             icon={<BookmarkIcon className="w-5 h-5" />}
             label="Saved Hooks"
+            onClick={onNavItemClick}
           />
         </SidebarCategory>
       </div>
@@ -169,15 +192,20 @@ const AppSidebar = () => {
             href="/account"
             icon={<UserCircle className="w-5 h-5" />}
             label="Account"
+            onClick={onNavItemClick}
           />
           <SidebarItem
             href="/billing"
             icon={<CreditCard className="w-5 h-5" />}
             label="Billing"
+            onClick={onNavItemClick}
           />
           <SidebarItem
             href="#"
-            onClick={handleLogout}
+            onClick={() => {
+              handleLogout();
+              if (onNavItemClick) onNavItemClick();
+            }}
             icon={<LogOut className="w-5 h-5" />}
             label="Logout"
           />
