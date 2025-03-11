@@ -288,31 +288,15 @@ const InputForm = ({
             <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <Building2 className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Business Niche</label>
+                  <LayersIcon className="text-[#4F92FF] w-4 h-4" />
+                  <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
                 </div>
                 <input
                   type="text"
-                  value={businessNiche}
-                  onChange={handleBusinessNicheChange}
+                  value={contentNiche}
+                  onChange={handleContentNicheChange}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Your business niche"
-                />
-              </div>
-            </div>
-
-            <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-              <div className="flex flex-col items-center w-full">
-                <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-                  <Building2 className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Business Description</label>
-                </div>
-                <textarea
-                  value={businessDescription}
-                  onChange={(e) => setBusinessDescription(e.target.value)}
-                  className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Describe what your business does"
-                  rows={2}
+                  placeholder="Your content niche"
                 />
               </div>
             </div>
@@ -337,14 +321,14 @@ const InputForm = ({
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
                   <Video className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
+                  <label className="text-xs md:text-sm font-medium text-foreground">Video Type</label>
                 </div>
                 <input
                   type="text"
-                  value={contentNiche}
-                  onChange={handleContentNicheChange}
+                  value={videoType}
+                  onChange={(e) => setVideoType(e.target.value)}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Your content niche"
+                  placeholder="Video type"
                 />
               </div>
             </div>
