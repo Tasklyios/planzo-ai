@@ -51,46 +51,67 @@ serve(async (req) => {
 
     console.log('Validated account type:', validAccountType);
 
-    // Enhanced system prompt with more specific guidance
-    let systemPrompt = `You are an elite marketing strategist and viral content expert specializing in ${platform} content.
+    // Create topic variations to encourage creativity
+    const nicheWords = niche.toLowerCase().split(/\s+/);
+    const mainTopic = nicheWords[nicheWords.length - 1] || niche;
+    const relatedTopics = generateRelatedTopics(niche, audience);
+    
+    // Enhanced system prompt with creativity instructions and divergent thinking techniques
+    let systemPrompt = `You are a world-class content strategist known for creating original, insightful, and breakthrough content ideas.
 
-Your expertise is creating viral content ideas for ${validAccountType} creators in the "${niche}" space targeting "${audience}".`;
+Your expertise is creating CREATIVE and ORIGINAL content ideas for ${validAccountType} creators in the "${niche}" space targeting "${audience}".
+
+CREATIVITY PROTOCOLS:
+1. Use lateral thinking to connect unexpected concepts
+2. Consider counterintuitive angles that challenge common wisdom
+3. Focus on specific stories, experiences, and unique perspectives
+4. Break conventional content formats and approaches
+5. Create ideas that make people think "I've never seen that before"
+6. Focus on the AUDIENCE'S needs, challenges, dreams, and desires`;
 
     // Tailor system prompt based on account type
     if (validAccountType === 'ecommerce') {
       systemPrompt += `
-FOR ECOMMERCE BRANDS - CRITICAL GUIDELINES:
-- Create MOSTLY ideas (at least 4 out of 5) that have NOTHING to do with products
-- Focus on providing pure value to the audience through educational content
-- These pure value ideas MUST NOT contain ANY references to:
-  * The creator's products
-  * "Our" products or services
-  * "We sell" language
-  * Anything that sounds like selling
-- The pure value ideas should focus on:
-  * Industry expertise
-  * Educational content
-  * Helpful tips and guidance
-  * Trends and insights
-  * Solving audience problems
-- MAXIMUM 1 out of 5 ideas can subtly reference products as solutions
-- The best ecommerce content marketing establishes expertise FIRST without selling
-- Pure value ideas should read like they came from an independent expert, not a brand`;
+FOR ECOMMERCE BRANDS - ABSOLUTELY CRITICAL:
+- Create a MIX OF CONTENT with this exact balance:
+  * 4 out of 5 ideas MUST HAVE NOTHING to do with products, selling, or your brand
+  * Only 1 out of 5 ideas can subtly mention the product category
+- The 4 non-product ideas should focus on:
+  * Industry expertise and thought leadership
+  * Audience lifestyle content beyond the product
+  * Educational content that builds trust
+  * Entertainment that relates to audience interests
+  * Personal stories with emotional resonance
+  * Broader topic exploration in adjacent interest areas
+- For non-product ideas, use ZERO language like:
+  * "our" anything
+  * "we sell" phrasing
+  * "product" mentions
+  * buying, purchasing, deals, etc.
+- Non-product ideas should sound like they come from an independent expert or educator
+- The ONE subtle product idea should be educational first, with product mentioned only as a small part
+- Remember: Content marketing success comes from building trust through value FIRST`;
     } else if (validAccountType === 'personal') {
       systemPrompt += `
-For this PERSONAL CREATOR account:
-- Focus on creating professional, straight-to-the-point content that avoids cringy or gimmicky approaches
-- Generate a diverse mix of content formats: storytelling, day-in-the-life, educational tutorials, top lists, behind-the-scenes
-- Ideas should showcase expertise without appearing forced or inauthentic
-- Each idea must have clear viral potential with strong hooks and unique angles
-- Avoid anything that feels amateur or desperate for attention`;
+FOR PERSONAL CREATORS:
+- Create a DIVERSE MIX of distinctive content formats:
+  * Personal narrative with emotional depth
+  * Contrarian perspective on industry norms
+  * Immersive day-in-the-life with unexpected moments
+  * Expert deep dive with unique insights
+  * Behind-the-scenes revelation
+- Avoid basic, templated approaches used by average creators
+- Each idea should contain a specific hook and original angle
+- Focus on authenticity, vulnerability, and distinctive voice
+- Include content that showcases your unique experience or perspective`;
     } else if (validAccountType === 'business') {
       systemPrompt += `
-For this BUSINESS account:
-- Focus on thought leadership, industry expertise, and building brand trust
-- Ideas should position the business as an authority while providing genuine value
-- Include a mix of educational content, behind-the-scenes, and industry insights
-- Prioritize ideas that establish credibility and trust with potential clients`;
+FOR BUSINESS ACCOUNTS:
+- Create content ideas that establish thought leadership without being boring
+- Balance professionalism with authentic, human connection
+- Include a mix of case studies, industry analysis, and behind-the-scenes
+- Demonstrate expertise through stories, not just facts
+- Create content that resonates with decision-makers on a personal level`;
     }
 
     // Add style profile and content preferences
@@ -101,68 +122,106 @@ TONE: ${styleProfile.tone}` : ''}
 ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
 ${contentPersonality ? `CONTENT PERSONALITY: ${contentPersonality}` : ''}
 
-PLATFORM ADAPTATION: Optimize specifically for ${platform} with the right format, hooks, and engagement tactics.`;
+PLATFORM ADAPTATION: 
+Create ideas specifically optimized for ${platform} with platform-native hooks, formats, and engagement approaches.`;
 
-    // Enhanced user prompt with clearer instructions
-    let userPrompt = `Create 5 original, viral-potential video ideas for a ${validAccountType} creator in the "${niche}" niche targeting "${audience}" on ${platform}.`;
+    // Enhanced user prompt with creative thinking techniques and clearer guidance
+    let userPrompt = `Create 5 HIGHLY ORIGINAL, outside-the-box video ideas for a ${validAccountType} creator in the "${niche}" space targeting "${audience}" on ${platform}.`;
+
+    // Add related topics to spark creativity
+    userPrompt += `
+CREATIVITY SPARKS:
+* Consider these related topics for inspiration: ${relatedTopics.join(', ')}
+* Think about emotional angles: curiosity, surprise, awe, contradiction, nostalgia
+* Consider perspectives from: beginners, experts, skeptics, enthusiasts, adjacent fields`;
 
     // Specialized prompts for different account types
     if (validAccountType === 'ecommerce') {
       userPrompt += `
-FOR ECOMMERCE BRANDS - EXTREMELY IMPORTANT:
-- Create at least 4 ideas that have ABSOLUTELY NOTHING to do with products:
-  * Educational content about broader ${niche} topics
-  * Industry insights, trends and news
-  * Lifestyle content related to the interests of ${audience}
-  * Problem-solving content that helps your audience
-  * Content that builds community around shared interests
-- These 4+ ideas MUST NOT mention, imply, or reference products in ANY way
-- DO NOT use words like "our", "we sell", "product", "offering", etc. in these ideas
-- AT MOST 1 idea can subtly reference products or your brand - the rest should be completely product-free
-- Think like a content creator or educator, NOT like a brand
+FOR ECOMMERCE BRANDS - ABSOLUTELY CRITICAL:
+- Create a mix with EXACTLY this balance:
+  * 4 ideas that have ABSOLUTELY NOTHING to do with your products or brand (pure value)
+  * 1 idea that can subtly mention the product category (educational first, product second)
+  
+For the 4 NON-PRODUCT ideas, focus on:
+1. Industry expertise that builds authority (trends, research, insights)
+2. Audience lifestyle content related to their broader interests
+3. Educational content that solves problems without mentioning products
+4. Entertainment or inspiration that resonates emotionally with the audience
 
-EXAMPLES OF GOOD PURE-VALUE IDEAS FOR ${niche.toUpperCase()}:
-* "The Secret Warm-Up Routine Pro Athletes Use Before Intense Training"
-* "I Tracked My Performance For 30 Days - Here's What The Data Revealed"
-* "The Surprising Connection Between Sleep Quality and Athletic Performance"
-* "5 Unconventional Training Methods That Changed Everything For Me"`;
+The 4 non-product ideas MUST NOT include:
+* ANY mention of products, items, gear, equipment
+* ANY brand references (our, we, company name)
+* ANY selling language (buy, purchase, shop, deal)
+* ANYTHING that sounds like marketing
+
+For these 4 ideas, write as if you're an independent expert or educator with NO connection to any brand.
+
+For the 1 SUBTLE product idea:
+* Make it 80% educational, 20% product
+* The product should be mentioned as a small part of a larger story
+* Focus on the problem being solved, not the product itself
+
+EXAMPLES OF EXCELLENT NON-PRODUCT IDEAS FOR ${niche.toUpperCase()}:
+* "I Tracked My Athletic Performance For 6 Months - The Data Will Surprise You"
+* "What Elite Coaches Look For When Evaluating Young Athletes"
+* "The Psychology Behind Breaking Through Performance Plateaus"
+* "The 'Flow State' Training Protocol That Changed Everything For Me"`;
     } else if (validAccountType === 'personal') {
       userPrompt += `
-FOR PERSONAL BRANDS - IMPORTANT GUIDELINES:
-- Create a DIVERSE MIX of content formats with NO REPETITION:
-  * 1 storytelling idea with a specific narrative focus
-  * 1 behind-the-scenes or day-in-the-life content 
-  * 1 educational or expert insight video
-  * 1 list-based content with a compelling angle
-  * 1 trend analysis or current event perspective
-- All ideas must be PROFESSIONAL and STRAIGHT-TO-THE-POINT - avoid anything that feels gimmicky or cringy
-- Each idea should have CLEAR VIRAL POTENTIAL with strong hooks and unique angles
-- Aim for ideas that would genuinely interest ${audience} and provide real value
-- Focus on content that builds authority while being authentic and relatable`;
+FOR PERSONAL CREATORS:
+Create these 5 DISTINCT formats with original angles:
+1. A personal narrative that reveals vulnerability and authenticity
+2. A perspective that challenges a common belief in your industry
+3. A behind-the-scenes look at something normally hidden
+4. A unique teaching approach that no one else is doing
+5. A creative format that breaks platform conventions
+
+Each idea MUST:
+* Have a specific, attention-grabbing hook (not generic)
+* Include an unexpected element that surprises viewers
+* Feel distinctly DIFFERENT from typical content in your niche
+* Provide real value that builds your authority
+
+AVOID GENERIC TEMPLATES like:
+* "5 Tips for X"
+* "How to X in Y Steps"
+* "The Ultimate Guide to X"
+* "What I Wish I Knew About X"`;
     } else if (validAccountType === 'business') {
       userPrompt += `
-FOR BUSINESS BRANDS:
-- Ideas should establish industry authority and thought leadership
-- Include case studies, insider knowledge, and educational content
-- Focus on building trust and credibility with potential clients
-- Demonstrate expertise without being overly technical or jargon-heavy`;
+FOR BUSINESS ACCOUNTS:
+Create these 5 DISTINCTIVE content types:
+1. A case study with an unexpected outcome or approach
+2. An industry analysis with a bold prediction or contrarian view
+3. A behind-the-scenes look at your work culture or process
+4. A thought leadership piece that challenges industry assumptions
+5. A client-focused story that emotionally resonates
+
+Each idea MUST:
+* Balance professionalism with authentic human connection
+* Demonstrate expertise through storytelling, not just facts
+* Include specific details that make it uniquely YOURS
+* Appeal to both rational and emotional decision-making factors`;
     }
 
     // Add custom ideas and previous context
     userPrompt += `
-${customIdeas ? `CREATOR'S OWN IDEAS: "${customIdeas}"` : ""}
+${customIdeas ? `CREATOR'S OWN IDEAS TO INSPIRE YOU: "${customIdeas}"` : ""}
 
 ${previousIdeas && previousIdeas.titles && previousIdeas.titles.length ? 
   `DO NOT REPEAT THESE PREVIOUS IDEAS: ${previousIdeas.titles.slice(0, 5).join(', ')}` : ''}
 
 Format each idea with:
-1. A specific, scroll-stopping title
-2. Content category/format
-3. Detailed description
-4. 3-5 relevant hashtags`;
+1. A specific, scroll-stopping title (not generic)
+2. Content category/format (be specific and creative)
+3. Detailed description with the unique angle
+4. 3-5 relevant hashtags
 
-    // Call OpenAI with effective parameters
-    console.log('Calling OpenAI API...');
+CRITICAL: Each idea must be DISTINCTLY DIFFERENT from the others. Vary topics, formats, emotional angles, and approaches.`;
+
+    // Call OpenAI with effective parameters for creativity
+    console.log('Calling OpenAI API with creativity-enhanced prompts...');
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -175,9 +234,11 @@ Format each idea with:
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        temperature: 0.9,
+        temperature: 1.0, // Higher temperature for more creativity
         max_tokens: 1200,
-        top_p: 1.0
+        top_p: 1.0,
+        presence_penalty: 0.7, // Encourage new topics
+        frequency_penalty: 0.7 // Discourage repetition
       }),
     });
 
@@ -232,16 +293,16 @@ Format each idea with:
                                     text.match(/Detailed description:?\s*([^#]+)/i);
             const hashtagsMatch = text.match(/#([^#\s]+)(?:\s+#([^#\s]+))?(?:\s+#([^#\s]+))?(?:\s+#([^#\s]+))?(?:\s+#([^#\s]+))?/g);
             
-            const title = titleMatch ? titleMatch[1].trim() : "Viral Content Idea";
-            const category = categoryMatch ? categoryMatch[1].trim() : "Content";
+            const title = titleMatch ? titleMatch[1].trim() : createCreativeTitle(niche, audience);
+            const category = categoryMatch ? categoryMatch[1].trim() : getRandomContentFormat();
             const description = descriptionMatch ? descriptionMatch[1].trim() : text.trim();
             
             let tags = [];
             if (hashtagsMatch) {
               tags = hashtagsMatch.map(tag => tag.replace('#', '').trim());
             } else {
-              // Default tags if none found
-              tags = [niche.toLowerCase().replace(/\s+/g, ''), "content", "viral"]; 
+              // Generate relevant tags if none found
+              tags = generateRelevantTags(niche, category, audience);
             }
             
             return {
@@ -254,9 +315,9 @@ Format each idea with:
         }
       }
       
-      // Aggressively check for product mentions in all ideas for ecommerce accounts
+      // For ecommerce accounts, verify proper balance of product vs non-product ideas
       if (validAccountType === 'ecommerce' && ideas.length > 0) {
-        console.log("Ecommerce account detected - checking for product mentions");
+        console.log("Ecommerce account detected - checking for content balance");
         
         // Comprehensive list of product-selling phrases to detect
         const productPhrases = [
@@ -271,16 +332,12 @@ Format each idea with:
           `best ${niche}`, `top ${niche} products`, "product review"
         ];
         
-        // Add direct product niche mentions as selling language to detect
-        // For example if niche is "running sunglasses", match "sunglasses" or "glasses" as product words
-        const nicheWords = niche.toLowerCase().split(/\s+/);
+        // Add direct product niche mentions for detection
         if (nicheWords.length > 0) {
-          // For multi-word niches, also add the last word as it's often the product
           if (nicheWords.length > 1) {
             productPhrases.push(nicheWords[nicheWords.length - 1]);
           }
           
-          // Add specific product patterns for the niche
           productPhrases.push(
             "our " + niche, 
             niche + " product", 
@@ -290,86 +347,6 @@ Format each idea with:
             "premium " + niche
           );
         }
-        
-        // Define pure-value, educational ideas that make NO mention of products whatsoever
-        const pureValueIdeas = [
-          {
-            title: `The Science of Optimal Performance: What Top Athletes Know About ${audience[0].toUpperCase() + audience.slice(1)} Training`,
-            category: "Educational Content",
-            description: `A deep dive into the scientific principles behind peak athletic performance, sharing research-backed insights that top coaches use with elite athletes. This educational content positions you as a knowledge authority while providing actionable training wisdom without any product promotion.`,
-            tags: ["performancescience", "athletictraining", "researchbacked"]
-          },
-          {
-            title: `5 Training Myths Debunked: What Science Actually Says About ${nicheWords[0]} Performance`,
-            category: "Myth Busting",
-            description: `Challenge common misconceptions in the ${nicheWords[0]} space with evidence-based explanations. This science-focused content helps your audience avoid training mistakes while establishing you as a trustworthy, fact-based resource in your field.`,
-            tags: ["mythbusting", "sciencebacked", "trainingtips"]
-          },
-          {
-            title: `What I Learned Shadowing Elite ${nicheWords[0].charAt(0).toUpperCase() + nicheWords[0].slice(1)} Coaches for 30 Days`,
-            category: "Behind-the-Scenes",
-            description: `Share exclusive insights gained from spending time with top coaches in the industry. This behind-the-scenes content gives your audience access to professional-level knowledge while positioning you as connected and informed in the ${nicheWords[0]} community.`,
-            tags: ["elitecoaching", "behindthescenes", "insiderknowledge"]
-          },
-          {
-            title: `The Recovery Protocol That Transformed My ${nicheWords[0].charAt(0).toUpperCase() + nicheWords[0].slice(1)} Performance`,
-            category: "Personal Experience",
-            description: `Detail a specific recovery system that significantly improved your performance, focusing on techniques anyone can implement. This experience-based content provides immediate value to your audience while establishing your credibility through personal results.`,
-            tags: ["recoveryprotocol", "performanceenhancement", "athleticrecovery"]
-          },
-          {
-            title: `I Analyzed the Training Routines of 50 Pro ${audience.charAt(0).toUpperCase() + audience.slice(1)} - Here's What They All Have in Common`,
-            category: "Data Analysis",
-            description: `Present findings from studying the training habits of professional athletes, highlighting the patterns that contribute to their success. This research-driven content delivers unique insights your audience can't find elsewhere while establishing you as a serious analyst of athletic performance.`,
-            tags: ["dataanalysis", "protraining", "performancepatterns"]
-          },
-          {
-            title: `The Mental Game: Psychological Techniques That Set Elite ${nicheWords[0].charAt(0).toUpperCase() + nicheWords[0].slice(1)} Athletes Apart`,
-            category: "Sports Psychology",
-            description: `Explore the mental strategies used by top performers to overcome challenges and achieve peak performance. This psychology-focused content addresses an often-overlooked aspect of training while providing valuable mindset tools for your audience.`,
-            tags: ["sportpsychology", "mentalstrength", "eliteperformance"]
-          },
-          {
-            title: `What Your ${nicheWords[0].charAt(0).toUpperCase() + nicheWords[0].slice(1)} Form Says About Your Training Needs`,
-            category: "Technique Analysis",
-            description: `Break down common technique patterns and what they reveal about training imbalances or areas for improvement. This analytical content helps your audience identify personalized training needs while demonstrating your expert eye for technical details.`,
-            tags: ["formanalysis", "techniquebreakdown", "customtraining"]
-          },
-          {
-            title: `The Training Calendar of a Champion: How Elite ${audience.charAt(0).toUpperCase() + audience.slice(1)} Structure Their Year`,
-            category: "Training Periodization",
-            description: `Reveal how professional athletes plan their training cycles throughout the year for optimal performance. This strategic content gives your audience a high-level framework for their own training while positioning you as someone who understands the big picture of athletic development.`,
-            tags: ["periodization", "seasonplanning", "elitetraining"]
-          },
-          {
-            title: `7 Performance-Boosting Habits I Learned From Olympic ${nicheWords[0].charAt(0).toUpperCase() + nicheWords[0].slice(1)} Athletes`,
-            category: "Lifestyle Optimization",
-            description: `Share key lifestyle practices that Olympic-level athletes use to support their training and recovery. This holistic content broadens your expertise beyond just workouts to show how everyday habits contribute to athletic excellence.`,
-            tags: ["athletehabits", "performancelifestyle", "olympicmindset"]
-          },
-          {
-            title: `The Hidden Factors Affecting Your ${nicheWords[0].charAt(0).toUpperCase() + nicheWords[0].slice(1)} Performance That No One Talks About`,
-            category: "Performance Analysis",
-            description: `Explore overlooked elements that significantly impact athletic performance, such as environmental factors, timing considerations, or subtle technique adjustments. This insightful content demonstrates your deep understanding of performance optimization beyond the obvious factors.`,
-            tags: ["performancefactors", "hiddenvariables", "trainingoptimization"]
-          }
-        ];
-        
-        // Product-focused idea templates (only 1 of these maximum should be used)
-        const productFocusedIdeas = [
-          {
-            title: `What No One Tells You About Choosing the Right ${niche} for Your Performance Level`,
-            category: "Buyer's Guide",
-            description: `A helpful guide for athletes looking to make informed decisions about their equipment. This educational approach focuses primarily on criteria for evaluation rather than specific product promotion, helping your audience understand what features matter most for their specific needs.`,
-            tags: ["buyersguide", "equipmentchoice", "informeddecision"]
-          },
-          {
-            title: `How Equipment Technology Has Transformed ${nicheWords[0].charAt(0).toUpperCase() + nicheWords[0].slice(1)} Performance Over the Last Decade`,
-            category: "Industry Evolution",
-            description: `Explore the technological advancements in the industry and how they've changed the sport, touching on various brands and innovations including but not focusing exclusively on your own. This educational approach positions you as knowledgeable about the broader industry landscape.`,
-            tags: ["techevolution", "sportsinnovation", "equipmentadvancement"]
-          }
-        ];
         
         // Check each idea for product mentions
         let productMentionCount = 0;
@@ -389,240 +366,100 @@ Format each idea with:
         
         console.log(`Detected ${productMentionCount}/${ideas.length} ideas with product mentions`);
         
-        // For ecommerce, we want maximum 1 product idea, minimum 4 pure value ideas
-        if (productMentionCount > 1 || ideas.length < 5) {
-          console.log("Too many product mentions or too few ideas - replacing with balanced set");
+        // Create balanced idea library
+        const nonProductIdeas = getCreativeNonProductIdeas(niche, audience, nicheWords);
+        const subtleProductIdeas = getSubtleProductIdeas(niche, audience, nicheWords);
+        
+        // Fix balance if needed: should be 4 non-product, 1 product idea for ecommerce
+        if (productMentionCount > 1 || productMentionCount === 0 || ideas.length < 5) {
+          console.log("Adjusting content balance for ecommerce account");
           
-          // Create a balanced set of ideas: 4 pure value + 1 subtle product mention
+          // Create a balanced set of 4 non-product + 1 product idea
           const newIdeas = [];
           
-          // Add 4 pure value ideas (randomly selected from our pool)
+          // Add 4 non-product ideas
           for (let i = 0; i < 4; i++) {
-            const randomIndex = Math.floor(Math.random() * pureValueIdeas.length);
-            newIdeas.push(pureValueIdeas[randomIndex]);
-            // Remove to avoid duplicates
-            pureValueIdeas.splice(randomIndex, 1);
+            // Use a creative algorithm to pick diverse non-product ideas
+            const nonProductIndex = (i * 3 + Date.now() % 3) % nonProductIdeas.length;
+            newIdeas.push(nonProductIdeas[nonProductIndex]);
           }
           
           // Add 1 product-focused idea
-          const productIdeaIndex = Math.floor(Math.random() * productFocusedIdeas.length);
-          newIdeas.push(productFocusedIdeas[productIdeaIndex]);
+          const productIdeaIndex = Date.now() % subtleProductIdeas.length;
+          newIdeas.push(subtleProductIdeas[productIdeaIndex]);
           
           // Replace the original ideas with our balanced set
           ideas = newIdeas;
           
-          console.log("Replaced with 4 pure value ideas and 1 product-focused idea");
-        } else if (productMentionCount === 0 && ideas.length >= 5) {
-          // If we have 0 product mentions and enough ideas, replace one with a product-focused idea
-          console.log("No product mentions detected - adding one product-focused idea");
-          
-          const productIdeaIndex = Math.floor(Math.random() * productFocusedIdeas.length);
-          const randomIdeaToReplace = Math.floor(Math.random() * ideas.length);
-          
-          // Replace a random idea with a product-focused one
-          ideas[randomIdeaToReplace] = productFocusedIdeas[productIdeaIndex];
-          
-          console.log("Added 1 product-focused idea");
+          console.log("Created balanced set: 4 non-product ideas, 1 subtle product idea");
         }
       }
       
-      // For personal and business accounts, check if ideas look too templated
+      // For personal and business accounts, check for creativity and originality
       if (validAccountType !== 'ecommerce') {
-        // Check if ideas are just templates with the niche plugged in
+        // Check if ideas look too templated or generic
         const templatePatterns = [
           /^5 Tips for/i,
           /^How to/i,
           /^Top \d+ Ways/i,
-          /^The Ultimate Guide to/i
+          /^The Ultimate Guide to/i,
+          /^What I Wish I Knew/i,
+          /^The Best/i
         ];
         
-        let templatedIdeasCount = 0;
+        let genericIdeasCount = 0;
         ideas.forEach(idea => {
           if (templatePatterns.some(pattern => pattern.test(idea.title))) {
-            templatedIdeasCount++;
+            genericIdeasCount++;
           }
         });
         
-        // If more than 60% of ideas look templated, regenerate with stricter instructions
-        if (templatedIdeasCount >= Math.floor(ideas.length * 0.6)) {
-          console.log("Detected templated ideas, running fallback with creative examples");
+        // If more than 40% of ideas look generic, regenerate with creative alternatives
+        if (genericIdeasCount >= Math.floor(ideas.length * 0.4)) {
+          console.log("Detected generic ideas, providing creative alternatives");
           
-          // Enhanced fallback examples based on account type
-          let exampleIdeas = "";
+          // Replace generic ideas with creative alternatives
+          const creativeIdeas = getCreativeIdeasForAccountType(validAccountType, niche, audience);
           
-          if (validAccountType === 'personal') {
-            exampleIdeas = `
-- "What a $50K ${niche} Expert Taught Me in Just One Hour (Worth Every Penny)"
-- "My Daily ${niche} Routine: The 15-Minute System That Doubled My Results"
-- "I Studied Every Top ${niche} Creator's Process for 30 Days - Here's What Actually Works"
-- "Behind-the-Scenes: What Managing a ${niche} Business Really Looks Like"
-- "5 ${niche} Myths I Believed Until I Worked With Industry Leaders"`;
-          } else if (validAccountType === 'business') {
-            exampleIdeas = `
-- "The Client Strategy We Refused to Share With Our ${niche} Competitors Until Now"
-- "What 100 Successful ${niche} Professionals Have in Common - Our 3-Year Research Study"
-- "The Unconventional ${niche} Framework That Cut Our Client's Costs by 40%"
-- "Behind Closed Doors: How Top ${niche} Firms Actually Make Strategic Decisions"
-- "The ${niche} Analysis Method That Changed How We Approach Every Client Project"`;
-          }
-          
-          const stricterPrompt = `${userPrompt}
-
-IMPORTANT: Your previous ideas were too templated. Create TRULY ORIGINAL ideas like these examples:${exampleIdeas}
-
-- Create a diverse mix of content formats with NO REPETITION
-- All ideas must be professional, straight-to-the-point, and have viral potential
-- Avoid cringy, clickbaity or gimmicky approaches entirely`;
-          
-          const stricterResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${OPENAI_API_KEY}`
-            },
-            body: JSON.stringify({
-              model: "gpt-4o-mini",
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: stricterPrompt }
-              ],
-              temperature: 1.0,
-              max_tokens: 1200
-            }),
+          // For each generic idea, replace with a creative one
+          ideas = ideas.map((idea, index) => {
+            if (templatePatterns.some(pattern => pattern.test(idea.title))) {
+              // Use modulo to cycle through creative ideas
+              const creativeIndex = index % creativeIdeas.length;
+              return creativeIdeas[creativeIndex];
+            }
+            return idea;
           });
           
-          if (stricterResponse.ok) {
-            const stricterData = await stricterResponse.json();
-            const stricterRawResponse = stricterData.choices[0].message.content;
-            console.log('Stricter AI response:', stricterRawResponse);
-            
-            const stricterJsonMatch = stricterRawResponse.match(/\{[\s\S]*\}/);
-            if (stricterJsonMatch) {
-              const stricterParsedData = JSON.parse(stricterJsonMatch[0]);
-              if (stricterParsedData.ideas && Array.isArray(stricterParsedData.ideas)) {
-                ideas = stricterParsedData.ideas;
-              }
-            }
-          }
+          console.log("Replaced generic ideas with creative alternatives");
         }
       }
+      
+      // Ensure diversity of content types
+      ensureContentDiversity(ideas);
       
       // Limit to exactly 5 ideas
       ideas = ideas.slice(0, 5);
       
       // Ensure all ideas have required fields
       ideas = ideas.map(idea => ({
-        title: idea.title || `Viral ${niche} Concept`,
-        category: idea.category || "Creative Content",
-        description: idea.description || `A unique approach to creating content about ${niche} that will resonate with ${audience}.`,
+        title: idea.title || createCreativeTitle(niche, audience),
+        category: idea.category || getRandomContentFormat(),
+        description: idea.description || createCreativeDescription(niche, audience, idea.title),
         tags: Array.isArray(idea.tags) && idea.tags.length > 0 ? 
-          idea.tags : ["viral", "content", niche.toLowerCase().replace(/\s+/g, '-')]
+          idea.tags : generateRelevantTags(niche, idea.category || "Content", audience)
       }));
       
     } catch (error) {
       console.error("Error parsing ideas:", error);
       
-      // Carefully selected fallback ideas based on account type
+      // Provide creative fallback ideas based on account type
       if (validAccountType === 'ecommerce') {
-        // Return a mix of 4 pure value ideas and 1 product idea
-        ideas = [
-          {
-            title: `The Science Behind Recovery: What Elite Athletes Know That Most Don't`,
-            category: "Educational Content",
-            description: `A deep dive into the science of athletic recovery, sharing research-backed techniques used by elite athletes. This educational content builds authority while providing valuable knowledge without any product promotion.`,
-            tags: ["recovery", "sciencebacked", "eliteperformance"]
-          },
-          {
-            title: `I Tracked My Training Data for 6 Months - Here's What Actually Improved My Performance`,
-            category: "Data Analysis",
-            description: `Share insights from personal data tracking, revealing unexpected patterns and effective strategies that anyone can apply. This data-driven content demonstrates your commitment to improvement and provides actionable insights.`,
-            tags: ["datadriven", "performancetracking", "athleticimprovement"]
-          },
-          {
-            title: `5 Pre-Competition Rituals of Olympic Athletes That Anyone Can Use`,
-            category: "Performance Psychology",
-            description: `Explore the mental preparation techniques used by Olympic-level athletes before important events. This psychological content addresses the often-overlooked mental aspect of performance without selling any products.`,
-            tags: ["mentalpreperation", "performancepsychology", "precompetitionritual"]
-          },
-          {
-            title: `What Pro Coaches Look for When Evaluating Athlete Potential`,
-            category: "Expert Insights",
-            description: `Share insider knowledge about how professional coaches identify and develop talent. This insider content positions you as connected in the industry while providing valuable perspective for ambitious athletes.`,
-            tags: ["talentdevelopment", "coachinginsights", "athleticpotential"]
-          },
-          {
-            title: `How Equipment Technology Has Evolved and What It Means for Today's Athletes`,
-            category: "Industry Trends",
-            description: `Examine how technological advancements have changed the sport, discussing various brands and innovations (including but not exclusively yours). This educational approach positions you as knowledgeable about the broader industry landscape.`,
-            tags: ["equipmentevolution", "sportstechnology", "industrytrends"]
-          }
-        ];
+        ideas = getCreativeEcommerceIdeas(niche, audience, nicheWords);
       } else if (validAccountType === 'personal') {
-        ideas = [
-          {
-            title: `What a $10,000 ${niche} Workshop Taught Me That Changed Everything`,
-            category: "Personal Experience",
-            description: `Share the most valuable insights gained from a high-level professional development experience, focusing on unexpected or counter-intuitive lessons. This narrative content provides unique value while positioning you as someone who invests seriously in your expertise.`,
-            tags: ["expertinsights", "professionaltraining", "gamechangers"]
-          },
-          {
-            title: `Behind My Most Successful ${niche} Project: The Full Process Breakdown`,
-            category: "Behind-the-Scenes",
-            description: `Provide a detailed look at your workflow on a particularly successful project, showing both the polished result and the messy reality of creating it. This transparent content builds trust while giving your audience practical insights into professional-level work.`,
-            tags: ["creativeprocess", "behindthescenes", "projectbreakdown"]
-          },
-          {
-            title: `The ${niche} Myths I Believed Until I Worked With Industry Leaders`,
-            category: "Myth Busting",
-            description: `Challenge common misconceptions in your field based on your professional experience working with top experts. This perspective-shifting content helps your audience avoid common mistakes while establishing your credibility through association with industry leaders.`,
-            tags: ["mythbusting", "industryinsider", "expertperspective"]
-          },
-          {
-            title: `3 Unconventional ${niche} Techniques That Produced My Best Results Ever`,
-            category: "Tactical Advice",
-            description: `Share specific, unusual methods you've personally tested that delivered outstanding results, with detailed instructions for implementation. This actionable content provides immediate value while showcasing your innovative approach to your craft.`,
-            tags: ["unconventionaltechniques", "creativemethods", "proventactics"]
-          },
-          {
-            title: `What My Day As A ${niche} Professional Actually Looks Like (Reality vs Expectations)`,
-            category: "Day in the Life",
-            description: `Contrast the glamorized perception of your profession with the day-to-day reality, sharing both challenges and rewarding moments. This authentic content builds relatability while satisfying curiosity about professional life in your field.`,
-            tags: ["dayinthelife", "professionreality", "behindthescenes"]
-          }
-        ];
+        ideas = getCreativePersonalIdeas(niche, audience);
       } else {
-        ideas = [
-          {
-            title: `The Client Framework We Use to Double ${niche} Results in Half the Time`,
-            category: "Business Methodology",
-            description: `Outline a proprietary system your business uses that consistently delivers superior results for clients. This methodological content demonstrates your systematic approach while providing actionable insights that position your business as exceptionally effective.`,
-            tags: ["framework", "methodology", "businessresults"]
-          },
-          {
-            title: `Inside Our Most Challenging ${niche} Project: How We Turned Failure Into Success`,
-            category: "Case Study",
-            description: `Share a detailed account of a difficult project that initially went wrong, focusing on how your team's problem-solving approach ultimately created a successful outcome. This narrative builds credibility by showing your resilience and adaptability in challenging situations.`,
-            tags: ["casestudy", "problemsolving", "businesschallenges"]
-          },
-          {
-            title: `What 50+ Client Projects Taught Us About Effective ${niche} Strategy`,
-            category: "Industry Insights",
-            description: `Present key patterns and conclusions drawn from extensive client work, distilling practical wisdom that applies across your industry. This experience-based content establishes your business as having broad and deep expertise gained through substantial real-world application.`,
-            tags: ["strategyinsights", "industrypatterns", "clientexperience"]
-          },
-          {
-            title: `The Future of ${niche}: 5 Trends Reshaping the Industry in 2023`,
-            category: "Trend Analysis",
-            description: `Provide forward-looking insights about emerging developments in your field, demonstrating your business's finger on the pulse of industry evolution. This visionary content positions your company as a thought leader that clients can trust to keep them ahead of the curve.`,
-            tags: ["industrytrends", "futurepredictions", "businessevolution"]
-          },
-          {
-            title: `Behind Closed Doors: How Our ${niche} Team Approaches Complex Client Challenges`,
-            category: "Process Reveal",
-            description: `Take viewers inside your internal workflows, showing how your team collaborates to solve difficult problems. This transparent content humanizes your business while showcasing the intellectual firepower and teamwork that clients benefit from when working with you.`,
-            tags: ["teamprocess", "businessworkflow", "problemsolving"]
-          }
-        ];
+        ideas = getCreativeBusinessIdeas(niche, audience);
       }
     }
 
@@ -641,3 +478,441 @@ IMPORTANT: Your previous ideas were too templated. Create TRULY ORIGINAL ideas l
     );
   }
 });
+
+// ----- HELPER FUNCTIONS FOR CREATIVITY -----
+
+// Generate related topics for creative thinking
+function generateRelatedTopics(niche: string, audience: string): string[] {
+  const nicheWords = niche.toLowerCase().split(/\s+/);
+  const mainTopic = nicheWords[nicheWords.length - 1] || niche;
+  
+  // Create broader context topics
+  const topics = [
+    `${mainTopic} psychology`,
+    `${mainTopic} history`,
+    `${mainTopic} science`,
+    `${mainTopic} culture`,
+    `${mainTopic} community`,
+    `${mainTopic} lifestyle`,
+    `${mainTopic} technology`,
+    `${mainTopic} innovation`,
+    `${mainTopic} trends`,
+    `${mainTopic} controversies`,
+    `${mainTopic} myths`,
+    `${mainTopic} experiments`,
+    `${mainTopic} stories`,
+    `${mainTopic} challenges`,
+    `${mainTopic} future`,
+  ];
+  
+  // Return 5 random topics from the list
+  return topics
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 5);
+}
+
+// Create a creative title if needed
+function createCreativeTitle(niche: string, audience: string): string {
+  const titles = [
+    `What I Discovered After 30 Days of ${niche} Experimentation`,
+    `The Unconventional ${niche} Approach That Changed Everything`,
+    `Why Everything You Know About ${niche} Might Be Wrong`,
+    `The Secret ${niche} Technique That Only Insiders Know`,
+    `I Interviewed 50 ${niche} Experts - Here's What They All Agreed On`,
+    `The ${niche} Paradox: Why More Effort Leads to Worse Results`,
+    `What ${audience} Never Tell You About Their ${niche} Journey`,
+    `The Surprising Truth About ${niche} That No One Discusses`,
+    `How I Transformed My ${niche} Results With One Simple Change`,
+    `The Hidden Psychology Behind Successful ${niche}`,
+  ];
+  
+  return titles[Math.floor(Math.random() * titles.length)];
+}
+
+// Get a random content format
+function getRandomContentFormat(): string {
+  const formats = [
+    "Personal Journey",
+    "Data Analysis",
+    "Expert Interview",
+    "Myth Busting",
+    "Behind-the-Scenes",
+    "Case Study",
+    "Experimental",
+    "Storytelling",
+    "Contrarian Take",
+    "Deep Dive",
+    "Investigative",
+    "Trend Analysis",
+    "Technical Breakdown",
+    "Psychological Insight",
+    "Cultural Examination"
+  ];
+  
+  return formats[Math.floor(Math.random() * formats.length)];
+}
+
+// Create a creative description
+function createCreativeDescription(niche: string, audience: string, title: string): string {
+  const descriptions = [
+    `A deep exploration of ${niche} from a completely new angle, challenging conventional wisdom and providing actionable insights that most ${audience} miss. This content combines personal experience with research to deliver unique value.`,
+    
+    `An eye-opening journey into the world of ${niche} that reveals hidden patterns and unexpected connections. By examining both successes and failures, this content offers a balanced perspective that helps ${audience} make better decisions.`,
+    
+    `A provocative analysis that questions standard ${niche} practices and introduces a framework for thinking differently. Drawing from cross-disciplinary research, this content creates breakthrough insights for ${audience} looking to innovate.`,
+    
+    `A vulnerable, authentic look at the real challenges of ${niche} that most content creators won't discuss. By sharing both struggles and triumphs, this content creates a genuine connection with ${audience} facing similar obstacles.`,
+    
+    `A methodical breakdown of ${niche} techniques that combines data analysis with practical application. This research-backed approach gives ${audience} both the "why" and "how" behind effective strategies.`
+  ];
+  
+  return descriptions[Math.floor(Math.random() * descriptions.length)];
+}
+
+// Generate relevant hashtags
+function generateRelevantTags(niche: string, category: string, audience: string): string[] {
+  const baseTag = niche.toLowerCase().replace(/\s+/g, '');
+  const categoryTag = category.toLowerCase().replace(/\s+/g, '');
+  
+  const possibleTags = [
+    baseTag,
+    categoryTag,
+    'content',
+    'creator',
+    'authentic',
+    'valuedriven',
+    'education',
+    'insights',
+    'deepdive',
+    'behindthescenes',
+    'storytelling',
+    'expertise',
+    'thoughtleadership',
+    'learning',
+    'growth',
+    'community',
+    'strategy',
+    'success',
+    'creativity',
+    'innovation'
+  ];
+  
+  // Shuffle and take 3-5 tags
+  const shuffled = possibleTags.sort(() => 0.5 - Math.random());
+  const count = 3 + Math.floor(Math.random() * 3); // 3-5 tags
+  
+  return shuffled.slice(0, count);
+}
+
+// Get creative non-product ideas for ecommerce
+function getCreativeNonProductIdeas(niche: string, audience: string, nicheWords: string[]): any[] {
+  const mainTopic = nicheWords[0] || niche;
+  
+  return [
+    {
+      title: `The Surprising History of ${niche} That Most People Don't Know`,
+      category: "Historical Deep Dive",
+      description: `Explore the fascinating evolution of ${niche} through the ages, uncovering forgotten innovations and unexpected origins that shaped today's practices. This historically-rich content positions you as a knowledgeable industry voice while providing genuinely interesting context that goes far beyond product discussions.`,
+      tags: ["history", "evolution", "industryinsights"]
+    },
+    {
+      title: `I Interviewed 10 ${audience} About Their Biggest ${mainTopic} Challenges`,
+      category: "Community Research",
+      description: `Share authentic insights from real conversations with your target audience, highlighting common struggles, surprising patterns, and emotional touchpoints. This empathetic content demonstrates that you truly understand your audience's needs while building community through shared experiences.`,
+      tags: ["research", "communityinsights", "realstories"]
+    },
+    {
+      title: `The Science-Backed ${mainTopic} Method That Changed Everything For Me`,
+      category: "Research-Based Technique",
+      description: `Detail a specific approach to ${mainTopic} that leverages scientific principles, explaining both the research and practical application. This educational content establishes your expertise through evidence-based insights while providing immediately actionable value to your audience.`,
+      tags: ["sciencebacked", "researchbased", "methodology"]
+    },
+    {
+      title: `5 ${mainTopic} Myths I Believed Until I Became an Expert`,
+      category: "Myth Busting",
+      description: `Challenge common misconceptions in the ${niche} space with evidence and experience, explaining why these myths persist and what the reality actually is. This clarifying content helps your audience avoid common mistakes while positioning you as a truthful, authoritative voice.`,
+      tags: ["mythbusting", "expertinsights", "truthtelling"]
+    },
+    {
+      title: `What Top ${mainTopic} Coaches Never Tell Beginners (But Should)`,
+      category: "Insider Knowledge",
+      description: `Reveal important but often overlooked fundamentals that make a critical difference in ${mainTopic} success, explained in an accessible way for newcomers. This supportive content helps beginners avoid frustration while establishing you as someone who genuinely cares about others' success.`,
+      tags: ["beginneradvice", "insidertips", "fundamentals"]
+    },
+    {
+      title: `I Tracked My ${mainTopic} Progress For 100 Days - Here's What The Data Revealed`,
+      category: "Personal Experiment",
+      description: `Share the fascinating results and unexpected insights from a structured self-experiment related to ${mainTopic}, including methodology, data visualization, and practical takeaways. This analytical content demonstrates your commitment to improvement and evidence-based approaches.`,
+      tags: ["experiment", "dataanalysis", "progresstracking"]
+    },
+    {
+      title: `The Psychological Barriers Holding Back Most ${audience} (And How To Overcome Them)`,
+      category: "Performance Psychology",
+      description: `Explore the mental blocks and limiting beliefs that prevent progress in ${mainTopic}, offering psychological frameworks and practical mental techniques. This empowering content addresses the often-neglected mental aspect of performance while providing tools for breakthrough progress.`,
+      tags: ["psychology", "mindset", "mentalbarriers"]
+    },
+    {
+      title: `What I Learned Shadowing Elite ${mainTopic} Practitioners For 30 Days`,
+      category: "Expert Immersion",
+      description: `Take your audience behind the scenes of high-level ${mainTopic} practice, sharing surprising routines, mindsets, and approaches observed firsthand. This exclusive content provides rare access to elite methodologies while positioning you as connected to top-tier expertise.`,
+      tags: ["elitepractices", "behindthescenes", "expertmethods"]
+    },
+    {
+      title: `The Counterintuitive ${mainTopic} Approach That Produces Better Results With Less Effort`,
+      category: "Strategic Optimization",
+      description: `Present a methodology that challenges conventional wisdom by focusing on leverage points and efficiency rather than brute force, backed by principles and examples. This strategic content demonstrates sophisticated thinking while offering a refreshing alternative to typical grind-focused advice.`,
+      tags: ["optimization", "efficiency", "strategicthinking"]
+    },
+    {
+      title: `What the Latest Research Says About Optimizing ${mainTopic} Performance`,
+      category: "Scientific Review",
+      description: `Synthesize recent scientific findings related to ${mainTopic} into accessible, practical insights that anyone can apply, connecting research to real-world application. This evidence-based content establishes you as current with emerging knowledge while providing value through translation of complex research.`,
+      tags: ["research", "sciencebackedadvice", "performanceoptimization"]
+    }
+  ];
+}
+
+// Get subtle product ideas for ecommerce
+function getSubtleProductIdeas(niche: string, audience: string, nicheWords: string[]): any[] {
+  const mainTopic = nicheWords[0] || niche;
+  
+  return [
+    {
+      title: `How ${mainTopic} Technology Has Evolved: Past, Present, and Future Innovations`,
+      category: "Industry Evolution",
+      description: `Trace the fascinating technological development of ${niche} equipment over time, exploring historical milestones, current state-of-the-art advances, and emerging innovations across the industry. This educational approach positions you as knowledgeable about the broader market while subtly establishing context for quality differences.`,
+      tags: ["innovation", "technology", "industrytrends"]
+    },
+    {
+      title: `What Actually Matters When Evaluating ${niche} Quality: An Expert's Perspective`,
+      category: "Educational Guide",
+      description: `Break down the technical criteria experts use to assess ${niche} performance and durability, explaining key features and their functional impact. This informative content helps your audience make more informed decisions by understanding quality indicators across all products in the category.`,
+      tags: ["qualityassessment", "buyereducation", "expertadvice"]
+    },
+    {
+      title: `The Surprising Environmental Impact of Different ${niche} Manufacturing Approaches`,
+      category: "Sustainability Analysis",
+      description: `Examine how various production methods and materials in the ${niche} industry affect environmental footprint, discussing innovations in sustainable manufacturing. This conscious content demonstrates values beyond profit while educating on an aspect of products consumers increasingly care about.`,
+      tags: ["sustainability", "environmentalimpact", "consciousproduction"]
+    },
+    {
+      title: `How To Properly Maintain Any ${niche} for Maximum Longevity and Performance`,
+      category: "Care & Maintenance",
+      description: `Provide detailed maintenance guidance applicable to all ${niche} equipment, explaining techniques, timing, and common mistakes to avoid. This helpful content delivers practical value while subtly emphasizing the importance of quality and care in extending product life.`,
+      tags: ["maintenance", "productcare", "longevity"]
+    },
+    {
+      title: `What I Wish Someone Told Me Before Investing in ${niche} Equipment`,
+      category: "Consumer Wisdom",
+      description: `Share honest advice about evaluating needs, priorities, and trade-offs when considering ${niche} purchases, helping viewers avoid common regrets and make choices aligned with their specific situation. This authentic content builds trust through transparency and genuine desire to help consumers make the right choice for them.`,
+      tags: ["buyeradvice", "smartinvestment", "honestguidance"]
+    }
+  ];
+}
+
+// Get creative personal ideas
+function getCreativePersonalIdeas(niche: string, audience: string): any[] {
+  return [
+    {
+      title: `What a $10,000 ${niche} Masterclass Taught Me That Changed Everything`,
+      category: "Exclusive Knowledge Share",
+      description: `Reveal the most valuable insights gained from a high-investment learning experience, focusing on unexpected or counterintuitive lessons that contradicted conventional wisdom. This generous content provides unique value while positioning you as someone who invests seriously in your expertise.`,
+      tags: ["expertinsights", "exclusiveknowledge", "gamechangers"]
+    },
+    {
+      title: `The ${niche} Experiment That Failed Spectacularly (And Why It Was My Most Valuable Lesson)`,
+      category: "Vulnerability Story",
+      description: `Share a detailed account of a significant professional failure, the emotional journey through it, and the transformative insights that emerged only because of this challenging experience. This authentic content creates deep connection with viewers through shared vulnerability while demonstrating resilience and wisdom.`,
+      tags: ["failure", "vulnerability", "lessonlearned"]
+    },
+    {
+      title: `I Documented Every Step of My Most Successful ${niche} Project Ever`,
+      category: "Process Documentary",
+      description: `Provide unprecedented access to your complete workflow on a stand-out project, showing both the polished result and the messy reality of creating it, including decision points, challenges, and breakthroughs. This transparent content builds trust while giving your audience practical insights into professional-level work.`,
+      tags: ["creativeprocess", "behindthescenes", "workflowrevealed"]
+    },
+    {
+      title: `The Counterintuitive ${niche} Framework That Doubled My Results`,
+      category: "Strategic Methodology",
+      description: `Present a unique approach that challenges standard practices in your field, explaining the conceptual foundation, implementation details, and measurable outcomes that demonstrate its effectiveness. This innovative content establishes you as a forward-thinking expert who develops original solutions rather than following conventions.`,
+      tags: ["methodology", "innovation", "resultsdriven"]
+    },
+    {
+      title: `I Interviewed My ${niche} Hero - The Conversation Changed My Entire Approach`,
+      category: "Transformative Dialogue",
+      description: `Share insights from a meaningful conversation with someone you deeply respect in your field, focusing on perspective shifts and fundamental principles that altered your understanding of your craft. This inspirational content demonstrates your connection to expertise while creating an emotional narrative about growth and mentorship.`,
+      tags: ["interview", "mentorship", "perspectiveshift"]
+    }
+  ];
+}
+
+// Get creative business ideas
+function getCreativeBusinessIdeas(niche: string, audience: string): any[] {
+  return [
+    {
+      title: `The Unconventional ${niche} Strategy That Generated $1M For Our Client`,
+      category: "Case Study",
+      description: `Document a breakthrough approach that delivered exceptional results, detailing the initial challenge, strategic innovation, implementation process, and specific outcomes with metrics. This results-focused content demonstrates your impact while providing a framework others can adapt to their situations.`,
+      tags: ["casestudy", "strategy", "results"]
+    },
+    {
+      title: `Behind Closed Doors: How Executive ${niche} Decisions Actually Get Made`,
+      category: "Industry Insider",
+      description: `Reveal the hidden dynamics, unspoken considerations, and decision-making frameworks used at the highest levels of business, based on your experience working with leadership teams. This exclusive content provides rare access to executive thinking while positioning your business as operating at the highest level.`,
+      tags: ["executiveinsights", "decisionmaking", "leadershipstrategy"]
+    },
+    {
+      title: `The ${niche} Failure Analysis: 5 Critical Mistakes That Sink Most Projects`,
+      category: "Strategic Warning",
+      description: `Analyze patterns across unsuccessful initiatives to identify key warning signs, process breakdowns, and organizational blind spots that consistently lead to failure, with guidance for prevention. This protective content demonstrates your experience-based wisdom while providing valuable risk mitigation for potential clients.`,
+      tags: ["failureanalysis", "riskprevention", "strategicoversight"]
+    },
+    {
+      title: `We Studied 100 Successful ${niche} Implementations - Here's What They Had in Common`,
+      category: "Pattern Recognition Research",
+      description: `Share insights from systematic analysis of high-performing projects, identifying the non-obvious factors and approaches that consistently contributed to success across different contexts. This analytical content establishes your firm as thoughtfully data-driven while providing valuable strategic guidance.`,
+      tags: ["research", "successpatterns", "implementationinsights"]
+    },
+    {
+      title: `The Future of ${niche}: 5 Emerging Trends Reshaping The Industry`,
+      category: "Forward-Looking Analysis",
+      description: `Present a well-reasoned forecast of coming changes in your industry, connecting technological, social, and economic shifts to specific implications for businesses in your sector. This visionary content positions your company as a thought leader that clients can trust to keep them ahead of market evolution.`,
+      tags: ["futurepredictions", "industrytrends", "strategicforesight"]
+    }
+  ];
+}
+
+// Get creative ideas for a specific account type
+function getCreativeIdeasForAccountType(accountType: string, niche: string, audience: string): any[] {
+  if (accountType === 'personal') {
+    return getCreativePersonalIdeas(niche, audience);
+  } else if (accountType === 'business') {
+    return getCreativeBusinessIdeas(niche, audience);
+  } else {
+    const nicheWords = niche.toLowerCase().split(/\s+/);
+    return getCreativeNonProductIdeas(niche, audience, nicheWords);
+  }
+}
+
+// Ensure content diversity across ideas
+function ensureContentDiversity(ideas: any[]): void {
+  // Check for duplicate categories or very similar titles
+  const categories = new Set();
+  const titleWords = [];
+  
+  for (let i = 0; i < ideas.length; i++) {
+    // Get core words from title (excluding common words)
+    const titleCore = ideas[i].title
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .split(' ')
+      .filter(word => word.length > 3 && !['what', 'when', 'where', 'why', 'how', 'the', 'this', 'that', 'with', 'your', 'their', 'our'].includes(word));
+    
+    // Check for duplicate categories
+    if (categories.has(ideas[i].category)) {
+      // Assign a new category
+      ideas[i].category = getUniqueContentFormat(Array.from(categories));
+    }
+    categories.add(ideas[i].category);
+    
+    // Check for title similarity with previous ideas
+    for (let j = 0; j < i; j++) {
+      const previousTitleCore = titleWords[j] || [];
+      const overlap = previousTitleCore.filter(word => titleCore.includes(word));
+      
+      // If too similar (more than 50% overlap), replace with a more diverse title
+      if (overlap.length > titleCore.length * 0.5) {
+        ideas[i].title = getDiverseTitle(ideas.map(idea => idea.title));
+        break;
+      }
+    }
+    
+    titleWords[i] = titleCore;
+  }
+}
+
+// Get a unique content format not in the existing list
+function getUniqueContentFormat(existingFormats: string[]): string {
+  const allFormats = [
+    "Personal Journey",
+    "Data Analysis",
+    "Expert Interview",
+    "Myth Busting",
+    "Behind-the-Scenes",
+    "Case Study",
+    "Experimental",
+    "Storytelling",
+    "Contrarian Take",
+    "Deep Dive",
+    "Investigative",
+    "Trend Analysis",
+    "Technical Breakdown",
+    "Psychological Insight",
+    "Cultural Examination",
+    "Historical Context",
+    "Future Prediction",
+    "Comparative Analysis",
+    "Critical Review",
+    "Thought Experiment"
+  ];
+  
+  // Filter out existing formats
+  const availableFormats = allFormats.filter(format => !existingFormats.includes(format));
+  
+  // Return a random available format, or a completely new one if all are used
+  if (availableFormats.length > 0) {
+    return availableFormats[Math.floor(Math.random() * availableFormats.length)];
+  } else {
+    return "Innovative Perspective " + Math.floor(Math.random() * 100);
+  }
+}
+
+// Get a diverse title not similar to existing ones
+function getDiverseTitle(existingTitles: string[]): string {
+  const diverseTitles = [
+    "The Unexpected Connection Between [Topic] and [Surprising Field]",
+    "Why I Completely Changed My Approach to [Topic] After 10 Years",
+    "The [Topic] Technique That No One Talks About (But Everyone Should Know)",
+    "I Challenged My Own [Topic] Assumptions and Here's What Happened",
+    "The [Counter-intuitive Number] Rule for [Topic] That Defies Convention",
+    "What My Biggest [Topic] Failure Taught Me About [Key Lesson]",
+    "The Secret History of [Topic] That Reshapes How We Think About It",
+    "Why Everything You've Learned About [Topic] Might Be Outdated",
+    "The [Topic] Framework I Discovered By Accident",
+    "How a Single Conversation Changed My Entire [Topic] Philosophy"
+  ];
+  
+  // Pick a title not similar to existing ones
+  for (const title of diverseTitles) {
+    // Check similarity with existing titles
+    let isSimilar = false;
+    for (const existingTitle of existingTitles) {
+      // Basic similarity check - if they share more than 3 significant words
+      const words1 = title.toLowerCase().split(' ').filter(w => w.length > 3);
+      const words2 = existingTitle.toLowerCase().split(' ').filter(w => w.length > 3);
+      const sharedWords = words1.filter(w => words2.includes(w));
+      
+      if (sharedWords.length > 2) {
+        isSimilar = true;
+        break;
+      }
+    }
+    
+    if (!isSimilar) {
+      return title.replace('[Topic]', 'Topic').replace('[Surprising Field]', 'Surprising Field')
+        .replace('[Counter-intuitive Number]', '3').replace('[Key Lesson]', 'Success');
+    }
+  }
+  
+  // Fallback - current timestamp ensures uniqueness
+  return `A Completely Different Perspective on ${Date.now() % 1000}`;
+}
+
+// Get creative ecommerce ideas (with balanced product/non-product mix)
+function getCreativeEcommerceIdeas(niche: string, audience: string, nicheWords: string[]): any[] {
+  // Create a mix of 4 non-product and 1 subtle product ideas
+  const nonProductIdeas = getCreativeNonProductIdeas(niche, audience, nicheWords).slice(0, 4);
+  const productIdea = getSubtleProductIdeas(niche, audience, nicheWords)[0];
+  
+  return [...nonProductIdeas, productIdea];
+}

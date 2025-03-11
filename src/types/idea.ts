@@ -1,3 +1,4 @@
+
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -76,4 +77,12 @@ export interface StyleProfile {
   created_at: string;
   is_active: boolean;
   user_id: string;
+}
+
+export interface ContentIdeaProtocol {
+  type: 'value' | 'product' | 'hybrid'; 
+  format: string;
+  angle: string; 
+  hook: string;
+  premise: string;
 }

@@ -89,9 +89,11 @@ serve(async (req) => {
     // Get the actual title and description to use (from savedIdea or direct input)
     const scriptTitle = savedIdea ? savedIdea.title : title;
     const scriptDescription = savedIdea ? savedIdea.description : description;
+    const scriptCategory = savedIdea?.category || "";
 
     // Get user information to personalize the script generation
     let userProfile = null;
+    let accountType = "personal";
     if (userId) {
       try {
         const { data: profile, error: profileError } = await supabase
@@ -102,6 +104,7 @@ serve(async (req) => {
           
         if (!profileError && profile) {
           userProfile = profile;
+          accountType = profile.account_type || "personal";
           console.log("User profile retrieved:", userProfile);
         }
       } catch (error) {
@@ -110,6 +113,9 @@ serve(async (req) => {
       }
     }
 
+    // Detect if this is an ecommerce product-focused content or not
+    const isProductFocused = detectProductFocus(scriptTitle, scriptDescription, scriptCategory);
+    
     // Create a focused system prompt for script writing based on account type
     let systemPrompt = `You are a master script writer specializing in creating engaging content for ${userProfile?.account_type || 'content creators'}.
 
@@ -129,42 +135,50 @@ IMPORTANT GUIDELINES:
 - Add personality and originality to make the script unique
 - Write with line breaks to indicate speaking rhythm`;
 
-    // For ecommerce accounts, add special instructions
-    if (userProfile?.account_type === 'ecommerce') {
-      // Check if the idea description or title contains any product keywords
-      const productKeywords = [
-        'product', 'our', 'we sell', 'buy', 'purchase', 'shop', 'item', 'merchandise',
-        'collection', 'line', 'brand', 'stock', 'deal', 'discount', 'promo', 'promotion',
-        'limited edition', 'exclusive', 'new release', 'launch', 'introducing', 'featuring',
-        'showcase', 'try', 'get yours', 'shipping', 'order', 'available', 'sold'
-      ];
-      
-      const mentionsProducts = productKeywords.some(keyword => 
-        scriptTitle.toLowerCase().includes(keyword) || 
-        (scriptDescription && scriptDescription.toLowerCase().includes(keyword))
-      );
-      
-      if (!mentionsProducts) {
+    // Tailor the script based on account type and if it's for an ecommerce product
+    if (accountType === 'ecommerce') {
+      // Check if this is a "pure value" idea (non-product)
+      if (!isProductFocused) {
         systemPrompt += `
 
-CRITICAL FOR ECOMMERCE CONTENT:
-- This is a VALUE-FIRST video that should NOT mention specific products
+CRITICAL FOR VALUE-FIRST ECOMMERCE CONTENT:
+- This script is for PURE VALUE CONTENT that should NOT mention any products
 - Focus 100% on providing valuable, educational content about ${scriptTitle}
-- Position as an authority in the industry through expertise, not selling
-- Build trust by sharing genuine insights without any product promotion
-- Do NOT include phrases like "our product", "we sell", or any selling language
-- Treat this content as if you were an independent expert educator, not a brand`;
+- Avoid ANY selling language or product references
+- Do NOT include phrases like "our product", "we sell", "check out", etc.
+- Position the content as educational expertise, not selling
+- Write as if you are an independent expert educator, not a brand
+- The goal is to build trust and authority through genuine value
+- ZERO product mentions, ZERO brand mentions, ZERO selling language`;
       } else {
         systemPrompt += `
 
-FOR PRODUCT-RELATED CONTENT:
-- Prioritize education and value over direct selling
-- When mentioning products, focus on how they solve specific problems
-- Balance product mentions with substantial educational content (at least 70% education)
-- Maintain an authentic, helpful tone throughout
-- Avoid pushy sales language and instead focus on genuine benefits
-- Talk about products as solutions to specific problems`;
+FOR PRODUCT-RELATED ECOMMERCE CONTENT:
+- Balance education (80%) with subtle product references (20%)
+- Focus primarily on solving audience problems and providing value
+- When mentioning products, focus on solutions not features
+- Keep product mentions natural and integrated into value content
+- Avoid pushy sales language - be helpful and solution-oriented
+- Never sound like you're "selling" - maintain an authentic, helpful tone`;
       }
+    } else if (accountType === 'personal') {
+      systemPrompt += `
+
+FOR PERSONAL CREATOR CONTENT:
+- Focus on authentic storytelling and connecting with the audience
+- Be personal, vulnerable and relatable while maintaining expertise
+- Share genuine insights, experiences, and lessons learned
+- Use stories to illustrate points rather than just facts
+- Create content that feels uniquely yours rather than generic`;
+    } else if (accountType === 'business') {
+      systemPrompt += `
+
+FOR BUSINESS CONTENT:
+- Balance professionalism with authentic, human connection
+- Focus on building trust, authority, and credibility
+- Include specific examples, case studies, and evidence
+- Maintain a consistent brand voice while being conversational
+- Position the business as a helpful guide solving real problems`;
     }
 
     systemPrompt += `
@@ -172,11 +186,66 @@ FOR PRODUCT-RELATED CONTENT:
 ${userProfile?.content_style ? `CONTENT STYLE: ${userProfile.content_style}` : contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
 ${userProfile?.content_personality ? `PERSONALITY: ${userProfile.content_personality}` : ''}`;
 
-    // Create a detailed user prompt
-    const userPrompt = `Write a natural, engaging script for a ${timeRange} video titled: "${scriptTitle}"
+    // Create a detailed user prompt with specific guides based on content type
+    let userPrompt = `Write a natural, engaging script for a ${timeRange} video titled: "${scriptTitle}"
 
 ${scriptDescription ? `TOPIC CONTEXT: ${scriptDescription}` : ''}
-${hook ? `START WITH THIS HOOK: "${hook}"` : ''}
+${hook ? `START WITH THIS HOOK: "${hook}"` : ''}`;
+
+    // Add content category-specific guidance
+    if (scriptCategory) {
+      userPrompt += `\nCONTENT CATEGORY: ${scriptCategory}`;
+      
+      // Add specific guidance based on content category
+      if (scriptCategory.toLowerCase().includes("myth") || scriptCategory.toLowerCase().includes("bust")) {
+        userPrompt += `
+For this myth-busting content:
+- Start with a common misconception that many believe
+- Build tension around why this myth is so prevalent
+- Use authoritative but friendly tone when presenting the truth
+- Include specific evidence or examples that disprove the myth
+- End with actionable advice based on the correct information`;
+      } 
+      else if (scriptCategory.toLowerCase().includes("behind") || scriptCategory.toLowerCase().includes("scenes")) {
+        userPrompt += `
+For this behind-the-scenes content:
+- Start by building curiosity about what people don't normally see
+- Use lots of specific details that create vivid imagery
+- Share genuine challenges and how they were overcome
+- Include moments of vulnerability or authenticity
+- End by connecting the behind-the-scenes reality to a broader lesson`;
+      }
+      else if (scriptCategory.toLowerCase().includes("data") || scriptCategory.toLowerCase().includes("analysis")) {
+        userPrompt += `
+For this data-driven content:
+- Start with an intriguing finding or pattern that hooks attention
+- Explain your methodology briefly but clearly
+- Focus on surprising insights rather than just listing statistics
+- Humanize the data by connecting it to real-world implications
+- End with actionable conclusions based on what the data reveals`;
+      }
+      else if (scriptCategory.toLowerCase().includes("story") || scriptCategory.toLowerCase().includes("personal")) {
+        userPrompt += `
+For this storytelling content:
+- Start in the middle of action or with a compelling question
+- Include sensory details and emotional moments
+- Create a clear narrative arc with tension and resolution
+- Use dialogue or internal thoughts to make the story dynamic
+- End by connecting the story to a meaningful lesson or takeaway`;
+      }
+      else if (scriptCategory.toLowerCase().includes("review") || scriptCategory.toLowerCase().includes("guide")) {
+        userPrompt += `
+For this review/guide content:
+- Start by establishing your credibility and experience
+- Focus on specific, detailed observations rather than general statements
+- Balance positives and negatives for authenticity
+- Include practical examples of when/how/why something works
+- End with clear recommendations or next steps for the viewer`;
+      }
+    }
+
+    // Add final guidelines for all scripts
+    userPrompt += `
 
 The script must:
 1. Sound like authentic human speech with natural conversational flow
@@ -187,7 +256,7 @@ The script must:
 
 Format with natural line breaks to indicate speaking rhythm. Make it sound like you're having a genuine conversation with the viewer.`;
 
-    // Call OpenAI API
+    // Call OpenAI API with creative parameters
     console.log('Calling OpenAI API for script generation');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -203,7 +272,9 @@ Format with natural line breaks to indicate speaking rhythm. Make it sound like 
         ],
         temperature: 0.85,
         max_tokens: 800,
-        top_p: 1
+        top_p: 1,
+        presence_penalty: 0.6,
+        frequency_penalty: 0.6
       }),
     });
 
@@ -243,3 +314,34 @@ Format with natural line breaks to indicate speaking rhythm. Make it sound like 
     );
   }
 });
+
+// Helper function to detect if content is product-focused
+function detectProductFocus(title: string, description: string, category: string): boolean {
+  const combinedText = (title + ' ' + description + ' ' + category).toLowerCase();
+  
+  // Product-focused categories
+  const productCategories = [
+    'product', 'review', 'unboxing', 'showcase', 'demo', 'tutorial', 
+    'how-to', 'guide', 'comparison', 'versus', 'vs', 'buyer'
+  ];
+  
+  // Product-related phrases
+  const productPhrases = [
+    'product', 'item', 'gear', 'equipment', 'device', 'tool',
+    'buy', 'purchase', 'shop', 'sale', 'deal', 'offer',
+    'our', 'we sell', 'collection', 'line', 'model', 'brand',
+    'review', 'unbox', 'test', 'try out', 'check out'
+  ];
+  
+  // Check for product categories
+  const hasProductCategory = productCategories.some(cat => 
+    category.toLowerCase().includes(cat)
+  );
+  
+  // Check for product phrases in title or description
+  const hasProductPhrases = productPhrases.some(phrase => 
+    combinedText.includes(phrase)
+  );
+  
+  return hasProductCategory || hasProductPhrases;
+}
