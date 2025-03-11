@@ -602,6 +602,10 @@ export default function ContentPlanner() {
         .react-beautiful-dnd-draggable {
           transition: transform 0.2s;
         }
+        [data-rbd-draggable-id] {
+          width: 334px !important;
+          max-width: 334px !important;
+        }
       `}} />
 
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
