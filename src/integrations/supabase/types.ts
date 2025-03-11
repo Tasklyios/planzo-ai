@@ -38,6 +38,7 @@ export type Database = {
           account_type: string
           active_style_profile_id: string | null
           brand_name: string | null
+          business_description: string | null
           business_niche: string | null
           content_niche: string | null
           content_personality: string | null
@@ -53,6 +54,7 @@ export type Database = {
           account_type: string
           active_style_profile_id?: string | null
           brand_name?: string | null
+          business_description?: string | null
           business_niche?: string | null
           content_niche?: string | null
           content_personality?: string | null
@@ -68,6 +70,7 @@ export type Database = {
           account_type?: string
           active_style_profile_id?: string | null
           brand_name?: string | null
+          business_description?: string | null
           business_niche?: string | null
           content_niche?: string | null
           content_personality?: string | null

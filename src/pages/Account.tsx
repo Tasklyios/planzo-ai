@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun } from "lucide-react";
@@ -10,6 +11,7 @@ import AuthGuard from "@/components/AuthGuard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { Textarea } from "@/components/ui/textarea";
 
 const themeOptions = [
   {
@@ -641,12 +643,33 @@ export default function Account() {
                     <h3 className="text-lg font-medium">Business Details</h3>
                     
                     <div className="flex flex-col space-y-2">
+                      <Label htmlFor="businessDescription">Business Description</Label>
+                      <Textarea
+                        id="businessDescription"
+                        value={profile.business_description || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, business_description: e.target.value }))}
+                        placeholder="Describe what your business does"
+                        className="min-h-[80px]"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2">
                       <Label htmlFor="businessNiche">Business Niche</Label>
                       <Input
                         id="businessNiche"
                         value={profile.business_niche || ''}
                         onChange={(e) => setProfile(prev => ({ ...prev, business_niche: e.target.value }))}
                         placeholder="What industry is your business in? (e.g., consulting, education)"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="contentNiche">Content Niche</Label>
+                      <Input
+                        id="contentNiche"
+                        value={profile.content_niche || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+                        placeholder="What topics will your content focus on?"
                       />
                     </div>
                     
@@ -688,6 +711,16 @@ export default function Account() {
                         value={profile.product_niche || ''}
                         onChange={(e) => setProfile(prev => ({ ...prev, product_niche: e.target.value }))}
                         placeholder="What products do you sell? (e.g., clothing, electronics)"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="contentNiche">Content Niche</Label>
+                      <Input
+                        id="contentNiche"
+                        value={profile.content_niche || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+                        placeholder="What topics will your content focus on?"
                       />
                     </div>
                     
