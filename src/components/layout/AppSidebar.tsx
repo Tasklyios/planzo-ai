@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { 
   Calendar, 
@@ -90,19 +91,22 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
   const { toast } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     if (isLoggingOut) return;
     
-    try {
-      setIsLoggingOut(true);
-      await supabase.auth.signOut();
-      localStorage.removeItem('supabase.auth.token');
-      navigate("/", { replace: true });
-    } catch (error) {
+    setIsLoggingOut(true);
+    
+    // Use window.location to force a full page reload and navigate to the landing page
+    localStorage.clear(); // Clear all localStorage items
+    supabase.auth.signOut().then(() => {
+      window.location.href = "/";
+    }).catch(error => {
       console.error("Logout error:", error);
-    } finally {
+      // Force navigation even if signOut fails
+      window.location.href = "/";
+    }).finally(() => {
       setIsLoggingOut(false);
-    }
+    });
   };
 
   return (

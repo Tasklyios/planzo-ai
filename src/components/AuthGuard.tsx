@@ -32,16 +32,10 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         if (!session) {
           console.log("No session found, redirecting to auth");
           setIsAuthenticated(false);
-          // Clear any stored tokens to ensure clean state
-          localStorage.removeItem('supabase.auth.token');
+          localStorage.clear(); // Clear all localStorage on session check failure
           navigate("/auth", { state: { from: location.pathname } });
         } else {
           console.log("Session found, user is authenticated", session.user.id);
-          console.log("Access token is valid:", !!session.access_token);
-          
-          // Store the session access token for edge functions to use
-          localStorage.setItem('supabase.auth.token', session.access_token);
-          
           setIsAuthenticated(true);
         }
       } catch (error) {
@@ -60,20 +54,13 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       console.log("Auth state changed:", event, session ? "session exists" : "no session");
       
       if (event === "SIGNED_OUT") {
-        console.log("User signed out, redirecting to auth");
-        // Clear any stored tokens
-        localStorage.removeItem('supabase.auth.token');
+        console.log("User signed out, redirecting to landing page");
+        localStorage.clear(); // Clear all localStorage
         setIsAuthenticated(false);
-        // Force navigate to auth
-        navigate("/auth", { replace: true });
+        // Force navigate to landing page
+        window.location.href = "/";
       } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         console.log("User signed in or token refreshed", session?.user.id);
-        
-        // Update the token in localStorage
-        if (session?.access_token) {
-          localStorage.setItem('supabase.auth.token', session.access_token);
-        }
-        
         setIsAuthenticated(true);
         
         // Skip redirect for verification, otherwise redirect to dashboard if user signs in
