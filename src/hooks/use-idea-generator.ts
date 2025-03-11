@@ -30,7 +30,6 @@ export const useIdeaGenerator = () => {
   const [accountType, setAccountType] = useState<string>("personal");
   const { toast } = useToast();
 
-  // Use these preferences from localStorage or database
   useEffect(() => {
     console.log("useIdeaGenerator: Fetching user preferences on mount");
     const fetchUserPreferences = async () => {
@@ -105,7 +104,6 @@ export const useIdeaGenerator = () => {
     fetchUserPreferences();
   }, []);
 
-  // Listen for auth state changes to update preferences
   useEffect(() => {
     console.log("Auth state changed, fetching preferences");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
@@ -167,7 +165,6 @@ export const useIdeaGenerator = () => {
     };
   }, [niche, audience, videoType, platform, accountType]);
 
-  // Setup localStorage change listeners
   useEffect(() => {
     console.log("Setting up localStorage change listeners");
     
@@ -179,7 +176,6 @@ export const useIdeaGenerator = () => {
     
   }, [niche, audience, videoType, platform]);
 
-  // Save previous context to localStorage when it changes
   useEffect(() => {
     if (previousIdeasContext.titles.length > 0) {
       localStorage.setItem('previousIdeasContext', JSON.stringify(previousIdeasContext));
@@ -187,14 +183,12 @@ export const useIdeaGenerator = () => {
   }, [previousIdeasContext]);
 
   const generateIdeas = useCallback(async (params?: GenerateIdeasParams) => {
-    // Prioritize the current form values passed from Generator.tsx, falling back to state values if not provided
     const currentNiche = params?.currentNiche || niche;
     const currentAudience = params?.currentAudience || audience;
     const currentVideoType = params?.currentVideoType || videoType;
     const currentPlatform = params?.currentPlatform || platform;
     const currentCustomIdeas = params?.currentCustomIdeas || customIdeas;
 
-    // Validation check
     if (!currentNiche) {
       toast({
         title: "Please specify a niche",
@@ -216,7 +210,6 @@ export const useIdeaGenerator = () => {
     setError(null);
     
     try {
-      // First, ensure we have a valid session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session) {
@@ -228,7 +221,6 @@ export const useIdeaGenerator = () => {
         setError(errorMsg);
         setLoading(false);
         
-        // Force refresh of the auth state
         await supabase.auth.refreshSession();
         return;
       }
@@ -242,12 +234,9 @@ export const useIdeaGenerator = () => {
 
       console.log("Session found, proceeding with authentication header");
       
-      // Use the session token from the current session
       const authHeader = `Bearer ${session.access_token}`;
       console.log("Auth header created (token redacted for security)");
       
-      // First check usage limits
-      console.log("Calling check-usage-limits function with auth header");
       const checkResponse = await supabase.functions.invoke('check-usage-limits', {
         body: { action: 'ideas' },
         headers: {
@@ -265,14 +254,12 @@ export const useIdeaGenerator = () => {
       }
       
       if (!checkResponse.data?.canProceed) {
-        // Handle usage limit reached
         const errorMessage = checkResponse.data?.message || "You've reached your daily limit for idea generation";
         setError(errorMessage);
         setLoading(false);
         return;
       }
 
-      // Get the latest account type from profile
       let currentAccountType = accountType;
       try {
         const { data: profileData } = await supabase
@@ -289,7 +276,6 @@ export const useIdeaGenerator = () => {
         console.error("Error fetching latest account type:", error);
       }
 
-      // Now proceed with idea generation if usage limits allow
       console.log("Calling generate-ideas function with auth header and current form data");
       const { data: profile } = await supabase
         .from("profiles")
@@ -297,7 +283,6 @@ export const useIdeaGenerator = () => {
         .eq("id", session.user.id)
         .single();
 
-      // Include business description in the request if it exists
       const { data, error: generationError } = await supabase.functions.invoke('generate-ideas', {
         body: {
           niche: currentNiche,
@@ -308,7 +293,7 @@ export const useIdeaGenerator = () => {
           previousIdeas: previousIdeasContext,
           numIdeas: 5,
           accountType: currentAccountType,
-          businessDescription: profile?.business_description || "" // Add business description
+          businessDescription: profile?.business_description || ""
         },
         headers: {
           Authorization: authHeader
@@ -331,11 +316,9 @@ export const useIdeaGenerator = () => {
         return;
       }
 
-      // Format and clean up the ideas for display
-      // Ensure we only use exactly 5 ideas
       const limitedIdeas = data.ideas.slice(0, 5);
       const formattedIdeas = limitedIdeas.map((idea: any) => ({
-        id: crypto.randomUUID(), // Add temporary client-side ID
+        id: crypto.randomUUID(),
         title: typeof idea.title === 'string' ? idea.title.replace(/^"|"$/g, '') : 'Untitled Idea',
         category: typeof idea.category === 'string' ? idea.category.replace(/^"|"$/g, '') : 'General',
         description: typeof idea.description === 'string' ? idea.description.replace(/^"|"$/g, '') : '',
@@ -345,19 +328,17 @@ export const useIdeaGenerator = () => {
         is_saved: false
       }));
 
-      // Record the generated ideas to avoid duplicates in future
       const newTitles = formattedIdeas.map((idea: any) => idea.title);
       const newCategories = formattedIdeas.map((idea: any) => idea.category || "");
       const newDescriptions = formattedIdeas.map((idea: any) => idea.description || "");
       
       setPreviousIdeasContext(prev => ({
         count: (prev.count || 0) + newTitles.length,
-        titles: [...prev.titles, ...newTitles].slice(-30),  // Keep last 30 titles
+        titles: [...prev.titles, ...newTitles].slice(-30),
         categories: [...(prev.categories || []), ...newCategories].slice(-30),
         descriptions: [...(prev.descriptions || []), ...newDescriptions].slice(-30)
       }));
 
-      // Save generated ideas to database with user_id
       if (session?.user?.id) {
         const userId = session.user.id;
         
@@ -366,7 +347,6 @@ export const useIdeaGenerator = () => {
           user_id: userId
         }));
         
-        // Save to Supabase
         try {
           const { error: saveError } = await supabase
             .from('video_ideas')
@@ -374,11 +354,10 @@ export const useIdeaGenerator = () => {
           
           if (saveError) {
             console.error("Error saving ideas to database:", saveError);
-            // Continue anyway - the ideas will still be displayed to the user
+            setIdeas(formattedIdeas);
           } else {
             console.log("Ideas saved to database successfully");
             
-            // Now fetch the saved ideas to get their database IDs and additional fields
             const { data: savedIdeas, error: fetchError } = await supabase
               .from('video_ideas')
               .select('*')
@@ -388,27 +367,24 @@ export const useIdeaGenerator = () => {
             
             if (fetchError) {
               console.error("Error fetching saved ideas:", fetchError);
-              setIdeas(formattedIdeas);  // Fall back to the generated ideas without IDs
+              setIdeas(formattedIdeas);
             } else {
               console.log("Fetched saved ideas:", savedIdeas);
-              // Ensure we only display 5 ideas
               setIdeas(savedIdeas.slice(0, 5));
             }
           }
         } catch (dbError) {
           console.error("Database error:", dbError);
-          // Still show ideas to user even if saving failed
           setIdeas(formattedIdeas);
         }
       } else {
-        // If not logged in (shouldn't happen due to earlier check)
         setIdeas(formattedIdeas);
       }
-      
     } catch (error: any) {
       console.error("Error generating ideas:", error);
       setError(`Error generating ideas: ${error.message || "Unknown error"}`);
       setIdeas([]);
+      setLoading(false);
     } finally {
       setLoading(false);
     }

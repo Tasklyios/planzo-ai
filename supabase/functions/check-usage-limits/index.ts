@@ -122,10 +122,10 @@ serve(async (req) => {
     }
 
     // Determine max limit based on tier and action
-    let maxLimit = 5; // Default limit
+    let maxLimit = 10; // Default limit updated to 10 for ideas
     
     if (action === 'ideas') {
-      if (tier === 'free') maxLimit = 5;
+      if (tier === 'free') maxLimit = 10; // Updated from 5 to 10
       else if (tier === 'pro') maxLimit = 20;
       else if (tier === 'plus') maxLimit = 50;
       else if (tier === 'business') maxLimit = 999; // Using 999 for business tier

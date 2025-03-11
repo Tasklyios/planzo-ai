@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -13,8 +12,7 @@ import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { AddToCalendarIdea, PreviousIdeasContext } from "@/types/idea";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Zap } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 const Generator = () => {
   const {
@@ -44,7 +42,6 @@ const Generator = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Log ideas whenever they change
   useEffect(() => {
     console.log("Generator component - current ideas:", ideas);
   }, [ideas]);
@@ -60,7 +57,6 @@ const Generator = () => {
     }
   }, [setPreviousIdeasContext]);
 
-  // Add listener for account type changes to refresh data
   useEffect(() => {
     console.log(`Generator component detected account type: ${accountType}`);
   }, [accountType]);
@@ -89,7 +85,7 @@ const Generator = () => {
       } = await supabase.from("video_ideas")
         .update({
           scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
-          is_saved: true // Always save the idea when adding to calendar
+          is_saved: true
         })
         .eq("id", addingToCalendar.idea.id)
         .eq("user_id", userId);
@@ -111,7 +107,6 @@ const Generator = () => {
       });
       setAddingToCalendar(null);
       
-      // Navigate to calendar page after adding
       navigate("/calendar");
     } catch (error: any) {
       console.error("Error adding to calendar:", error);
@@ -138,7 +133,6 @@ const Generator = () => {
       
       const newSavedState = !ideaToUpdate.is_saved;
       
-      // Get the current user session
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast({
@@ -164,7 +158,6 @@ const Generator = () => {
         throw new Error(`Error updating bookmark: ${error.message}`);
       }
       
-      // Update the local state to reflect the change
       setIdeas(prevIdeas => prevIdeas.map(idea => idea.id === ideaId ? {
         ...idea,
         is_saved: newSavedState
@@ -193,7 +186,6 @@ const Generator = () => {
     navigate('/billing');
   };
 
-  // Debug auth status
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
@@ -202,23 +194,18 @@ const Generator = () => {
     checkAuth();
   }, []);
 
-  // This function checks if we have a valid list of ideas to display
   const hasValidIdeas = () => {
     return Array.isArray(ideas) && ideas.length > 0;
   };
 
-  // Clear existing ideas before generating new ones
   const handleGenerateIdeas = () => {
     console.log("handleGenerateIdeas called with current account type:", accountType);
     console.log("Current state - niche:", niche, "audience:", audience, "videoType:", videoType, "platform:", platform);
     console.log("Custom ideas:", customIdeas);
     
-    // Clear existing ideas first
     setIdeas([]);
     
-    // Then generate new ideas with all required data
     generateIdeas({
-      // Explicitly pass the current form values to ensure latest data is used
       currentNiche: niche,
       currentAudience: audience,
       currentVideoType: videoType,

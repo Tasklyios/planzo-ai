@@ -63,11 +63,11 @@ BEGIN
     -- Set max limit based on tier and action
     IF p_action = 'ideas' THEN
         v_max_limit := CASE 
-            WHEN v_tier = 'free' THEN 5
+            WHEN v_tier = 'free' THEN 10  -- Updated from 5 to 10
             WHEN v_tier = 'pro' THEN 20
             WHEN v_tier = 'plus' THEN 50
             WHEN v_tier = 'business' THEN 999 -- Should not reach here but added as fallback
-            ELSE 5
+            ELSE 10  -- Updated default to match free tier
         END;
         -- For ideas, increment by 5
         v_increment_count := 5;
@@ -76,7 +76,7 @@ BEGIN
             WHEN v_tier = 'free' THEN 3
             WHEN v_tier = 'pro' THEN 10
             WHEN v_tier = 'plus' THEN 25
-            WHEN v_tier = 'business' THEN 999 -- Should not reach here but added as fallback
+            WHEN v_tier = 'business' THEN 999
             ELSE 3
         END;
         v_increment_count := 1;
@@ -85,7 +85,7 @@ BEGIN
             WHEN v_tier = 'free' THEN 5
             WHEN v_tier = 'pro' THEN 15
             WHEN v_tier = 'plus' THEN 30
-            WHEN v_tier = 'business' THEN 999 -- Should not reach here but added as fallback
+            WHEN v_tier = 'business' THEN 999
             ELSE 5
         END;
         v_increment_count := 1;
