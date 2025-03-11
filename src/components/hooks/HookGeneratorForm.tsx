@@ -44,6 +44,7 @@ const HookGeneratorForm = ({
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="e.g., Mindfulness meditation benefits" 
+                disabled={isGenerating}
               />
             </div>
             <div className="space-y-2">
@@ -53,6 +54,7 @@ const HookGeneratorForm = ({
                 value={audience}
                 onChange={(e) => setAudience(e.target.value)}
                 placeholder="e.g., Working professionals ages 25-40" 
+                disabled={isGenerating}
               />
             </div>
             <div className="space-y-2">
@@ -62,6 +64,7 @@ const HookGeneratorForm = ({
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 placeholder="Add any specific details, key messages, or emotional tone for your hooks" 
+                disabled={isGenerating}
               />
             </div>
           </CardContent>

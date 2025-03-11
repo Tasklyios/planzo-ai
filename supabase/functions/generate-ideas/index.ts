@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
@@ -95,6 +96,15 @@ Each idea MUST follow this exact format:
    HASHTAGS: [3-5 relevant hashtags]
 
 `;
+
+    // Make sure OPENAI_API_KEY is set
+    if (!OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is not set");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error: API key missing" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
 
     // Call OpenAI API with updated Planzo AI personality
     console.log('Calling OpenAI API for idea generation with Planzo AI personality...');
