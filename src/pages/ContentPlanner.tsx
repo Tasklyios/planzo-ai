@@ -15,6 +15,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -41,7 +42,6 @@ const columnFormSchema = z.object({
   title: z.string().min(1, "Column title is required").max(50, "Column title must be less than 50 characters"),
 });
 
-// Fixed "ideas" column ID
 const IDEAS_COLUMN_ID = "ideas";
 
 export default function ContentPlanner() {
@@ -73,7 +73,6 @@ export default function ContentPlanner() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
-      // Fetch user's columns
       const { data: columnsData, error: columnsError } = await supabase
         .from('planner_columns')
         .select('*')
@@ -82,19 +81,16 @@ export default function ContentPlanner() {
 
       if (columnsError) throw columnsError;
 
-      // Check if Ideas column exists, if not add it
       let hasIdeasColumn = false;
       
       if (columnsData && columnsData.length > 0) {
         hasIdeasColumn = columnsData.some(col => col.id === IDEAS_COLUMN_ID);
       }
 
-      // If no columns exist or no Ideas column, create default columns
       if (!columnsData || columnsData.length === 0 || !hasIdeasColumn) {
         let defaultColumns = [];
         
         if (!columnsData || columnsData.length === 0) {
-          // Create all default columns if none exist
           defaultColumns = [
             { id: IDEAS_COLUMN_ID, title: 'Ideas', order: 0 },
             { id: 'planning', title: 'Planning', order: 1 },
@@ -103,12 +99,10 @@ export default function ContentPlanner() {
             { id: 'ready', title: 'Ready to Post', order: 4 },
           ];
         } else if (!hasIdeasColumn) {
-          // Just add the Ideas column if it doesn't exist
           defaultColumns = [
             { id: IDEAS_COLUMN_ID, title: 'Ideas', order: 0 }
           ];
           
-          // Need to reorder existing columns
           for (let i = 0; i < columnsData.length; i++) {
             await supabase
               .from('planner_columns')
@@ -129,7 +123,6 @@ export default function ContentPlanner() {
             });
         }
 
-        // Fetch columns again after creating defaults
         const { data: newColumnsData, error: newColumnsError } = await supabase
           .from('planner_columns')
           .select('*')
@@ -139,7 +132,6 @@ export default function ContentPlanner() {
         if (newColumnsError) throw newColumnsError;
         
         if (newColumnsData) {
-          // Initialize columns with empty items arrays
           const columnsWithItems = newColumnsData.map(col => ({
             ...col,
             items: []
@@ -147,7 +139,6 @@ export default function ContentPlanner() {
           setColumns(columnsWithItems);
         }
       } else {
-        // Initialize columns with empty items arrays
         const columnsWithItems = columnsData.map(col => ({
           ...col,
           items: []
@@ -155,7 +146,6 @@ export default function ContentPlanner() {
         setColumns(columnsWithItems);
       }
 
-      // Fetch ideas - IMPORTANT CHANGE: get ONLY saved ideas (is_saved = true)
       const { data: ideas, error: ideasError } = await supabase
         .from('video_ideas')
         .select('*')
@@ -167,12 +157,8 @@ export default function ContentPlanner() {
       if (ideas && ideas.length > 0) {
         console.log("Fetched saved ideas:", ideas);
         
-        // Group ideas by status
         const groupedIdeas = ideas.reduce((acc: { [key: string]: PlannerItem[] }, idea) => {
-          // If idea has no status or status doesn't match an existing column, 
-          // put it in the Ideas column
           const status = idea.status || IDEAS_COLUMN_ID;
-          // Check if the status corresponds to an actual column
           const columnExists = columnsData?.some(col => col.id === status) || status === IDEAS_COLUMN_ID;
           
           const targetStatus = columnExists ? status : IDEAS_COLUMN_ID;
@@ -188,7 +174,6 @@ export default function ContentPlanner() {
 
         console.log("Grouped ideas:", groupedIdeas);
 
-        // Update columns with fetched ideas
         setColumns(prevColumns => 
           prevColumns.map(col => ({
             ...col,
@@ -217,14 +202,11 @@ export default function ContentPlanner() {
     
     const { source, destination, type, draggableId } = result;
     
-    // If there's no destination, do nothing
     if (!destination) return;
 
-    // Handle dropping in delete bin
     if (destination.droppableId === 'delete-bin') {
       if (type === 'column') {
         const columnId = draggableId.replace('column-', '');
-        // Don't allow deletion of the Ideas column
         if (columnId === IDEAS_COLUMN_ID) {
           toast({
             title: "Cannot Delete",
@@ -262,7 +244,6 @@ export default function ContentPlanner() {
       }
     }
     
-    // Handle column reordering
     if (type === 'column') {
       if (source.index === destination.index) return;
 
@@ -270,7 +251,6 @@ export default function ContentPlanner() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
 
-        // Prevent moving the Ideas column from being first
         if (destination.index === 0 && columns[source.index].id !== IDEAS_COLUMN_ID) {
           toast({
             title: "Cannot Reorder",
@@ -280,10 +260,8 @@ export default function ContentPlanner() {
           return;
         }
 
-        // Ensure Ideas column stays as the first column
         const newColumns = [...columns];
         
-        // If moving Ideas column, restrict its position to index 0
         if (newColumns[source.index].id === IDEAS_COLUMN_ID && destination.index !== 0) {
           toast({
             title: "Cannot Reorder",
@@ -296,7 +274,6 @@ export default function ContentPlanner() {
         const [removed] = newColumns.splice(source.index, 1);
         newColumns.splice(destination.index, 0, removed);
 
-        // Update the order property for each column
         const updatedColumns = newColumns.map((col, index) => ({
           ...col,
           order: index
@@ -304,7 +281,6 @@ export default function ContentPlanner() {
 
         setColumns(updatedColumns);
 
-        // Update the order in the database
         for (const column of updatedColumns) {
           await supabase
             .from('planner_columns')
@@ -323,24 +299,20 @@ export default function ContentPlanner() {
       return;
     }
     
-    // Handle regular card dragging
     if (type === 'task') {
       try {
-        // Update in Supabase first
         const ideaId = result.draggableId;
         
-        // Ensure is_saved is true when moving ideas between columns
         const { error } = await supabase
           .from('video_ideas')
           .update({ 
             status: destination.droppableId,
-            is_saved: true // Auto-bookmark when added to any column
+            is_saved: true
           })
           .eq('id', ideaId);
 
         if (error) throw error;
 
-        // Then update local state
         if (source.droppableId !== destination.droppableId) {
           const sourceColumn = columns.find(col => col.id === source.droppableId);
           const destColumn = columns.find(col => col.id === destination.droppableId);
@@ -350,7 +322,6 @@ export default function ContentPlanner() {
           const sourceItems = [...sourceColumn.items];
           const destItems = [...destColumn.items];
           const [removed] = sourceItems.splice(source.index, 1);
-          // Ensure the item is marked as saved in the UI
           removed.is_saved = true;
           destItems.splice(destination.index, 0, removed);
 
@@ -398,7 +369,6 @@ export default function ContentPlanner() {
       if (pendingDelete.type === 'column') {
         const columnId = pendingDelete.id;
         
-        // Double-check we're not deleting the Ideas column
         if (columnId === IDEAS_COLUMN_ID) {
           toast({
             title: "Cannot Delete",
@@ -411,10 +381,8 @@ export default function ContentPlanner() {
           return;
         }
         
-        // Get items that need to be moved to 'ideas' column
         const columnItems = columns.find(col => col.id === columnId)?.items || [];
         
-        // Update each item in the database
         for (const item of columnItems) {
           const { error: updateError } = await supabase
             .from('video_ideas')
@@ -427,7 +395,6 @@ export default function ContentPlanner() {
           }
         }
         
-        // Delete the column from the database
         const { error: deleteError } = await supabase
           .from('planner_columns')
           .delete()
@@ -438,7 +405,6 @@ export default function ContentPlanner() {
           throw deleteError;
         }
         
-        // Remove the column from the UI
         const newColumns = columns.filter(col => col.id !== columnId);
         setColumns(newColumns);
         
@@ -449,7 +415,6 @@ export default function ContentPlanner() {
       } else if (pendingDelete.type === 'task') {
         const ideaId = pendingDelete.id;
         
-        // Mark the idea as not saved in Supabase (soft delete)
         const { error } = await supabase
           .from('video_ideas')
           .update({ is_saved: false })
@@ -460,7 +425,6 @@ export default function ContentPlanner() {
           throw error;
         }
         
-        // Update local state
         const newColumns = columns.map(col => ({
           ...col,
           items: col.items.filter(item => item.id !== ideaId)
@@ -500,7 +464,6 @@ export default function ContentPlanner() {
       const newColumnId = crypto.randomUUID();
       const newColumnOrder = columns.length;
 
-      // Add column to database
       const { error } = await supabase
         .from('planner_columns')
         .insert({
@@ -512,7 +475,6 @@ export default function ContentPlanner() {
 
       if (error) throw error;
 
-      // Add column to local state
       const newColumn: PlannerColumnWithItems = {
         id: newColumnId,
         title: data.title,
@@ -541,25 +503,21 @@ export default function ContentPlanner() {
   };
 
   const handleIdeaDeleted = () => {
-    // Refresh data after an idea is deleted
     fetchColumnsAndIdeas();
   };
 
   const handleColumnDeleted = () => {
-    // Refresh data after a column is deleted
     fetchColumnsAndIdeas();
   };
-  
-  // Add new state for zoom level
+
   const [zoomLevel, setZoomLevel] = useState(100);
 
-  // Add zoom control functions
   const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 10, 150)); // Max zoom 150%
+    setZoomLevel(prev => Math.min(prev + 10, 150));
   };
 
   const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 10, 50)); // Min zoom 50%
+    setZoomLevel(prev => Math.max(prev - 10, 50));
   };
 
   return (
