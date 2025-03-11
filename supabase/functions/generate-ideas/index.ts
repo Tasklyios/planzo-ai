@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
@@ -50,76 +51,48 @@ serve(async (req) => {
 
     console.log('Validated account type:', validAccountType);
 
-    // Create topic variations to encourage creativity
-    const nicheWords = niche.toLowerCase().split(/\s+/);
-    
     // Create a simpler, more direct system prompt focused on creating high-value ideas
-    let systemPrompt = `You are a creative content strategist who specializes in creating highly engaging, valuable content ideas.`;
+    const systemPrompt = `You are an expert content strategist who specializes in creating viral, high-value content ideas in the ${niche} niche.
 
-    // Tailor system prompt based on account type
-    if (validAccountType === 'ecommerce') {
-      systemPrompt += `
-For ECOMMERCE creators:
-- Create exactly 5 content ideas where 4 must be purely educational with NO product mentions
-- The 4 non-product ideas should focus on solving problems and providing value
-- Only 1 idea can subtly mention the product category (not specific products)
-- For educational ideas, write as if you're an independent expert with no brand affiliation`;
-    } else if (validAccountType === 'personal') {
-      systemPrompt += `
-For PERSONAL creators:
-- Create diverse content formats that showcase personality
-- Focus on authenticity, storytelling and unique perspectives
-- Include content that establishes expertise while being relatable`;
-    } else if (validAccountType === 'business') {
-      systemPrompt += `
-FOR BUSINESS ACCOUNTS:
-- Balance professionalism with authentic connection
-- Include content that establishes thought leadership
-- Create ideas that demonstrate expertise through storytelling`;
-    }
+Key requirements:
+1. Create EXACTLY 5 distinct content ideas.
+2. Make each idea short, snappy, and scroll-stopping.
+3. Each idea must have its own clear title, format, and brief description.
+4. Format consistently: Title, then Category/Format, then Description.
+5. For ecommerce specifically: Focus on valuable educational content that builds authority WITHOUT directly selling products.
+6. Include relevant hashtags for each idea.
 
-    // Add style profile and content preferences
-    systemPrompt += `
 ${styleProfile ? `STYLE: "${styleProfile.name}": ${styleProfile.description}
 TONE: ${styleProfile.tone}` : ''}
 ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
 ${contentPersonality ? `CONTENT PERSONALITY: ${contentPersonality}` : ''}`;
 
     // Create a simple, direct user prompt
-    let userPrompt = `Create 5 highly creative content ideas for a ${validAccountType} creator in the "${niche}" space targeting "${audience}" on ${platform}.`;
+    let userPrompt = `Create 5 viral content ideas for ${validAccountType} creator in "${niche}" targeting "${audience}" on ${platform}.
 
-    // Add specific guidance for ecommerce
-    if (validAccountType === 'ecommerce') {
-      userPrompt += `
-CRITICAL for ecommerce:
-- Out of 5 ideas, create 4 pure educational ideas with ZERO product mentions
-- These 4 ideas should focus on: industry expertise, audience pain points, educational content, or entertainment
-- For these 4 ideas, DO NOT use any language like "our product", "we sell", etc.
-- Only 1 idea should subtly reference the product category (not specific products)
+${validAccountType === 'ecommerce' ? 
+`For ECOMMERCE content:
+- 4 of 5 ideas MUST be purely educational with ZERO product mentions
+- These ideas should focus on solving problems, sharing expertise, or entertaining the audience
+- Only 1 idea can subtly mention product category (not specific products)
+- NO selling language or promotional content in educational ideas` : ''}
 
-EXAMPLES of good educational ideas for ${niche}:
-- "5 Training Mistakes That Slow Down Most Runners"
-- "Why Elite Runners Change Their Form Based on Terrain"
-- "The Psychology Behind Runner's High: Science Explained"
-- "I Analyzed 100 Marathon Winners' Training Schedules - Here's What I Found"`;
-    }
-
-    // Add custom ideas and previous context
-    userPrompt += `
 ${customIdeas ? `CREATOR'S OWN IDEAS TO INSPIRE YOU: "${customIdeas}"` : ""}
 ${previousIdeas && previousIdeas.titles && previousIdeas.titles.length ? 
   `DO NOT REPEAT THESE PREVIOUS IDEAS: ${previousIdeas.titles.slice(0, 5).join(', ')}` : ''}
 
-Format each idea with:
-1. A specific, scroll-stopping title (not generic)
-2. Content category/format (be specific and creative)
-3. Brief description with the unique angle
-4. 3-5 relevant hashtags
+Format requirements:
+1. Each idea must start with a clear number (1. Title...)
+2. Each idea must include:
+   - Title: short, specific, and scroll-stopping
+   - Category/Format: specific content format (e.g., Tutorial Timelapse, Behind-the-Scenes)
+   - Description: brief explanation with unique angle (1-2 sentences only)
+   - Hashtags: 3-5 relevant hashtags
 
-Each idea must be distinctly different from the others. Vary topics, formats, and approaches.`;
+Make each idea distinctly different. Focus on value, authenticity, and shareability.`;
 
     // Call OpenAI with simplified parameters for creativity
-    console.log('Calling OpenAI API with simplified creative prompt...');
+    console.log('Calling OpenAI API for idea generation...');
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -166,42 +139,77 @@ Each idea must be distinctly different from the others. Vary topics, formats, an
     let ideas = [];
     
     try {
-      // Try to extract structured data with regex patterns
+      // Split the response by idea numbers (1., 2., etc.)
       const ideaBlocks = rawResponse.split(/\n\s*\d+\.\s+/).filter(block => block.trim().length > 0);
       
       if (ideaBlocks.length >= 1) {
         ideas = ideaBlocks.map(block => {
-          const titleMatch = block.match(/^(.+?)(?:\n|$)/);
-          const categoryMatch = block.match(/Category\/Format:?\s*([^\n]+)/i) || 
-                               block.match(/Content (?:category|format|type):?\s*([^\n]+)/i) ||
-                               block.match(/\(([^)]+)\)/);
-          const descriptionMatch = block.match(/Description:?\s*([^#]+)/i) ||
-                                  block.match(/[^\n]+\n[^\n]+\n([^#]+)/);
-          const hashtagsMatch = block.match(/#[a-zA-Z0-9]+(?: #[a-zA-Z0-9]+)*/g);
+          // For each idea block, extract the components
+          const lines = block.split('\n').filter(line => line.trim().length > 0);
           
-          // Extract title, stripping quotes if present
-          const title = titleMatch 
-            ? titleMatch[1].replace(/^["'](.+)["']$/, '$1').trim() 
-            : "Creative Content Idea";
-            
-          // Extract or create category
-          const category = categoryMatch 
-            ? categoryMatch[1].trim() 
-            : "Creative Format";
-            
-          // Extract or create description
-          const description = descriptionMatch 
-            ? descriptionMatch[1].trim() 
-            : block.trim();
-            
-          // Extract or create tags
+          let title = '';
+          let category = '';
+          let description = '';
           let tags = [];
-          if (hashtagsMatch) {
-            tags = hashtagsMatch[0].split(' ').map(tag => tag.replace('#', ''));
-          } else {
-            // Create default tags based on niche
-            tags = [niche.toLowerCase().replace(/\s+/g, ''), 'content', 'creators'];
+          
+          // First non-empty line is usually the title
+          if (lines.length > 0) {
+            title = lines[0].replace(/^["'](.+)["']$/, '$1').trim();
           }
+          
+          // Look for category/format
+          const categoryLine = lines.find(line => 
+            line.match(/category|format/i) || 
+            line.match(/^[a-z\s]+:/i)
+          );
+          
+          if (categoryLine) {
+            category = categoryLine.replace(/.*?:\s*/, '').trim();
+          } else if (lines.length > 1) {
+            // If no explicit category, use the second line
+            category = lines[1].trim();
+          }
+          
+          // Look for description
+          const descriptionLine = lines.find(line => 
+            line.match(/description/i) || 
+            (line.length > 30 && !line.match(/category|format|hashtag|tag/i))
+          );
+          
+          if (descriptionLine) {
+            description = descriptionLine.replace(/.*?:\s*/, '').trim();
+          } else if (lines.length > 2) {
+            // If no explicit description, use the third line or combine remaining lines
+            description = lines.slice(2).filter(l => !l.includes('#')).join(' ').trim();
+          }
+          
+          // Look for hashtags
+          const hashtagLine = lines.find(line => line.includes('#') || line.match(/hashtag|tag/i));
+          if (hashtagLine) {
+            // Extract tags, either as "#tag1 #tag2" or just "tag1, tag2"
+            const tagMatches = hashtagLine.match(/#[a-zA-Z0-9]+(?: #[a-zA-Z0-9]+)*/g) || 
+                              hashtagLine.match(/hashtags?:?\s*([^#].*)/i);
+            
+            if (tagMatches) {
+              if (typeof tagMatches[0] === 'string' && tagMatches[0].includes('#')) {
+                // Format: #tag1 #tag2
+                tags = tagMatches[0].split(/\s+/).map(tag => tag.replace('#', ''));
+              } else if (tagMatches[1]) {
+                // Format: Hashtags: tag1, tag2
+                tags = tagMatches[1].split(/[,\s]+/).filter(t => t.trim().length > 0);
+              }
+            }
+          }
+          
+          // Ensure we have at least some tags
+          if (tags.length === 0) {
+            tags = [niche.toLowerCase().replace(/\s+/g, ''), platform.toLowerCase().replace(/\s+/g, ''), 'content'];
+          }
+          
+          // Clean up any lingering formatting issues
+          title = title.replace(/^title:?\s*/i, '').trim();
+          category = category.replace(/^(category|format):?\s*/i, '').trim();
+          description = description.replace(/^description:?\s*/i, '').trim();
           
           return {
             title,
@@ -212,110 +220,37 @@ Each idea must be distinctly different from the others. Vary topics, formats, an
         });
       }
       
-      // If no ideas were extracted, try fallback parsing
-      if (ideas.length === 0) {
-        // Basic extraction - find numbered items or sections with titles
-        const fallbackMatches = rawResponse.match(/(?:\d+\.|Title:)\s*([^\n]+)/g);
-        if (fallbackMatches && fallbackMatches.length > 0) {
-          ideas = fallbackMatches.map(match => {
-            const title = match.replace(/(?:\d+\.|Title:)\s*/, '').trim();
-            return {
-              title,
-              category: "Content Idea",
-              description: `Creative content about ${title} for ${audience}`,
-              tags: [niche.toLowerCase().replace(/\s+/g, ''), 'content', 'creative']
-            };
-          });
-        }
-      }
-      
-      // Last resort: create basic ideas if parsing failed completely
-      if (ideas.length === 0) {
-        console.log("Failed to parse ideas, creating fallback ideas");
+      // If parsing failed or produced fewer than 5 ideas, use backup generation
+      if (ideas.length < 5) {
+        console.log("Generating backup ideas to ensure we have 5 total");
         
-        // For ecommerce, create balanced set of product/non-product ideas
-        if (validAccountType === 'ecommerce') {
-          ideas = [
-            {
-              title: `5 Common ${niche} Myths Debunked by Science`,
-              category: "Myth Busting",
-              description: `Explore scientific facts that contradict popular misconceptions about ${niche}, providing evidence-based insights that help your audience make better decisions.`,
-              tags: ["mythbusting", "science", "facts", niche.toLowerCase().replace(/\s+/g, '')]
-            },
-            {
-              title: `What I Learned Tracking My ${niche.split(' ')[0]} Progress for 30 Days`,
-              category: "Personal Experiment",
-              description: `Share insights from a month-long experiment related to ${niche}, revealing patterns and discoveries that can help others improve their own results.`,
-              tags: ["experiment", "results", "tracking", "improvement"]
-            },
-            {
-              title: `The History of ${niche} Most People Don't Know`,
-              category: "Educational Deep Dive",
-              description: `Explore the fascinating evolution and little-known origin stories of ${niche}, providing context that enriches your audience's appreciation of the subject.`,
-              tags: ["history", "origins", "education", "facts"]
-            },
-            {
-              title: `Interview: How Elite ${audience} Approach Their Training`,
-              category: "Expert Insights",
-              description: `Share wisdom from conversations with top performers in the ${niche} space, extracting practical advice that viewers can apply to their own practice.`,
-              tags: ["expertise", "interview", "eliteperformance", "training"]
-            },
-            {
-              title: `How to Choose the Right ${niche} for Your Specific Needs`,
-              category: "Buying Guide",
-              description: `Provide an educational overview of different types of ${niche} options, explaining how features benefit different use cases without pushing specific products.`,
-              tags: ["guide", "education", "choices", "features"]
-            }
-          ];
-        } else {
-          // Generic creative ideas for personal/business accounts
-          ideas = [
-            {
-              title: `What Nobody Tells You About ${niche} When Starting Out`,
-              category: "Insider Knowledge",
-              description: `Share honest insights about ${niche} that beginners rarely discover until they've gained significant experience, helping your audience avoid common pitfalls.`,
-              tags: ["insiderknowledge", "beginners", "truth", "advice"]
-            },
-            {
-              title: `I Tried 5 Different ${niche} Approaches: Here's What Worked`,
-              category: "Experiment Results",
-              description: `Compare multiple methods for ${niche}, providing an authentic assessment of each approach's strengths and weaknesses based on personal experience.`,
-              tags: ["comparison", "methods", "results", "testing"]
-            },
-            {
-              title: `The Surprising Connection Between ${niche} and Mental Health`,
-              category: "Psychological Insights",
-              description: `Explore the unexpected ways that ${niche} impacts psychological wellbeing, drawing connections that most people overlook but that can significantly enhance results.`,
-              tags: ["mentalhealth", "psychology", "wellbeing", "mindset"]
-            },
-            {
-              title: `Behind-the-Scenes: My ${niche} Process from Start to Finish`,
-              category: "Process Documentary",
-              description: `Provide unprecedented access to your complete workflow, showing both the polished results and the messy reality of working with ${niche}.`,
-              tags: ["behindthescenes", "process", "workflow", "reality"]
-            },
-            {
-              title: `The Future of ${niche}: Trends to Watch in the Next Year`,
-              category: "Trend Analysis",
-              description: `Share forward-looking insights about emerging developments in the ${niche} space, positioning yourself as a knowledgeable voice on where the industry is heading.`,
-              tags: ["trends", "future", "predictions", "industry"]
-            }
-          ];
-        }
+        // Generate additional ideas to reach 5 total
+        const missingCount = 5 - ideas.length;
+        
+        // Backup ideas for different account types
+        const backupIdeas = getBackupIdeas(niche, audience, validAccountType, missingCount);
+        
+        // Add the backup ideas to our collection
+        ideas = [...ideas, ...backupIdeas];
       }
       
-      // Ensure we have exactly 5 ideas
-      ideas = ideas.slice(0, 5);
+      // Ensure we have exactly 5 ideas with complete information
+      ideas = ideas.slice(0, 5).map(idea => {
+        return {
+          title: idea.title || `${niche} Tips for ${audience}`,
+          category: idea.category || "Quick Tips",
+          description: idea.description || `Valuable insights about ${niche} specifically curated for ${audience}.`,
+          tags: idea.tags && idea.tags.length ? idea.tags : [niche.toLowerCase().replace(/\s+/g, ''), 'content', 'tips']
+        };
+      });
       
-      // Log the parsed ideas for debugging
-      console.log(`Successfully extracted ${ideas.length} ideas`);
+      console.log(`Successfully generated ${ideas.length} ideas`);
       
     } catch (error) {
       console.error("Error parsing ideas:", error);
-      return new Response(
-        JSON.stringify({ error: `Error parsing ideas: ${error.message}` }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
+      // Generate fallback ideas rather than returning an error
+      ideas = getBackupIdeas(niche, audience, validAccountType, 5);
+      console.log("Using fallback ideas due to parsing error");
     }
 
     // Return the ideas
@@ -332,33 +267,87 @@ Each idea must be distinctly different from the others. Vary topics, formats, an
   }
 });
 
-// Helper function to detect if content is product-focused
-function detectProductFocus(title: string, description: string, category: string): boolean {
-  const combinedText = (title + ' ' + description + ' ' + category).toLowerCase();
+// Helper function to generate backup ideas based on account type
+function getBackupIdeas(niche, audience, accountType, count) {
+  const ideas = [];
   
-  // Product-focused categories
-  const productCategories = [
-    'product', 'review', 'unboxing', 'showcase', 'demo', 'tutorial', 
-    'how-to', 'guide', 'comparison', 'versus', 'vs', 'buyer'
-  ];
+  // Different idea templates based on account type
+  if (accountType === 'ecommerce') {
+    const ecommerceIdeas = [
+      {
+        title: `5 Common ${niche} Myths Debunked`,
+        category: "Myth Busting",
+        description: `Explode popular misconceptions about ${niche} with science-backed facts that your audience needs to know.`,
+        tags: ["mythbusting", "facts", niche.toLowerCase().replace(/\s+/g, '')]
+      },
+      {
+        title: `What Happened When I Tracked My ${niche.split(' ')[0]} Progress for 30 Days`,
+        category: "Personal Experiment",
+        description: `A transparent look at real results and unexpected discoveries from a month-long ${niche} experiment.`,
+        tags: ["experiment", "results", "tracking"]
+      },
+      {
+        title: `3 ${niche} Hacks That Actually Work (And 2 That Don't)`,
+        category: "Tested Tips",
+        description: `Save time and frustration with these verified ${niche} techniques that deliver real results.`,
+        tags: ["hacks", "tested", "tips"]
+      },
+      {
+        title: `The Unexpected History of ${niche} Nobody Talks About`,
+        category: "Deep Dive",
+        description: `Fascinating origin stories and evolution of ${niche} that will change how you think about it.`,
+        tags: ["history", "facts", "deepdive"]
+      },
+      {
+        title: `Behind-the-Scenes: How Top ${audience.split(' ')[0]}s Approach ${niche}`,
+        category: "Expert Insights",
+        description: `Exclusive peeks into the routines and strategies of leading ${audience} when it comes to ${niche}.`,
+        tags: ["behindthescenes", "experts", "insights"]
+      }
+    ];
+    
+    for (let i = 0; i < count; i++) {
+      ideas.push(ecommerceIdeas[i % ecommerceIdeas.length]);
+    }
+  } else {
+    // Ideas for personal/business accounts
+    const generalIdeas = [
+      {
+        title: `What Nobody Tells You About ${niche} (But Should)`,
+        category: "Honest Talk",
+        description: `The unfiltered truth about ${niche} that will save you time, money, and frustration.`,
+        tags: ["truth", "insights", niche.toLowerCase().replace(/\s+/g, '')]
+      },
+      {
+        title: `I Tried 5 ${niche} Techniques: Here's The Clear Winner`,
+        category: "Comparison Test",
+        description: `An authentic side-by-side test revealing which approach to ${niche} actually delivers results.`,
+        tags: ["tested", "comparison", "results"]
+      },
+      {
+        title: `The 60-Second ${niche} Hack That Changed Everything`,
+        category: "Quick Tip",
+        description: `This simple but powerful adjustment to your ${niche} routine delivers immediate improvements.`,
+        tags: ["quicktip", "hack", "gamechanger"]
+      },
+      {
+        title: `Behind-the-Scenes: The Real Process of ${niche}`,
+        category: "Reality Check",
+        description: `The unfiltered, messy truth about what ${niche} actually looks like day-to-day.`,
+        tags: ["behindthescenes", "reality", "process"]
+      },
+      {
+        title: `3 ${niche} Trends About to Explode in 2025`,
+        category: "Trend Forecast",
+        description: `Get ahead of the curve with these emerging developments in the ${niche} space that few are talking about yet.`,
+        tags: ["trends", "predictions", "future"]
+      }
+    ];
+    
+    for (let i = 0; i < count; i++) {
+      ideas.push(generalIdeas[i % generalIdeas.length]);
+    }
+  }
   
-  // Product-related phrases
-  const productPhrases = [
-    'product', 'item', 'gear', 'equipment', 'device', 'tool',
-    'buy', 'purchase', 'shop', 'sale', 'deal', 'offer',
-    'our', 'we sell', 'collection', 'line', 'model', 'brand',
-    'review', 'unbox', 'test', 'try out', 'check out'
-  ];
-  
-  // Check for product categories
-  const hasProductCategory = productCategories.some(cat => 
-    category.toLowerCase().includes(cat)
-  );
-  
-  // Check for product phrases in title or description
-  const hasProductPhrases = productPhrases.some(phrase => 
-    combinedText.includes(phrase)
-  );
-  
-  return hasProductCategory || hasProductPhrases;
+  return ideas.slice(0, count);
 }

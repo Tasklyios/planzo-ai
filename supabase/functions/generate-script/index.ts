@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.1";
@@ -119,11 +120,11 @@ serve(async (req) => {
     let systemPrompt = `You are a script writer creating engaging ${timeRange} content about "${scriptTitle}" in a conversational, authentic style.
 
 Your script should:
-1. Sound like natural human speech with filler words and pauses
-2. Provide valuable, specific information 
-3. Have a clear structure with proper flow
+1. Start with a powerful hook that grabs attention in the first 3 seconds
+2. Use natural human speech with filler words and pauses
+3. Be specific and value-focused - no generic content
 4. Include [action notes] in brackets when needed
-5. Match the requested style and personality
+5. Be concise, punchy, and paced for social media
 `;
 
     // Tailor the script based on account type and if it's for an ecommerce product
@@ -166,7 +167,7 @@ ${userProfile?.content_style ? `CONTENT STYLE: ${userProfile.content_style}` : c
 ${userProfile?.content_personality ? `PERSONALITY: ${userProfile.content_personality}` : ''}`;
 
     // Create a detailed user prompt
-    let userPrompt = `Write a natural, engaging script for a ${timeRange} video titled: "${scriptTitle}"
+    let userPrompt = `Write a punchy, engaging script for a ${timeRange} video titled: "${scriptTitle}"
 
 ${scriptDescription ? `TOPIC CONTEXT: ${scriptDescription}` : ''}
 ${hook ? `START WITH THIS HOOK: "${hook}"` : ''}`;
@@ -199,7 +200,8 @@ For this behind-the-scenes content:
 
 Make the script sound like authentic human speech with natural flow.
 Format with line breaks to indicate speaking rhythm.
-Include [camera directions] or [action notes] in brackets where needed.`;
+Include [camera directions] or [action notes] in brackets where needed.
+BE CONCISE - focus on high-impact statements and specific value.`;
 
     // Call OpenAI API with creative parameters
     console.log('Calling OpenAI API for script generation');
