@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,14 +9,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import HookGeneratorForm from '@/components/hooks/HookGeneratorForm';
 import GeneratedHooksGrid from '@/components/hooks/GeneratedHooksGrid';
 import SavedHooksView from '@/components/hooks/SavedHooksView';
-import SavedIdeaSelector from '@/components/hooks/SavedIdeaSelector';
 import ApplyHookToIdea from '@/components/hooks/ApplyHookToIdea';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 const Hooks = () => {
   const { toast } = useToast();
@@ -178,53 +176,20 @@ const Hooks = () => {
         </TabsList>
         
         <TabsContent value="generate" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              <HookGeneratorForm 
-                topic={topic}
-                setTopic={setTopic}
-                audience={audience}
-                setAudience={setAudience}
-                details={details}
-                setDetails={setDetails}
-                handleGenerateHooks={handleGenerateHooks}
-                isGenerating={isGenerating}
-                useSavedIdea={useSavedIdea}
-                setUseSavedIdea={setUseSavedIdea}
-                onIdeaSelect={handleSelectIdea}
-                selectedIdea={selectedIdea}
-              />
-            </div>
-            
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Video Idea</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <SavedIdeaSelector onIdeaSelect={handleSelectIdea} />
-                  
-                  {selectedIdea && (
-                    <div className="mt-4 space-y-2">
-                      <Badge>{selectedIdea.category}</Badge>
-                      <h3 className="font-medium">{selectedIdea.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedIdea.description.substring(0, 100)}
-                        {selectedIdea.description.length > 100 ? '...' : ''}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {selectedIdea && selectedHook && (
-                    <ApplyHookToIdea 
-                      idea={selectedIdea} 
-                      hook={selectedHook} 
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          <HookGeneratorForm 
+            topic={topic}
+            setTopic={setTopic}
+            audience={audience}
+            setAudience={setAudience}
+            details={details}
+            setDetails={setDetails}
+            handleGenerateHooks={handleGenerateHooks}
+            isGenerating={isGenerating}
+            useSavedIdea={useSavedIdea}
+            setUseSavedIdea={setUseSavedIdea}
+            onIdeaSelect={handleSelectIdea}
+            selectedIdea={selectedIdea}
+          />
 
           {error && (
             <Alert variant="destructive" className="mb-4">
