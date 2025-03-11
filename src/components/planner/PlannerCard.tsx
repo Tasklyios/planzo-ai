@@ -1,3 +1,4 @@
+
 import { Draggable } from "react-beautiful-dnd";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,10 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
             )}
             style={{
               ...provided.draggableProps.style,
-              width: "100%"
+              left: snapshot.isDragging ? provided.draggableProps.style?.left : undefined,
+              top: snapshot.isDragging ? provided.draggableProps.style?.top : undefined,
+              width: "100%",
+              cursor: snapshot.isDragging ? "grabbing" : "grab"
             }}
           >
             <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
