@@ -1,4 +1,3 @@
-
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,14 +31,12 @@ export function PlannerColumn({
 
   const handleDeleteColumn = async () => {
     try {
-      // Get items that need to be moved to 'ideas' column
       const { data: columnItems } = await supabase
         .from('video_ideas')
         .select('id')
         .eq('status', id);
       
       if (columnItems && columnItems.length > 0) {
-        // Update each item's status to 'ideas'
         for (const item of columnItems) {
           await supabase
             .from('video_ideas')
@@ -48,7 +45,6 @@ export function PlannerColumn({
         }
       }
       
-      // Delete the column
       const { error } = await supabase
         .from('planner_columns')
         .delete()
@@ -56,7 +52,6 @@ export function PlannerColumn({
         
       if (error) throw error;
       
-      // Notify parent component
       if (onColumnDeleted) {
         onColumnDeleted();
       }
@@ -78,7 +73,6 @@ export function PlannerColumn({
           }`}
           style={{
             ...provided.draggableProps.style,
-            // Preserve width during drag to prevent stretching
             width: snapshot.isDragging ? "350px" : undefined
           }}
         >

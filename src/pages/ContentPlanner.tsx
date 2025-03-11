@@ -195,10 +195,12 @@ export default function ContentPlanner() {
 
   const onDragStart = () => {
     setIsDragging(true);
+    document.body.classList.add('dragging');
   };
 
   const onDragEnd = async (result: DropResult) => {
     setIsDragging(false);
+    document.body.classList.remove('dragging');
     
     const { source, destination, type, draggableId } = result;
     
@@ -587,6 +589,12 @@ export default function ContentPlanner() {
           </Dialog>
         </div>
       </div>
+
+      <style jsx global>{`
+        .dragging {
+          cursor: grabbing !important;
+        }
+      `}</style>
 
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <Droppable droppableId="columns" direction="horizontal" type="column">

@@ -1,3 +1,4 @@
+
 import { Draggable } from "react-beautiful-dnd";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -82,7 +83,9 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
               width: snapshot.isDragging ? "calc(100% - 8px)" : undefined,
               transform: snapshot.isDragging 
                 ? `${provided.draggableProps.style?.transform} rotate(1deg)` 
-                : provided.draggableProps.style?.transform
+                : provided.draggableProps.style?.transform,
+              // Add a new property to improve cursor alignment
+              cursor: snapshot.isDragging ? "grabbing" : "grab"
             }}
           >
             <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
