@@ -80,15 +80,13 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
             )}
             style={{
               ...provided.draggableProps.style,
-              // Fix the width to maintain consistent size during drag
-              width: "calc(100% - 8px)",
-              // Ensure the width is fixed when dragging outside of column
-              maxWidth: "318px", // 350px column width - 2*16px padding
+              // Ensure the width is properly constrained during drag
+              width: "100%",
+              maxWidth: "302px", // Column width (350px) - padding (2*24px)
               transform: snapshot.isDragging 
                 ? provided.draggableProps.style?.transform
                 : provided.draggableProps.style?.transform,
               cursor: snapshot.isDragging ? "grabbing" : "grab",
-              // Set a fixed positioning reference for drag alignment
               transformOrigin: "top left",
               left: snapshot.isDragging ? 0 : undefined,
               top: snapshot.isDragging ? 0 : undefined

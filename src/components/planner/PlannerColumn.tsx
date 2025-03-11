@@ -1,4 +1,3 @@
-
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -69,13 +68,12 @@ export function PlannerColumn({
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className={`bg-muted/50 rounded-lg p-4 h-full w-[350px] flex-shrink-0 ${
+          className={`bg-muted/50 rounded-lg p-6 h-full w-[350px] flex-shrink-0 ${
             snapshot.isDragging ? "opacity-90 shadow-lg" : ""
           }`}
           style={{
             ...provided.draggableProps.style,
             width: snapshot.isDragging ? "350px" : undefined,
-            // Improve column drag position
             transformOrigin: "top left",
             left: snapshot.isDragging ? 0 : undefined,
             top: snapshot.isDragging ? 0 : undefined
