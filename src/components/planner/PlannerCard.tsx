@@ -63,6 +63,7 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
   };
 
   const borderColorClass = colorClasses[color || 'blue'] || colorClasses.blue;
+  const cardWidth = 342; // Column width (350px) - 8px for spacing/borders
 
   return (
     <>
@@ -80,9 +81,8 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
             )}
             style={{
               ...provided.draggableProps.style,
-              // Ensure the width is properly constrained during drag
               width: "100%",
-              maxWidth: "302px", // Column width (350px) - padding (2*24px)
+              maxWidth: `${cardWidth}px`, 
               transform: snapshot.isDragging 
                 ? provided.draggableProps.style?.transform
                 : provided.draggableProps.style?.transform,

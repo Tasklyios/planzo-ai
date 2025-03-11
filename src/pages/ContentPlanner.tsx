@@ -603,8 +603,8 @@ export default function ContentPlanner() {
           transition: transform 0.2s;
         }
         [data-rbd-draggable-id] {
-          width: 302px !important;
-          max-width: 302px !important;
+          width: 342px !important;
+          max-width: 342px !important;
         }
       `}} />
 
@@ -689,4 +689,3 @@ export default function ContentPlanner() {
     </div>
   );
 }
-
