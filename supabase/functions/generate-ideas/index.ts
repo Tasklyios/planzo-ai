@@ -55,13 +55,14 @@ serve(async (req) => {
 
 Your expertise is creating viral content ideas for ${validAccountType} creators in the "${niche}" space targeting "${audience}".
 
-CONTENT REQUIREMENTS:
-- Create COMPLETELY ORIGINAL ideas that would be considered high-quality and professional 
-- Each idea must have a unique angle specific to ${niche}
-- Ideas should be attention-grabbing, value-driven, and achievable
-- Focus on what would actually go viral for this specific creator while maintaining credibility
-
-${validAccountType === 'personal' ? 
+${validAccountType === 'ecommerce' ? 
+  `FOR ECOMMERCE BRANDS - CRITICAL GUIDELINES:
+  - Create ideas that build trust and authority WITHOUT mentioning products
+  - 70% of ideas should focus purely on helping the audience with NO product references
+  - 30% of ideas can naturally showcase products as solutions
+  - Focus on educational content that establishes expertise in ${niche}
+  - Build an engaged community by providing pure value first
+  - Position the brand as a trusted advisor, not just a seller` : 
   `For this PERSONAL CREATOR account:
   - Focus on creating professional, straight-to-the-point content that avoids cringy or gimmicky approaches
   - Generate a diverse mix of content formats: storytelling, day-in-the-life, educational tutorials, top lists, behind-the-scenes
@@ -74,13 +75,6 @@ ${validAccountType === 'personal' ?
   - Ideas should position the business as an authority while providing genuine value
   - Include a mix of educational content, behind-the-scenes, and industry insights
   - Prioritize ideas that establish credibility and trust with potential clients` :
-  validAccountType === 'ecommerce' ? 
-  `For this ECOMMERCE account:
-  - Include a balance of direct product promotion and pure value-focused content
-  - 60% of ideas should focus purely on helping the audience without explicit product mentions
-  - 40% of ideas should showcase products in natural, problem-solving contexts
-  - Prioritize educational content that positions the brand as an industry leader
-  - Focus on building an engaged community around the niche, not just selling products` : 
   ''}
 
 ${styleProfile ? `CREATOR'S UNIQUE STYLE: "${styleProfile.name}": ${styleProfile.description}
@@ -94,19 +88,17 @@ PLATFORM ADAPTATION: Optimize specifically for ${platform} with the right format
     // Enhanced user prompt with clearer instructions
     const userPrompt = `Create 5 original, viral-potential video ideas for a ${validAccountType} creator in the "${niche}" niche targeting "${audience}" on ${platform}.
 
-IMPORTANT CONTEXT ABOUT THIS CREATOR:
-- Niche: ${niche}
-- Target Audience: ${audience} 
-- Platform: ${platform}
-- Content Type: ${videoType || "Various formats"}
-- Style: ${contentStyle || "Not specified"}
-- Personality: ${contentPersonality || "Not specified"}
-${customIdeas ? `- Creator's Own Ideas: "${customIdeas}"` : ""}
-
-${previousIdeas && previousIdeas.titles && previousIdeas.titles.length ? 
-  `DO NOT REPEAT THESE PREVIOUS IDEAS: ${previousIdeas.titles.slice(0, 5).join(', ')}` : ''}
-
-${validAccountType === 'personal' ? 
+${validAccountType === 'ecommerce' ? 
+  `FOR ECOMMERCE BRANDS - IMPORTANT:
+  - Create 3-4 ideas that focus PURELY on helping ${audience} with NO product mentions:
+    * Educational content about ${niche} trends/techniques
+    * Industry insights and expert advice
+    * Community-focused content
+    * Tips and strategies that provide immediate value
+  - Only 1-2 ideas should involve products, and these must be naturally integrated
+  - ALL ideas must establish the brand as a trusted authority in ${niche}
+  - Focus on content that genuinely helps your audience succeed
+  - Build trust through expertise and generosity, not selling` :
   `FOR PERSONAL BRANDS - IMPORTANT GUIDELINES:
   - Create a DIVERSE MIX of formats with NO REPETITION:
     * 1 professional storytelling idea (narrative-driven, personal experience)
@@ -118,13 +110,6 @@ ${validAccountType === 'personal' ?
   - Each idea should have CLEAR VIRAL POTENTIAL with strong hooks and unique angles
   - Aim for ideas that would genuinely interest ${audience} and provide real value
   - Focus on content that builds authority while being authentic and relatable` :
-  validAccountType === 'ecommerce' ? 
-  `FOR ECOMMERCE BRANDS:
-  - Include 3 ideas that focus ONLY on helping the audience with no direct product promotion
-  - Include 2 ideas that naturally showcase products as solutions to audience problems
-  - All ideas should establish the brand as a trusted authority in the ${niche} space
-  - Focus on educational content that genuinely helps ${audience}
-  - Avoid overly promotional angles - prioritize building trust and engagement` :
   validAccountType === 'business' ? 
   `FOR BUSINESS BRANDS:
   - Ideas should establish industry authority and thought leadership
@@ -133,24 +118,16 @@ ${validAccountType === 'personal' ?
   - Demonstrate expertise without being overly technical or jargon-heavy` : ''
 }
 
-Each idea MUST include:
-1. A HIGHLY SPECIFIC title that would make viewers stop scrolling (not generic "How to" or "5 Tips" formulas)
-2. A relevant content category or format type (e.g., "Day in the Life", "Tutorial", "Storytelling")
-3. A detailed description explaining why this idea would perform well with ${audience}
-4. 3-5 relevant hashtags or tags
+${customIdeas ? `CREATOR'S OWN IDEAS: "${customIdeas}"` : ""}
 
-FORMAT AS VALID JSON ONLY:
-{
-  "ideas": [
-    {
-      "title": "Compelling, specific, original title here",
-      "category": "Content category",
-      "description": "Detailed description of the content and why it would be effective",
-      "tags": ["tag1", "tag2", "tag3"]
-    },
-    // 4 more ideas
-  ]
-}`;
+${previousIdeas && previousIdeas.titles && previousIdeas.titles.length ? 
+  `DO NOT REPEAT THESE PREVIOUS IDEAS: ${previousIdeas.titles.slice(0, 5).join(', ')}` : ''}
+
+Format each idea with:
+1. A specific, scroll-stopping title
+2. Content category/format
+3. Detailed description
+4. 3-5 relevant hashtags`;
 
     // Call OpenAI with effective parameters
     console.log('Calling OpenAI API...');
@@ -309,35 +286,35 @@ FOR PERSONAL BRAND CREATORS:
           fallbackIdeas = [
             // Pure value ideas (no product promotion)
             {
-              title: `The ${niche} Training Approach That Elite Athletes Never Share Publicly`,
-              category: "Expert Insights",
-              description: `Break down an advanced training approach used by professionals in the ${niche} world that everyday enthusiasts can adapt. This positions your brand as having insider knowledge while providing pure value to ${audience} without mentioning products.`,
-              tags: ["expertinsights", "trainingtips", niche.toLowerCase().replace(/\s+/g, '')]
+              title: `What ${niche} Coaches Never Tell Their Students (Insider Training Secrets)`,
+              category: "Expert Education",
+              description: `Share advanced training principles and insider knowledge that coaches typically reserve for their top clients. This positions your brand as having deep expertise while providing immense value to the audience without any product promotion.`,
+              tags: ["trainingtips", "expertadvice", "insiderknowledge"]
             },
             {
-              title: `What ${audience} Get Wrong About ${niche} Recovery (According to Science)`,
+              title: `The Truth About ${niche} Recovery: Science vs. Popular Myths`,
               category: "Myth Busting",
-              description: `Debunk common misconceptions about recovery in the ${niche} space using scientific evidence and expert insights. This educational content builds authority and trust with your audience without pushing products directly.`,
-              tags: ["mythbusting", "recovery", "sciencebacked"]
+              description: `Break down common misconceptions about recovery in the ${niche} space using scientific research and expert insights. This educational content builds credibility while genuinely helping your audience improve their results.`,
+              tags: ["sciencebacked", "recovery", "mythbusting"]
             },
             {
-              title: `I Interviewed 50 ${niche} Coaches About Their #1 Mental Performance Hack`,
-              category: "Community Insights",
-              description: `Share valuable insights from industry professionals about the mental side of ${niche} performance. This community-focused content positions your brand as connected and knowledgeable while providing immense value.`,
-              tags: ["mentalperformance", "experttips", "community"]
+              title: `I Interviewed 50 Elite ${niche} Athletes About Their Mental Game`,
+              category: "Research & Insights",
+              description: `Share valuable insights from top performers about the mental aspects of ${niche} performance. This community-focused content positions your brand as well-connected while providing unique value to your audience.`,
+              tags: ["mentalperformance", "eliteinsights", "mindset"]
             },
-            // Product-focused ideas
+            // Product-focused ideas (but still value-first)
             {
-              title: `We Asked Pro ${niche} Athletes to Brutally Critique Our Products (Their Feedback Changed Everything)`,
-              category: "Product Development",
-              description: `Show authentic feedback from professional athletes about your ${niche} products, highlighting both praise and criticism. This transparent approach builds trust with ${audience} while naturally showcasing your products and commitment to quality.`,
-              tags: ["honestfeedback", "productdevelopment", "athletetested"]
+              title: `Behind The Scenes: How Elite Athletes Train With Our ${niche} Equipment`,
+              category: "Product Showcase",
+              description: `Document professional athletes using your products in their actual training routines, showing both the benefits and practical applications. This natural product integration builds credibility while providing valuable training insights.`,
+              tags: ["behindthescenes", "elitetraining", "productinsights"]
             },
             {
-              title: `The Unconventional ${niche} Test: How Our Products Perform in Extreme Conditions`,
-              category: "Product Performance",
-              description: `Document putting your ${niche} products through unusual or extreme testing scenarios to demonstrate durability, effectiveness, and quality. This entertaining yet informative content naturally showcases product benefits in a non-promotional way.`,
-              tags: ["producttesting", "extremeconditions", "qualityproof"]
+              title: `The Complete ${niche} Gear Guide (Including Competitors' Products)`,
+              category: "Product Education",
+              description: `Create an unbiased, comprehensive guide to all ${niche} equipment options, including competitor products. This transparent approach builds trust while naturally positioning your products within the broader market context.`,
+              tags: ["gearguide", "productcomparison", "honestreviews"]
             }
           ];
         } else if (validAccountType === 'business') {
@@ -480,15 +457,15 @@ FOR PERSONAL BRAND CREATORS:
         fallbackIdeas = [
           // Pure value ideas (no product promotion)
           {
-            title: `The ${niche} Training Approach That Elite Athletes Never Share Publicly`,
-            category: "Expert Insights",
-            description: `Break down an advanced training approach used by professionals in the ${niche} world that everyday enthusiasts can adapt. This positions your brand as having insider knowledge while providing pure value to ${audience} without mentioning products.`,
-            tags: ["expertinsights", "trainingtips", niche.toLowerCase().replace(/\s+/g, '')]
+            title: `What ${niche} Coaches Never Tell Their Students (Insider Training Secrets)`,
+            category: "Expert Education",
+            description: `Share advanced training principles and insider knowledge that coaches typically reserve for their top clients. This positions your brand as having deep expertise while providing immense value to the audience without any product promotion.`,
+            tags: ["trainingtips", "expertadvice", "insiderknowledge"]
           },
           {
-            title: `What ${audience} Get Wrong About ${niche} Recovery (According to Science)`,
+            title: `The Truth About ${niche} Recovery: Science vs. Popular Myths`,
             category: "Myth Busting",
-            description: `Debunk common misconceptions about recovery in the ${niche} space using scientific evidence and expert insights. This educational content builds authority and trust with your audience without pushing products directly.`,
+            description: `Break down common misconceptions about recovery in the ${niche} space using scientific evidence and expert insights. This educational content builds authority and trust with your audience without pushing products directly.`,
             tags: ["mythbusting", "recovery", "sciencebacked"]
           },
           {
