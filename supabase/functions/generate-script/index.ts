@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.1";
@@ -29,7 +30,7 @@ serve(async (req) => {
 
   try {
     // Get request parameters
-    const { title, description, contentStyle, hook, targetLength, userId, savedIdea } = await req.json();
+    const { title, description, contentStyle, hook, targetLength, targetDuration, wordsPerMinute, userId, savedIdea } = await req.json();
 
     // Validate required fields
     if ((!title && !savedIdea) || (!savedIdea && !title)) {
@@ -74,16 +75,32 @@ serve(async (req) => {
       }
     }
 
-    // Map target length to human-readable duration
-    const lengthMapping = {
-      "15-30": "15-30 seconds",
-      "30-60": "30-60 seconds",
-      "1-2": "1-2 minutes",
-      "2-3": "2-3 minutes",
-      "3-5": "3-5 minutes"
-    };
+    // Calculate approximate word count based on duration and words per minute
+    let targetWordCount = null;
+    let timeRangeDescription = "";
+    
+    if (targetDuration && wordsPerMinute) {
+      const [minDuration, maxDuration] = targetDuration.split('-').map(Number);
+      const avgDuration = (minDuration + maxDuration) / 2;
+      targetWordCount = Math.round(avgDuration * wordsPerMinute);
+      
+      // Create a description of the target length for the prompt
+      timeRangeDescription = `${targetDuration} minutes (approximately ${targetWordCount} words at ${wordsPerMinute} words per minute)`;
+      console.log(`Calculated target word count: ${targetWordCount} words`);
+    } else if (targetLength) {
+      // Map target length to human-readable duration (for backward compatibility)
+      const lengthMapping = {
+        "15-30": "15-30 seconds",
+        "30-60": "30-60 seconds",
+        "1-2": "1-2 minutes",
+        "2-3": "2-3 minutes",
+        "3-5": "3-5 minutes"
+      };
 
-    const timeRange = lengthMapping[targetLength as keyof typeof lengthMapping] || "30-60 seconds";
+      timeRangeDescription = lengthMapping[targetLength as keyof typeof lengthMapping] || "30-60 seconds";
+    } else {
+      timeRangeDescription = "30-60 seconds";
+    }
 
     // Get the actual title and description to use (from savedIdea or direct input)
     const scriptTitle = savedIdea ? savedIdea.title : title;
@@ -122,12 +139,12 @@ ONLY output the script text with no introduction or conclusion.
 DO NOT prefix with phrases like "Here's a script" or "Script for". 
 START DIRECTLY with the script content.
 
-Create a ${timeRange} script about "${scriptTitle}" with these requirements:
-- Start with an attention-grabbing hook
+Create a ${timeRangeDescription} script about "${scriptTitle}" with these requirements:
+- Start with an attention-grabbing hook${hook ? " (provided below)" : ""}
 - Use natural human speech with conversational fillers
 - Be specific and value-focused
 - Include [action notes] in brackets when needed
-- Be concise and punchy for social media`;
+- Be concise and punchy for social media${targetWordCount ? `\n- Aim for approximately ${targetWordCount} words` : ''}`;
 
     // Tailor the script based on account type and if it's for an ecommerce product
     if (accountType === 'ecommerce') {
@@ -169,10 +186,14 @@ ${userProfile?.content_style ? `CONTENT STYLE: ${userProfile.content_style}` : c
 ${userProfile?.content_personality ? `PERSONALITY: ${userProfile.content_personality}` : ''}`;
 
     // Create a detailed user prompt
-    let userPrompt = `Write a punchy, engaging script for a ${timeRange} video titled: "${scriptTitle}"
+    let userPrompt = `Write a punchy, engaging script for a ${timeRangeDescription} video titled: "${scriptTitle}"
 
-${scriptDescription ? `TOPIC CONTEXT: ${scriptDescription}` : ''}
-${hook ? `START WITH THIS HOOK: "${hook}"` : ''}`;
+${scriptDescription ? `TOPIC CONTEXT: ${scriptDescription}` : ''}`;
+
+    // Add the hook to the prompt if provided
+    if (hook) {
+      userPrompt += `\nSTART WITH THIS HOOK EXACTLY: "${hook}"`;
+    }
 
     // Add content category-specific guidance
     if (scriptCategory) {
@@ -202,7 +223,7 @@ For this behind-the-scenes content:
 
 Make the script sound like authentic human speech with natural flow.
 Format with line breaks to indicate speaking rhythm.
-Include [camera directions] or [action notes] in brackets where needed.
+Include [camera directions] or [action notes] in brackets where needed.${targetWordCount ? `\nAim for approximately ${targetWordCount} words total.` : ''}
 BE CONCISE - focus on high-impact statements and specific value.`;
 
     // Call OpenAI API with updated Planzo AI personality
