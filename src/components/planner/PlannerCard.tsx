@@ -1,4 +1,3 @@
-
 import { Draggable } from "react-beautiful-dnd";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -67,7 +66,7 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
   return (
     <>
       <Draggable draggableId={id} index={index}>
-        {(provided) => (
+        {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
             {...provided.draggableProps}
@@ -75,8 +74,16 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
             className={cn(
               "bg-background rounded-md p-3 shadow-sm border relative group",
               "border-l-4",
-              borderColorClass
+              borderColorClass,
+              snapshot.isDragging ? "shadow-md opacity-90" : ""
             )}
+            style={{
+              ...provided.draggableProps.style,
+              width: snapshot.isDragging ? "calc(100% - 8px)" : undefined,
+              transform: snapshot.isDragging 
+                ? `${provided.draggableProps.style?.transform} rotate(1deg)` 
+                : provided.draggableProps.style?.transform
+            }}
           >
             <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
               <DeleteIcon

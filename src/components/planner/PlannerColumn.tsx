@@ -14,8 +14,8 @@ interface PlannerColumnProps {
   index: number;
   children: React.ReactNode;
   isDeletable?: boolean;
-  onIdeaAdded?: () => void; // Add callback for when an idea is added
-  onColumnDeleted?: () => void; // Add callback for when column is deleted
+  onIdeaAdded?: () => void; 
+  onColumnDeleted?: () => void;
 }
 
 export function PlannerColumn({ 
@@ -69,11 +69,18 @@ export function PlannerColumn({
 
   return (
     <Draggable draggableId={`column-${id}`} index={index} isDragDisabled={!isDeletable}>
-      {(provided) => (
+      {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className="bg-muted/50 rounded-lg p-4 h-full w-[350px] flex-shrink-0"
+          className={`bg-muted/50 rounded-lg p-4 h-full w-[350px] flex-shrink-0 ${
+            snapshot.isDragging ? "opacity-90 shadow-lg" : ""
+          }`}
+          style={{
+            ...provided.draggableProps.style,
+            // Preserve width during drag to prevent stretching
+            width: snapshot.isDragging ? "350px" : undefined
+          }}
         >
           <div 
             className="flex justify-between items-center mb-4"
@@ -81,7 +88,9 @@ export function PlannerColumn({
             <div className="flex items-center gap-2">
               <div 
                 {...provided.dragHandleProps}
-                className={`cursor-grab hover:text-primary ${!isDeletable ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`cursor-grab hover:text-primary ${!isDeletable ? 'opacity-50 cursor-not-allowed' : ''} ${
+                  snapshot.isDragging ? "cursor-grabbing" : ""
+                }`}
               >
                 <GripVertical className="h-5 w-5" />
               </div>
