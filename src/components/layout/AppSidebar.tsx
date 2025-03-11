@@ -95,39 +95,11 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
     
     try {
       setIsLoggingOut(true);
-      
-      // First, clear local storage
+      await supabase.auth.signOut();
       localStorage.removeItem('supabase.auth.token');
-      
-      // Attempt to sign out
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Wait for auth state to update before showing success message
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // Only show success message if session is actually cleared
-        toast({
-          title: "Logged out successfully",
-          description: "You have been logged out of your account.",
-        });
-        navigate("/auth", { replace: true });
-      } else {
-        throw new Error("Failed to clear session");
-      }
-      
+      navigate("/", { replace: true });
     } catch (error) {
-      console.error("Error in logout process:", error);
-      
-      toast({
-        variant: "destructive",
-        title: "Logout failed",
-        description: "Please try again or refresh the page.",
-      });
+      console.error("Logout error:", error);
     } finally {
       setIsLoggingOut(false);
     }
