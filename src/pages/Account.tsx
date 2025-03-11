@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { Monitor, Moon, Sun } from "lucide-react";
@@ -59,6 +58,7 @@ interface Profile {
   posting_platforms?: string[] | null;
   business_niche?: string | null;
   product_niche?: string | null;
+  business_description?: string | null;
 }
 
 export default function Account() {
@@ -88,7 +88,6 @@ export default function Account() {
       setLoading(true);
       setFetchError(null);
       
-      // Get the current session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -104,10 +103,9 @@ export default function Account() {
 
       setEmail(session.user.email || "");
 
-      // Fetch profile data
       const { data, error } = await supabase
         .from('profiles')
-        .select('account_type, content_niche, target_audience, posting_platforms, business_niche, product_niche')
+        .select('account_type, content_niche, target_audience, posting_platforms, business_niche, product_niche, business_description')
         .eq('id', session.user.id)
         .maybeSingle();
 
@@ -121,31 +119,20 @@ export default function Account() {
       if (data) {
         setProfile(data as Profile);
         
-        // Update localStorage with the fetched values
         if (data.content_niche) localStorage.setItem("niche", data.content_niche);
         if (data.target_audience) localStorage.setItem("audience", data.target_audience);
         if (data.posting_platforms && data.posting_platforms.length > 0) {
           localStorage.setItem("platform", data.posting_platforms[0]);
         }
         
-        // Set videoType based on account type
-        if (data.account_type === 'ecommerce' && data.product_niche) {
-          localStorage.setItem("videoType", data.product_niche);
-          localStorage.setItem("niche", data.product_niche);
-        } else if (data.account_type === 'business' && data.business_niche) {
-          localStorage.setItem("videoType", data.business_niche);
-          localStorage.setItem("niche", data.business_niche);
-        } else if (data.content_niche) {
-          localStorage.setItem("videoType", data.content_niche);
-        }
+        if (data.business_niche) localStorage.setItem("videoType", data.business_niche);
+        if (data.product_niche) localStorage.setItem("videoType", data.product_niche);
         
-        // Trigger a storage event to notify other tabs
         triggerStorageEvents();
       } else {
-        // If no profile found, insert a default profile
         console.log("No profile found, creating default profile");
         const defaultProfile: Profile = {
-          account_type: 'personal', // This is required
+          account_type: 'personal',
           content_niche: '',
           target_audience: '',
           posting_platforms: [],
@@ -153,7 +140,6 @@ export default function Account() {
         
         setProfile(defaultProfile);
         
-        // Insert the default profile - explicitly setting account_type as required
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -166,7 +152,6 @@ export default function Account() {
           
         if (insertError) {
           console.error("Error creating default profile:", insertError);
-          // We'll continue anyway since we set the state locally
         }
       }
     } catch (error: any) {
@@ -186,7 +171,6 @@ export default function Account() {
     try {
       window.dispatchEvent(new Event('storage'));
       
-      // Also dispatch a custom event as a fallback
       const customEvent = new CustomEvent('localStorageChange');
       window.dispatchEvent(customEvent);
       
@@ -198,7 +182,7 @@ export default function Account() {
 
   const handleUpdateProfile = async () => {
     try {
-      console.log("Updating profile...");
+      console.log("Updating profile:", profile);
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
@@ -210,12 +194,10 @@ export default function Account() {
         return;
       }
 
-      // Ensure account_type is always defined for the update
       if (!profile.account_type) {
-        profile.account_type = 'personal'; // Default value if somehow undefined
+        profile.account_type = 'personal';
       }
 
-      // Prepare the update data based on account type - explicitly type as required by Supabase
       const updateData: any = {
         id: session.user.id,
         account_type: profile.account_type,
@@ -223,32 +205,18 @@ export default function Account() {
         target_audience: profile.target_audience || null,
         posting_platforms: profile.posting_platforms || [],
         business_niche: profile.business_niche || null,
+        business_description: profile.business_description || null,
         product_niche: profile.product_niche || null
       };
 
       console.log("Updating profile with:", updateData);
 
-      // Try upsert instead of update to handle missing profile records
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: session.user.id,
-          account_type: profile.account_type, // This is required
-          content_niche: profile.content_niche,
-          target_audience: profile.target_audience,
-          posting_platforms: profile.posting_platforms || [],
-          business_niche: profile.business_niche,
-          product_niche: profile.product_niche
-        });
+        .upsert(updateData);
 
-      if (error) {
-        console.error("Update error:", error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log("Profile updated successfully");
-
-      // Update localStorage with correct values based on account type
       let nicheToStore = profile.content_niche || "";
       let videoTypeValue = profile.content_niche || "";
       
@@ -260,34 +228,29 @@ export default function Account() {
         videoTypeValue = profile.product_niche;
       }
       
-      // Use the updateLocalStorage helper to ensure cross-tab updates
-      updateLocalStorage("niche", nicheToStore);
-      updateLocalStorage("videoType", videoTypeValue);
+      localStorage.setItem("niche", nicheToStore);
+      localStorage.setItem("videoType", videoTypeValue);
       
       if (profile.target_audience) {
-        updateLocalStorage("audience", profile.target_audience);
+        localStorage.setItem("audience", profile.target_audience);
       }
       
       if (profile.posting_platforms && profile.posting_platforms.length > 0) {
-        updateLocalStorage("platform", profile.posting_platforms[0]);
+        localStorage.setItem("platform", profile.posting_platforms[0]);
       }
-
-      // Force a refresh of localStorage data to ensure consistency
-      triggerStorageEvents();
 
       toast({
         title: "Profile updated",
         description: "Your changes have been saved successfully.",
       });
       
-      // Refresh profile data from the server to confirm the update
       fetchProfile();
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to update profile. Please try again.",
+        description: error.message || "Failed to update profile",
       });
     } finally {
       setLoading(false);
@@ -300,7 +263,6 @@ export default function Account() {
     
     localStorage.setItem(key, value);
     
-    // Dispatch a storage event to notify other tabs
     try {
       const event = new StorageEvent('storage', {
         key: key,
@@ -312,7 +274,6 @@ export default function Account() {
     } catch (e) {
       console.warn('Could not dispatch storage event', e);
       
-      // Fallback: dispatch a custom event
       const customEvent = new CustomEvent('localStorageChange', { 
         detail: { key, oldValue, newValue: value } 
       });
@@ -378,7 +339,6 @@ export default function Account() {
         return;
       }
 
-      // First, verify the current password by signing in
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password: currentPassword,
@@ -393,7 +353,6 @@ export default function Account() {
         return;
       }
 
-      // Then update the password
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       
       if (error) throw error;
@@ -479,7 +438,6 @@ export default function Account() {
                 <h2 className="text-xl font-semibold mb-6">Email and Password</h2>
                 
                 <div className="space-y-6">
-                  {/* Email display */}
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <div className="flex gap-2">
@@ -493,7 +451,6 @@ export default function Account() {
                     </div>
                   </div>
                   
-                  {/* Email change form */}
                   {isChangingEmail && (
                     <div className="flex flex-col space-y-4 p-4 border rounded-md bg-accent/10">
                       <div className="flex flex-col space-y-2">
@@ -515,7 +472,6 @@ export default function Account() {
                     </div>
                   )}
                   
-                  {/* Password change button */}
                   <div className="flex flex-col space-y-2">
                     <Label>Password</Label>
                     <Button 
@@ -526,7 +482,6 @@ export default function Account() {
                     </Button>
                   </div>
                   
-                  {/* Password change form */}
                   {isChangingPassword && (
                     <div className="flex flex-col space-y-4 p-4 border rounded-md bg-accent/10">
                       <div className="flex flex-col space-y-2">

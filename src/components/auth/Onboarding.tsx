@@ -98,8 +98,9 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     setLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
+      if (sessionError) throw sessionError;
       if (!session?.user) {
         navigate('/auth');
         return;
@@ -108,9 +109,9 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
       // Base profile data common to all account types
       const profileData: Record<string, any> = {
         account_type: selectedType,
+        brand_name: brandName,
         target_audience: targetAudience,
         posting_platforms: selectedPlatforms,
-        brand_name: brandName,
         onboarding_completed: true,
       };
 
@@ -118,13 +119,15 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
       if (selectedType === 'personal') {
         profileData.content_niche = contentNiche;
       } else if (selectedType === 'business') {
-        profileData.business_description = businessDescription;
+        profileData.content_niche = contentNiche;
         profileData.business_niche = businessNiche;
-        profileData.content_niche = contentNiche;
+        profileData.business_description = businessDescription;
       } else if (selectedType === 'ecommerce') {
-        profileData.product_niche = productNiche;
         profileData.content_niche = contentNiche;
+        profileData.product_niche = productNiche;
       }
+
+      console.log("Saving profile data:", profileData);
 
       const { error } = await supabase
         .from('profiles')
@@ -133,6 +136,25 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
 
       if (error) throw error;
 
+      // Update localStorage with correct values based on account type
+      let nicheToStore = contentNiche || "";
+      let videoTypeToStore = contentNiche || "";
+      
+      if (selectedType === 'business' && businessNiche) {
+        nicheToStore = businessNiche;
+        videoTypeToStore = businessNiche;
+      } else if (selectedType === 'ecommerce' && productNiche) {
+        nicheToStore = productNiche;
+        videoTypeToStore = productNiche;
+      }
+      
+      localStorage.setItem("niche", nicheToStore);
+      localStorage.setItem("videoType", videoTypeToStore);
+      localStorage.setItem("audience", targetAudience || "");
+      if (selectedPlatforms?.length > 0) {
+        localStorage.setItem("platform", selectedPlatforms[0]);
+      }
+
       toast({
         title: "Welcome to TrendAI!",
         description: "Your preferences have been saved.",
@@ -140,6 +162,7 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
 
       onComplete();
     } catch (error: any) {
+      console.error("Error in handleSubmit:", error);
       toast({
         variant: "destructive",
         title: "Error",
