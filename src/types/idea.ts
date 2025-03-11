@@ -76,3 +76,14 @@ export interface ContentIdeaProtocol {
   hook: string;
   premise: string;
 }
+
+// Add StyleProfile interface to fix the import errors
+export interface StyleProfile {
+  id: string;
+  user_id: string;
+  name: string;
+  content_style: string | null;
+  content_personality: string | null;
+  is_active: boolean;
+  created_at?: string;
+}
