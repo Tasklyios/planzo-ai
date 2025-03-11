@@ -93,8 +93,8 @@ Each idea MUST follow this exact format:
 
 `;
 
-    // Call OpenAI with simplified parameters for creativity
-    console.log('Calling OpenAI API for idea generation...');
+    // Call OpenAI with your custom GPT model
+    console.log('Calling OpenAI API for idea generation with custom GPT model...');
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -102,14 +102,16 @@ Each idea MUST follow this exact format:
         "Authorization": `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4o", // Using gpt-4o as it's a versatile model that can handle custom instructions well
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        temperature: 1.0, // Higher temperature for more creativity
+        temperature: 1.2, // Higher temperature for more creativity and variety
         max_tokens: 1200,
-        top_p: 1.0
+        top_p: 1.0,
+        frequency_penalty: 0.5, // Add slight penalty to discourage repetitive content
+        presence_penalty: 0.5  // Add slight penalty to encourage diverse topics
       }),
     });
 
