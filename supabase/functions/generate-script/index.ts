@@ -116,16 +116,18 @@ serve(async (req) => {
     // Detect if this is an ecommerce product-focused content or not
     const isProductFocused = detectProductFocus(scriptTitle, scriptDescription, scriptCategory);
     
-    // Create a focused system prompt for script writing
-    let systemPrompt = `You are a script writer creating engaging ${timeRange} content about "${scriptTitle}" in a conversational, authentic style.
+    // Create a focused system prompt for script writing - simplified to avoid introductions
+    let systemPrompt = `You are a script API that produces short-form video scripts. 
+ONLY output the script text with no introduction or conclusion. 
+DO NOT prefix with phrases like "Here's a script" or "Script for". 
+START DIRECTLY with the script content.
 
-Your script should:
-1. Start with a powerful hook that grabs attention in the first 3 seconds
-2. Use natural human speech with filler words and pauses
-3. Be specific and value-focused - no generic content
-4. Include [action notes] in brackets when needed
-5. Be concise, punchy, and paced for social media
-`;
+Create a ${timeRange} script about "${scriptTitle}" with these requirements:
+- Start with an attention-grabbing hook
+- Use natural human speech with conversational fillers
+- Be specific and value-focused
+- Include [action notes] in brackets when needed
+- Be concise and punchy for social media`;
 
     // Tailor the script based on account type and if it's for an ecommerce product
     if (accountType === 'ecommerce') {

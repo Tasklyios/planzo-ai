@@ -51,16 +51,20 @@ serve(async (req) => {
 
     console.log('Validated account type:', validAccountType);
 
-    // Create a simpler, more direct system prompt focused on creating high-value ideas
-    const systemPrompt = `You are an expert content strategist who specializes in creating viral, high-value content ideas in the ${niche} niche.
+    // Create a very direct, stricter system prompt to avoid introductory text
+    const systemPrompt = `You are a content idea generator API. Your ONLY task is to output exactly 5 content ideas in a structured format without ANY introduction, greeting, or conclusion text.
 
-Key requirements:
-1. Create EXACTLY 5 distinct content ideas.
-2. Make each idea short, snappy, and scroll-stopping.
-3. Each idea must have its own clear title, format, and brief description.
-4. Format consistently: Title, then Category/Format, then Description.
-5. For ecommerce specifically: Focus on valuable educational content that builds authority WITHOUT directly selling products.
-6. Include relevant hashtags for each idea.
+DO NOT start with phrases like "Here are 5 ideas..." or introduce yourself.
+DO NOT include ANY text outside of the 5 numbered ideas.
+START DIRECTLY with "1." and end after idea #5.
+
+Each idea must include:
+- A short, specific title
+- A single category/format tag
+- A brief 1-2 sentence description
+- 3-5 relevant hashtags
+
+Make each idea distinctly different and highly creative.
 
 ${styleProfile ? `STYLE: "${styleProfile.name}": ${styleProfile.description}
 TONE: ${styleProfile.tone}` : ''}
@@ -68,7 +72,7 @@ ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
 ${contentPersonality ? `CONTENT PERSONALITY: ${contentPersonality}` : ''}`;
 
     // Create a simple, direct user prompt
-    let userPrompt = `Create 5 viral content ideas for ${validAccountType} creator in "${niche}" targeting "${audience}" on ${platform}.
+    let userPrompt = `Generate 5 viral content ideas for ${validAccountType} creator in "${niche}" targeting "${audience}" on ${platform}.
 
 ${validAccountType === 'ecommerce' ? 
 `For ECOMMERCE content:
@@ -81,15 +85,13 @@ ${customIdeas ? `CREATOR'S OWN IDEAS TO INSPIRE YOU: "${customIdeas}"` : ""}
 ${previousIdeas && previousIdeas.titles && previousIdeas.titles.length ? 
   `DO NOT REPEAT THESE PREVIOUS IDEAS: ${previousIdeas.titles.slice(0, 5).join(', ')}` : ''}
 
-Format requirements:
-1. Each idea must start with a clear number (1. Title...)
-2. Each idea must include:
-   - Title: short, specific, and scroll-stopping
-   - Category/Format: specific content format (e.g., Tutorial Timelapse, Behind-the-Scenes)
-   - Description: brief explanation with unique angle (1-2 sentences only)
-   - Hashtags: 3-5 relevant hashtags
+Each idea MUST follow this exact format:
+1. TITLE: [attention-grabbing title]
+   CATEGORY: [specific content format]
+   DESCRIPTION: [brief explanation]
+   HASHTAGS: [3-5 relevant hashtags]
 
-Make each idea distinctly different. Focus on value, authenticity, and shareability.`;
+`;
 
     // Call OpenAI with simplified parameters for creativity
     console.log('Calling OpenAI API for idea generation...');
@@ -135,81 +137,46 @@ Make each idea distinctly different. Focus on value, authenticity, and shareabil
     const rawResponse = data.choices[0].message.content;
     console.log('Raw AI response:', rawResponse);
     
-    // Process and extract ideas using a more robust parsing approach
+    // More robust idea parsing with improved regex patterns
     let ideas = [];
     
     try {
-      // Split the response by idea numbers (1., 2., etc.)
-      const ideaBlocks = rawResponse.split(/\n\s*\d+\.\s+/).filter(block => block.trim().length > 0);
+      // Split by numbered ideas (1., 2., etc.)
+      const ideaRegex = /(\d+)\.\s+(.*?)(?=\s*\d+\.\s+|$)/gs;
+      const matches = [...rawResponse.matchAll(ideaRegex)];
       
-      if (ideaBlocks.length >= 1) {
-        ideas = ideaBlocks.map(block => {
-          // For each idea block, extract the components
-          const lines = block.split('\n').filter(line => line.trim().length > 0);
+      if (matches.length > 0) {
+        ideas = matches.map(match => {
+          const ideaText = match[2].trim();
           
-          let title = '';
-          let category = '';
-          let description = '';
+          // Extract components using clear markers
+          const titleMatch = ideaText.match(/(?:TITLE:?\s*)(.*?)(?=\s*CATEGORY|FORMAT|DESCRIPTION|HASHTAG|$)/is);
+          const categoryMatch = ideaText.match(/(?:CATEGORY|FORMAT):?\s*(.*?)(?=\s*DESCRIPTION|HASHTAG|$)/is);
+          const descriptionMatch = ideaText.match(/(?:DESCRIPTION):?\s*(.*?)(?=\s*HASHTAG|$)/is);
+          const hashtagsMatch = ideaText.match(/(?:HASHTAGS?):?\s*(.*?)(?=$)/is);
+          
+          // Extract the values or provide defaults
+          const title = titleMatch ? titleMatch[1].trim() : `Idea ${match[1]}`;
+          const category = categoryMatch ? categoryMatch[1].trim() : "Content";
+          const description = descriptionMatch ? descriptionMatch[1].trim() : "";
+          
+          // Process hashtags
           let tags = [];
-          
-          // First non-empty line is usually the title
-          if (lines.length > 0) {
-            title = lines[0].replace(/^["'](.+)["']$/, '$1').trim();
-          }
-          
-          // Look for category/format
-          const categoryLine = lines.find(line => 
-            line.match(/category|format/i) || 
-            line.match(/^[a-z\s]+:/i)
-          );
-          
-          if (categoryLine) {
-            category = categoryLine.replace(/.*?:\s*/, '').trim();
-          } else if (lines.length > 1) {
-            // If no explicit category, use the second line
-            category = lines[1].trim();
-          }
-          
-          // Look for description
-          const descriptionLine = lines.find(line => 
-            line.match(/description/i) || 
-            (line.length > 30 && !line.match(/category|format|hashtag|tag/i))
-          );
-          
-          if (descriptionLine) {
-            description = descriptionLine.replace(/.*?:\s*/, '').trim();
-          } else if (lines.length > 2) {
-            // If no explicit description, use the third line or combine remaining lines
-            description = lines.slice(2).filter(l => !l.includes('#')).join(' ').trim();
-          }
-          
-          // Look for hashtags
-          const hashtagLine = lines.find(line => line.includes('#') || line.match(/hashtag|tag/i));
-          if (hashtagLine) {
-            // Extract tags, either as "#tag1 #tag2" or just "tag1, tag2"
-            const tagMatches = hashtagLine.match(/#[a-zA-Z0-9]+(?: #[a-zA-Z0-9]+)*/g) || 
-                              hashtagLine.match(/hashtags?:?\s*([^#].*)/i);
-            
-            if (tagMatches) {
-              if (typeof tagMatches[0] === 'string' && tagMatches[0].includes('#')) {
-                // Format: #tag1 #tag2
-                tags = tagMatches[0].split(/\s+/).map(tag => tag.replace('#', ''));
-              } else if (tagMatches[1]) {
-                // Format: Hashtags: tag1, tag2
-                tags = tagMatches[1].split(/[,\s]+/).filter(t => t.trim().length > 0);
-              }
+          if (hashtagsMatch && hashtagsMatch[1]) {
+            const hashtagText = hashtagsMatch[1].trim();
+            // Handle both #tag format and comma-separated format
+            if (hashtagText.includes('#')) {
+              tags = hashtagText.split(/\s+/).map(tag => tag.replace('#', '').trim()).filter(Boolean);
+            } else {
+              tags = hashtagText.split(/,|\//).map(tag => tag.trim()).filter(Boolean);
             }
           }
           
-          // Ensure we have at least some tags
+          // If no tags were extracted, generate some based on other fields
           if (tags.length === 0) {
-            tags = [niche.toLowerCase().replace(/\s+/g, ''), platform.toLowerCase().replace(/\s+/g, ''), 'content'];
+            const nicheTag = niche.toLowerCase().replace(/\s+/g, '');
+            tags = [nicheTag, 'content', platform.toLowerCase().replace(/\s+/g, '')];
           }
-          
-          // Clean up any lingering formatting issues
-          title = title.replace(/^title:?\s*/i, '').trim();
-          category = category.replace(/^(category|format):?\s*/i, '').trim();
-          description = description.replace(/^description:?\s*/i, '').trim();
           
           return {
             title,
@@ -220,31 +187,23 @@ Make each idea distinctly different. Focus on value, authenticity, and shareabil
         });
       }
       
-      // If parsing failed or produced fewer than 5 ideas, use backup generation
+      // Ensure we have exactly 5 well-formed ideas
       if (ideas.length < 5) {
-        console.log("Generating backup ideas to ensure we have 5 total");
-        
-        // Generate additional ideas to reach 5 total
-        const missingCount = 5 - ideas.length;
-        
-        // Backup ideas for different account types
-        const backupIdeas = getBackupIdeas(niche, audience, validAccountType, missingCount);
-        
-        // Add the backup ideas to our collection
+        console.log(`Only parsed ${ideas.length} ideas, generating backup ideas to reach 5`);
+        const backupIdeas = getBackupIdeas(niche, audience, validAccountType, 5 - ideas.length);
         ideas = [...ideas, ...backupIdeas];
       }
       
-      // Ensure we have exactly 5 ideas with complete information
-      ideas = ideas.slice(0, 5).map(idea => {
-        return {
-          title: idea.title || `${niche} Tips for ${audience}`,
-          category: idea.category || "Quick Tips",
-          description: idea.description || `Valuable insights about ${niche} specifically curated for ${audience}.`,
-          tags: idea.tags && idea.tags.length ? idea.tags : [niche.toLowerCase().replace(/\s+/g, ''), 'content', 'tips']
-        };
-      });
+      // Take exactly 5 ideas
+      ideas = ideas.slice(0, 5);
       
-      console.log(`Successfully generated ${ideas.length} ideas`);
+      // Ensure each idea has all required fields
+      ideas = ideas.map(idea => ({
+        title: idea.title || `${niche} Tips for ${audience}`,
+        category: idea.category || "Quick Tips",
+        description: idea.description || `Valuable insights about ${niche} specifically curated for ${audience}.`,
+        tags: idea.tags && idea.tags.length ? idea.tags : [niche.toLowerCase().replace(/\s+/g, ''), 'content', 'tips']
+      }));
       
     } catch (error) {
       console.error("Error parsing ideas:", error);
@@ -252,6 +211,8 @@ Make each idea distinctly different. Focus on value, authenticity, and shareabil
       ideas = getBackupIdeas(niche, audience, validAccountType, 5);
       console.log("Using fallback ideas due to parsing error");
     }
+
+    console.log(`Successfully returning ${ideas.length} ideas:`, ideas);
 
     // Return the ideas
     return new Response(
