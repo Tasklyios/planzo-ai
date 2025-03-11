@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface AuthGuardProps {
 const AuthGuard = ({ children }: AuthGuardProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -30,6 +32,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         if (!session) {
           console.log("No session found, redirecting to auth");
           setIsAuthenticated(false);
+          // Clear any stored tokens to ensure clean state
+          localStorage.removeItem('supabase.auth.token');
           navigate("/auth", { state: { from: location.pathname } });
         } else {
           console.log("Session found, user is authenticated", session.user.id);
@@ -57,9 +61,11 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       
       if (event === "SIGNED_OUT") {
         console.log("User signed out, redirecting to auth");
+        // Clear any stored tokens
         localStorage.removeItem('supabase.auth.token');
         setIsAuthenticated(false);
-        navigate("/auth");
+        // Force navigate to auth
+        navigate("/auth", { replace: true });
       } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         console.log("User signed in or token refreshed", session?.user.id);
         
@@ -72,7 +78,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         
         // Skip redirect for verification, otherwise redirect to dashboard if user signs in
         const isEmailVerification = location.pathname === '/auth' && 
-                                   (location.search.includes('access_token') || 
+                                  (location.search.includes('access_token') || 
                                     location.search.includes('error_description') ||
                                     location.search.includes('token_hash'));
         

@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { 
   Calendar, 
@@ -92,32 +91,34 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
+    if (isLoggingOut) return; // Prevent multiple clicks
+    
     try {
       setIsLoggingOut(true);
       
-      // First, clean up local storage
+      // First, clean up local storage before attempting signout
       localStorage.removeItem('supabase.auth.token');
       
-      // Attempt to sign out
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error("Logout error:", error);
-        throw error;
+      try {
+        // Try to sign out, but don't block on errors
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.error("Sign out API call failed:", signOutError);
+        // Continue with logout process even if API call fails
       }
       
-      // Force navigation to auth page even if signOut had an error
-      navigate("/auth");
+      // Always navigate to auth page and show success message
+      navigate("/auth", { replace: true });
       
       toast({
         title: "Logged out successfully",
         description: "You have been logged out of your account.",
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error in logout process:", error);
       
       // Force navigation to auth page as fallback
-      navigate("/auth");
+      navigate("/auth", { replace: true });
       
       toast({
         variant: "destructive",
@@ -219,7 +220,7 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
               if (onNavItemClick) onNavItemClick();
             }}
             disabled={isLoggingOut}
-            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full hover:bg-primary/10 dark:hover:bg-accent"
+            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full hover:bg-primary/10 dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <LogOut className="w-5 h-5" />
             {isLoggingOut ? "Logging out..." : "Logout"}
@@ -231,3 +232,4 @@ const AppSidebar = ({ isMobile = false, onNavItemClick }: AppSidebarProps) => {
 };
 
 export default AppSidebar;
+
