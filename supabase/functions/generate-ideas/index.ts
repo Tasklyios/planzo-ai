@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
@@ -63,6 +64,7 @@ ${validAccountType === 'ecommerce' ?
   - Focus on educational content that establishes expertise in ${niche}
   - Build an engaged community by providing pure value first
   - Position the brand as a trusted advisor, not just a seller` : 
+  validAccountType === 'personal' ? 
   `For this PERSONAL CREATOR account:
   - Focus on creating professional, straight-to-the-point content that avoids cringy or gimmicky approaches
   - Generate a diverse mix of content formats: storytelling, day-in-the-life, educational tutorials, top lists, behind-the-scenes
@@ -99,6 +101,7 @@ ${validAccountType === 'ecommerce' ?
   - ALL ideas must establish the brand as a trusted authority in ${niche}
   - Focus on content that genuinely helps your audience succeed
   - Build trust through expertise and generosity, not selling` :
+  validAccountType === 'personal' ? 
   `FOR PERSONAL BRANDS - IMPORTANT GUIDELINES:
   - Create a DIVERSE MIX of formats with NO REPETITION:
     * 1 professional storytelling idea (narrative-driven, personal experience)
