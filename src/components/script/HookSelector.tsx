@@ -203,156 +203,160 @@ const HookSelector = ({ onSelectHook, selectedHook, topic: initialTopic = '', au
           Add a Hook
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md md:max-w-lg overflow-hidden flex flex-col" side="right">
-        <SheetHeader>
-          <SheetTitle>Select a Hook</SheetTitle>
-          <SheetDescription>
-            Choose from your saved hooks or generate new ones
-          </SheetDescription>
-        </SheetHeader>
+      <SheetContent className="w-full sm:max-w-md md:max-w-lg overflow-hidden flex flex-col h-full p-0" side="right">
+        <div className="p-6 pb-0">
+          <SheetHeader>
+            <SheetTitle>Select a Hook</SheetTitle>
+            <SheetDescription>
+              Choose from your saved hooks or generate new ones
+            </SheetDescription>
+          </SheetHeader>
+        </div>
         
-        <Tabs 
-          defaultValue="saved" 
-          value={activeTab} 
-          onValueChange={setActiveTab}
-          className="mt-6 flex-1 flex flex-col"
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="saved">Saved Hooks</TabsTrigger>
-            <TabsTrigger value="generate">Generate New</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="saved" className="mt-4 space-y-4 flex-1 overflow-hidden flex flex-col">
-            <Input
-              placeholder="Search hooks..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="mb-4"
-            />
-            
-            {isLoadingSavedHooks ? (
-              <div className="flex justify-center p-4">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : !savedHooks || savedHooks.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-muted-foreground">No saved hooks found. Create some in the Hooks section or generate new ones.</p>
-                <Button 
-                  variant="outline" 
-                  className="mt-2" 
-                  onClick={() => setActiveTab('generate')}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Generate New Hooks
-                </Button>
-              </div>
-            ) : (
-              <Tabs defaultValue="question" className="w-full flex-1 flex flex-col">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="question">Question</TabsTrigger>
-                  <TabsTrigger value="statistic">Statistic</TabsTrigger>
-                  <TabsTrigger value="story">Story</TabsTrigger>
-                  <TabsTrigger value="challenge">Challenge</TabsTrigger>
-                </TabsList>
-                
-                {['question', 'statistic', 'story', 'challenge'].map(category => (
-                  <TabsContent key={category} value={category} className="flex-1 overflow-hidden">
-                    <ScrollArea className="h-[calc(100vh-300px)]">
-                      <div className="space-y-2 py-2">
-                        {filterHooks(category, savedHooks).length === 0 ? (
-                          <p className="text-center text-muted-foreground py-4">
-                            {searchTerm ? 'No matching hooks found' : `No ${category} hooks saved`}
-                          </p>
-                        ) : (
-                          filterHooks(category, savedHooks).map(hook => (
-                            <Button
-                              key={hook.id}
-                              variant="ghost"
-                              className="w-full justify-start text-left p-3 h-auto"
-                              onClick={() => handleSelectHook(hook.hook_text)}
-                            >
-                              {hook.hook_text}
-                            </Button>
-                          ))
-                        )}
-                      </div>
-                    </ScrollArea>
-                  </TabsContent>
-                ))}
-              </Tabs>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="generate" className="mt-4 space-y-4 flex-1 overflow-hidden flex flex-col">
-            <ScrollArea className="flex-1">
-              <div className="space-y-4">
-                {topic && (
-                  <Card className="border bg-accent/20">
-                    <CardContent className="p-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium line-clamp-2">{topic}</h3>
-                          {showQualityBadge && (
-                            <div className="flex items-center">
-                              <Sparkles className="h-4 w-4 text-amber-500 mr-1" />
-                              <span className="text-xs text-muted-foreground">
-                                {quality === "high" ? "High Quality" : "Good"}
-                              </span>
-                            </div>
+        <div className="flex-1 overflow-hidden flex flex-col mt-6">
+          <div className="px-6">
+            <Tabs 
+              defaultValue="saved" 
+              value={activeTab} 
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="saved">Saved Hooks</TabsTrigger>
+                <TabsTrigger value="generate">Generate New</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          <ScrollArea className="flex-1 px-6">
+            <TabsContent value="saved" className="mt-4 space-y-4">
+              <Input
+                placeholder="Search hooks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="mb-4"
+              />
+              
+              {isLoadingSavedHooks ? (
+                <div className="flex justify-center p-4">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : !savedHooks || savedHooks.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-muted-foreground">No saved hooks found. Create some in the Hooks section or generate new ones.</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-2" 
+                    onClick={() => setActiveTab('generate')}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Generate New Hooks
+                  </Button>
+                </div>
+              ) : (
+                <Tabs defaultValue="question" className="w-full flex-1 flex flex-col">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="question">Question</TabsTrigger>
+                    <TabsTrigger value="statistic">Statistic</TabsTrigger>
+                    <TabsTrigger value="story">Story</TabsTrigger>
+                    <TabsTrigger value="challenge">Challenge</TabsTrigger>
+                  </TabsList>
+                  
+                  {['question', 'statistic', 'story', 'challenge'].map(category => (
+                    <TabsContent key={category} value={category} className="flex-1 overflow-hidden">
+                      <ScrollArea className="h-[calc(100vh-300px)]">
+                        <div className="space-y-2 py-2">
+                          {filterHooks(category, savedHooks).length === 0 ? (
+                            <p className="text-center text-muted-foreground py-4">
+                              {searchTerm ? 'No matching hooks found' : `No ${category} hooks saved`}
+                            </p>
+                          ) : (
+                            filterHooks(category, savedHooks).map(hook => (
+                              <Button
+                                key={hook.id}
+                                variant="ghost"
+                                className="w-full justify-start text-left p-3 h-auto"
+                                onClick={() => handleSelectHook(hook.hook_text)}
+                              >
+                                {hook.hook_text}
+                              </Button>
+                            ))
                           )}
                         </div>
-                        
-                        {details && (
-                          <p className="text-sm text-muted-foreground line-clamp-3">
-                            {details}
-                          </p>
-                        )}
-                        
-                        {audience && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <Tag className="h-3 w-3 text-muted-foreground" />
+                      </ScrollArea>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="generate" className="mt-4 space-y-4">
+              {topic && (
+                <Card className="border bg-accent/20">
+                  <CardContent className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium line-clamp-2">{topic}</h3>
+                        {showQualityBadge && (
+                          <div className="flex items-center">
+                            <Sparkles className="h-4 w-4 text-amber-500 mr-1" />
                             <span className="text-xs text-muted-foreground">
-                              {audience}
+                              {quality === "high" ? "High Quality" : "Good"}
                             </span>
                           </div>
                         )}
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-                
-                <div className="space-y-2">
-                  <Label htmlFor="customIdeas">Already have some ideas for hooks? Add them here!</Label>
-                  <Textarea 
-                    id="customIdeas" 
-                    value={customHookIdeas}
-                    onChange={(e) => setCustomHookIdeas(e.target.value)}
-                    className="min-h-24"
-                    placeholder="Enter any additional details or ideas that might help generate better hooks..."
-                  />
-                </div>
-                
-                <Button
-                  onClick={handleGenerateHooks}
-                  disabled={generating || !topic.trim()}
-                  className="w-full"
-                >
-                  {generating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Generate Viral Hooks
-                    </>
-                  )}
-                </Button>
+                      
+                      {details && (
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {details}
+                        </p>
+                      )}
+                      
+                      {audience && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Tag className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">
+                            {audience}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              <div className="space-y-2">
+                <Label htmlFor="customIdeas">Already have some ideas for hooks? Add them here!</Label>
+                <Textarea 
+                  id="customIdeas" 
+                  value={customHookIdeas}
+                  onChange={(e) => setCustomHookIdeas(e.target.value)}
+                  className="min-h-24"
+                  placeholder="Enter any additional details or ideas that might help generate better hooks..."
+                />
               </div>
               
+              <Button
+                onClick={handleGenerateHooks}
+                disabled={generating || !topic.trim()}
+                className="w-full"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Generate Viral Hooks
+                  </>
+                )}
+              </Button>
+              
               {generatedHooks.length > 0 && (
-                <div className="mt-6 space-y-4">
+                <div className="mt-6 space-y-4 pb-6">
                   <h3 className="font-medium">Generated Hooks</h3>
                   
                   <Tabs defaultValue="question" className="w-full">
@@ -411,13 +415,12 @@ const HookSelector = ({ onSelectHook, selectedHook, topic: initialTopic = '', au
                   </Tabs>
                 </div>
               )}
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
+            </TabsContent>
+          </ScrollArea>
+        </div>
       </SheetContent>
     </Sheet>
   );
 };
 
 export default HookSelector;
-
