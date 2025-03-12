@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,34 @@ const Script = () => {
   const [durationUnit, setDurationUnit] = useState("seconds");
   const WORDS_PER_MINUTE = 150;
   const { toast } = useToast();
+
+  // Handle automatic conversion between seconds and minutes
+  useEffect(() => {
+    if (durationUnit === "seconds" && duration.includes('.')) {
+      // Convert decimal minutes to seconds
+      setDuration(Math.round(parseFloat(duration) * 60).toString());
+    } else if (durationUnit === "minutes" && !duration.includes('.')) {
+      // Convert whole seconds to minutes
+      setDuration((parseInt(duration) / 60).toString());
+    }
+  }, [durationUnit]);
+
+  // Handle duration unit change with conversion
+  const handleDurationUnitChange = (newUnit: string) => {
+    if (newUnit === durationUnit) return;
+    
+    if (newUnit === "minutes" && durationUnit === "seconds") {
+      // Convert seconds to minutes
+      const minutes = (parseInt(duration) / 60).toFixed(2);
+      setDuration(parseFloat(minutes).toString());
+    } else if (newUnit === "seconds" && durationUnit === "minutes") {
+      // Convert minutes to seconds
+      const seconds = Math.round(parseFloat(duration) * 60);
+      setDuration(seconds.toString());
+    }
+    
+    setDurationUnit(newUnit);
+  };
 
   const generateScript = async () => {
     if (useSavedIdea && !savedIdea) {
@@ -220,8 +249,6 @@ const Script = () => {
     return Math.round(durationInMinutes * WORDS_PER_MINUTE);
   };
 
-  const approximateWordCount = calculateWordCount();
-
   return (
     <div className="container py-6 space-y-8 max-w-full">
       <div className="flex justify-between items-center">
@@ -365,7 +392,7 @@ const Script = () => {
                   <div className="w-1/3">
                     <Select
                       value={durationUnit}
-                      onValueChange={setDurationUnit}
+                      onValueChange={handleDurationUnitChange}
                     >
                       <SelectTrigger id="duration-unit" className="w-full">
                         <SelectValue placeholder="Unit" />
@@ -377,15 +404,6 @@ const Script = () => {
                     </Select>
                   </div>
                 </div>
-                
-                {approximateWordCount > 0 && (
-                  <div className="p-3 bg-muted rounded-md flex items-center space-x-2">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                    <p className="text-sm">
-                      Approximate word count: <strong>{approximateWordCount} words</strong> <span className="text-muted-foreground">(based on average speaking rate)</span>
-                    </p>
-                  </div>
-                )}
               </div>
               
               <div className="space-y-2">
