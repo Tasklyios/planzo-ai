@@ -58,23 +58,18 @@ const HookCategoryCard = ({
         {hooks.map((hook, index) => (
           <div key={index} className="p-3 border rounded-md flex justify-between items-start gap-2">
             <p className="text-sm">{getHookText(hook)}</p>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => 'hook_text' in hook ? onSaveHook(hook as HookType) : null}
-              disabled={isSaving || isHookSaved(hook)}
-              className={isHookSaved(hook) ? "text-primary" : ""}
-              title={isHookSaved(hook) ? "Already saved" : "Save hook"}
-            >
+            <div className="flex-shrink-0">
               {isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               ) : (
                 <BookmarkIcon 
-                  className="h-4 w-4" 
-                  fill={isHookSaved(hook) ? "currentColor" : "none"} 
+                  className={`h-4 w-4 cursor-pointer ${isHookSaved(hook) ? "text-primary" : "text-muted-foreground hover:text-primary transition-colors"}`}
+                  fill={isHookSaved(hook) ? "currentColor" : "none"}
+                  onClick={() => 'hook_text' in hook && !isHookSaved(hook) ? onSaveHook(hook as HookType) : null}
+                  aria-label={isHookSaved(hook) ? "Already saved" : "Save hook"}
                 />
               )}
-            </Button>
+            </div>
           </div>
         ))}
       </CardContent>

@@ -39,7 +39,7 @@ serve(async (req) => {
 
 You understand audience psychology, engagement triggers, and platform-specific trends. Your hooks are designed to maximize curiosity, emotional response, and viewer retention in the critical first few seconds of a video.`;
 
-    let userPrompt = `Generate exactly 8 different hooks about ${topic}`;
+    let userPrompt = `Generate EXACTLY 8 different hooks about ${topic}`;
     
     if (audience && audience.trim()) {
       userPrompt += ` for ${audience}`;
