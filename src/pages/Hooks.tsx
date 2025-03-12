@@ -125,7 +125,13 @@ const Hooks = () => {
 
   const handleSaveHook = (hook: HookType) => {
     saveHookMutation.mutate(hook);
-    setSelectedHook(hook);
+    setGeneratedHooks(prevHooks => 
+      prevHooks.map(h => 
+        h.hook_text === hook.hook_text 
+          ? { ...h, id: 'temp-id-' + Date.now() }
+          : h
+      )
+    );
   };
 
   const handleDeleteHook = (id: string) => {
@@ -242,7 +248,7 @@ const Hooks = () => {
           <GeneratedHooksGrid 
             hooks={generatedHooks}
             onSaveHook={handleSaveHook}
-            isSaving={saveHookMutation.isPending}
+            isSaving={false}
             filterHooksByCategory={filterHooksByCategory}
             getHookText={getHookText}
             selectedHookTypes={selectedHookTypes}

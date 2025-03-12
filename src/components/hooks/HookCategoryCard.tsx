@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookmarkIcon, Loader2 } from "lucide-react";
+import { BookmarkIcon } from "lucide-react";
 import { HookType, SavedHook } from "@/types/hooks";
 
 interface HookCategoryCardProps {
@@ -54,15 +55,11 @@ const HookCategoryCard = ({
           <div key={index} className="p-3 border rounded-md flex justify-between items-start gap-2">
             <p className="text-sm">{getHookText(hook)}</p>
             <div className="flex-shrink-0">
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              ) : (
-                <BookmarkIcon 
-                  className={`h-4 w-4 cursor-pointer ${isHookSaved(hook) ? "text-primary fill-primary" : "text-muted-foreground hover:text-primary transition-colors"}`}
-                  onClick={() => 'hook_text' in hook && !isHookSaved(hook) ? onSaveHook(hook as HookType) : null}
-                  aria-label={isHookSaved(hook) ? "Already saved" : "Save hook"}
-                />
-              )}
+              <BookmarkIcon 
+                className={`h-4 w-4 cursor-pointer ${isHookSaved(hook) ? "text-primary fill-primary" : "text-muted-foreground hover:text-primary transition-colors"}`}
+                onClick={() => 'hook_text' in hook && !isHookSaved(hook) ? onSaveHook(hook as HookType) : null}
+                aria-label={isHookSaved(hook) ? "Already saved" : "Save hook"}
+              />
             </div>
           </div>
         ))}
