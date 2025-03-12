@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { HookType, SavedHook } from "@/types/hooks";
 import { toast } from "@/components/ui/use-toast";
@@ -6,7 +5,8 @@ import { toast } from "@/components/ui/use-toast";
 export const generateHooks = async (
   topic: string,
   audience: string,
-  details?: string
+  details?: string,
+  selectedHookTypes: string[] = ["question", "statistic", "story", "challenge"]
 ): Promise<HookType[]> => {
   try {
     // First check usage limits
@@ -75,7 +75,8 @@ export const generateHooks = async (
         isLifestyle,
         audienceProfile,
         industryResearch,
-        optimizeForViral: true
+        optimizeForViral: true,
+        selectedHookTypes
       },
     });
 
@@ -92,43 +93,11 @@ export const generateHooks = async (
     console.log("Hooks generated successfully:", data.hooks);
     
     // Transform the returned hooks to match the expected HookType structure
-    // and assign them to specific categories
-    const formattedHooks = data.hooks.map((hook: any, index: number) => {
-      // Determine category based on index or content
-      let category: string;
-      
-      // Intelligent category assignment based on content
-      const hookText = hook.hook?.toLowerCase() || "";
-      if (hookText.includes("?") || hookText.startsWith("what") || hookText.startsWith("how") || 
-          hookText.startsWith("why") || hookText.startsWith("when") || hookText.startsWith("are")) {
-        category = "question";
-      } else if (hookText.includes("%") || hookText.match(/\d+(\.\d+)?%/) || 
-                 hookText.match(/\d+ out of \d+/) || hookText.includes("study shows") ||
-                 hookText.includes("according to") || hookText.includes("research")) {
-        category = "statistic";  
-      } else if (hookText.includes("imagine") || hookText.includes("picture this") || 
-                 hookText.includes("when i") || hookText.includes("my story") ||
-                 hookText.includes("once upon") || hookText.includes("day")) {
-        category = "story";
-      } else if (hookText.includes("challenge") || hookText.includes("try this") || 
-                 hookText.includes("can you") || hookText.startsWith("if you can")) {
-        category = "challenge";
-      } else {
-        // Fallback to simple distribution across categories
-        const categoryIndex = index % 4;
-        switch (categoryIndex) {
-          case 0: category = "question"; break;
-          case 1: category = "statistic"; break;
-          case 2: category = "story"; break;
-          case 3: category = "challenge"; break;
-          default: category = "question";
-        }
-      }
-
+    const formattedHooks = data.hooks.map((hook: any) => {
       return {
         id: crypto.randomUUID(),
         hook_text: hook.hook || "",
-        category: category,
+        category: hook.category || "",
         explanation: hook.explanation || ""
       };
     });

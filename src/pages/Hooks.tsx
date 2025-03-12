@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,6 +28,7 @@ const Hooks = () => {
   const [selectedIdea, setSelectedIdea] = useState<GeneratedIdea | null>(null);
   const [selectedHook, setSelectedHook] = useState<HookType | null>(null);
   const [useSavedIdea, setUseSavedIdea] = useState(false);
+  const [selectedHookTypes, setSelectedHookTypes] = useState<string[]>(["question", "statistic", "story", "challenge"]);
 
   const { data: savedHooks, isLoading: isFetchingHooks } = useQuery({
     queryKey: ['savedHooks'],
@@ -81,6 +81,15 @@ const Hooks = () => {
       return;
     }
 
+    if (selectedHookTypes.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Hook types required",
+        description: "Please select at least one hook type.",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     setError(null);
     try {
@@ -89,7 +98,7 @@ const Hooks = () => {
         `${selectedIdea.description}\n\nTags: ${selectedIdea.tags?.join(', ')}` : 
         details;
       
-      const hooks = await generateHooks(topicToUse, audience, detailsToUse);
+      const hooks = await generateHooks(topicToUse, audience, detailsToUse, selectedHookTypes);
       setGeneratedHooks(hooks);
     } catch (error: any) {
       console.error("Failed to generate hooks:", error);
@@ -189,6 +198,8 @@ const Hooks = () => {
             setUseSavedIdea={setUseSavedIdea}
             onIdeaSelect={handleSelectIdea}
             selectedIdea={selectedIdea}
+            selectedHookTypes={selectedHookTypes}
+            setSelectedHookTypes={setSelectedHookTypes}
           />
 
           {error && (

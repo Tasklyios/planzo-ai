@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Zap, Loader2 } from "lucide-react";
 import VideoIdeaSelector from '../script/VideoIdeaSelector';
 import { GeneratedIdea } from '@/types/idea';
+import { cn } from '@/lib/utils';
 
 interface HookGeneratorFormProps {
   topic: string;
@@ -23,6 +24,8 @@ interface HookGeneratorFormProps {
   setUseSavedIdea: (value: boolean) => void;
   onIdeaSelect: (idea: GeneratedIdea) => void;
   selectedIdea: GeneratedIdea | null;
+  selectedHookTypes: string[];
+  setSelectedHookTypes: (types: string[]) => void;
 }
 
 const HookGeneratorForm = ({
@@ -37,8 +40,19 @@ const HookGeneratorForm = ({
   useSavedIdea,
   setUseSavedIdea,
   onIdeaSelect,
-  selectedIdea
+  selectedIdea,
+  selectedHookTypes,
+  setSelectedHookTypes
 }: HookGeneratorFormProps) => {
+  
+  const toggleHookType = (type: string) => {
+    if (selectedHookTypes.includes(type)) {
+      setSelectedHookTypes(selectedHookTypes.filter(t => t !== type));
+    } else {
+      setSelectedHookTypes([...selectedHookTypes, type]);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
       <div className="lg:col-span-2">
@@ -102,7 +116,7 @@ const HookGeneratorForm = ({
             <Button 
               className="w-full blue-gradient" 
               onClick={handleGenerateHooks}
-              disabled={isGenerating || (!useSavedIdea && !topic) || (useSavedIdea && !selectedIdea)}
+              disabled={isGenerating || (!useSavedIdea && !topic) || (useSavedIdea && !selectedIdea) || selectedHookTypes.length === 0}
             >
               {isGenerating ? (
                 <>
@@ -112,7 +126,7 @@ const HookGeneratorForm = ({
               ) : (
                 <>
                   <Zap className="mr-2 h-4 w-4" />
-                  Generate Viral Hooks
+                  Generate {selectedHookTypes.length === 4 ? 'All' : 'Selected'} Hook Types
                 </>
               )}
             </Button>
@@ -120,26 +134,50 @@ const HookGeneratorForm = ({
         </Card>
       </div>
 
-      <div className="hidden sm:block">
+      <div className="sm:block">
         <Card>
           <CardHeader className="pb-3 sm:pb-4">
             <CardTitle>Hook Types</CardTitle>
-            <CardDescription>Different styles proven to boost engagement</CardDescription>
+            <CardDescription>Select the types of hooks you want (choose at least one)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4">
-            <div className="bg-muted rounded-lg p-3">
+            <div 
+              className={cn(
+                "bg-muted rounded-lg p-3 cursor-pointer transition-colors hover:bg-muted/80",
+                selectedHookTypes.includes("question") && "bg-primary/10 hover:bg-primary/20 border border-primary/50"
+              )}
+              onClick={() => toggleHookType("question")}
+            >
               <h3 className="font-medium">Question Hooks</h3>
               <p className="text-sm text-muted-foreground">Trigger curiosity with thought-provoking questions</p>
             </div>
-            <div className="bg-muted rounded-lg p-3">
+            <div 
+              className={cn(
+                "bg-muted rounded-lg p-3 cursor-pointer transition-colors hover:bg-muted/80",
+                selectedHookTypes.includes("statistic") && "bg-primary/10 hover:bg-primary/20 border border-primary/50"
+              )}
+              onClick={() => toggleHookType("statistic")}
+            >
               <h3 className="font-medium">Statistic Hooks</h3>
               <p className="text-sm text-muted-foreground">Create pattern-interrupts with surprising data points</p>
             </div>
-            <div className="bg-muted rounded-lg p-3">
+            <div 
+              className={cn(
+                "bg-muted rounded-lg p-3 cursor-pointer transition-colors hover:bg-muted/80",
+                selectedHookTypes.includes("story") && "bg-primary/10 hover:bg-primary/20 border border-primary/50"
+              )}
+              onClick={() => toggleHookType("story")}
+            >
               <h3 className="font-medium">Story Hooks</h3>
               <p className="text-sm text-muted-foreground">Build emotional connection with relatable narratives</p>
             </div>
-            <div className="bg-muted rounded-lg p-3">
+            <div 
+              className={cn(
+                "bg-muted rounded-lg p-3 cursor-pointer transition-colors hover:bg-muted/80",
+                selectedHookTypes.includes("challenge") && "bg-primary/10 hover:bg-primary/20 border border-primary/50"
+              )}
+              onClick={() => toggleHookType("challenge")}
+            >
               <h3 className="font-medium">Challenge Hooks</h3>
               <p className="text-sm text-muted-foreground">Create polarizing reactions by challenging assumptions</p>
             </div>

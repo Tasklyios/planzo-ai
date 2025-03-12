@@ -25,7 +25,7 @@ serve(async (req) => {
     }
 
     // Get the request body
-    const { topic, audience, details } = await req.json();
+    const { topic, audience, details, selectedHookTypes = ["question", "statistic", "story", "challenge"] } = await req.json();
 
     if (!topic) {
       return new Response(
@@ -34,12 +34,40 @@ serve(async (req) => {
       );
     }
 
+    // Validate selected hook types
+    const validHookTypes = selectedHookTypes.filter(type => 
+      ["question", "statistic", "story", "challenge"].includes(type)
+    );
+
+    if (validHookTypes.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'At least one valid hook type must be selected' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Calculate hooks per type (always 4 hooks total regardless of how many types are selected)
+    const totalHooks = 4;
+    const hooksPerType = Math.floor(totalHooks / validHookTypes.length);
+    let remainingHooks = totalHooks % validHookTypes.length;
+    
+    const hookAllocation = validHookTypes.reduce((acc, type) => {
+      acc[type] = hooksPerType;
+      if (remainingHooks > 0) {
+        acc[type]++;
+        remainingHooks--;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    console.log("Hook allocation:", hookAllocation);
+
     // Updated system prompt to match Planzo AI's personality and expertise
     const systemPrompt = `You are Planzo AI, a specialist in creating viral-worthy content for social media. You excel at crafting hooks that stop users from scrolling on platforms like TikTok, YouTube Shorts, and Instagram Reels.
 
 You understand audience psychology, engagement triggers, and platform-specific trends. Your hooks are designed to maximize curiosity, emotional response, and viewer retention in the critical first few seconds of a video.`;
 
-    let userPrompt = `Generate EXACTLY 8 different hooks about ${topic}`;
+    let userPrompt = `Generate EXACTLY ${totalHooks} different hooks about ${topic}`;
     
     if (audience && audience.trim()) {
       userPrompt += ` for ${audience}`;
@@ -49,29 +77,47 @@ You understand audience psychology, engagement triggers, and platform-specific t
       userPrompt += `\nAdditional context: ${details}`;
     }
 
-    // Specifically request exactly 2 hooks per category
-    userPrompt += `\n\nCreate EXACTLY 2 hooks for each of these categories (8 hooks total):
-    1. QUESTION hooks: Hooks that pose an intriguing question to the viewer
-    2. STATISTIC hooks: Hooks that lead with a surprising statistic or fact
-    3. STORY hooks: Hooks that begin with a mini-story or scenario
-    4. CHALLENGE hooks: Hooks that challenge a common belief or present a controversial take
+    // Create prompt with specific allocation instructions
+    userPrompt += `\n\nGenerate hooks distributed EXACTLY as follows (${totalHooks} hooks total):`;
     
-    FORMAT YOUR RESPONSE AS A JSON ARRAY of objects with "hook", "explanation", and "category" properties:
-    [
-      {
-        "hook": "The actual hook text that would start the video",
-        "explanation": "Why this hook works and when to use it",
-        "category": "question"
-      },
-      // more hooks...
-    ]
+    for (const [type, count] of Object.entries(hookAllocation)) {
+      if (count > 0) {
+        userPrompt += `\n- ${count} ${type.toUpperCase()} hooks: `;
+        
+        switch(type) {
+          case "question":
+            userPrompt += "Hooks that pose an intriguing question to the viewer";
+            break;
+          case "statistic":
+            userPrompt += "Hooks that lead with a surprising statistic or fact";
+            break;
+          case "story":
+            userPrompt += "Hooks that begin with a mini-story or scenario";
+            break;
+          case "challenge":
+            userPrompt += "Hooks that challenge a common belief or present a controversial take";
+            break;
+        }
+      }
+    }
     
-    The category MUST be one of: "question", "statistic", "story", or "challenge".
-    Make sure to create EXACTLY 2 hooks for each category.
-    DO NOT include any text outside of the JSON format. Your entire response should be valid JSON.`;
+    userPrompt += `\n
+FORMAT YOUR RESPONSE AS A JSON ARRAY of objects with "hook", "explanation", and "category" properties:
+[
+  {
+    "hook": "The actual hook text that would start the video",
+    "explanation": "Why this hook works and when to use it",
+    "category": "${validHookTypes[0]}"
+  },
+  // more hooks...
+]
+
+The category MUST be one of: ${validHookTypes.map(t => `"${t}"`).join(", ")}.
+Make sure to create EXACTLY the specified number of hooks for each category.
+DO NOT include any text outside of the JSON format. Your entire response should be valid JSON.`;
 
     // Call the OpenAI API
-    console.log('Calling OpenAI API for hook generation...');
+    console.log('Calling OpenAI API for hook generation with prompt:', userPrompt);
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -141,101 +187,48 @@ You understand audience psychology, engagement triggers, and platform-specific t
       if (manuallyExtractedHooks.length > 0) {
         hooks = manuallyExtractedHooks;
       } else {
-        // Create default hooks if all parsing fails - exactly 2 per category
-        hooks = [
-          { hook: "Did you know that most people get this wrong about your topic?", explanation: "Question hook that creates curiosity", category: "question" },
-          { hook: "What's the one thing about this topic that even experts miss?", explanation: "Question hook that positions viewer to learn something valuable", category: "question" },
-          { hook: "Studies show that 87% of people never know this about your topic.", explanation: "Statistic hook that grabs attention", category: "statistic" },
-          { hook: "Only 1% of people know this game-changing tip.", explanation: "Statistic hook that creates exclusivity", category: "statistic" },
-          { hook: "I tried this for 30 days straight. Here's what happened.", explanation: "Story hook that builds interest", category: "story" },
-          { hook: "When I first started with this, I made every mistake possible.", explanation: "Story hook that creates relatability", category: "story" },
-          { hook: "Everything you've been told about this is wrong. Here's why.", explanation: "Challenge hook that creates controversy", category: "challenge" },
-          { hook: "This popular approach is actually sabotaging your results.", explanation: "Challenge hook that challenges conventional wisdom", category: "challenge" }
-        ];
+        // Create default hooks - matching the requested allocation
+        hooks = [];
+        for (const [type, count] of Object.entries(hookAllocation)) {
+          for (let i = 0; i < count; i++) {
+            const defaultHook = getDefaultHook(type, topic, i);
+            hooks.push(defaultHook);
+          }
+        }
       }
     }
 
-    // Ensure we have exactly 2 hooks per category
-    const categorizedHooks = {
-      question: [],
-      statistic: [],
-      story: [],
-      challenge: []
-    };
+    // Ensure we have the exact allocation of hooks per category
+    const categorizedHooks: Record<string, any[]> = {};
+    validHookTypes.forEach(type => {
+      categorizedHooks[type] = [];
+    });
 
-    // Normalize category names and distribute hooks
+    // First, categorize existing hooks
     hooks.forEach(hook => {
-      let category = hook.category?.toLowerCase() || '';
-      
-      // Map similar categories to our standard ones
-      if (category === 'benefit' || category === 'problem-solution' || category === 'controversial') {
-        category = 'challenge';
-      }
-      
-      if (!['question', 'statistic', 'story', 'challenge'].includes(category)) {
-        // Assign a default category if none/invalid provided
-        if (hook.hook.includes('?')) {
-          category = 'question';
-        } else if (hook.hook.match(/\d+%/) || hook.hook.match(/\d+ out of \d+/) || 
-                  hook.hook.includes("studies show") || hook.hook.includes("research")) {
-          category = 'statistic';
-        } else if (hook.hook.includes("I ") || hook.hook.includes("when ") || 
-                  hook.hook.includes("imagine") || hook.hook.includes("story")) {
-          category = 'story';
-        } else {
-          category = 'challenge';
-        }
-      }
-      
-      // Only add if we have less than 2 hooks in this category
-      if (categorizedHooks[category].length < 2) {
+      const category = hook.category?.toLowerCase() || '';
+      if (validHookTypes.includes(category) && categorizedHooks[category].length < hookAllocation[category]) {
         categorizedHooks[category].push({
           ...hook,
-          category,
           id: crypto.randomUUID()
         });
       }
     });
-    
-    // If any category has less than 2 hooks, add default ones
-    const defaultHooks = {
-      question: [
-        "Did you know that most people get this wrong about your topic?",
-        "What's the one thing about this topic that even experts miss?"
-      ],
-      statistic: [
-        "Studies show that 87% of people never know this about your topic.",
-        "Only 1% of people know this game-changing tip."
-      ],
-      story: [
-        "I tried this for 30 days straight. Here's what happened.",
-        "When I first started with this, I made every mistake possible."
-      ],
-      challenge: [
-        "Everything you've been told about this is wrong. Here's why.",
-        "This popular approach is actually sabotaging your results."
-      ]
-    };
-    
-    Object.keys(categorizedHooks).forEach(category => {
-      while (categorizedHooks[category].length < 2) {
-        const index = categorizedHooks[category].length;
-        categorizedHooks[category].push({
-          hook: defaultHooks[category][index],
-          explanation: `Default ${category} hook ${index + 1}`,
-          category,
+
+    // Fill in any missing hooks with defaults
+    for (const [type, count] of Object.entries(hookAllocation)) {
+      while (categorizedHooks[type].length < count) {
+        const index = categorizedHooks[type].length;
+        const defaultHook = getDefaultHook(type, topic, index);
+        categorizedHooks[type].push({
+          ...defaultHook,
           id: crypto.randomUUID()
         });
       }
-    });
+    }
     
     // Flatten the categorized hooks back into an array
-    const finalHooks = [
-      ...categorizedHooks.question,
-      ...categorizedHooks.statistic,
-      ...categorizedHooks.story,
-      ...categorizedHooks.challenge
-    ];
+    const finalHooks = Object.values(categorizedHooks).flat();
 
     // Return the hooks
     return new Response(
@@ -250,3 +243,67 @@ You understand audience psychology, engagement triggers, and platform-specific t
     );
   }
 });
+
+// Helper function to get default hooks when needed
+function getDefaultHook(type: string, topic: string, index: number) {
+  switch (type) {
+    case "question":
+      return index === 0 
+        ? { 
+            hook: `Did you know that most people get this wrong about ${topic}?`, 
+            explanation: "Question hook that creates curiosity", 
+            category: "question" 
+          }
+        : { 
+            hook: `What's the one thing about ${topic} that even experts miss?`, 
+            explanation: "Question hook that positions viewer to learn something valuable", 
+            category: "question" 
+          };
+    
+    case "statistic":
+      return index === 0 
+        ? { 
+            hook: `Studies show that 87% of people never know this about ${topic}.`, 
+            explanation: "Statistic hook that grabs attention", 
+            category: "statistic" 
+          }
+        : { 
+            hook: `Only 1% of people know this game-changing tip about ${topic}.`, 
+            explanation: "Statistic hook that creates exclusivity", 
+            category: "statistic" 
+          };
+      
+    case "story":
+      return index === 0 
+        ? { 
+            hook: `I tried ${topic} for 30 days straight. Here's what happened.`, 
+            explanation: "Story hook that builds interest", 
+            category: "story" 
+          }
+        : { 
+            hook: `When I first started with ${topic}, I made every mistake possible.`, 
+            explanation: "Story hook that creates relatability", 
+            category: "story" 
+          };
+      
+    case "challenge":
+      return index === 0 
+        ? { 
+            hook: `Everything you've been told about ${topic} is wrong. Here's why.`, 
+            explanation: "Challenge hook that creates controversy", 
+            category: "challenge" 
+          }
+        : { 
+            hook: `This popular approach to ${topic} is actually sabotaging your results.`, 
+            explanation: "Challenge hook that challenges conventional wisdom", 
+            category: "challenge" 
+          };
+      
+    default:
+      return { 
+        hook: `The ultimate guide to ${topic} that nobody is talking about.`, 
+        explanation: "Generic hook that creates curiosity", 
+        category: type 
+      };
+  }
+}
