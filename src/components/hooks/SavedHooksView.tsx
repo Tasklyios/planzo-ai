@@ -7,7 +7,7 @@ import { Copy, Trash2, Loader2, Check } from "lucide-react";
 import { HookType, SavedHook } from "@/types/hooks";
 import { GeneratedIdea } from "@/types/idea";
 import { useToast } from "@/components/ui/use-toast";
-import SavedIdeaSelector from './SavedIdeaSelector';
+import VideoIdeaSelector from '../script/VideoIdeaSelector';
 import ApplyHookToIdea from './ApplyHookToIdea';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -168,7 +168,7 @@ const SavedHooksView = ({
             <CardTitle>Apply Hook to Idea</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <SavedIdeaSelector onIdeaSelect={handleSelectIdea} />
+            <VideoIdeaSelector onSelectIdea={handleSelectIdea} />
             
             {selectedIdeaLocal && (
               <div className="mt-4 space-y-2">

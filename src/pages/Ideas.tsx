@@ -8,14 +8,28 @@ import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog
 import { AddToCalendarIdea } from "@/types/idea";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SavedHooksView from "@/components/hooks/SavedHooksView";
+import { HookType } from "@/types/hooks";
+import { getSavedHooks } from "@/services/hookService";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Ideas() {
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
+  const [selectedIdea, setSelectedIdea] = useState<GeneratedIdea | null>(null);
+  const [selectedHook, setSelectedHook] = useState<HookType | null>(null);
+  const [activeTab, setActiveTab] = useState("ideas");
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+
+  // Get saved hooks for the hooks tab
+  const { data: savedHooks, isLoading: isFetchingHooks } = useQuery({
+    queryKey: ['savedHooks'],
+    queryFn: getSavedHooks,
+  });
 
   const fetchSavedIdeas = async () => {
     try {
@@ -165,6 +179,31 @@ export default function Ideas() {
     setAddingToCalendar(prev => prev ? { ...prev, [field]: value } : null);
   };
 
+  const handleSelectIdea = (idea: GeneratedIdea) => {
+    setSelectedIdea(idea);
+  };
+
+  const handleSelectHook = (hook: HookType) => {
+    setSelectedHook(hook);
+  };
+
+  // Filter hooks by category
+  const filterHooksByCategory = (hooks: any[], category: string): any[] => {
+    if (!hooks) return [];
+    
+    return hooks.filter(hook => {
+      const hookCategory = 'category' in hook ? hook.category : '';
+      return hookCategory.toLowerCase() === category.toLowerCase();
+    });
+  };
+
+  // Get hook text based on hook type
+  const getHookText = (hook: any): string => {
+    if ('hook_text' in hook) return hook.hook_text;
+    if ('hook' in hook) return hook.hook;
+    return '';
+  };
+
   return (
     <main className="container mx-auto px-4 pt-8 pb-12">
       <section className="mb-12">
@@ -173,28 +212,49 @@ export default function Ideas() {
           <p className="text-muted-foreground mt-2">Browse and manage your bookmarked video ideas</p>
         </div>
 
-        {ideas.length > 0 ? (
-          <IdeasGrid
-            ideas={ideas}
-            onAddToCalendar={(idea) => setAddingToCalendar({
-              idea,
-              title: idea.title,
-              scheduledFor: new Date().toISOString().split('T')[0],
-            })}
-            onEdit={(ideaId) => setEditingIdeaId(ideaId)}
-            onBookmarkToggle={handleBookmarkToggle}
-          />
-        ) : (
-          <div className="text-center py-12 bg-muted/30 rounded-lg">
-            <p className="text-muted-foreground">No saved ideas found. Bookmark some ideas to see them here.</p>
-            <button 
-              onClick={() => navigate('/generator')}
-              className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
-            >
-              Generate Ideas
-            </button>
-          </div>
-        )}
+        <Tabs defaultValue="ideas" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="ideas">Ideas</TabsTrigger>
+            <TabsTrigger value="hooks">Apply Hooks</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="ideas">
+            {ideas.length > 0 ? (
+              <IdeasGrid
+                ideas={ideas}
+                onAddToCalendar={(idea) => setAddingToCalendar({
+                  idea,
+                  title: idea.title,
+                  scheduledFor: new Date().toISOString().split('T')[0],
+                })}
+                onEdit={(ideaId) => setEditingIdeaId(ideaId)}
+                onBookmarkToggle={handleBookmarkToggle}
+              />
+            ) : (
+              <div className="text-center py-12 bg-muted/30 rounded-lg">
+                <p className="text-muted-foreground">No saved ideas found. Bookmark some ideas to see them here.</p>
+                <button 
+                  onClick={() => navigate('/generator')}
+                  className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
+                >
+                  Generate Ideas
+                </button>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="hooks">
+            <SavedHooksView 
+              savedHooks={savedHooks}
+              isFetchingHooks={isFetchingHooks}
+              handleDeleteHook={() => {}} // Not needed here
+              filterHooksByCategory={filterHooksByCategory}
+              getHookText={getHookText}
+              onSelectHook={handleSelectHook}
+              selectedIdea={selectedIdea}
+            />
+          </TabsContent>
+        </Tabs>
       </section>
 
       {editingIdeaId && (
