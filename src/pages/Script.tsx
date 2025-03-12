@@ -25,7 +25,7 @@ const Script = () => {
   const [isSavingScript, setIsSavingScript] = useState(false);
   const [duration, setDuration] = useState("60");
   const [durationUnit, setDurationUnit] = useState("seconds");
-  const [wordsPerMinute, setWordsPerMinute] = useState(150);
+  const WORDS_PER_MINUTE = 150;
   const { toast } = useToast();
 
   const generateScript = async () => {
@@ -74,7 +74,7 @@ const Script = () => {
         hook: selectedHook || null,
         targetLength: null,
         targetDuration: targetDurationRange,
-        wordsPerMinute,
+        wordsPerMinute: WORDS_PER_MINUTE,
         userId,
         savedIdea: useSavedIdea ? savedIdea : null,
       });
@@ -87,7 +87,7 @@ const Script = () => {
           hook: selectedHook || null,
           targetLength: null,
           targetDuration: targetDurationRange,
-          wordsPerMinute,
+          wordsPerMinute: WORDS_PER_MINUTE,
           userId,
           savedIdea: useSavedIdea ? savedIdea : null,
         },
@@ -217,7 +217,7 @@ const Script = () => {
       ? parseInt(duration) / 60 
       : parseInt(duration);
     
-    return Math.round(durationInMinutes * wordsPerMinute);
+    return Math.round(durationInMinutes * WORDS_PER_MINUTE);
   };
 
   const approximateWordCount = calculateWordCount();
@@ -378,50 +378,11 @@ const Script = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="words-per-minute">
-                      Speaking Rate (words per minute): {wordsPerMinute}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <HelpCircle className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <div className="space-y-2 max-w-xs">
-                            <p>Average speaking rates:</p>
-                            <p>120-150: Slow, deliberate speech</p>
-                            <p>150-180: Conversational speech</p>
-                            <p>180-200: Fast-paced, energetic speech</p>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 py-1">
-                    {[120, 150, 180].map((rate) => (
-                      <Button
-                        key={rate}
-                        type="button"
-                        variant={wordsPerMinute === rate ? "default" : "outline"}
-                        className="h-9 text-xs"
-                        onClick={() => setWordsPerMinute(rate)}
-                      >
-                        {rate === 120 ? "Slow" : rate === 150 ? "Normal" : "Fast"}
-                        <span className="ml-1 opacity-70">({rate})</span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                
-                {approximateWordCount && (
+                {approximateWordCount > 0 && (
                   <div className="p-3 bg-muted rounded-md flex items-center space-x-2">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
                     <p className="text-sm">
-                      Approximate word count: <strong>{approximateWordCount} words</strong>
+                      Approximate word count: <strong>{approximateWordCount} words</strong> <span className="text-muted-foreground">(based on average speaking rate)</span>
                     </p>
                   </div>
                 )}

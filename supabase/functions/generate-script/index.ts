@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.1";
@@ -7,6 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Standard speaking rate to use throughout the application
+const STANDARD_SPEAKING_RATE = 150; // words per minute
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -75,17 +77,18 @@ serve(async (req) => {
       }
     }
 
-    // Calculate approximate word count based on duration and words per minute
+    // Calculate approximate word count based on duration and standard speaking rate
     let targetWordCount = null;
     let timeRangeDescription = "";
     
-    if (targetDuration && wordsPerMinute) {
+    if (targetDuration) {
+      // Always use the standard speaking rate, ignore any passed wordsPerMinute
       const [minDuration, maxDuration] = targetDuration.split('-').map(Number);
       const avgDuration = (minDuration + maxDuration) / 2;
-      targetWordCount = Math.round(avgDuration * wordsPerMinute);
+      targetWordCount = Math.round(avgDuration * STANDARD_SPEAKING_RATE);
       
       // Create a description of the target length for the prompt
-      timeRangeDescription = `${targetDuration} minutes (approximately ${targetWordCount} words at ${wordsPerMinute} words per minute)`;
+      timeRangeDescription = `${targetDuration} minutes (approximately ${targetWordCount} words at standard speaking rate)`;
       console.log(`Calculated target word count: ${targetWordCount} words`);
     } else if (targetLength) {
       // Map target length to human-readable duration (for backward compatibility)
