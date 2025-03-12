@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { GeneratedIdea, PreviousIdeasContext } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,21 +60,21 @@ export const useIdeaGenerator = () => {
                 setNiche(profile.content_niche);
               }
               if (profile.target_audience) setAudience(profile.target_audience);
-              if (profile.content_niche) setVideoType(profile.content_niche);
+              // Don't auto-fill videoType from content_niche
             } else if (profile.account_type === 'ecommerce') {
               if (profile.product_niche) {
                 console.log("Setting ecommerce niche to product_niche:", profile.product_niche);
                 setNiche(profile.product_niche);
               }
               if (profile.target_audience) setAudience(profile.target_audience);
-              if (profile.content_niche) setVideoType(profile.content_niche);
+              // Don't auto-fill videoType from content_niche
             } else if (profile.account_type === 'business') {
               if (profile.business_niche) {
                 console.log("Setting business niche to business_niche:", profile.business_niche);
                 setNiche(profile.business_niche);
               }
               if (profile.target_audience) setAudience(profile.target_audience);
-              if (profile.content_niche) setVideoType(profile.content_niche);
+              // Don't auto-fill videoType from content_niche
             }
             
             if (profile.posting_platforms && profile.posting_platforms.length > 0) 
@@ -149,7 +150,7 @@ export const useIdeaGenerator = () => {
               }
               
               if (!audience && profile.target_audience) setAudience(profile.target_audience);
-              if (!videoType && profile.content_niche) setVideoType(profile.content_niche);
+              // Don't auto-fill videoType from content_niche
               if (!platform && profile.posting_platforms && profile.posting_platforms.length > 0) 
                 setPlatform(profile.posting_platforms[0]);
             }

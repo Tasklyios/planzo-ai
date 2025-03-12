@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from "react";
-import { LayersIcon, Users, Video, Smartphone, Package2, Building2, ChevronDown, ChevronUp } from "lucide-react";
+import { LayersIcon, Users, Video, Smartphone, Package2, Building2, ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -9,6 +10,12 @@ import {
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface InputFormProps {
   niche: string;
@@ -91,7 +98,11 @@ const InputForm = ({
             setNiche(profile.business_niche || "");
           }
           
-          setVideoType(profile.content_niche || "");
+          // Don't automatically set videoType from contentNiche
+          if (!videoType && profile.content_niche) {
+            setVideoType("");
+          }
+          
           setAudience(profile.target_audience || "");
         }
       }
@@ -137,7 +148,8 @@ const InputForm = ({
       setNiche(newValue);
     }
     
-    setVideoType(newValue);
+    // Remove this line to prevent auto-filling videoType with contentNiche
+    // setVideoType(newValue);
   };
 
   const handleProductNicheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -216,13 +228,23 @@ const InputForm = ({
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
                   <Video className="text-[#4F92FF] w-4 h-4" />
                   <label className="text-xs md:text-sm font-medium text-foreground">Video Type</label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="text-muted-foreground w-3 h-3 cursor-pointer hover:text-primary transition-colors" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[260px] p-3 bg-card border shadow-md text-foreground">
+                        <p className="text-xs">Specify the type of video you want to create, e.g., "tutorial", "product review", "storytime", "behind-the-scenes", etc. This helps generate more targeted content ideas.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <input
                   type="text"
                   value={videoType}
                   onChange={(e) => setVideoType(e.target.value)}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Video type"
+                  placeholder="Video type (e.g., tutorial, review)"
                 />
               </div>
             </div>
@@ -269,6 +291,16 @@ const InputForm = ({
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
                   <Video className="text-[#4F92FF] w-4 h-4" />
                   <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="text-muted-foreground w-3 h-3 cursor-pointer hover:text-primary transition-colors" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[260px] p-3 bg-card border shadow-md text-foreground">
+                        <p className="text-xs">Specify the type of video you want to create, e.g., "product showcase", "how-to", "customer testimonial", etc. This helps generate more targeted content ideas for your e-commerce brand.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <input
                   type="text"
@@ -322,13 +354,23 @@ const InputForm = ({
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
                   <Video className="text-[#4F92FF] w-4 h-4" />
                   <label className="text-xs md:text-sm font-medium text-foreground">Video Type</label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="text-muted-foreground w-3 h-3 cursor-pointer hover:text-primary transition-colors" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[260px] p-3 bg-card border shadow-md text-foreground">
+                        <p className="text-xs">Specify the type of video you want to create, e.g., "explainer", "case study", "thought leadership", etc. This helps generate more targeted content ideas for your business.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <input
                   type="text"
                   value={videoType}
                   onChange={(e) => setVideoType(e.target.value)}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Video type"
+                  placeholder="Video type (e.g., explainer, case study)"
                 />
               </div>
             </div>
