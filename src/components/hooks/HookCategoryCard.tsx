@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookmarkIcon, Loader2 } from "lucide-react";
@@ -36,13 +35,10 @@ const HookCategoryCard = ({
     );
   }
 
-  // Function to check if a hook is saved (already bookmarked)
   const isHookSaved = (hook: HookType | SavedHook): boolean => {
-    // If it has 'id' property and NOT 'hook_text', it's a SavedHook
     return 'id' in hook && !('hook_text' in hook);
   };
 
-  // Function to get the hook ID for saving state tracking
   const getHookId = (hook: HookType | SavedHook): string => {
     if ('id' in hook && hook.id) return hook.id;
     return 'hook_text' in hook ? hook.hook_text : hook.hook;
@@ -62,8 +58,7 @@ const HookCategoryCard = ({
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               ) : (
                 <BookmarkIcon 
-                  className={`h-4 w-4 cursor-pointer ${isHookSaved(hook) ? "text-primary" : "text-muted-foreground hover:text-primary transition-colors"}`}
-                  fill={isHookSaved(hook) ? "currentColor" : "none"}
+                  className={`h-4 w-4 cursor-pointer ${isHookSaved(hook) ? "text-primary fill-primary" : "text-muted-foreground hover:text-primary transition-colors"}`}
                   onClick={() => 'hook_text' in hook && !isHookSaved(hook) ? onSaveHook(hook as HookType) : null}
                   aria-label={isHookSaved(hook) ? "Already saved" : "Save hook"}
                 />
