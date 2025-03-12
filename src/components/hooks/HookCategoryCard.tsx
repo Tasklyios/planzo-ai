@@ -39,8 +39,8 @@ const HookCategoryCard = ({
 
   // Function to check if a hook is saved (already bookmarked)
   const isHookSaved = (hook: HookType | SavedHook): boolean => {
-    // If it has 'hook' property and not 'hook_text', it's a SavedHook
-    return !('hook_text' in hook);
+    // If it has 'id' property and NOT 'hook_text', it's a SavedHook
+    return 'id' in hook && !('hook_text' in hook);
   };
 
   // Function to get the hook ID for saving state tracking
@@ -72,7 +72,6 @@ const HookCategoryCard = ({
                 <BookmarkIcon 
                   className="h-4 w-4" 
                   fill={isHookSaved(hook) ? "currentColor" : "none"} 
-                  stroke="currentColor"
                 />
               )}
             </Button>
