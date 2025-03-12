@@ -1,19 +1,16 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RefreshCw, Undo2, Save, HelpCircle } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Loader2, RefreshCw, Undo2, Save, HelpCircle, Timer } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import VideoIdeaSelector from "@/components/script/VideoIdeaSelector";
 import HookSelector from "@/components/script/HookSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Slider } from "@/components/ui/slider";
 
 const Script = () => {
   const [title, setTitle] = useState("");
@@ -22,12 +19,11 @@ const Script = () => {
   const [script, setScript] = useState("");
   const [contentStyle, setContentStyle] = useState("educational");
   const [selectedHook, setSelectedHook] = useState("");
-  const [targetLength, setTargetLength] = useState("30-60");
   const [isGenerating, setIsGenerating] = useState(false);
   const [useSavedIdea, setUseSavedIdea] = useState(false);
   const [isSavingScript, setIsSavingScript] = useState(false);
-  const [useDurationCalculator, setUseDurationCalculator] = useState(false);
-  const [targetDuration, setTargetDuration] = useState("1-2");
+  const [duration, setDuration] = useState("60");
+  const [durationUnit, setDurationUnit] = useState("seconds");
   const [wordsPerMinute, setWordsPerMinute] = useState(150);
   const { toast } = useToast();
 
@@ -60,14 +56,27 @@ const Script = () => {
       const scriptTitle = useSavedIdea ? savedIdea.title : title;
       const scriptDescription = useSavedIdea ? savedIdea.description : description;
 
+      // Calculate target duration in minutes for the API
+      let targetDurationInMinutes;
+      if (durationUnit === "seconds") {
+        targetDurationInMinutes = (parseInt(duration) / 60).toFixed(2);
+      } else {
+        targetDurationInMinutes = duration;
+      }
+      
+      // Create a range around the target duration (±10%)
+      const minDuration = (parseFloat(targetDurationInMinutes) * 0.9).toFixed(2);
+      const maxDuration = (parseFloat(targetDurationInMinutes) * 1.1).toFixed(2);
+      const targetDurationRange = `${minDuration}-${maxDuration}`;
+
       console.log("Sending parameters:", {
         title: scriptTitle,
         description: scriptDescription,
         contentStyle,
         hook: selectedHook || null,
-        targetLength: useDurationCalculator ? null : targetLength,
-        targetDuration: useDurationCalculator ? targetDuration : null,
-        wordsPerMinute: useDurationCalculator ? wordsPerMinute : null,
+        targetLength: null,
+        targetDuration: targetDurationRange,
+        wordsPerMinute,
         userId,
         savedIdea: useSavedIdea ? savedIdea : null,
       });
@@ -78,9 +87,9 @@ const Script = () => {
           description: scriptDescription,
           contentStyle,
           hook: selectedHook || null,
-          targetLength: useDurationCalculator ? null : targetLength,
-          targetDuration: useDurationCalculator ? targetDuration : null,
-          wordsPerMinute: useDurationCalculator ? wordsPerMinute : null,
+          targetLength: null,
+          targetDuration: targetDurationRange,
+          wordsPerMinute,
           userId,
           savedIdea: useSavedIdea ? savedIdea : null,
         },
@@ -208,13 +217,13 @@ const Script = () => {
     setScript("");
   };
 
-  // Calculate the approximate word count
+  // Calculate the approximate word count based on duration and speaking rate
   const calculateWordCount = () => {
-    if (!useDurationCalculator) return null;
+    const durationInMinutes = durationUnit === "seconds" 
+      ? parseInt(duration) / 60 
+      : parseInt(duration);
     
-    const [minDuration, maxDuration] = targetDuration.split('-').map(Number);
-    const avgDuration = (minDuration + maxDuration) / 2;
-    return Math.round(avgDuration * wordsPerMinute);
+    return Math.round(durationInMinutes * wordsPerMinute);
   };
 
   const approximateWordCount = calculateWordCount();
@@ -303,7 +312,7 @@ const Script = () => {
           </Card>
         </div>
 
-        {/* Right Column: Content Style & Hook */}
+        {/* Right Column: Content Style & Duration */}
         <div className="space-y-6">
           <Card>
             <CardContent className="pt-6 space-y-4">
@@ -330,12 +339,8 @@ const Script = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Switch 
-                      id="use-duration-calculator" 
-                      checked={useDurationCalculator}
-                      onCheckedChange={setUseDurationCalculator}
-                    />
-                    <Label htmlFor="use-duration-calculator">Use duration calculator</Label>
+                    <Timer className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="duration">Target Duration</Label>
                   </div>
                   <TooltipProvider>
                     <Tooltip>
@@ -346,94 +351,86 @@ const Script = () => {
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="max-w-xs">
-                          This will calculate the script length based on speech rate and duration
+                          Enter the target duration for your video
                         </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
 
-                {useDurationCalculator ? (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="target-duration">Target Video Duration (minutes)</Label>
-                      <Select
-                        value={targetDuration}
-                        onValueChange={setTargetDuration}
-                      >
-                        <SelectTrigger id="target-duration">
-                          <SelectValue placeholder="Select target video duration" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0.5-1">0.5-1 minutes</SelectItem>
-                          <SelectItem value="1-2">1-2 minutes</SelectItem>
-                          <SelectItem value="2-3">2-3 minutes</SelectItem>
-                          <SelectItem value="3-5">3-5 minutes</SelectItem>
-                          <SelectItem value="5-7">5-7 minutes</SelectItem>
-                          <SelectItem value="7-10">7-10 minutes</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <Label htmlFor="words-per-minute">
-                          Speaking Rate (words per minute): {wordsPerMinute}
-                        </Label>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <HelpCircle className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <div className="space-y-2 max-w-xs">
-                                <p>Average speaking rates:</p>
-                                <p>120-150: Slow, deliberate speech</p>
-                                <p>150-180: Conversational speech</p>
-                                <p>180-200: Fast-paced, energetic speech</p>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                      <Slider
-                        id="words-per-minute"
-                        min={120}
-                        max={200}
-                        step={5}
-                        value={[wordsPerMinute]}
-                        onValueChange={(values) => setWordsPerMinute(values[0])}
-                      />
-                    </div>
-                    
-                    {approximateWordCount && (
-                      <div className="p-3 bg-muted rounded-md">
-                        <p className="text-sm">
-                          Approximate word count: <strong>{approximateWordCount} words</strong>
-                        </p>
-                      </div>
-                    )}
+                <div className="flex space-x-3">
+                  <div className="flex-1">
+                    <Input
+                      id="duration"
+                      type="number"
+                      min="1"
+                      placeholder="Duration"
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      className="w-full"
+                    />
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label htmlFor="target-length">Target Video Length</Label>
+                  <div className="w-1/3">
                     <Select
-                      value={targetLength}
-                      onValueChange={setTargetLength}
+                      value={durationUnit}
+                      onValueChange={setDurationUnit}
                     >
-                      <SelectTrigger id="target-length">
-                        <SelectValue placeholder="Select target video length" />
+                      <SelectTrigger id="duration-unit" className="w-full">
+                        <SelectValue placeholder="Unit" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="15-30">15-30 seconds (Ideal for TikTok)</SelectItem>
-                        <SelectItem value="30-60">30-60 seconds (Short-form)</SelectItem>
-                        <SelectItem value="1-2">1-2 minutes (Standard)</SelectItem>
-                        <SelectItem value="2-3">2-3 minutes (Extended)</SelectItem>
-                        <SelectItem value="3-5">3-5 minutes (Long-form)</SelectItem>
+                        <SelectItem value="seconds">Seconds</SelectItem>
+                        <SelectItem value="minutes">Minutes</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="words-per-minute">
+                      Speaking Rate (words per minute): {wordsPerMinute}
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <HelpCircle className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="space-y-2 max-w-xs">
+                            <p>Average speaking rates:</p>
+                            <p>120-150: Slow, deliberate speech</p>
+                            <p>150-180: Conversational speech</p>
+                            <p>180-200: Fast-paced, energetic speech</p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 py-1">
+                    {[120, 150, 180].map((rate) => (
+                      <Button
+                        key={rate}
+                        type="button"
+                        variant={wordsPerMinute === rate ? "default" : "outline"}
+                        className="h-9 text-xs"
+                        onClick={() => setWordsPerMinute(rate)}
+                      >
+                        {rate === 120 ? "Slow" : rate === 150 ? "Normal" : "Fast"}
+                        <span className="ml-1 opacity-70">({rate})</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                
+                {approximateWordCount && (
+                  <div className="p-3 bg-muted rounded-md flex items-center space-x-2">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                    <p className="text-sm">
+                      Approximate word count: <strong>{approximateWordCount} words</strong>
+                    </p>
                   </div>
                 )}
               </div>
