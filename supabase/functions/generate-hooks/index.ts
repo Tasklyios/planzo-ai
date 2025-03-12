@@ -49,6 +49,7 @@ You understand audience psychology, engagement triggers, and platform-specific t
       userPrompt += `\nAdditional context: ${details}`;
     }
 
+    // Updated to request only 2 hooks per category
     userPrompt += `\n\nCreate 2 hooks for each of these categories:
     1. QUESTION hooks: Hooks that pose an intriguing question to the viewer
     2. STATISTIC hooks: Hooks that lead with a surprising statistic or fact
@@ -136,12 +137,16 @@ You understand audience psychology, engagement triggers, and platform-specific t
       if (manuallyExtractedHooks.length > 0) {
         hooks = manuallyExtractedHooks;
       } else {
-        // Create default hooks if all parsing fails
+        // Create default hooks if all parsing fails - limited to 8 total (2 per category)
         hooks = [
           { hook: "Did you know that most people get this wrong about your topic?", explanation: "Question hook that creates curiosity" },
+          { hook: "What's the one thing about this topic that even experts miss?", explanation: "Question hook that positions viewer to learn something valuable" },
+          { hook: "Studies show that 87% of people never know this about your topic.", explanation: "Statistic hook that grabs attention" },
+          { hook: "Only 1% of people know this game-changing tip.", explanation: "Statistic hook that creates exclusivity" },
           { hook: "I tried this for 30 days straight. Here's what happened.", explanation: "Story hook that builds interest" },
+          { hook: "When I first started with this, I made every mistake possible.", explanation: "Story hook that creates relatability" },
           { hook: "Everything you've been told about this is wrong. Here's why.", explanation: "Challenge hook that creates controversy" },
-          { hook: "Only 1% of people know this game-changing tip.", explanation: "Statistic hook that grabs attention" }
+          { hook: "This popular approach is actually sabotaging your results.", explanation: "Challenge hook that challenges conventional wisdom" }
         ];
       }
     }
