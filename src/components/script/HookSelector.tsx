@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +22,9 @@ import { useToast } from "@/components/ui/use-toast";
 interface HookSelectorProps {
   onSelectHook: (hookText: string) => void;
   selectedHook?: string;
+  topic?: string;
+  audience?: string;
+  details?: string;
 }
 
 const normalizeHook = (hook: any): HookType => {
@@ -42,18 +46,25 @@ const normalizeHook = (hook: any): HookType => {
   };
 };
 
-const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
+const HookSelector = ({ onSelectHook, selectedHook, topic: initialTopic = '', audience: initialAudience = '', details: initialDetails = '' }: HookSelectorProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('saved');
-  const [topic, setTopic] = useState('');
-  const [audience, setAudience] = useState('');
-  const [details, setDetails] = useState('');
+  const [topic, setTopic] = useState(initialTopic);
+  const [audience, setAudience] = useState(initialAudience);
+  const [details, setDetails] = useState(initialDetails);
   const [generating, setGenerating] = useState(false);
   const [generatedHooks, setGeneratedHooks] = useState<HookType[]>([]);
   const [savingHookId, setSavingHookId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Update local state when props change
+  useEffect(() => {
+    setTopic(initialTopic);
+    setAudience(initialAudience);
+    setDetails(initialDetails);
+  }, [initialTopic, initialAudience, initialDetails]);
 
   const { 
     data: savedHooksRaw, 
@@ -263,7 +274,7 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   className="bg-muted"
-                  readOnly
+                  readOnly={!!initialTopic}
                 />
               </div>
               
@@ -273,8 +284,6 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
                   id="audience" 
                   value={audience}
                   onChange={(e) => setAudience(e.target.value)}
-                  className="bg-muted"
-                  readOnly
                 />
               </div>
               
@@ -284,8 +293,7 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
                   id="details" 
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
-                  className="bg-muted min-h-24"
-                  readOnly
+                  className="min-h-24"
                 />
               </div>
               
@@ -302,7 +310,7 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
                 ) : (
                   <>
                     <Plus className="mr-2 h-4 w-4" />
-                    Generate Hooks
+                    Generate Viral Hooks
                   </>
                 )}
               </Button>
