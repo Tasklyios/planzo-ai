@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,6 +9,7 @@ import { Wand2, Trash2 } from "lucide-react";
 import { Check } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 interface EditIdeaProps {
   ideaId: string | null;
@@ -39,9 +39,9 @@ const availableColors = [
 const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const [idea, setIdea] = useState<IdeaData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [generatingScript, setGeneratingScript] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (ideaId) fetchIdea();
@@ -78,13 +78,11 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     try {
       setDeleting(true);
       
-      // If on calendar page, we want to remove the scheduled_for date
-      // but keep the idea in the database
       const { error } = await supabase
         .from("video_ideas")
         .update({ 
           scheduled_for: null,
-          is_saved: window.location.pathname !== "/calendar" // Only mark as not saved if not on calendar
+          is_saved: window.location.pathname !== "/calendar"
         })
         .eq("id", idea.id);
 
@@ -109,13 +107,17 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     }
   };
 
+  const handleNavigateToScript = () => {
+    onClose();
+    navigate(`/script?idea=${idea?.id}`);
+  };
+
   const handleSave = async () => {
     if (!idea) return;
 
     try {
       console.log("Saving idea with status:", idea.status, "is_saved:", true);
       
-      // Ensure we preserve the status and set is_saved to true
       const { error } = await supabase
         .from("video_ideas")
         .update({
@@ -129,7 +131,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           hook_text: idea.hook_text,
           hook_category: idea.hook_category,
           scheduled_for: idea.scheduled_for,
-          is_saved: true, // Always save when editing
+          is_saved: true,
           status: idea.status || "ideas"
         })
         .eq("id", idea.id);
@@ -147,44 +149,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         title: "Error",
         description: error.message,
       });
-    }
-  };
-
-  const generateScript = async () => {
-    if (!idea) return;
-
-    setGeneratingScript(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-ideas', {
-        body: {
-          type: 'script',
-          title: idea.title,
-          description: idea.description,
-          platform: idea.platform,
-          tags: idea.tags,
-        },
-      });
-
-      if (error) throw error;
-
-      if (!data || !data.script) {
-        throw new Error('Failed to generate script');
-      }
-
-      setIdea({ ...idea, script: data.script });
-      
-      toast({
-        title: "Success",
-        description: "Script generated successfully",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    } finally {
-      setGeneratingScript(false);
     }
   };
 
@@ -324,17 +288,10 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={generateScript}
-                disabled={generatingScript}
+                onClick={handleNavigateToScript}
               >
-                {generatingScript ? (
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Wand2 className="w-4 h-4 mr-2" />
-                    Generate Script
-                  </>
-                )}
+                <Wand2 className="w-4 h-4 mr-2" />
+                Generate Script
               </Button>
             </div>
             <Textarea
