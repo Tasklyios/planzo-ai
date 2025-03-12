@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +60,7 @@ const HookSelector = ({ onSelectHook, selectedHook, topic: initialTopic = '', au
   const [generating, setGenerating] = useState(false);
   const [generatedHooks, setGeneratedHooks] = useState<HookType[]>([]);
   const [savingHookId, setSavingHookId] = useState<string | null>(null);
+  const [categoryTab, setCategoryTab] = useState('question');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -195,6 +197,298 @@ const HookSelector = ({ onSelectHook, selectedHook, topic: initialTopic = '', au
   const quality = getIdeaQualityIndicator(topic, details);
   const showQualityBadge = quality === "high" || quality === "medium";
 
+  // Render saved hooks category tabs
+  const renderSavedHooksTabs = () => (
+    <Tabs value={categoryTab} onValueChange={setCategoryTab} className="w-full flex-1 flex flex-col">
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="question">Question</TabsTrigger>
+        <TabsTrigger value="statistic">Statistic</TabsTrigger>
+        <TabsTrigger value="story">Story</TabsTrigger>
+        <TabsTrigger value="challenge">Challenge</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="question" className="flex-1 overflow-hidden">
+        <ScrollArea className="h-[calc(100vh-300px)]">
+          <div className="space-y-2 py-2">
+            {filterHooks('question', savedHooks).length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                {searchTerm ? 'No matching hooks found' : 'No question hooks saved'}
+              </p>
+            ) : (
+              filterHooks('question', savedHooks).map(hook => (
+                <Button
+                  key={hook.id}
+                  variant="ghost"
+                  className="w-full justify-start text-left p-3 h-auto"
+                  onClick={() => handleSelectHook(hook.hook_text)}
+                >
+                  {hook.hook_text}
+                </Button>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </TabsContent>
+      
+      <TabsContent value="statistic" className="flex-1 overflow-hidden">
+        <ScrollArea className="h-[calc(100vh-300px)]">
+          <div className="space-y-2 py-2">
+            {filterHooks('statistic', savedHooks).length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                {searchTerm ? 'No matching hooks found' : 'No statistic hooks saved'}
+              </p>
+            ) : (
+              filterHooks('statistic', savedHooks).map(hook => (
+                <Button
+                  key={hook.id}
+                  variant="ghost"
+                  className="w-full justify-start text-left p-3 h-auto"
+                  onClick={() => handleSelectHook(hook.hook_text)}
+                >
+                  {hook.hook_text}
+                </Button>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </TabsContent>
+      
+      <TabsContent value="story" className="flex-1 overflow-hidden">
+        <ScrollArea className="h-[calc(100vh-300px)]">
+          <div className="space-y-2 py-2">
+            {filterHooks('story', savedHooks).length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                {searchTerm ? 'No matching hooks found' : 'No story hooks saved'}
+              </p>
+            ) : (
+              filterHooks('story', savedHooks).map(hook => (
+                <Button
+                  key={hook.id}
+                  variant="ghost"
+                  className="w-full justify-start text-left p-3 h-auto"
+                  onClick={() => handleSelectHook(hook.hook_text)}
+                >
+                  {hook.hook_text}
+                </Button>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </TabsContent>
+      
+      <TabsContent value="challenge" className="flex-1 overflow-hidden">
+        <ScrollArea className="h-[calc(100vh-300px)]">
+          <div className="space-y-2 py-2">
+            {filterHooks('challenge', savedHooks).length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                {searchTerm ? 'No matching hooks found' : 'No challenge hooks saved'}
+              </p>
+            ) : (
+              filterHooks('challenge', savedHooks).map(hook => (
+                <Button
+                  key={hook.id}
+                  variant="ghost"
+                  className="w-full justify-start text-left p-3 h-auto"
+                  onClick={() => handleSelectHook(hook.hook_text)}
+                >
+                  {hook.hook_text}
+                </Button>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </TabsContent>
+    </Tabs>
+  );
+
+  // Render generated hooks category tabs
+  const renderGeneratedHooksTabs = () => (
+    <Tabs value={categoryTab} onValueChange={setCategoryTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="question">Question</TabsTrigger>
+        <TabsTrigger value="statistic">Statistic</TabsTrigger>
+        <TabsTrigger value="story">Story</TabsTrigger>
+        <TabsTrigger value="challenge">Challenge</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="question" className="overflow-visible">
+        <div className="space-y-2 py-2">
+          {filterHooks('question', generatedHooks).length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">
+              No question hooks generated
+            </p>
+          ) : (
+            filterHooks('question', generatedHooks).map((hook, index) => (
+              <div 
+                key={`generated-question-${index}`}
+                className="p-3 border rounded-md flex justify-between items-start"
+              >
+                <p className="flex-1">{hook.hook_text}</p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) || isHookSaved(hook.hook_text)}
+                    onClick={() => handleSaveHook(hook)}
+                    title={isHookSaved(hook.hook_text) ? "Already saved" : "Save hook"}
+                  >
+                    {saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Bookmark 
+                        className="h-4 w-4" 
+                        fill={isHookSaved(hook.hook_text) ? "currentColor" : "none"} 
+                      />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="px-2"
+                    onClick={() => handleSelectHook(hook.hook_text)}
+                  >
+                    Use
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="statistic" className="overflow-visible">
+        <div className="space-y-2 py-2">
+          {filterHooks('statistic', generatedHooks).length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">
+              No statistic hooks generated
+            </p>
+          ) : (
+            filterHooks('statistic', generatedHooks).map((hook, index) => (
+              <div 
+                key={`generated-statistic-${index}`}
+                className="p-3 border rounded-md flex justify-between items-start"
+              >
+                <p className="flex-1">{hook.hook_text}</p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) || isHookSaved(hook.hook_text)}
+                    onClick={() => handleSaveHook(hook)}
+                    title={isHookSaved(hook.hook_text) ? "Already saved" : "Save hook"}
+                  >
+                    {saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Bookmark 
+                        className="h-4 w-4" 
+                        fill={isHookSaved(hook.hook_text) ? "currentColor" : "none"} 
+                      />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="px-2"
+                    onClick={() => handleSelectHook(hook.hook_text)}
+                  >
+                    Use
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="story" className="overflow-visible">
+        <div className="space-y-2 py-2">
+          {filterHooks('story', generatedHooks).length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">
+              No story hooks generated
+            </p>
+          ) : (
+            filterHooks('story', generatedHooks).map((hook, index) => (
+              <div 
+                key={`generated-story-${index}`}
+                className="p-3 border rounded-md flex justify-between items-start"
+              >
+                <p className="flex-1">{hook.hook_text}</p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) || isHookSaved(hook.hook_text)}
+                    onClick={() => handleSaveHook(hook)}
+                    title={isHookSaved(hook.hook_text) ? "Already saved" : "Save hook"}
+                  >
+                    {saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Bookmark 
+                        className="h-4 w-4" 
+                        fill={isHookSaved(hook.hook_text) ? "currentColor" : "none"} 
+                      />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="px-2"
+                    onClick={() => handleSelectHook(hook.hook_text)}
+                  >
+                    Use
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="challenge" className="overflow-visible">
+        <div className="space-y-2 py-2">
+          {filterHooks('challenge', generatedHooks).length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">
+              No challenge hooks generated
+            </p>
+          ) : (
+            filterHooks('challenge', generatedHooks).map((hook, index) => (
+              <div 
+                key={`generated-challenge-${index}`}
+                className="p-3 border rounded-md flex justify-between items-start"
+              >
+                <p className="flex-1">{hook.hook_text}</p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) || isHookSaved(hook.hook_text)}
+                    onClick={() => handleSaveHook(hook)}
+                    title={isHookSaved(hook.hook_text) ? "Already saved" : "Save hook"}
+                  >
+                    {saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Bookmark 
+                        className="h-4 w-4" 
+                        fill={isHookSaved(hook.hook_text) ? "currentColor" : "none"} 
+                      />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="px-2"
+                    onClick={() => handleSelectHook(hook.hook_text)}
+                  >
+                    Use
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </TabsContent>
+    </Tabs>
+  );
+
   return (
     <Sheet open={open} onOpenChange={handleSheetOpen}>
       <SheetTrigger asChild>
@@ -225,198 +519,114 @@ const HookSelector = ({ onSelectHook, selectedHook, topic: initialTopic = '', au
                 <TabsTrigger value="saved">Saved Hooks</TabsTrigger>
                 <TabsTrigger value="generate">Generate New</TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="saved" className="mt-4 space-y-4">
+                <Input
+                  placeholder="Search hooks..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="mb-4"
+                />
+                
+                {isLoadingSavedHooks ? (
+                  <div className="flex justify-center p-4">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : !savedHooks || savedHooks.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground">No saved hooks found. Create some in the Hooks section or generate new ones.</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-2" 
+                      onClick={() => setActiveTab('generate')}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Generate New Hooks
+                    </Button>
+                  </div>
+                ) : (
+                  renderSavedHooksTabs()
+                )}
+              </TabsContent>
+              
+              <TabsContent value="generate" className="mt-4 space-y-4">
+                <ScrollArea className="h-[calc(100vh-200px)]">
+                  <div className="space-y-4 pr-4">
+                    {topic && (
+                      <Card className="border bg-accent/20">
+                        <CardContent className="p-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-medium line-clamp-2">{topic}</h3>
+                              {showQualityBadge && (
+                                <div className="flex items-center">
+                                  <Sparkles className="h-4 w-4 text-amber-500 mr-1" />
+                                  <span className="text-xs text-muted-foreground">
+                                    {quality === "high" ? "High Quality" : "Good"}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {details && (
+                              <p className="text-sm text-muted-foreground line-clamp-3">
+                                {details}
+                              </p>
+                            )}
+                            
+                            {audience && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <Tag className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">
+                                  {audience}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="customIdeas">Already have some ideas for hooks? Add them here!</Label>
+                      <Textarea 
+                        id="customIdeas" 
+                        value={customHookIdeas}
+                        onChange={(e) => setCustomHookIdeas(e.target.value)}
+                        className="min-h-24"
+                        placeholder="Enter any additional details or ideas that might help generate better hooks..."
+                      />
+                    </div>
+                    
+                    <Button
+                      onClick={handleGenerateHooks}
+                      disabled={generating || !topic.trim()}
+                      className="w-full"
+                    >
+                      {generating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Generate Viral Hooks
+                        </>
+                      )}
+                    </Button>
+                    
+                    {generatedHooks.length > 0 && (
+                      <div className="mt-6 space-y-4 pb-6">
+                        <h3 className="font-medium">Generated Hooks</h3>
+                        {renderGeneratedHooksTabs()}
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
             </Tabs>
           </div>
-
-          <ScrollArea className="flex-1 px-6">
-            <TabsContent value="saved" className="mt-4 space-y-4">
-              <Input
-                placeholder="Search hooks..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="mb-4"
-              />
-              
-              {isLoadingSavedHooks ? (
-                <div className="flex justify-center p-4">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-              ) : !savedHooks || savedHooks.length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground">No saved hooks found. Create some in the Hooks section or generate new ones.</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-2" 
-                    onClick={() => setActiveTab('generate')}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Generate New Hooks
-                  </Button>
-                </div>
-              ) : (
-                <Tabs defaultValue="question" className="w-full flex-1 flex flex-col">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="question">Question</TabsTrigger>
-                    <TabsTrigger value="statistic">Statistic</TabsTrigger>
-                    <TabsTrigger value="story">Story</TabsTrigger>
-                    <TabsTrigger value="challenge">Challenge</TabsTrigger>
-                  </TabsList>
-                  
-                  {['question', 'statistic', 'story', 'challenge'].map(category => (
-                    <TabsContent key={category} value={category} className="flex-1 overflow-hidden">
-                      <ScrollArea className="h-[calc(100vh-300px)]">
-                        <div className="space-y-2 py-2">
-                          {filterHooks(category, savedHooks).length === 0 ? (
-                            <p className="text-center text-muted-foreground py-4">
-                              {searchTerm ? 'No matching hooks found' : `No ${category} hooks saved`}
-                            </p>
-                          ) : (
-                            filterHooks(category, savedHooks).map(hook => (
-                              <Button
-                                key={hook.id}
-                                variant="ghost"
-                                className="w-full justify-start text-left p-3 h-auto"
-                                onClick={() => handleSelectHook(hook.hook_text)}
-                              >
-                                {hook.hook_text}
-                              </Button>
-                            ))
-                          )}
-                        </div>
-                      </ScrollArea>
-                    </TabsContent>
-                  ))}
-                </Tabs>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="generate" className="mt-4 space-y-4">
-              {topic && (
-                <Card className="border bg-accent/20">
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-medium line-clamp-2">{topic}</h3>
-                        {showQualityBadge && (
-                          <div className="flex items-center">
-                            <Sparkles className="h-4 w-4 text-amber-500 mr-1" />
-                            <span className="text-xs text-muted-foreground">
-                              {quality === "high" ? "High Quality" : "Good"}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {details && (
-                        <p className="text-sm text-muted-foreground line-clamp-3">
-                          {details}
-                        </p>
-                      )}
-                      
-                      {audience && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <Tag className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">
-                            {audience}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="customIdeas">Already have some ideas for hooks? Add them here!</Label>
-                <Textarea 
-                  id="customIdeas" 
-                  value={customHookIdeas}
-                  onChange={(e) => setCustomHookIdeas(e.target.value)}
-                  className="min-h-24"
-                  placeholder="Enter any additional details or ideas that might help generate better hooks..."
-                />
-              </div>
-              
-              <Button
-                onClick={handleGenerateHooks}
-                disabled={generating || !topic.trim()}
-                className="w-full"
-              >
-                {generating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Generate Viral Hooks
-                  </>
-                )}
-              </Button>
-              
-              {generatedHooks.length > 0 && (
-                <div className="mt-6 space-y-4 pb-6">
-                  <h3 className="font-medium">Generated Hooks</h3>
-                  
-                  <Tabs defaultValue="question" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="question">Question</TabsTrigger>
-                      <TabsTrigger value="statistic">Statistic</TabsTrigger>
-                      <TabsTrigger value="story">Story</TabsTrigger>
-                      <TabsTrigger value="challenge">Challenge</TabsTrigger>
-                    </TabsList>
-                    
-                    {['question', 'statistic', 'story', 'challenge'].map(category => (
-                      <TabsContent key={category} value={category} className="overflow-visible">
-                        <div className="space-y-2 py-2">
-                          {filterHooks(category, generatedHooks).length === 0 ? (
-                            <p className="text-center text-muted-foreground py-4">
-                              No {category} hooks generated
-                            </p>
-                          ) : (
-                            filterHooks(category, generatedHooks).map((hook, index) => (
-                              <div 
-                                key={`generated-${category}-${index}`}
-                                className="p-3 border rounded-md flex justify-between items-start"
-                              >
-                                <p className="flex-1">{hook.hook_text}</p>
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    disabled={saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) || isHookSaved(hook.hook_text)}
-                                    onClick={() => handleSaveHook(hook)}
-                                    title={isHookSaved(hook.hook_text) ? "Already saved" : "Save hook"}
-                                  >
-                                    {saveHookMutation.isPending && savingHookId === (hook.id || hook.hook_text) ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Bookmark 
-                                        className="h-4 w-4" 
-                                        fill={isHookSaved(hook.hook_text) ? "currentColor" : "none"} 
-                                      />
-                                    )}
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    className="px-2"
-                                    onClick={() => handleSelectHook(hook.hook_text)}
-                                  >
-                                    Use
-                                  </Button>
-                                </div>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                </div>
-              )}
-            </TabsContent>
-          </ScrollArea>
         </div>
       </SheetContent>
     </Sheet>
