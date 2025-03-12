@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,27 +28,21 @@ const Script = () => {
   const WORDS_PER_MINUTE = 150;
   const { toast } = useToast();
 
-  // Handle automatic conversion between seconds and minutes
   useEffect(() => {
     if (durationUnit === "seconds" && duration.includes('.')) {
-      // Convert decimal minutes to seconds
       setDuration(Math.round(parseFloat(duration) * 60).toString());
     } else if (durationUnit === "minutes" && !duration.includes('.')) {
-      // Convert whole seconds to minutes
       setDuration((parseInt(duration) / 60).toString());
     }
   }, [durationUnit]);
 
-  // Handle duration unit change with conversion
   const handleDurationUnitChange = (newUnit: string) => {
     if (newUnit === durationUnit) return;
     
     if (newUnit === "minutes" && durationUnit === "seconds") {
-      // Convert seconds to minutes
       const minutes = (parseInt(duration) / 60).toFixed(2);
       setDuration(parseFloat(minutes).toString());
     } else if (newUnit === "seconds" && durationUnit === "minutes") {
-      // Convert minutes to seconds
       const seconds = Math.round(parseFloat(duration) * 60);
       setDuration(seconds.toString());
     }
@@ -410,7 +403,13 @@ const Script = () => {
                 <div className="flex justify-between items-center">
                   <Label>Add a Hook (Optional)</Label>
                 </div>
-                <HookSelector onSelectHook={handleSelectHook} selectedHook={selectedHook} />
+                <HookSelector 
+                  onSelectHook={handleSelectHook} 
+                  selectedHook={selectedHook}
+                  topic={useSavedIdea ? savedIdea?.title : title}
+                  audience=""
+                  details={useSavedIdea ? savedIdea?.description : description}
+                />
                 
                 {selectedHook && (
                   <div className="mt-2 p-3 bg-muted rounded-md">

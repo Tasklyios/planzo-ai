@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -24,19 +23,15 @@ interface HookSelectorProps {
   selectedHook?: string;
 }
 
-// Helper function to normalize hook data structure
 const normalizeHook = (hook: any): HookType => {
-  // Normalize the category to lowercase and handle special cases
   let category = hook.category?.toLowerCase() || '';
   
-  // Map special categories to our four standard categories
   if (category === 'benefit' || category === 'problem-solution' || category === 'controversial') {
-    category = 'challenge'; // Map additional categories to challenge
+    category = 'challenge';
   }
   
-  // Ensure it's one of our four supported categories
   if (!['question', 'statistic', 'story', 'challenge'].includes(category)) {
-    category = 'question'; // Default to question for unknown categories
+    category = 'question';
   }
   
   return {
@@ -59,8 +54,7 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
   const [savingHookId, setSavingHookId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Fetch saved hooks
+
   const { 
     data: savedHooksRaw, 
     isLoading: isLoadingSavedHooks,
@@ -70,7 +64,6 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
     queryFn: getSavedHooks,
   });
 
-  // Save hook mutation
   const saveHookMutation = useMutation({
     mutationFn: saveHook,
     onSuccess: () => {
@@ -91,10 +84,8 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
     },
   });
 
-  // Normalize saved hooks to match HookType
   const savedHooks = savedHooksRaw ? savedHooksRaw.map(normalizeHook) : [];
 
-  // Clear generated hooks when the sheet is closed
   useEffect(() => {
     if (!open) {
       setGeneratedHooks([]);
@@ -122,7 +113,6 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
     saveHookMutation.mutate(hook);
   };
 
-  // Check if a hook is already saved
   const isHookSaved = (hookText: string): boolean => {
     return savedHooks.some(savedHook => savedHook.hook_text === hookText);
   };
@@ -141,12 +131,11 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
     try {
       const generatedRawHooks = await generateHooks(topic, audience, details);
       
-      // Normalize the generated hooks to match HookType and correctly map categories
       const normalizedHooks = generatedRawHooks.map(normalizeHook);
       console.log("Normalized hooks with corrected categories:", normalizedHooks);
       
       setGeneratedHooks(normalizedHooks);
-      setActiveTab('generate'); // Switch to the generate tab to show the results
+      setActiveTab('generate');
       
       toast({
         title: "Hooks generated",
@@ -164,8 +153,23 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
     }
   };
 
+  const handleSheetOpen = (isOpen: boolean) => {
+    setOpen(isOpen);
+    
+    if (isOpen) {
+      setActiveTab('generate');
+      
+      if (topic && audience && details) {
+        handleGenerateHooks();
+      }
+    } else {
+      setGeneratedHooks([]);
+      setActiveTab('saved');
+    }
+  };
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={handleSheetOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" className="w-full">
           <Anchor className="mr-2 h-4 w-4" />
@@ -256,9 +260,10 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
                 <Label htmlFor="topic">Topic</Label>
                 <Input 
                   id="topic" 
-                  placeholder="e.g., Meditation, Cryptocurrency, Fitness" 
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
+                  className="bg-muted"
+                  readOnly
                 />
               </div>
               
@@ -266,19 +271,21 @@ const HookSelector = ({ onSelectHook, selectedHook }: HookSelectorProps) => {
                 <Label htmlFor="audience">Target Audience</Label>
                 <Input 
                   id="audience" 
-                  placeholder="e.g., Beginners, Investors, Working professionals" 
                   value={audience}
                   onChange={(e) => setAudience(e.target.value)}
+                  className="bg-muted"
+                  readOnly
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="details">Additional Details (Optional)</Label>
+                <Label htmlFor="details">Additional Details</Label>
                 <Textarea 
                   id="details" 
-                  placeholder="Any specific requirements or context for your hooks"
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
+                  className="bg-muted min-h-24"
+                  readOnly
                 />
               </div>
               
