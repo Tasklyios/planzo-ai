@@ -124,7 +124,6 @@ const Hooks = () => {
   };
 
   const handleSaveHook = (hook: HookType) => {
-    saveHookMutation.mutate(hook);
     setGeneratedHooks(prevHooks => 
       prevHooks.map(h => 
         h.hook_text === hook.hook_text 
@@ -132,6 +131,8 @@ const Hooks = () => {
           : h
       )
     );
+    
+    saveHookMutation.mutate(hook);
   };
 
   const handleDeleteHook = (id: string) => {

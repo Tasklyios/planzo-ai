@@ -117,10 +117,10 @@ const GeneratedHooksGrid = ({
 
   return (
     <div className="mt-8">
-      <div className="flex items-center mb-4">
-        <h2 className="text-2xl font-bold mr-4">Generated Hooks</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center mb-4 gap-2">
+        <h2 className="text-2xl font-bold">Generated Hooks</h2>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 sm:ml-4">
           <Badge variant="outline" className="bg-primary/10">
             {totalHooks} hooks created
           </Badge>
