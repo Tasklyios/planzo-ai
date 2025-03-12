@@ -12,6 +12,7 @@ export interface ToastProps {
   description?: React.ReactNode;
   action?: ToastActionElement;
   variant?: "default" | "destructive";
+  duration?: number;
 }
 
 interface ToastState {
@@ -80,7 +81,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   // Add toast function directly to context value
   const toast = React.useCallback((props: Omit<ToastProps, "id">) => {
-    addToast(props);
+    // Set default duration to 3000ms if not specified
+    const toastWithDefaults = {
+      ...props,
+      duration: props.duration ?? 3000,
+    };
+    addToast(toastWithDefaults);
   }, [addToast]);
 
   const value = React.useMemo(
@@ -127,15 +133,15 @@ toastFunction.destructive = (props: Omit<ToastProps, "id" | "variant">) => {
 };
 
 toastFunction.success = (description: string, title?: string) => {
-  toastFunction({ title: title || "Success", description, variant: "default" });
+  toastFunction({ title: title || "Success", description, variant: "default", duration: 3000 });
 };
 
 toastFunction.error = (description: string, title?: string) => {
-  toastFunction({ title: title || "Error", description, variant: "destructive" });
+  toastFunction({ title: title || "Error", description, variant: "destructive", duration: 3000 });
 };
 
 toastFunction.info = (description: string, title?: string) => {
-  toastFunction({ title: title || "Info", description, variant: "default" });
+  toastFunction({ title: title || "Info", description, variant: "default", duration: 3000 });
 };
 
 export const toast = toastFunction;
