@@ -50,6 +50,11 @@ const Hooks = () => {
         title: "Failed to save hook",
         description: error.message,
       });
+      setGeneratedHooks(prevHooks => 
+        prevHooks.map(h => 
+          h.is_saved ? { ...h, is_saved: false } : h
+        )
+      );
     },
   });
 
@@ -99,7 +104,11 @@ const Hooks = () => {
         details;
       
       const hooks = await generateHooks(topicToUse, audience, detailsToUse, selectedHookTypes);
-      setGeneratedHooks(hooks);
+      const hooksWithSavedState = hooks.map(hook => ({
+        ...hook,
+        is_saved: false
+      }));
+      setGeneratedHooks(hooksWithSavedState);
     } catch (error: any) {
       console.error("Failed to generate hooks:", error);
       setError(error.message || "Failed to generate hooks");
@@ -127,7 +136,7 @@ const Hooks = () => {
     setGeneratedHooks(prevHooks => 
       prevHooks.map(h => 
         h.hook_text === hook.hook_text 
-          ? { ...h, id: 'temp-id-' + Date.now() }
+          ? { ...h, is_saved: true }
           : h
       )
     );

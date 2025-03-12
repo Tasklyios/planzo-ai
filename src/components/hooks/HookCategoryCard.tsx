@@ -36,9 +36,10 @@ const HookCategoryCard = ({
     );
   }
 
+  // Check if a hook is saved by looking for the 'is_saved' property
   const isHookSaved = (hook: HookType | SavedHook): boolean => {
-    // Consider a hook saved if it has an id property
-    return 'id' in hook;
+    if ('is_saved' in hook) return hook.is_saved === true;
+    return false;
   };
 
   const getHookId = (hook: HookType | SavedHook): string => {
@@ -58,7 +59,7 @@ const HookCategoryCard = ({
             <div className="flex-shrink-0">
               <BookmarkIcon 
                 className={`h-4 w-4 cursor-pointer ${isHookSaved(hook) ? "text-primary fill-primary" : "text-muted-foreground hover:text-primary transition-colors"}`}
-                onClick={() => !isHookSaved(hook) && 'hook_text' in hook ? onSaveHook(hook as HookType) : null}
+                onClick={() => 'hook_text' in hook ? onSaveHook(hook as HookType) : null}
                 aria-label={isHookSaved(hook) ? "Already saved" : "Save hook"}
               />
             </div>
