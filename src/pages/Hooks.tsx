@@ -245,6 +245,7 @@ const Hooks = () => {
             isSaving={saveHookMutation.isPending}
             filterHooksByCategory={filterHooksByCategory}
             getHookText={getHookText}
+            selectedHookTypes={selectedHookTypes}
           />
         </TabsContent>
 
