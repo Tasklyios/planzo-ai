@@ -10,7 +10,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Anchor, Bookmark, Loader2, Plus } from "lucide-react";
+import { Anchor, Bookmark, Loader2, Plus, Tag, Sparkles } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSavedHooks, generateHooks, saveHook } from '@/services/hookService';
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { HookType } from '@/types/hooks';
 import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface HookSelectorProps {
   onSelectHook: (hookText: string) => void;
@@ -53,6 +55,7 @@ const HookSelector = ({ onSelectHook, selectedHook, topic: initialTopic = '', au
   const [topic, setTopic] = useState(initialTopic);
   const [audience, setAudience] = useState(initialAudience);
   const [details, setDetails] = useState(initialDetails);
+  const [customHookIdeas, setCustomHookIdeas] = useState('');
   const [generating, setGenerating] = useState(false);
   const [generatedHooks, setGeneratedHooks] = useState<HookType[]>([]);
   const [savingHookId, setSavingHookId] = useState<string | null>(null);
@@ -140,7 +143,7 @@ const HookSelector = ({ onSelectHook, selectedHook, topic: initialTopic = '', au
 
     setGenerating(true);
     try {
-      const generatedRawHooks = await generateHooks(topic, audience, details);
+      const generatedRawHooks = await generateHooks(topic, audience, details || customHookIdeas);
       
       const normalizedHooks = generatedRawHooks.map(normalizeHook);
       console.log("Normalized hooks with corrected categories:", normalizedHooks);
@@ -178,6 +181,21 @@ const HookSelector = ({ onSelectHook, selectedHook, topic: initialTopic = '', au
       setActiveTab('saved');
     }
   };
+
+  // Get quality indicator for idea
+  const getIdeaQualityIndicator = (title: string, description: string) => {
+    const hasRichDetails = description && description.length > 80;
+    const hasCreativeTitle = title && title.length > 15;
+    
+    let qualityScore = 0;
+    if (hasRichDetails) qualityScore += 2;
+    if (hasCreativeTitle) qualityScore += 2;
+    
+    return qualityScore >= 3 ? "high" : qualityScore >= 2 ? "medium" : "standard";
+  };
+
+  const quality = getIdeaQualityIndicator(topic, details);
+  const showQualityBadge = quality === "high" || quality === "medium";
 
   return (
     <Sheet open={open} onOpenChange={handleSheetOpen}>
@@ -267,33 +285,50 @@ const HookSelector = ({ onSelectHook, selectedHook, topic: initialTopic = '', au
           
           <TabsContent value="generate" className="mt-4 space-y-4">
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="topic">Topic</Label>
-                <Input 
-                  id="topic" 
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  className="bg-muted"
-                  readOnly={!!initialTopic}
-                />
-              </div>
+              {/* Display the idea in a card format */}
+              {topic && (
+                <Card className="border bg-accent/20">
+                  <CardContent className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium line-clamp-2">{topic}</h3>
+                        {showQualityBadge && (
+                          <div className="flex items-center">
+                            <Sparkles className="h-4 w-4 text-amber-500 mr-1" />
+                            <span className="text-xs text-muted-foreground">
+                              {quality === "high" ? "High Quality" : "Good"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {details && (
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {details}
+                        </p>
+                      )}
+                      
+                      {audience && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Tag className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">
+                            {audience}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               
               <div className="space-y-2">
-                <Label htmlFor="audience">Target Audience</Label>
-                <Input 
-                  id="audience" 
-                  value={audience}
-                  onChange={(e) => setAudience(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="details">Additional Details</Label>
+                <Label htmlFor="customIdeas">Already have some ideas for hooks? Add them here!</Label>
                 <Textarea 
-                  id="details" 
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
+                  id="customIdeas" 
+                  value={customHookIdeas}
+                  onChange={(e) => setCustomHookIdeas(e.target.value)}
                   className="min-h-24"
+                  placeholder="Enter any additional details or ideas that might help generate better hooks..."
                 />
               </div>
               
