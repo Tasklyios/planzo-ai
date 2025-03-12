@@ -46,17 +46,17 @@ serve(async (req) => {
 
     console.log('Creating checkout session with price ID:', priceId);
 
-    // Create Checkout Session - now with allow_promotion_codes set to true
+    // Create Checkout Session with absolute URL and success/cancel handling
     const session = await stripe.checkout.sessions.create({
       line_items: [{
         price: priceId,
         quantity: 1,
       }],
       mode: 'subscription',
-      success_url: returnUrl,
-      cancel_url: returnUrl,
+      success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}&success=true`,
+      cancel_url: `${returnUrl}?canceled=true`,
       client_reference_id: userId,
-      allow_promotion_codes: true, // Enable promotional codes
+      allow_promotion_codes: true,
     });
 
     console.log('Checkout session created:', session.url);

@@ -1,7 +1,6 @@
 
-# Redirect from netlify domain to primary domain
+# Redirect from netlify domain to primary domain (preserve query params)
 https://planzo.netlify.app/* https://planzoai.com/:splat 301!
 
 # Handle client-side routing
 /* /index.html 200
-
