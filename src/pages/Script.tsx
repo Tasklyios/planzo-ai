@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, RefreshCw, Undo2, Save, HelpCircle, Timer } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { Switch } from "@/components/ui/switch";
 import VideoIdeaSelector from "@/components/script/VideoIdeaSelector";
 import HookSelector from "@/components/script/HookSelector";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,11 +53,9 @@ const Script = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user.id;
 
-      // Use the actual video idea title and description if using a saved idea
       const scriptTitle = useSavedIdea ? savedIdea.title : title;
       const scriptDescription = useSavedIdea ? savedIdea.description : description;
 
-      // Calculate target duration in minutes for the API
       let targetDurationInMinutes;
       if (durationUnit === "seconds") {
         targetDurationInMinutes = (parseInt(duration) / 60).toFixed(2);
@@ -64,7 +63,6 @@ const Script = () => {
         targetDurationInMinutes = duration;
       }
       
-      // Create a range around the target duration (±10%)
       const minDuration = (parseFloat(targetDurationInMinutes) * 0.9).toFixed(2);
       const maxDuration = (parseFloat(targetDurationInMinutes) * 1.1).toFixed(2);
       const targetDurationRange = `${minDuration}-${maxDuration}`;
@@ -172,7 +170,6 @@ const Script = () => {
         .from("video_ideas")
         .update({ 
           script: script,
-          // Make sure the idea remains saved when updating
           is_saved: true 
         })
         .eq("id", savedIdea.id);
@@ -181,7 +178,6 @@ const Script = () => {
         throw error;
       }
 
-      // Update the local savedIdea object to reflect the change
       setSavedIdea({
         ...savedIdea,
         script: script
@@ -209,7 +205,6 @@ const Script = () => {
 
   const handleSelectIdea = (idea: any) => {
     setSavedIdea(idea);
-    // If they select an idea, automatically switch to saved idea mode
     setUseSavedIdea(true);
   };
 
@@ -217,7 +212,6 @@ const Script = () => {
     setScript("");
   };
 
-  // Calculate the approximate word count based on duration and speaking rate
   const calculateWordCount = () => {
     const durationInMinutes = durationUnit === "seconds" 
       ? parseInt(duration) / 60 
@@ -257,7 +251,6 @@ const Script = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: Video Details */}
         <div className="space-y-6">
           <Card>
             <CardContent className="pt-6 space-y-4">
@@ -312,7 +305,6 @@ const Script = () => {
           </Card>
         </div>
 
-        {/* Right Column: Content Style & Duration */}
         <div className="space-y-6">
           <Card>
             <CardContent className="pt-6 space-y-4">
@@ -452,7 +444,6 @@ const Script = () => {
         </div>
       </div>
 
-      {/* Script Output Section */}
       {script && (
         <Card className="mt-8">
           <CardContent className="pt-6">
