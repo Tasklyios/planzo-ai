@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { LayersIcon, Users, Video, Smartphone, Package2, Building2, ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,7 +97,6 @@ const InputForm = ({
             setNiche(profile.business_niche || "");
           }
           
-          // Don't automatically set videoType from contentNiche
           if (!videoType && profile.content_niche) {
             setVideoType("");
           }
@@ -148,8 +146,7 @@ const InputForm = ({
       setNiche(newValue);
     }
     
-    // Remove this line to prevent auto-filling videoType with contentNiche
-    // setVideoType(newValue);
+    setVideoType(newValue);
   };
 
   const handleProductNicheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -231,7 +228,7 @@ const InputForm = ({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <HelpCircle className="text-muted-foreground w-3 h-3 cursor-pointer hover:text-primary transition-colors" />
+                        <HelpCircle className="text-primary w-4 h-4 cursor-pointer hover:text-primary/80 transition-colors" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-[260px] p-3 bg-card border shadow-md text-foreground">
                         <p className="text-xs">Specify the type of video you want to create, e.g., "tutorial", "product review", "storytime", "behind-the-scenes", etc. This helps generate more targeted content ideas.</p>
@@ -294,7 +291,7 @@ const InputForm = ({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <HelpCircle className="text-muted-foreground w-3 h-3 cursor-pointer hover:text-primary transition-colors" />
+                        <HelpCircle className="text-primary w-4 h-4 cursor-pointer hover:text-primary/80 transition-colors" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-[260px] p-3 bg-card border shadow-md text-foreground">
                         <p className="text-xs">Specify the type of video you want to create, e.g., "product showcase", "how-to", "customer testimonial", etc. This helps generate more targeted content ideas for your e-commerce brand.</p>
@@ -357,7 +354,7 @@ const InputForm = ({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <HelpCircle className="text-muted-foreground w-3 h-3 cursor-pointer hover:text-primary transition-colors" />
+                        <HelpCircle className="text-primary w-4 h-4 cursor-pointer hover:text-primary/80 transition-colors" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-[260px] p-3 bg-card border shadow-md text-foreground">
                         <p className="text-xs">Specify the type of video you want to create, e.g., "explainer", "case study", "thought leadership", etc. This helps generate more targeted content ideas for your business.</p>
