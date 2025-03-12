@@ -148,7 +148,7 @@ Each idea MUST follow this exact format:
         "Authorization": `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4o-mini", // Updated to use the faster, more cost-effective model
         messages: [
           { 
             role: "system", 
@@ -159,8 +159,8 @@ Each idea MUST follow this exact format:
             content: userPrompt 
           }
         ],
-        temperature: 0.85, // Slightly lower temperature for more factual content
-        max_tokens: 1500,  // Increased token limit for more detailed ideas
+        temperature: 0.85,
+        max_tokens: 1500,
         top_p: 0.95,
         frequency_penalty: 0.5, 
         presence_penalty: 0.5  
