@@ -2,17 +2,25 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getSavedHooks, deleteSavedHook } from "@/services/hookService";
-import { SavedHook } from "@/types/hooks";
+import { SavedHook, HookType } from "@/types/hooks";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bookmark, Copy, Loader2, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SavedHooksView from "@/components/hooks/SavedHooksView";
+import VideoIdeaSelector from "@/components/script/VideoIdeaSelector";
+import ApplyHookToIdea from "@/components/hooks/ApplyHookToIdea";
+import { GeneratedIdea } from "@/types/idea";
+import { Badge } from "@/components/ui/badge";
 
 const SavedHooks = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<string>("view");
+  const [selectedIdea, setSelectedIdea] = useState<GeneratedIdea | null>(null);
+  const [selectedHook, setSelectedHook] = useState<HookType | null>(null);
   
   // Fetch saved hooks
   const { data: savedHooks, isLoading } = useQuery({
@@ -64,11 +72,44 @@ const SavedHooks = () => {
     return savedHooks.filter(hook => hook.category === activeCategory);
   };
 
+  // Filter hooks by category for SavedHooksView
+  const filterHooksByCategory = (hooks: any[], category: string): any[] => {
+    if (!hooks) return [];
+    
+    return hooks.filter(hook => {
+      const hookCategory = 'category' in hook ? hook.category : '';
+      return hookCategory.toLowerCase() === category.toLowerCase();
+    });
+  };
+
+  // Get hook text based on hook type
+  const getHookText = (hook: any): string => {
+    if ('hook_text' in hook) return hook.hook_text;
+    if ('hook' in hook) return hook.hook;
+    return '';
+  };
+
   // Get unique categories from hooks
   const getCategories = (): string[] => {
     if (!savedHooks) return [];
     const categories = savedHooks.map(hook => hook.category);
     return [...new Set(categories)];
+  };
+
+  const handleSelectIdea = (idea: GeneratedIdea) => {
+    setSelectedIdea(idea);
+  };
+
+  const handleSelectHook = (hook: any) => {
+    // Convert SavedHook to HookType if needed
+    const hookToSelect: HookType = {
+      id: 'id' in hook ? hook.id : '',
+      category: 'category' in hook ? hook.category : '',
+      hook_text: getHookText(hook),
+      created_at: 'created_at' in hook ? hook.created_at : '',
+    };
+    
+    setSelectedHook(hookToSelect);
   };
 
   const filteredHooks = getFilteredHooks();
@@ -81,86 +122,161 @@ const SavedHooks = () => {
         <p className="text-muted-foreground">Manage your collection of saved hooks for scripts</p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3 sm:pb-4">
-          <CardTitle>Your Saved Hooks</CardTitle>
-          <CardDescription>
-            Use these hooks in your scripts or copy them for other content
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : !savedHooks || savedHooks.length === 0 ? (
-            <div className="text-center py-8">
-              <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium">No saved hooks yet</h3>
-              <p className="text-muted-foreground mt-2">
-                Head over to the Hook Generator to create and save some hooks
-              </p>
-              <Button 
-                className="mt-4" 
-                variant="default" 
-                onClick={() => window.location.href = '/hooks'}
-              >
-                Go to Hook Generator
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-                <div className="overflow-x-auto pb-2">
-                  <TabsList className="mb-4 flex">
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    {categories.map(category => (
-                      <TabsTrigger key={category} value={category} className="capitalize">
-                        {category}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
+      <Tabs defaultValue="view" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="view">View Hooks</TabsTrigger>
+          <TabsTrigger value="apply">Apply to Ideas</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="view">
+          <Card>
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle>Your Saved Hooks</CardTitle>
+              <CardDescription>
+                Use these hooks in your scripts or copy them for other content
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
+              ) : !savedHooks || savedHooks.length === 0 ? (
+                <div className="text-center py-8">
+                  <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium">No saved hooks yet</h3>
+                  <p className="text-muted-foreground mt-2">
+                    Head over to the Hook Generator to create and save some hooks
+                  </p>
+                  <Button 
+                    className="mt-4" 
+                    variant="default" 
+                    onClick={() => window.location.href = '/hooks'}
+                  >
+                    Go to Hook Generator
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory} className="w-full">
+                    <div className="overflow-x-auto pb-2">
+                      <TabsList className="mb-4 flex">
+                        <TabsTrigger value="all">All</TabsTrigger>
+                        {categories.map(category => (
+                          <TabsTrigger key={category} value={category} className="capitalize">
+                            {category}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </div>
 
-                <TabsContent value={activeCategory} className="mt-0">
-                  <div className="grid gap-3">
-                    {filteredHooks.map((hook: SavedHook) => (
-                      <div 
-                        key={hook.id} 
-                        className="p-3 sm:p-4 border rounded-md flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4"
-                      >
-                        <div>
-                          <p className="text-sm font-medium mb-1 capitalize">{hook.category} Hook</p>
-                          <p className="text-sm sm:text-base">{hook.hook}</p>
-                        </div>
-                        <div className="flex gap-2 shrink-0 self-end sm:self-start">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => copyToClipboard(hook.hook)}
-                            title="Copy to clipboard"
+                    <TabsContent value={activeCategory} className="mt-0">
+                      <div className="grid gap-3">
+                        {filteredHooks.map((hook: SavedHook) => (
+                          <div 
+                            key={hook.id} 
+                            className="p-3 sm:p-4 border rounded-md flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4"
                           >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => deleteHookMutation.mutate(hook.id)}
-                            disabled={deleteHookMutation.isPending}
-                            title="Delete hook"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                            <div className="flex-1 break-words whitespace-pre-wrap">
+                              <p className="text-sm font-medium mb-1 capitalize">{hook.category} Hook</p>
+                              <p className="text-sm sm:text-base">{hook.hook}</p>
+                            </div>
+                            <div className="flex gap-2 shrink-0 self-end sm:self-start">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => copyToClipboard(hook.hook)}
+                                title="Copy to clipboard"
+                                className="h-8 w-8 flex items-center justify-center"
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => deleteHookMutation.mutate(hook.id)}
+                                disabled={deleteHookMutation.isPending}
+                                title="Delete hook"
+                                className="h-8 w-8 flex items-center justify-center"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="apply">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Select a Hook</CardTitle>
+                  <CardDescription>Choose a hook to apply to your idea</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SavedHooksView 
+                    savedHooks={savedHooks}
+                    isFetchingHooks={isLoading}
+                    handleDeleteHook={(id) => deleteHookMutation.mutate(id)}
+                    isDeleting={deleteHookMutation.isPending}
+                    filterHooksByCategory={filterHooksByCategory}
+                    getHookText={getHookText}
+                  />
+                </CardContent>
+              </Card>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Apply Hook to Idea</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <VideoIdeaSelector onSelectIdea={handleSelectIdea} />
+                  
+                  {selectedIdea && (
+                    <div className="mt-4 space-y-2">
+                      <Badge>{selectedIdea.category}</Badge>
+                      <h3 className="font-medium">{selectedIdea.title}</h3>
+                      <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap">
+                        {selectedIdea.description.substring(0, 100)}
+                        {selectedIdea.description.length > 100 ? '...' : ''}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {selectedHook && (
+                    <div className="mt-4 space-y-2">
+                      <h3 className="font-medium">Selected Hook</h3>
+                      <div className="p-3 border rounded-md bg-secondary/20">
+                        <p className="break-words whitespace-pre-wrap">{selectedHook.hook_text}</p>
+                        <Badge variant="outline" className="mt-2">
+                          {selectedHook.category}
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {selectedIdea && selectedHook && (
+                    <ApplyHookToIdea 
+                      idea={selectedIdea} 
+                      hook={selectedHook} 
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
