@@ -1,14 +1,14 @@
 
 import EmailTemplateViewer from "@/components/email-templates/EmailTemplateViewer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CircleInfo as InfoCircleIcon } from "lucide-react";
+import { Info } from "lucide-react";
 
 const EmailTemplates = () => {
   return (
     <div className="container py-8 space-y-6">
       <h1 className="text-3xl font-bold">Email Templates</h1>
       <Alert>
-        <InfoCircleIcon className="h-4 w-4" />
+        <Info className="h-4 w-4" />
         <AlertTitle>Important Information</AlertTitle>
         <AlertDescription>
           These email templates use the PlanzoAI branding and are designed to be used with Supabase Auth. 
