@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const contentNiches = [
   "Education",
-  "Entertainment",
+  "Entertainment", 
   "Lifestyle",
   "Technology",
   "Fashion & Beauty",
@@ -208,6 +208,25 @@ const Account = () => {
     } catch (error) {
       console.error("Error signing out:", error);
     }
+  };
+
+  const fetchSubscription = async () => {
+    const { data: subscriptionData, error: subscriptionError } = await supabase
+      .from("user_subscriptions")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+      
+    if (subscriptionError && subscriptionError.code !== "PGRST116") {
+      throw subscriptionError;
+    }
+    
+    setSubscription(subscriptionData || { tier: "free" });
+  };
+
+  const handleSubscriptionLinked = () => {
+    fetchSubscription();
+    setShowLinkDialog(false);
   };
 
   if (!user && !isLoading) {
@@ -643,7 +662,7 @@ const Account = () => {
       
       {showLinkDialog && (
         <LinkSubscriptionDialog 
-          onOpenChange={setShowLinkDialog} 
+          onSuccess={handleSubscriptionLinked} 
         />
       )}
     </div>
