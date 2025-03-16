@@ -24,10 +24,11 @@ interface SidebarItemProps {
   label: string;
   href: string;
   active?: boolean;
+  onClick?: () => void;
 }
 
-const SidebarItem = ({ icon, label, href, active }: SidebarItemProps) => (
-  <Link to={href} className="w-full">
+const SidebarItem = ({ icon, label, href, active, onClick }: SidebarItemProps) => (
+  <Link to={href} className="w-full" onClick={onClick}>
     <Button 
       variant="ghost" 
       className={cn(
@@ -41,9 +42,10 @@ const SidebarItem = ({ icon, label, href, active }: SidebarItemProps) => (
   </Link>
 );
 
-const LogoutItem = ({ icon, label }: { icon: React.ReactNode; label: string }) => {
+const LogoutItem = ({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    if (onClick) onClick();
   };
   
   return (
@@ -58,7 +60,12 @@ const LogoutItem = ({ icon, label }: { icon: React.ReactNode; label: string }) =
   );
 };
 
-export default function AppSidebar() {
+interface AppSidebarProps {
+  isMobile?: boolean;
+  closeDrawer?: () => void;
+}
+
+export default function AppSidebar({ isMobile = false, closeDrawer }: AppSidebarProps) {
   const location = useLocation();
   const currentPath = location.pathname;
   
@@ -156,6 +163,7 @@ export default function AppSidebar() {
                   label={item.label}
                   href={item.href}
                   active={currentPath === item.href}
+                  onClick={isMobile && closeDrawer ? closeDrawer : undefined}
                 />
               ))}
             </div>
@@ -178,11 +186,13 @@ export default function AppSidebar() {
                 label={item.label}
                 href={item.href}
                 active={currentPath === item.href}
+                onClick={isMobile && closeDrawer ? closeDrawer : undefined}
               />
             ))}
             <LogoutItem 
               icon={<LogOut className="h-5 w-5" />}
               label="Log Out"
+              onClick={isMobile && closeDrawer ? closeDrawer : undefined}
             />
           </div>
         </div>
