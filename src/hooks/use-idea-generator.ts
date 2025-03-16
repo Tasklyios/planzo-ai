@@ -19,6 +19,7 @@ export const useIdeaGenerator = () => {
   const [videoType, setVideoType] = useState("");
   const [platform, setPlatform] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingExisting, setLoadingExisting] = useState(true);
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
   const [customIdeas, setCustomIdeas] = useState("");
   const [previousIdeasContext, setPreviousIdeasContext] = useState<PreviousIdeasContext>({ 
@@ -28,19 +29,21 @@ export const useIdeaGenerator = () => {
     descriptions: []
   });
   const [error, setError] = useState<string | null>(null);
-  const [accountType, setAccountType] = useState<string>("personal");
+  const [accountType, setAccountType] = useState<"personal" | "ecommerce" | "business">("personal");
   const [contentType, setContentType] = useState<string>("");
   const [postingFrequency, setPostingFrequency] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log("useIdeaGenerator: Fetching user preferences on mount");
-    const fetchUserPreferences = async () => {
+    console.log("useIdeaGenerator: Fetching user preferences and existing ideas on mount");
+    const fetchUserPreferencesAndIdeas = async () => {
       try {
+        setLoadingExisting(true);
         console.log("Fetching user preferences from Supabase");
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session?.user) {
+          // Fetch user preferences
           const { data: profile } = await supabase
             .from("profiles")
             .select("*")
@@ -52,7 +55,7 @@ export const useIdeaGenerator = () => {
             // Store account type
             if (profile.account_type) {
               console.log("Setting account type to:", profile.account_type);
-              setAccountType(profile.account_type);
+              setAccountType(profile.account_type as "personal" | "ecommerce" | "business");
             }
             
             // Store additional profile data
@@ -93,6 +96,27 @@ export const useIdeaGenerator = () => {
             if (profile.posting_platforms && profile.posting_platforms.length > 0) 
               setPlatform(profile.posting_platforms[0]);
           }
+
+          // Fetch existing generated ideas that are not saved
+          const thresholdDate = new Date();
+          thresholdDate.setDate(thresholdDate.getDate() - 1); // 24 hours ago
+          
+          const { data: existingIdeas, error: ideasError } = await supabase
+            .from('video_ideas')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .is('is_saved', false)
+            .is('scheduled_for', null)
+            .gte('created_at', thresholdDate.toISOString())
+            .order('created_at', { ascending: false })
+            .limit(5);
+          
+          if (ideasError) {
+            console.error("Error fetching existing ideas:", ideasError);
+          } else if (existingIdeas && existingIdeas.length > 0) {
+            console.log("Found existing generated ideas:", existingIdeas);
+            setIdeas(existingIdeas);
+          }
         }
 
         // Also check localStorage for any saved values
@@ -111,11 +135,13 @@ export const useIdeaGenerator = () => {
         if (localStorageValues.platform) setPlatform(localStorageValues.platform);
         
       } catch (error) {
-        console.error("Error fetching user preferences:", error);
+        console.error("Error fetching user preferences or existing ideas:", error);
+      } finally {
+        setLoadingExisting(false);
       }
     };
 
-    fetchUserPreferences();
+    fetchUserPreferencesAndIdeas();
   }, []);
 
   useEffect(() => {
@@ -300,7 +326,7 @@ export const useIdeaGenerator = () => {
         
         if (profileData) {
           if (profileData.account_type) {
-            currentAccountType = profileData.account_type;
+            currentAccountType = profileData.account_type as "personal" | "ecommerce" | "business";
             console.log("Updated account type from database:", currentAccountType);
           }
           
@@ -386,9 +412,14 @@ export const useIdeaGenerator = () => {
       if (session?.user?.id) {
         const userId = session.user.id;
         
+        // Set the expiration timestamp to 24 hours from now
+        const expirationDate = new Date();
+        expirationDate.setHours(expirationDate.getHours() + 24);
+        
         const ideasWithMetadata = formattedIdeas.map((idea: any) => ({
           ...idea,
-          user_id: userId
+          user_id: userId,
+          expires_at: expirationDate.toISOString() // Add expiration timestamp
         }));
         
         try {
@@ -444,6 +475,7 @@ export const useIdeaGenerator = () => {
     platform,
     setPlatform,
     loading,
+    loadingExisting,
     ideas,
     setIdeas,
     generateIdeas,

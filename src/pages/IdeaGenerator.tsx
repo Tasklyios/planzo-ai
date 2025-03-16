@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
 import MobileMenuDialog from "@/components/idea-generator/MobileMenuDialog";
 import { useMobile } from "@/hooks/use-mobile";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function IdeaGenerator() {
   const {
@@ -23,6 +24,7 @@ export default function IdeaGenerator() {
     platform,
     setPlatform,
     loading,
+    loadingExisting,
     ideas,
     setIdeas,
     generateIdeas,
@@ -72,6 +74,16 @@ export default function IdeaGenerator() {
         .eq('id', id);
         
       if (error) throw error;
+
+      // If we're saving the idea, make sure it doesn't expire
+      if (isSaved) {
+        await supabase
+          .from('video_ideas')
+          .update({ 
+            expires_at: null  // Remove expiration when saved
+          })
+          .eq('id', id);
+      }
     } catch (error) {
       console.error("Error saving idea:", error);
       toast({
@@ -115,7 +127,8 @@ export default function IdeaGenerator() {
         .update({ 
           scheduled_for: scheduledDate.toISOString(),
           is_saved: true,  // Automatically save to bookmarks
-          status: 'ideas'  // Place in Ideas column
+          status: 'ideas',  // Place in Ideas column
+          expires_at: null  // Remove expiration when scheduled
         })
         .eq('id', addToCalendarIdea.idea.id);
       
@@ -180,17 +193,26 @@ export default function IdeaGenerator() {
             setCustomIdeas={setCustomIdeas}
           />
         ) : (
-          <IdeasGrid
-            ideas={ideas}
-            onAddToCalendar={handleAddToCalendar}
-            onEdit={(id) => console.log("Edit idea", id)}
-            onBookmarkToggle={(id) => {
-              const idea = ideas.find(i => i.id === id);
-              if (idea) {
-                handleSaveIdea(id, !idea.is_saved);
-              }
-            }}
-          />
+          <>
+            {loadingExisting ? (
+              <div className="flex justify-center items-center py-12">
+                <Spinner size="lg" />
+                <span className="ml-3">Loading your previously generated ideas...</span>
+              </div>
+            ) : (
+              <IdeasGrid
+                ideas={ideas}
+                onAddToCalendar={handleAddToCalendar}
+                onEdit={(id) => console.log("Edit idea", id)}
+                onBookmarkToggle={(id) => {
+                  const idea = ideas.find(i => i.id === id);
+                  if (idea) {
+                    handleSaveIdea(id, !idea.is_saved);
+                  }
+                }}
+              />
+            )}
+          </>
         )}
       </div>
       
