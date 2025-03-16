@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 
 // Define the form schema with appropriate types
 const accountFormSchema = z.object({
@@ -38,7 +39,9 @@ const contentNiches = [
   "Lifestyle",
   "Technology",
   "Fashion & Beauty",
-  "Health & Fitness"
+  "Health & Fitness",
+  "Entrepreneur / Motivational",
+  "Fitness"
 ];
 
 // Posting frequency options
@@ -209,6 +212,11 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     if (accountType === "personal") return 4;
     if (accountType === "ecommerce") return 3;
     return 3; // business
+  };
+
+  // Calculate progress percentage
+  const getProgressPercentage = () => {
+    return (step / getMaxSteps()) * 100;
   };
 
   // Render account type selection step
@@ -559,6 +567,16 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
             Tell us about yourself so we can provide the best experience for you.
           </DialogDescription>
         </DialogHeader>
+        
+        {/* Progress navigation */}
+        <div className="mb-4 space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">
+              Step {step} of {getMaxSteps()}
+            </span>
+          </div>
+          <Progress value={getProgressPercentage()} className="h-2" />
+        </div>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
