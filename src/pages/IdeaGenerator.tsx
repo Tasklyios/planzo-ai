@@ -1,19 +1,19 @@
 
-import { useState, useEffect } from "react";
-import { useIdeaGenerator } from "@/hooks/use-idea-generator";
-import InputForm from "@/components/idea-generator/InputForm";
-import IdeasGrid from "@/components/idea-generator/IdeasGrid";
-import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
-import { GeneratedIdea, AddToCalendarIdea } from "@/types/idea";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useIdeaGenerator } from "@/hooks/use-idea-generator";
+import IdeasGrid from "@/components/idea-generator/IdeasGrid";
+import InputForm from "@/components/idea-generator/InputForm";
+import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { format } from "date-fns";
-import AddToCalendarDialog from "@/components/idea-generator/AddToCalendarDialog";
 import MobileMenuDialog from "@/components/idea-generator/MobileMenuDialog";
 import { useMobile } from "@/hooks/use-mobile";
-import { Spinner } from "@/components/ui/spinner";
+import { GeneratedIdea } from "@/types/idea";
 
-export default function IdeaGenerator() {
+const IdeaGenerator: React.FC = () => {
   const {
     niche,
     setNiche,
@@ -30,198 +30,162 @@ export default function IdeaGenerator() {
     generateIdeas,
     customIdeas,
     setCustomIdeas,
-    error
+    error,
+    accountType,
+    setAccountType,
   } = useIdeaGenerator();
-
-  const [activeTab, setActiveTab] = useState<'input' | 'ideas'>(ideas.length > 0 ? 'ideas' : 'input');
-  const [addToCalendarIdea, setAddToCalendarIdea] = useState<AddToCalendarIdea | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showForm, setShowForm] = useState(true);
+  const [openMobileMenu, setOpenMobileMenu] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useMobile();
 
-  useEffect(() => {
-    if (ideas.length > 0 && activeTab === 'input') {
-      setActiveTab('ideas');
-    }
-  }, [ideas]);
-
-  const handleDeleteIdea = async (id: string) => {
-    try {
-      const updatedIdeas = ideas.filter(idea => idea.id !== id);
-      setIdeas(updatedIdeas);
-      
-      // Note: We don't actually delete from the database, just remove from UI
-    } catch (error) {
-      console.error("Error deleting idea:", error);
-    }
-  };
-
-  const handleSaveIdea = async (id: string, isSaved: boolean) => {
-    try {
-      // Update local state
-      const updatedIdeas = ideas.map(idea =>
-        idea.id === id ? { ...idea, is_saved: isSaved } : idea
-      );
-      setIdeas(updatedIdeas);
-      
-      // Update in database
-      const { error } = await supabase
-        .from('video_ideas')
-        .update({ 
-          is_saved: isSaved,
-          status: 'ideas'  // Always set status to ideas when saving
-        })
-        .eq('id', id);
-        
-      if (error) throw error;
-
-      // If we're saving the idea, make sure it doesn't expire
-      if (isSaved) {
-        await supabase
-          .from('video_ideas')
-          .update({ 
-            expires_at: null  // Remove expiration when saved
-          })
-          .eq('id', id);
-      }
-    } catch (error) {
-      console.error("Error saving idea:", error);
+  const handleRefreshClick = () => {
+    if (customIdeas.trim() === "" && niche.trim() === "") {
       toast({
+        title: "Please specify a niche",
+        description: "Enter a niche or custom ideas to generate new ideas",
         variant: "destructive",
-        title: "Error",
-        description: "Failed to save idea",
       });
+      return;
     }
-  };
-
-  const handleAddToCalendar = async (idea: GeneratedIdea) => {
-    // Create the AddToCalendarIdea object
-    const calendarIdea: AddToCalendarIdea = {
-      idea: idea,
-      title: idea.title,
-      scheduledFor: new Date().toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
-    };
     
-    // Open the dialog
-    setAddToCalendarIdea(calendarIdea);
+    // Generate ideas with latest form values
+    generateIdeas({
+      currentNiche: niche,
+      currentAudience: audience,
+      currentVideoType: videoType,
+      currentPlatform: platform,
+      currentCustomIdeas: customIdeas,
+    });
   };
 
-  const handleAddToCalendarUpdate = (field: keyof AddToCalendarIdea, value: string) => {
-    if (addToCalendarIdea) {
-      setAddToCalendarIdea({
-        ...addToCalendarIdea,
-        [field]: value
-      });
-    }
-  };
-
-  const saveToCalendar = async () => {
-    if (!addToCalendarIdea) return;
-
+  const handleSaveIdea = async (idea: GeneratedIdea) => {
     try {
-      const scheduledDate = new Date(addToCalendarIdea.scheduledFor);
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // Update the idea in the database
+      if (!session) {
+        toast({
+          title: "Sign in required",
+          description: "Please sign in to save ideas",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       const { error } = await supabase
         .from('video_ideas')
-        .update({ 
-          scheduled_for: scheduledDate.toISOString(),
-          is_saved: true,  // Automatically save to bookmarks
-          status: 'ideas',  // Place in Ideas column
-          expires_at: null  // Remove expiration when scheduled
-        })
-        .eq('id', addToCalendarIdea.idea.id);
+        .update({ is_saved: true })
+        .eq('id', idea.id);
       
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       
-      // Update UI
-      const updatedIdeas = ideas.map(idea => 
-        idea.id === addToCalendarIdea.idea.id 
-          ? { ...idea, scheduled_for: scheduledDate.toISOString(), is_saved: true } 
-          : idea
-      );
-      
-      setIdeas(updatedIdeas);
+      // Update the local ideas state
+      setIdeas(ideas.map(i => i.id === idea.id ? { ...i, is_saved: true } : i));
       
       toast({
-        title: "Added to Calendar",
-        description: `Scheduled for ${format(scheduledDate, "MMMM d, yyyy")}`,
+        title: "Idea saved",
+        description: "The idea has been saved to your collection",
       });
-      
-      // Close dialog
-      setAddToCalendarIdea(null);
     } catch (error: any) {
-      console.error("Error adding to calendar:", error);
+      console.error('Error saving idea:', error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to add to calendar",
+        title: "Error saving idea",
+        description: error.message || "An unknown error occurred",
       });
     }
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-full">
-      <GeneratorHeader 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        hasIdeas={ideas.length > 0}
-      />
-      
-      {isMobile && (
-        <MobileMenuDialog 
-          open={isMenuOpen} 
-          onOpenChange={(open) => setIsMenuOpen(open)}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          hasIdeas={ideas.length > 0}
-        />
-      )}
-      
-      <div className="mt-6">
-        {activeTab === 'input' ? (
+    <div className="w-full">
+      <div className="md:hidden flex items-center justify-between py-2 px-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(-1)}
+          className="mr-2"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-xl font-semibold flex-1 text-center">Ideas</h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpenMobileMenu(true)}
+        >
+          {loading ? (
+            <RefreshCw className="h-5 w-5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-5 w-5" />
+          )}
+        </Button>
+      </div>
+
+      <div className="h-full flex flex-col md:flex-row">
+        <div className={`md:w-1/3 md:min-w-[300px] md:max-w-[450px] md:border-r bg-background p-4 overflow-auto ${!showForm && !isMobile ? "hidden" : ""}`}>
+          <GeneratorHeader
+            loading={loading}
+            onRefresh={handleRefreshClick}
+            onToggleForm={() => setShowForm(!showForm)}
+            showForm={showForm}
+          />
           <InputForm
             niche={niche}
-            audience={audience}
-            videoType={videoType}
-            platform={platform}
-            customIdeas={customIdeas}
             setNiche={setNiche}
+            audience={audience}
             setAudience={setAudience}
+            videoType={videoType}
             setVideoType={setVideoType}
+            platform={platform}
             setPlatform={setPlatform}
+            accountType={accountType}
+            setAccountType={setAccountType}
+            customIdeas={customIdeas}
             setCustomIdeas={setCustomIdeas}
+            onGenerate={handleRefreshClick}
+            isGenerating={loading}
           />
-        ) : (
-          <>
-            {loadingExisting ? (
-              <div className="flex justify-center items-center py-12">
-                <Spinner size="lg" />
-                <span className="ml-3">Loading your previously generated ideas...</span>
-              </div>
-            ) : (
-              <IdeasGrid
-                ideas={ideas}
-                onAddToCalendar={handleAddToCalendar}
-                onEdit={(id) => console.log("Edit idea", id)}
-                onBookmarkToggle={(id) => {
-                  const idea = ideas.find(i => i.id === id);
-                  if (idea) {
-                    handleSaveIdea(id, !idea.is_saved);
-                  }
-                }}
-              />
-            )}
-          </>
-        )}
+        </div>
+
+        <div className={`flex-1 p-4 overflow-auto ${(showForm && isMobile) ? "hidden" : ""}`}>
+          <IdeasGrid
+            ideas={ideas}
+            loadingIdeas={loading}
+            loadingExisting={loadingExisting}
+            onSaveIdea={handleSaveIdea}
+            error={error}
+            onToggleForm={() => setShowForm(!showForm)}
+            showForm={showForm}
+          />
+        </div>
       </div>
-      
-      <AddToCalendarDialog
-        idea={addToCalendarIdea}
-        onOpenChange={(open) => !open && setAddToCalendarIdea(null)}
-        onAddToCalendar={saveToCalendar}
-        onUpdate={handleAddToCalendarUpdate}
-      />
+
+      <MobileMenuDialog open={openMobileMenu} onOpenChange={setOpenMobileMenu}>
+        <InputForm
+          niche={niche}
+          setNiche={setNiche}
+          audience={audience}
+          setAudience={setAudience}
+          videoType={videoType}
+          setVideoType={setVideoType}
+          platform={platform}
+          setPlatform={setPlatform}
+          accountType={accountType}
+          setAccountType={setAccountType}
+          customIdeas={customIdeas}
+          setCustomIdeas={setCustomIdeas}
+          onGenerate={() => {
+            handleRefreshClick();
+            setOpenMobileMenu(false);
+          }}
+          isGenerating={loading}
+        />
+      </MobileMenuDialog>
     </div>
   );
-}
+};
+
+export default IdeaGenerator;

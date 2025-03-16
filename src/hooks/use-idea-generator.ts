@@ -55,7 +55,9 @@ export const useIdeaGenerator = () => {
             // Store account type
             if (profile.account_type) {
               console.log("Setting account type to:", profile.account_type);
-              setAccountType(profile.account_type as "personal" | "ecommerce" | "business");
+              // Fix: Cast the account_type to the specific union type
+              const typedAccountType = profile.account_type as "personal" | "ecommerce" | "business";
+              setAccountType(typedAccountType);
             }
             
             // Store additional profile data
@@ -107,7 +109,7 @@ export const useIdeaGenerator = () => {
             .eq('user_id', session.user.id)
             .is('is_saved', false)
             .is('scheduled_for', null)
-            .gte('created_at', thresholdDate.toISOString())
+            .gte('expires_at', new Date().toISOString()) // Only get ideas that haven't expired
             .order('created_at', { ascending: false })
             .limit(5);
           
@@ -165,7 +167,9 @@ export const useIdeaGenerator = () => {
               // Set account type first
               if (profile.account_type) {
                 console.log("Setting account type to:", profile.account_type);
-                setAccountType(profile.account_type);
+                // Fix: Cast the account_type to the specific union type
+                const typedAccountType = profile.account_type as "personal" | "ecommerce" | "business";
+                setAccountType(typedAccountType);
               }
               
               // Set additional profile data
@@ -326,6 +330,7 @@ export const useIdeaGenerator = () => {
         
         if (profileData) {
           if (profileData.account_type) {
+            // Fix: Cast the account_type to the specific union type
             currentAccountType = profileData.account_type as "personal" | "ecommerce" | "business";
             console.log("Updated account type from database:", currentAccountType);
           }

@@ -92,6 +92,14 @@ export const onRequestPost = async (context: any) => {
     const data = await response.json();
     const ideas = JSON.parse(data.choices[0].message.content);
 
+    // Add expiration date to each idea (24 hours from now)
+    const expirationDate = new Date();
+    expirationDate.setHours(expirationDate.getHours() + 24);
+    
+    ideas.ideas.forEach((idea: any) => {
+      idea.expires_at = expirationDate.toISOString();
+    });
+
     return new Response(JSON.stringify(ideas), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

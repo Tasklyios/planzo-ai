@@ -1,4 +1,3 @@
-
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -23,15 +22,18 @@ export interface IdeaGeneratorFormData {
 export interface GeneratedIdea {
   id: string;
   title: string;
-  category: string;
   description: string;
-  tags: string[];
+  category?: string;
+  tags?: string[];
+  is_saved?: boolean;
   platform?: string;
-  color?: string;
   hook_text?: string;
   hook_category?: string;
-  is_saved?: boolean;
-  scheduled_for?: string;
+  scheduled_for?: string | null;
+  color?: string;
+  symbol?: string;
+  status?: string;
+  expires_at?: string;
 }
 
 export interface PreviousIdeasContext {
@@ -79,7 +81,6 @@ export interface ContentIdeaProtocol {
   premise: string;
 }
 
-// Add StyleProfile interface to fix the import errors
 export interface StyleProfile {
   id: string;
   user_id: string;

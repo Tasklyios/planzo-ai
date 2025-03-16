@@ -12,3 +12,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.check-usage-limits]
 verify_jwt = false
+[functions.cleanup-expired-ideas]
+verify_jwt = true
