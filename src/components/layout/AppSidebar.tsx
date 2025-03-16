@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface SidebarItemProps {
   icon: React.ReactNode;
@@ -42,62 +43,82 @@ export default function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   
-  // Navigation items with their respective paths and icons
-  const navItems = [
-    { 
-      label: "Dashboard", 
-      href: "/dashboard", 
-      icon: <Home className="h-5 w-5" /> 
+  // Grouped navigation items by category
+  const navCategories = [
+    {
+      title: "Overview",
+      items: [
+        { 
+          label: "Dashboard", 
+          href: "/dashboard", 
+          icon: <Home className="h-5 w-5" /> 
+        }
+      ]
     },
-    { 
-      label: "Content Generator", 
-      href: "/generator", 
-      icon: <Sparkles className="h-5 w-5" /> 
+    {
+      title: "Content Creation",
+      items: [
+        { 
+          label: "Content Generator", 
+          href: "/generator", 
+          icon: <Sparkles className="h-5 w-5" /> 
+        },
+        { 
+          label: "Script Generator", 
+          href: "/script", 
+          icon: <FileText className="h-5 w-5" /> 
+        },
+        { 
+          label: "Hook Generator", 
+          href: "/hooks", 
+          icon: <AnchorIcon className="h-5 w-5" /> 
+        },
+        { 
+          label: "Find Your Style", 
+          href: "/find-your-style", 
+          icon: <Settings className="h-5 w-5" /> 
+        }
+      ]
     },
-    { 
-      label: "Script Generator", 
-      href: "/script", 
-      icon: <FileText className="h-5 w-5" /> 
+    {
+      title: "Planning & Organization",
+      items: [
+        { 
+          label: "Content Planner", 
+          href: "/planner", 
+          icon: <LayoutGrid className="h-5 w-5" /> 
+        },
+        { 
+          label: "Ideas", 
+          href: "/ideas", 
+          icon: <Lightbulb className="h-5 w-5" /> 
+        },
+        { 
+          label: "Saved Hooks", 
+          href: "/saved-hooks", 
+          icon: <Lightbulb className="h-5 w-5" /> 
+        },
+        { 
+          label: "Calendar", 
+          href: "/calendar", 
+          icon: <Calendar className="h-5 w-5" /> 
+        }
+      ]
     },
-    { 
-      label: "Hook Generator", 
-      href: "/hooks", 
-      icon: <AnchorIcon className="h-5 w-5" /> 
-    },
-    { 
-      label: "Saved Hooks", 
-      href: "/saved-hooks", 
-      icon: <Lightbulb className="h-5 w-5" /> 
-    },
-    { 
-      label: "Content Planner", 
-      href: "/planner", 
-      icon: <LayoutGrid className="h-5 w-5" /> 
-    },
-    { 
-      label: "Find Your Style", 
-      href: "/find-your-style", 
-      icon: <Settings className="h-5 w-5" /> 
-    },
-    { 
-      label: "Ideas", 
-      href: "/ideas", 
-      icon: <Lightbulb className="h-5 w-5" /> 
-    },
-    { 
-      label: "Calendar", 
-      href: "/calendar", 
-      icon: <Calendar className="h-5 w-5" /> 
-    },
-    { 
-      label: "Account", 
-      href: "/account", 
-      icon: <User className="h-5 w-5" /> 
-    },
-    { 
-      label: "Billing", 
-      href: "/billing", 
-      icon: <CreditCard className="h-5 w-5" /> 
+    {
+      title: "Account",
+      items: [
+        { 
+          label: "Account", 
+          href: "/account", 
+          icon: <User className="h-5 w-5" /> 
+        },
+        { 
+          label: "Billing", 
+          href: "/billing", 
+          icon: <CreditCard className="h-5 w-5" /> 
+        }
+      ]
     }
   ];
   
@@ -106,15 +127,27 @@ export default function AppSidebar() {
       <div className="flex items-center justify-center mb-6 px-4">
         <Logo />
       </div>
-      <div className="space-y-1 flex-1">
-        {navItems.map((item) => (
-          <SidebarItem 
-            key={item.href}
-            icon={item.icon}
-            label={item.label}
-            href={item.href}
-            active={currentPath === item.href}
-          />
+      <div className="space-y-6 flex-1">
+        {navCategories.map((category, index) => (
+          <div key={index} className="space-y-2">
+            <h3 className="font-medium text-xs uppercase text-muted-foreground px-4">
+              {category.title}
+            </h3>
+            <div className="space-y-1">
+              {category.items.map((item) => (
+                <SidebarItem 
+                  key={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  href={item.href}
+                  active={currentPath === item.href}
+                />
+              ))}
+            </div>
+            {index < navCategories.length - 1 && (
+              <Separator className="my-2" />
+            )}
+          </div>
         ))}
       </div>
     </div>
