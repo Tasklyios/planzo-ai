@@ -24,6 +24,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { ToastProvider } from "@/hooks/use-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Onboarding from "@/components/auth/Onboarding";
+import IdeaGenerator from "@/pages/IdeaGenerator";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +125,8 @@ function App() {
                 <Route element={<AppLayout><Outlet /></AppLayout>}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/generator" element={<Generator />} />
+                  <Route path="/idea-generator" element={<IdeaGenerator />} />
+                  <Route path="/content-planner" element={<ContentPlanner />} />
                   <Route path="/script" element={<Script />} />
                   <Route path="/hooks" element={<Hooks />} />
                   <Route path="/saved-hooks" element={<SavedHooks />} />

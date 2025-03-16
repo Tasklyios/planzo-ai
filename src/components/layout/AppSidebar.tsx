@@ -72,8 +72,8 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
   };
 
   return (
-    <ScrollArea className="h-full py-4 px-3">
-      <div className="flex items-center justify-between mb-4 px-2">
+    <ScrollArea className="h-full py-2 px-2">
+      <div className="flex items-center justify-between mb-2 px-1">
         <Link to="/" className="flex items-center gap-2" onClick={closeDrawer}>
           <Logo size="small" />
         </Link>
@@ -84,15 +84,15 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-1">
         <div className="space-y-1">
-          <h3 className="px-3 text-xs font-medium text-muted-foreground">Overview</h3>
-          <div className="space-y-1">
+          <h3 className="px-2 text-xs font-medium text-muted-foreground">Overview</h3>
+          <div className="space-y-0">
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start h-8 px-2 py-1",
                 isActive("/dashboard") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/dashboard")}
@@ -104,7 +104,7 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start h-8 px-2 py-1",
                 isActive("/content-planner") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/content-planner")}
@@ -116,7 +116,7 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start h-8 px-2 py-1",
                 isActive("/calendar") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/calendar")}
@@ -130,13 +130,13 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
         <Separator className="my-1" />
 
         <div className="space-y-1">
-          <h3 className="px-3 text-xs font-medium text-muted-foreground">Generate</h3>
-          <div className="space-y-1">
+          <h3 className="px-2 text-xs font-medium text-muted-foreground">Generate</h3>
+          <div className="space-y-0">
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start h-8 px-2 py-1",
                 isActive("/idea-generator") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/idea-generator")}
@@ -148,7 +148,7 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start h-8 px-2 py-1",
                 isActive("/script") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/script")}
@@ -160,7 +160,7 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start h-8 px-2 py-1",
                 isActive("/hooks") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/hooks")}
@@ -174,13 +174,13 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
         <Separator className="my-1" />
 
         <div className="space-y-1">
-          <h3 className="px-3 text-xs font-medium text-muted-foreground">Library</h3>
-          <div className="space-y-1">
+          <h3 className="px-2 text-xs font-medium text-muted-foreground">Library</h3>
+          <div className="space-y-0">
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start h-8 px-2 py-1",
                 isActive("/ideas") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/ideas")}
@@ -192,7 +192,7 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start h-8 px-2 py-1",
                 isActive("/saved-hooks") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/saved-hooks")}
@@ -206,13 +206,13 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
         <Separator className="my-1" />
         
         <div className="space-y-1">
-          <h3 className="px-3 text-xs font-medium text-muted-foreground">Account</h3>
-          <div className="space-y-1">
+          <h3 className="px-2 text-xs font-medium text-muted-foreground">Account</h3>
+          <div className="space-y-0">
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start h-8 px-2 py-1",
                 isActive("/account") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/account")}
@@ -224,7 +224,7 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start",
+                "w-full justify-start h-8 px-2 py-1",
                 isActive("/billing") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/billing")}
@@ -235,7 +235,7 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start text-muted-foreground"
+              className="w-full justify-start h-8 px-2 py-1 text-muted-foreground"
               onClick={handleSignOut}
             >
               <LogOut className="mr-2 h-4 w-4" />
