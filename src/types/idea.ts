@@ -1,4 +1,3 @@
-
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -74,6 +73,8 @@ export interface PlannerColumn {
   order?: number;
 }
 
+export type AccountType = 'personal' | 'ecommerce' | 'business';
+
 export interface ContentIdeaProtocol {
   type: 'value' | 'product' | 'hybrid'; 
   format: string;
@@ -91,5 +92,3 @@ export interface StyleProfile {
   is_active: boolean;
   created_at?: string;
 }
-
-export type AccountType = 'personal' | 'ecommerce' | 'business';

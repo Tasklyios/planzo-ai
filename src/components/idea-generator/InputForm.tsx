@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { LayersIcon, Users, Video, Smartphone, Package2, Building2, ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { AccountType } from "@/types/idea";
 
 interface InputFormProps {
   niche: string;
@@ -27,13 +29,11 @@ interface InputFormProps {
   setVideoType: (value: string) => void;
   setPlatform: (value: string) => void;
   setCustomIdeas: (value: string) => void;
-  accountType?: string;
-  setAccountType?: (value: string) => void;
+  accountType?: AccountType;
+  setAccountType?: (value: AccountType) => void;
   onGenerate?: () => void;
   isGenerating?: boolean;
 }
-
-type AccountType = 'personal' | 'ecommerce' | 'business';
 
 const InputForm = ({
   niche,

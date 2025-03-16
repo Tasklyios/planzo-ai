@@ -11,7 +11,7 @@ import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import MobileMenuDialog from "@/components/idea-generator/MobileMenuDialog";
 import { useMobile } from "@/hooks/use-mobile";
-import { GeneratedIdea } from "@/types/idea";
+import { GeneratedIdea, AccountType } from "@/types/idea";
 
 const IdeaGenerator: React.FC = () => {
   const {
@@ -141,8 +141,8 @@ const IdeaGenerator: React.FC = () => {
             setVideoType={setVideoType}
             platform={platform}
             setPlatform={setPlatform}
-            accountType={accountType}
-            setAccountType={setAccountType}
+            accountType={accountType as AccountType}
+            setAccountType={(value: AccountType) => setAccountType(value)}
             customIdeas={customIdeas}
             setCustomIdeas={setCustomIdeas}
             onGenerate={handleRefreshClick}
@@ -165,24 +165,24 @@ const IdeaGenerator: React.FC = () => {
 
       <MobileMenuDialog open={openMobileMenu} onOpenChange={setOpenMobileMenu}>
         <InputForm
-          niche={niche}
-          setNiche={setNiche}
-          audience={audience}
-          setAudience={setAudience}
-          videoType={videoType}
-          setVideoType={setVideoType}
-          platform={platform}
-          setPlatform={setPlatform}
-          accountType={accountType}
-          setAccountType={setAccountType}
-          customIdeas={customIdeas}
-          setCustomIdeas={setCustomIdeas}
-          onGenerate={() => {
-            handleRefreshClick();
-            setOpenMobileMenu(false);
-          }}
-          isGenerating={loading}
-        />
+            niche={niche}
+            setNiche={setNiche}
+            audience={audience}
+            setAudience={setAudience}
+            videoType={videoType}
+            setVideoType={setVideoType}
+            platform={platform}
+            setPlatform={setPlatform}
+            accountType={accountType as AccountType}
+            setAccountType={(value: AccountType) => setAccountType(value)}
+            customIdeas={customIdeas}
+            setCustomIdeas={setCustomIdeas}
+            onGenerate={() => {
+              handleRefreshClick();
+              setOpenMobileMenu(false);
+            }}
+            isGenerating={loading}
+          />
       </MobileMenuDialog>
     </div>
   );

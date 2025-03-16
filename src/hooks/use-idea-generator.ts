@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { GeneratedIdea, PreviousIdeasContext } from "@/types/idea";
+import { GeneratedIdea, PreviousIdeasContext, AccountType } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -29,7 +29,7 @@ export const useIdeaGenerator = () => {
     descriptions: []
   });
   const [error, setError] = useState<string | null>(null);
-  const [accountType, setAccountType] = useState<"personal" | "ecommerce" | "business">("personal");
+  const [accountType, setAccountType] = useState<AccountType>("personal");
   const [contentType, setContentType] = useState<string>("");
   const [postingFrequency, setPostingFrequency] = useState<string>("");
   const { toast } = useToast();
