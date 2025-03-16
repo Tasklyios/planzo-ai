@@ -29,11 +29,14 @@ serve(async (req) => {
       previousIdeas = null,
       styleProfile = null,
       accountType = "personal",
-      businessDescription = ""
+      businessDescription = "",
+      contentType = "",
+      postingFrequency = ""
     } = await req.json();
 
     console.log('Generating ideas with:', { 
       niche, audience, videoType, platform, accountType,
+      contentType, postingFrequency,
       hasCustomIdeas: !!customIdeas,
       hasStyleProfile: !!styleProfile,
       hasBusinessDescription: !!businessDescription
@@ -53,6 +56,30 @@ serve(async (req) => {
 
     console.log('Validated account type:', validAccountType);
 
+    // Build content type description based on the content_type field
+    let contentTypeDescription = "";
+    if (contentType === "talking_head") {
+      contentTypeDescription = "Create ideas optimized for talking head videos where the creator speaks directly to the camera.";
+    } else if (contentType === "text_based") {
+      contentTypeDescription = "Focus on ideas that work well as text-based clips with minimal on-camera presence, using animated text and visuals.";
+    } else if (contentType === "mixed") {
+      contentTypeDescription = "Create a mix of ideas that combine talking head segments with text-based visuals for variety.";
+    }
+
+    // Build posting frequency guidance
+    let frequencyGuidance = "";
+    if (postingFrequency === "daily") {
+      frequencyGuidance = "These ideas should be suitable for daily content creation (5-7 times per week), so consider ease of production and sustainable topics.";
+    } else if (postingFrequency === "multiple_times_a_week") {
+      frequencyGuidance = "These ideas should work for posting 2-4 times per week, balancing depth with regular production schedule.";
+    } else if (postingFrequency === "weekly") {
+      frequencyGuidance = "Focus on weekly content ideas that can be more in-depth and higher production value.";
+    } else if (postingFrequency === "monthly") {
+      frequencyGuidance = "Create ideas for monthly content that can be more comprehensive and higher production quality.";
+    } else if (postingFrequency === "irregularly") {
+      frequencyGuidance = "Create a mix of both quick, easy-to-produce ideas and more in-depth content for irregular posting schedules.";
+    }
+
     // Updated system prompt to emphasize research-backed ideas across all account types
     const systemPrompt = `You are Planzo AI, a specialist in creating viral-worthy, research-backed video ideas for social media. You excel at crafting highly specific, data-driven content concepts for platforms like TikTok, YouTube Shorts, and Instagram Reels.
 
@@ -60,6 +87,10 @@ You understand trends analysis, audience psychology, and engagement metrics to c
 
 ${validAccountType === 'business' && businessDescription ? 
   `BUSINESS CONTEXT: This is for a business in the ${niche} niche. Business description: ${businessDescription}` : ''}
+  
+${contentTypeDescription ? `CONTENT TYPE: ${contentTypeDescription}` : ''}
+
+${frequencyGuidance ? `POSTING FREQUENCY: ${frequencyGuidance}` : ''}
 
 Your ONLY task is to output exactly 5 content ideas in a structured format without ANY introduction, greeting, or conclusion text.
 
@@ -82,6 +113,9 @@ IMPORTANT: Each idea must:
 
 Make each idea distinctly different and supported by factual elements.
 
+${contentType === "talking_head" ? "Format ideas to work well as talking head videos with direct-to-camera presentation." : ""}
+${contentType === "text_based" ? "Format ideas to work well with text animations, graphics and minimal on-camera presence." : ""}
+
 ${styleProfile ? `STYLE: "${styleProfile.name}": ${styleProfile.description}
 TONE: ${styleProfile.tone}` : ''}
 ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
@@ -95,6 +129,10 @@ DO NOT generate generic, fluffy ideas. EVERY idea must be:
 - Backed by data or referenced studies/statistics 
 - Tied to a verified trend or evergreen problem
 - Concrete enough to be immediately usable
+
+${contentType ? `FORMAT: These ideas should be optimized for ${contentType === "talking_head" ? "talking head videos" : contentType === "text_based" ? "text-based visual content" : "mixed content combining talking head and text-based elements"}.` : ""}
+
+${postingFrequency ? `FREQUENCY: Content will be posted ${postingFrequency.replace("_", " ")}.` : ""}
 
 ${validAccountType === 'ecommerce' ? 
 `For ECOMMERCE content:
@@ -310,96 +348,93 @@ function getBackupIdeas(niche, audience, accountType, count) {
       {
         title: `The Overlooked ${niche} Strategy That 79% of Industry Leaders Are Now Adopting`,
         category: "Trend Analysis",
-        description: `Review findings from interviews with 35 industry experts showing how this specific approach is driving 2.7x more qualified traffic. Learn the exact implementation steps with ROI metrics.`,
-        tags: ["industrytrends", "expertanalysis", "growthmetrics"]
+        description: `Explore the emerging approach that top companies are quietly implementing. Data shows early adopters seeing a 27% increase in customer retention and 42% higher repeat purchase rates within 60 days.`,
+        tags: ["industrysecrets", "strategytips", "earlytrends"]
       },
       {
-        title: `The Only 5 ${niche} Metrics That Actually Predict Revenue (Based on 10,000+ Transactions)`,
-        category: "Data Insights",
-        description: `Share the specific KPIs that showed 94% correlation with revenue growth in our 12-month analysis. The second metric is overlooked by 84% of businesses but predicted sales spikes with 89% accuracy.`,
-        tags: ["revenueanalysis", "businessmetrics", "datavisualizations"]
+        title: `How to Create a ${niche} System That Saves 7+ Hours Per Week (Based on Data from 120+ Businesses)`,
+        category: "Productivity Blueprint",
+        description: `Step-by-step framework for building an efficient system based on real-world data from successful businesses. The average team reclaimed 7.4 hours weekly while improving quality metrics by 18%.`,
+        tags: ["productivity", "systemization", "timemanagement"]
       }
     ];
-    
-    for (let i = 0; i < count; i++) {
-      ideas.push(ecommerceIdeas[i % ecommerceIdeas.length]);
+    for (let i = 0; i < count && i < ecommerceIdeas.length; i++) {
+      ideas.push(ecommerceIdeas[i]);
     }
   } else if (accountType === 'business') {
     const businessIdeas = [
       {
-        title: `How We Increased Employee Retention by 34% Using This Specific ${niche} Framework`,
-        category: "Case Study Results",
-        description: `Walk through the exact 4-step process that reduced our turnover from 24% to 15.8% over 6 months, saving $187,000 in recruitment costs. The key third step only required 2 hours per week to implement.`,
-        tags: ["employeeretention", "hrmetrics", "businesscase"]
+        title: `The ROI Analysis: ${niche} Investments That Delivered 280% Returns in 12 Months`,
+        category: "ROI Case Study",
+        description: `Detailed breakdown of high-performing business investments with exact figures and timelines. Research from 37 companies shows the key factors that drove 3.8x higher returns than industry average.`,
+        tags: ["ROIanalysis", "businessstrategy", "investmentreturns"]
       },
       {
-        title: `The 15-Minute ${niche} Audit That Found $417,000 in Overlooked Opportunities`,
-        category: "Process Optimization",
-        description: `Share the specific checklist that identified 7 critical efficiency gaps across our operations. Our clients have now implemented this audit across 23 departments with an average ROI of 347%.`,
-        tags: ["businessaudit", "costoptimization", "efficiencymetrics"]
+        title: `The 15-Minute ${niche} Audit That Found $42,000 in Hidden Revenue Opportunities`,
+        category: "Business Optimization",
+        description: `Simple yet powerful business audit process that identified substantial revenue leaks in 94% of businesses reviewed. The average discovery was worth $42,350 in annual recurring revenue.`,
+        tags: ["businessaudit", "revenuegrowth", "optimization"]
       },
       {
-        title: `7 Leadership Trends Transforming ${niche} (Based on LinkedIn's 2024 Industry Report)`,
-        category: "Trend Analysis",
-        description: `Analyze the latest LinkedIn data showing how companies implementing these specific leadership practices are experiencing 41% higher team productivity and 28% better talent acquisition success.`,
-        tags: ["leadershiptrends", "industryreport", "datadriveninsights"]
+        title: `5 Client Acquisition Strategies That Reduced Our CAC by 64% in 60 Days`,
+        category: "Client Acquisition",
+        description: `Evidence-based breakdown of how we tested 12 acquisition channels and found 5 that dramatically reduced Customer Acquisition Cost from $278 down to $98 while maintaining lead quality.`,
+        tags: ["customeracquisition", "leadgeneration", "marketingstrategy"]
       },
       {
-        title: `How These 3 Companies Are Using AI to Revolutionize Their ${niche} (With Real Results)`,
-        category: "Industry Innovation",
-        description: `Examine case studies from 3 mid-sized businesses that reduced operational costs by 23-37% through specific AI implementations. The second company achieved ROI within just 48 days of deployment.`,
-        tags: ["aiinnovation", "businesscases", "techimplementation"]
+        title: `The ${niche} Meeting Framework That Increased Team Productivity by 32%`,
+        category: "Team Performance",
+        description: `Step-by-step guide to implementing the data-backed meeting structure that saved 5.4 hours per employee weekly while improving project completion rates by almost a third.`,
+        tags: ["teamproductivity", "meetings", "performance"]
       },
       {
-        title: `The Exact Customer Service Script That Increased Our ${niche} Satisfaction Scores by 62%`,
-        category: "Process Implementation",
-        description: `Share the word-for-word template that transformed our customer satisfaction metrics from 72% to 92% in just 60 days. This approach also led to a 28% increase in repeat purchases worth $324,000.`,
-        tags: ["customersatisfaction", "servicescripts", "loyaltymetrics"]
+        title: `How We Created a ${niche} Referral System Generating 43% of New Business`,
+        category: "Growth Strategy",
+        description: `Detailed walkthrough of building a referral engine that now drives 43% of all new business at a 76% lower acquisition cost compared to paid channels, based on data from 18 months of testing.`,
+        tags: ["referralmarketing", "businessgrowth", "clientacquisition"]
       }
     ];
-    
-    for (let i = 0; i < count; i++) {
-      ideas.push(businessIdeas[i % businessIdeas.length]);
+    for (let i = 0; i < count && i < businessIdeas.length; i++) {
+      ideas.push(businessIdeas[i]);
     }
   } else {
-    // Personal brand evidence-based ideas
+    // Personal brand ideas
     const personalIdeas = [
       {
-        title: `I Tested 7 Viral ${niche} Methods and Only 2 Actually Worked - The Data Will Surprise You`,
+        title: `I Tested 7 Viral ${niche} Techniques - Only 2 Actually Worked (With 215% Better Results)`,
         category: "Experiment Results",
-        description: `I documented my 60-day experiment testing popular ${niche} techniques, measuring precise before/after metrics. Method #4 promised a 300% improvement but delivered only 17%, while the unexpected winner improved results by 214%.`,
-        tags: ["testedmethods", "experimentresults", "datareveal"]
+        description: `Honest review after testing popular techniques with real metrics. Two methods outperformed others by 215%, while the most popular one on social media completely failed in controlled testing.`,
+        tags: ["experiments", "mythbusting", "realresults"]
       },
       {
-        title: `The 20/80 ${niche} Analysis: How I Identified the 20% of Efforts Producing 80% of My Results`,
-        category: "Productivity Analysis",
-        description: `I tracked every action for 30 days and discovered the specific 4.2 hours per week that generated 83% of my progress. I've compiled the exact time-tracking template and decision framework I used.`,
-        tags: ["productivitydata", "timeanalysis", "efficiencyhacks"]
-      },
-      {
-        title: `5 ${niche} Tools That Saved Me 11.5 Hours Per Week (With Actual Screen Time Data)`,
-        category: "Tool Comparison",
-        description: `I documented my workflow before and after implementing these specific tools, with precise time savings metrics for each step. Tool #3 had a 932% ROI based on time saved versus monthly cost.`,
-        tags: ["productivitytools", "timetracking", "workflowoptimization"]
-      },
-      {
-        title: `What Actually Happened When I Followed the Viral ${niche} Advice for 30 Days Straight`,
+        title: `The 30-Day ${niche} Challenge That Improved My Results by 78% (Full Breakdown)`,
         category: "Challenge Results",
-        description: `I implemented the exact technique that got 42M views on TikTok, documenting daily metrics including a 23% improvement in week 1, followed by an unexpected 17% decline in week 3. Here's the complete data.`,
-        tags: ["challengeresults", "trendanalysis", "datatracking"]
+        description: `Comprehensive documentation of my 30-day experiment with before/after metrics and daily insights. The structured approach yielded 78% better outcomes than my previous 3-month average.`,
+        tags: ["30daychallenge", "transformation", "results"]
       },
       {
-        title: `3 Counter-Intuitive ${niche} Strategies That Increased My Results by 218% (With Evidence)`,
-        category: "Proven Methods",
-        description: `I'm sharing the exact approaches that contradicted conventional wisdom but delivered measurable improvements. Strategy #2 initially seemed riskiest but produced a consistent 43% better outcome across 17 test cases.`,
-        tags: ["provenmethods", "dataevidence", "resultsanalysis"]
+        title: `5 ${niche} Mistakes I Made That Cost Me $8,700 (And How You Can Avoid Them)`,
+        category: "Lessons Learned",
+        description: `Transparent breakdown of costly mistakes with specific numbers and consequences. Detailed explanation of exactly what went wrong and the precise steps I took to correct each issue.`,
+        tags: ["mistakes", "lessonslearned", "transparency"]
+      },
+      {
+        title: `The Counterintuitive ${niche} Approach That 3X'd My Growth in 60 Days`,
+        category: "Growth Strategy",
+        description: `Data-backed case study of how going against conventional wisdom led to unexpected success. Metrics show a 312% improvement over standard methods based on tracking 14 key performance indicators.`,
+        tags: ["growthhacking", "counterintuitive", "results"]
+      },
+      {
+        title: `I Analyzed 100+ Successful ${niche} Creators and Found These 3 Surprising Patterns`,
+        category: "Creator Research",
+        description: `Revealing findings from studying top creators in the space. The data shows 3 consistent patterns present in 87% of successful accounts but only 9% of struggling ones.`,
+        tags: ["creatorresearch", "successpatterns", "analysis"]
       }
     ];
-    
-    for (let i = 0; i < count; i++) {
-      ideas.push(personalIdeas[i % personalIdeas.length]);
+    for (let i = 0; i < count && i < personalIdeas.length; i++) {
+      ideas.push(personalIdeas[i]);
     }
   }
   
-  return ideas.slice(0, count);
+  return ideas;
 }

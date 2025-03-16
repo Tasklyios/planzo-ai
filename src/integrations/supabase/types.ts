@@ -43,9 +43,11 @@ export type Database = {
           content_niche: string | null
           content_personality: string | null
           content_style: string | null
+          content_type: string | null
           created_at: string
           id: string
           onboarding_completed: boolean
+          posting_frequency: string | null
           posting_platforms: string[] | null
           product_niche: string | null
           target_audience: string | null
@@ -59,9 +61,11 @@ export type Database = {
           content_niche?: string | null
           content_personality?: string | null
           content_style?: string | null
+          content_type?: string | null
           created_at?: string
           id: string
           onboarding_completed?: boolean
+          posting_frequency?: string | null
           posting_platforms?: string[] | null
           product_niche?: string | null
           target_audience?: string | null
@@ -75,9 +79,11 @@ export type Database = {
           content_niche?: string | null
           content_personality?: string | null
           content_style?: string | null
+          content_type?: string | null
           created_at?: string
           id?: string
           onboarding_completed?: boolean
+          posting_frequency?: string | null
           posting_platforms?: string[] | null
           product_niche?: string | null
           target_audience?: string | null
@@ -453,6 +459,14 @@ export type Database = {
       }
     }
     Enums: {
+      content_niche_enum:
+        | "Education"
+        | "Entertainment"
+        | "Lifestyle"
+        | "Technology"
+        | "Fashion & Beauty"
+        | "Health & Fitness"
+        | "Other"
       subscription_tier: "free" | "pro" | "business" | "plus"
     }
     CompositeTypes: {

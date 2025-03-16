@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 
 const themeOptions = [
   {
@@ -52,6 +53,42 @@ const accountTypes = [
   },
 ];
 
+const contentTypes = [
+  {
+    value: "talking_head",
+    title: "Talking Head Videos",
+    description: "Face-to-camera videos where you directly speak to your audience"
+  },
+  {
+    value: "text_based",
+    title: "Text-Based Visual Content",
+    description: "Videos with animated text, graphics, and visuals with minimal on-camera presence"
+  },
+  {
+    value: "mixed",
+    title: "Mixed Content Approach",
+    description: "Combination of talking head segments with text-based visuals for variety"
+  },
+];
+
+const contentNiches = [
+  { value: 'Education', label: 'Education & Learning' },
+  { value: 'Entertainment', label: 'Entertainment & Comedy' },
+  { value: 'Lifestyle', label: 'Lifestyle & Daily Vlogs' },
+  { value: 'Technology', label: 'Technology & Gadgets' },
+  { value: 'Fashion & Beauty', label: 'Fashion & Beauty' },
+  { value: 'Health & Fitness', label: 'Health & Fitness' },
+  { value: 'Other', label: 'Other (Custom)' },
+];
+
+const postingFrequencies = [
+  { value: 'daily', label: 'Daily (5-7 times per week)' },
+  { value: 'multiple_times_a_week', label: 'Multiple times a week (2-4 times)' },
+  { value: 'weekly', label: 'Weekly (Once a week)' },
+  { value: 'monthly', label: 'Monthly (1-3 times per month)' },
+  { value: 'irregularly', label: 'Irregular schedule' },
+];
+
 interface Profile {
   id?: string;
   account_type: string;
@@ -61,6 +98,8 @@ interface Profile {
   business_niche?: string | null;
   product_niche?: string | null;
   business_description?: string | null;
+  content_type?: string | null;
+  posting_frequency?: string | null;
 }
 
 export default function Account() {
@@ -76,6 +115,7 @@ export default function Account() {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [isChangingEmail, setIsChangingEmail] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isCustomNiche, setIsCustomNiche] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -107,7 +147,7 @@ export default function Account() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('account_type, content_niche, target_audience, posting_platforms, business_niche, product_niche, business_description')
+        .select('account_type, content_niche, target_audience, posting_platforms, business_niche, product_niche, business_description, content_type, posting_frequency')
         .eq('id', session.user.id)
         .maybeSingle();
 
@@ -120,6 +160,10 @@ export default function Account() {
       
       if (data) {
         setProfile(data as Profile);
+        
+        // Check if content_niche is a custom value
+        const isStandardNiche = contentNiches.some(niche => niche.value === data.content_niche);
+        setIsCustomNiche(!isStandardNiche && data.content_niche !== null);
         
         if (data.content_niche) localStorage.setItem("niche", data.content_niche);
         if (data.target_audience) localStorage.setItem("audience", data.target_audience);
@@ -208,7 +252,9 @@ export default function Account() {
         posting_platforms: profile.posting_platforms || [],
         business_niche: profile.business_niche || null,
         business_description: profile.business_description || null,
-        product_niche: profile.product_niche || null
+        product_niche: profile.product_niche || null,
+        content_type: profile.content_type || null,
+        posting_frequency: profile.posting_frequency || null
       };
 
       console.log("Updating profile with:", updateData);
@@ -382,6 +428,11 @@ export default function Account() {
 
   const handleRetry = () => {
     fetchProfile();
+  };
+
+  const handleContentNicheChange = (value: string) => {
+    setProfile(prev => ({ ...prev, content_niche: value }));
+    setIsCustomNiche(value === 'Other');
   };
 
   if (fetchError) {
@@ -601,14 +652,93 @@ export default function Account() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Content Details</h3>
                     
-                    <div className="flex flex-col space-y-2">
+                    <div className="space-y-4">
+                      <Label>Content Type</Label>
+                      <RadioGroup
+                        value={profile.content_type || ''}
+                        onValueChange={(value) => setProfile(prev => ({ ...prev, content_type: value }))}
+                        className="grid gap-4"
+                      >
+                        {contentTypes.map((option) => (
+                          <Card 
+                            key={option.value}
+                            className={`cursor-pointer ${profile.content_type === option.value ? 'ring-2 ring-primary' : ''}`}
+                            onClick={() => setProfile(prev => ({ ...prev, content_type: option.value }))}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-center gap-2">
+                                <RadioGroupItem 
+                                  value={option.value} 
+                                  id={`content-type-${option.value}`}
+                                  className="peer sr-only" 
+                                />
+                                <div className="flex-1">
+                                  <h4 className="font-medium">{option.title}</h4>
+                                  <p className="text-sm text-muted-foreground">{option.description}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                    
+                    <div className="space-y-2">
                       <Label htmlFor="contentNiche">Content Niche</Label>
-                      <Input
-                        id="contentNiche"
+                      <RadioGroup
                         value={profile.content_niche || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
-                        placeholder="Enter your content niche (e.g., fitness, cooking, tech)"
-                      />
+                        onValueChange={handleContentNicheChange}
+                        className="grid grid-cols-2 gap-2 mt-2"
+                      >
+                        {contentNiches.map((niche) => (
+                          <div key={niche.value} className="flex items-center space-x-2">
+                            <RadioGroupItem 
+                              id={`niche-${niche.value}`} 
+                              value={niche.value} 
+                            />
+                            <Label 
+                              htmlFor={`niche-${niche.value}`} 
+                              className="cursor-pointer"
+                            >
+                              {niche.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                      
+                      {(isCustomNiche || profile.content_niche === 'Other') && (
+                        <div className="mt-2">
+                          <Input
+                            placeholder="Specify your niche"
+                            value={isCustomNiche ? profile.content_niche || '' : ''}
+                            onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="postingFrequency">Posting Frequency</Label>
+                      <RadioGroup
+                        value={profile.posting_frequency || ''}
+                        onValueChange={(value) => setProfile(prev => ({ ...prev, posting_frequency: value }))}
+                        className="grid gap-2 mt-2"
+                      >
+                        {postingFrequencies.map((frequency) => (
+                          <div key={frequency.value} className="flex items-center space-x-2">
+                            <RadioGroupItem 
+                              id={`frequency-${frequency.value}`} 
+                              value={frequency.value} 
+                            />
+                            <Label 
+                              htmlFor={`frequency-${frequency.value}`} 
+                              className="cursor-pointer"
+                            >
+                              {frequency.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
                     </div>
                     
                     <div className="flex flex-col space-y-2">
