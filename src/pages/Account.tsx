@@ -1,900 +1,652 @@
 
 import { useState, useEffect } from "react";
-import { useTheme } from "@/hooks/use-theme";
-import { Monitor, Moon, Sun } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import AuthGuard from "@/components/AuthGuard";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, CheckCircle2, Package2, UserCircle, Building2, LogOut } from "lucide-react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import LinkSubscriptionDialog from "@/components/billing/LinkSubscriptionDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const themeOptions = [
-  {
-    value: "light",
-    title: "Light",
-    description: "Light theme for bright environments",
-    icon: Sun,
-  },
-  {
-    value: "dark",
-    title: "Dark",
-    description: "Dark theme for low-light environments",
-    icon: Moon,
-  },
-  {
-    value: "system",
-    title: "System",
-    description: "Sync with your system preferences",
-    icon: Monitor,
-  },
-];
-
-const accountTypes = [
-  {
-    value: "personal",
-    title: "Personal Brand",
-    description: "Create content for your personal brand",
-  },
-  {
-    value: "business",
-    title: "Business",
-    description: "Create content for your business",
-  },
-  {
-    value: "ecommerce",
-    title: "E-commerce",
-    description: "Create content for your online store",
-  },
-];
-
-const contentTypes = [
-  {
-    value: "talking_head",
-    title: "Talking Head Videos",
-    description: "Face-to-camera videos where you directly speak to your audience"
-  },
-  {
-    value: "text_based",
-    title: "Text-Based Visual Content",
-    description: "Videos with animated text, graphics, and visuals with minimal on-camera presence"
-  },
-  {
-    value: "mixed",
-    title: "Mixed Content Approach",
-    description: "Combination of talking head segments with text-based visuals for variety"
-  },
-];
-
+// Define predefined options
 const contentNiches = [
-  { value: 'Education', label: 'Education & Learning' },
-  { value: 'Entertainment', label: 'Entertainment & Comedy' },
-  { value: 'Lifestyle', label: 'Lifestyle & Daily Vlogs' },
-  { value: 'Technology', label: 'Technology & Gadgets' },
-  { value: 'Fashion & Beauty', label: 'Fashion & Beauty' },
-  { value: 'Health & Fitness', label: 'Health & Fitness' },
-  { value: 'Other', label: 'Other (Custom)' },
+  "Education",
+  "Entertainment",
+  "Lifestyle",
+  "Technology",
+  "Fashion & Beauty",
+  "Health & Fitness",
+  "Other"
 ];
 
 const postingFrequencies = [
-  { value: 'daily', label: 'Daily (5-7 times per week)' },
-  { value: 'multiple_times_a_week', label: 'Multiple times a week (2-4 times)' },
-  { value: 'weekly', label: 'Weekly (Once a week)' },
-  { value: 'monthly', label: 'Monthly (1-3 times per month)' },
-  { value: 'irregularly', label: 'Irregular schedule' },
+  "Daily",
+  "3-5 times per week",
+  "1-2 times per week",
+  "A few times a month",
+  "Monthly"
 ];
 
-interface Profile {
-  id?: string;
-  account_type: string;
-  content_niche?: string | null;
-  target_audience?: string | null;
-  posting_platforms?: string[] | null;
-  business_niche?: string | null;
-  product_niche?: string | null;
-  business_description?: string | null;
-  content_type?: string | null;
-  posting_frequency?: string | null;
-}
+const contentTypes = [
+  { value: "talking_head", label: "Talking Head Videos", description: "Face-to-camera content where you speak directly to your audience" },
+  { value: "text_based", label: "Text-Overlay Videos", description: "Videos that primarily use text overlays with visuals or b-roll footage" },
+  { value: "mixed", label: "Mixed Format", description: "Combination of talking head segments with text overlays and visual elements" }
+];
 
-export default function Account() {
-  const [activeTab, setActiveTab] = useState<'settings' | 'customize'>('settings');
-  const { theme, setTheme } = useTheme();
-  const [profile, setProfile] = useState<Profile>({account_type: 'personal'});
-  const [loading, setLoading] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-  const [email, setEmail] = useState<string>("");
-  const [newEmail, setNewEmail] = useState<string>("");
-  const [currentPassword, setCurrentPassword] = useState<string>("");
-  const [newPassword, setNewPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [isChangingEmail, setIsChangingEmail] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isCustomNiche, setIsCustomNiche] = useState(false);
+// Define the form schema
+const profileFormSchema = z.object({
+  accountType: z.enum(["personal", "ecommerce", "business"]),
+  contentNiche: z.string().optional(),
+  productNiche: z.string().optional(),
+  businessNiche: z.string().optional(),
+  contentType: z.string().optional(),
+  postingFrequency: z.string().optional(),
+  targetAudience: z.string().optional(),
+  brandName: z.string().optional(),
+  businessDescription: z.string().optional(),
+  customNiche: z.string().optional(),
+});
+
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
+
+const Account = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [isCustomNiche, setIsCustomNiche] = useState(false);
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      accountType: "personal",
+      contentNiche: "",
+      productNiche: "",
+      businessNiche: "",
+      contentType: "",
+      postingFrequency: "",
+      targetAudience: "",
+      brandName: "",
+      businessDescription: "",
+      customNiche: "",
+    },
+  });
 
   useEffect(() => {
-    console.log("Account component mounted, fetching profile");
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      console.log("Fetching profile data...");
-      setLoading(true);
-      setFetchError(null);
-      
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Session error:", sessionError);
-        throw sessionError;
-      }
-      
-      if (!session?.user) {
-        console.error("No authenticated user found");
-        setFetchError("No authenticated user found. Please log in again.");
-        return;
-      }
-
-      setEmail(session.user.email || "");
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('account_type, content_niche, target_audience, posting_platforms, business_niche, product_niche, business_description, content_type, posting_frequency')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        throw error;
-      }
-      
-      console.log("Profile data fetched:", data);
-      
-      if (data) {
-        setProfile(data as Profile);
+    const getProfile = async () => {
+      try {
+        setIsLoading(true);
         
-        // Check if content_niche is a custom value
-        const isStandardNiche = contentNiches.some(niche => niche.value === data.content_niche);
-        setIsCustomNiche(!isStandardNiche && data.content_niche !== null);
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (data.content_niche) localStorage.setItem("niche", data.content_niche);
-        if (data.target_audience) localStorage.setItem("audience", data.target_audience);
-        if (data.posting_platforms && data.posting_platforms.length > 0) {
-          localStorage.setItem("platform", data.posting_platforms[0]);
+        if (!session) {
+          navigate("/auth");
+          return;
         }
         
-        if (data.business_niche) localStorage.setItem("videoType", data.business_niche);
-        if (data.product_niche) localStorage.setItem("videoType", data.product_niche);
+        setUser(session.user);
         
-        triggerStorageEvents();
-      } else {
-        console.log("No profile found, creating default profile");
-        const defaultProfile: Profile = {
-          account_type: 'personal',
-          content_niche: '',
-          target_audience: '',
-          posting_platforms: [],
-        };
-        
-        setProfile(defaultProfile);
-        
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: session.user.id,
-            account_type: defaultProfile.account_type,
-            content_niche: defaultProfile.content_niche,
-            target_audience: defaultProfile.target_audience,
-            posting_platforms: defaultProfile.posting_platforms
-          });
+        // Fetch profile
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
           
-        if (insertError) {
-          console.error("Error creating default profile:", insertError);
+        if (profileError) throw profileError;
+        
+        if (profile) {
+          // Set form values from profile
+          form.setValue("accountType", profile.account_type || "personal");
+          form.setValue("contentNiche", profile.content_niche || "");
+          form.setValue("productNiche", profile.product_niche || "");
+          form.setValue("businessNiche", profile.business_niche || "");
+          form.setValue("targetAudience", profile.target_audience || "");
+          form.setValue("brandName", profile.brand_name || "");
+          form.setValue("businessDescription", profile.business_description || "");
+          form.setValue("contentType", profile.content_type || "");
+          form.setValue("postingFrequency", profile.posting_frequency || "");
+          
+          // Check if the content niche is custom
+          if (profile.content_niche && !contentNiches.includes(profile.content_niche)) {
+            setIsCustomNiche(true);
+            form.setValue("customNiche", profile.content_niche);
+          }
         }
-      }
-    } catch (error: any) {
-      console.error('Error in fetchProfile:', error);
-      setFetchError(error.message || "Failed to load profile data");
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to load profile data",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const triggerStorageEvents = () => {
-    try {
-      window.dispatchEvent(new Event('storage'));
-      
-      const customEvent = new CustomEvent('localStorageChange');
-      window.dispatchEvent(customEvent);
-      
-      console.log("Storage events triggered");
-    } catch (e) {
-      console.warn('Could not dispatch storage event', e);
-    }
-  };
-
-  const handleUpdateProfile = async () => {
-    try {
-      console.log("Updating profile:", profile);
-      setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
+        
+        // Fetch subscription
+        const { data: subscriptionData, error: subscriptionError } = await supabase
+          .from("user_subscriptions")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .single();
+          
+        if (subscriptionError && subscriptionError.code !== "PGRST116") {
+          throw subscriptionError;
+        }
+        
+        setSubscription(subscriptionData || { tier: "free" });
+      } catch (error) {
+        console.error("Error loading profile:", error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "You must be logged in to update your profile",
+          title: "Error loading profile",
+          description: "There was an error loading your profile information.",
         });
-        return;
+      } finally {
+        setIsLoading(false);
       }
+    };
+    
+    getProfile();
+  }, [navigate, toast, form]);
 
-      if (!profile.account_type) {
-        profile.account_type = 'personal';
+  const onSubmit = async (data: ProfileFormValues) => {
+    try {
+      setIsLoading(true);
+      
+      if (!user) return;
+      
+      // Determine which niche field to use based on account type
+      let nicheField = "";
+      if (data.accountType === "personal") {
+        nicheField = isCustomNiche ? data.customNiche || "" : data.contentNiche || "";
+      } else if (data.accountType === "ecommerce") {
+        nicheField = data.productNiche || "";
+      } else {
+        nicheField = data.businessNiche || "";
       }
-
-      const updateData: any = {
-        id: session.user.id,
-        account_type: profile.account_type,
-        content_niche: profile.content_niche || null,
-        target_audience: profile.target_audience || null,
-        posting_platforms: profile.posting_platforms || [],
-        business_niche: profile.business_niche || null,
-        business_description: profile.business_description || null,
-        product_niche: profile.product_niche || null,
-        content_type: profile.content_type || null,
-        posting_frequency: profile.posting_frequency || null
-      };
-
-      console.log("Updating profile with:", updateData);
-
+      
+      // Update profile
       const { error } = await supabase
-        .from('profiles')
-        .upsert(updateData);
-
+        .from("profiles")
+        .update({
+          account_type: data.accountType,
+          content_niche: data.accountType === "personal" ? nicheField : data.contentNiche,
+          product_niche: data.accountType === "ecommerce" ? nicheField : data.productNiche,
+          business_niche: data.accountType === "business" ? nicheField : data.businessNiche,
+          target_audience: data.targetAudience,
+          brand_name: data.brandName,
+          business_description: data.businessDescription,
+          content_type: data.contentType,
+          posting_frequency: data.postingFrequency
+        })
+        .eq("id", user.id);
+        
       if (error) throw error;
-
-      let nicheToStore = profile.content_niche || "";
-      let videoTypeValue = profile.content_niche || "";
       
-      if (profile.account_type === 'business' && profile.business_niche) {
-        nicheToStore = profile.business_niche;
-        videoTypeValue = profile.business_niche;
-      } else if (profile.account_type === 'ecommerce' && profile.product_niche) {
-        nicheToStore = profile.product_niche;
-        videoTypeValue = profile.product_niche;
-      }
-      
-      localStorage.setItem("niche", nicheToStore);
-      localStorage.setItem("videoType", videoTypeValue);
-      
-      if (profile.target_audience) {
-        localStorage.setItem("audience", profile.target_audience);
-      }
-      
-      if (profile.posting_platforms && profile.posting_platforms.length > 0) {
-        localStorage.setItem("platform", profile.posting_platforms[0]);
-      }
-
       toast({
         title: "Profile updated",
-        description: "Your changes have been saved successfully.",
+        description: "Your profile information has been updated successfully.",
       });
-      
-      fetchProfile();
     } catch (error: any) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to update profile",
+        title: "Error updating profile",
+        description: error.message,
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const updateLocalStorage = (key: string, value: string) => {
-    const oldValue = localStorage.getItem(key);
-    console.log(`Updating localStorage: ${key} = ${value} (was: ${oldValue})`);
-    
-    localStorage.setItem(key, value);
-    
+  const handleSignOut = async () => {
     try {
-      const event = new StorageEvent('storage', {
-        key: key,
-        oldValue: oldValue || '',
-        newValue: value,
-        storageArea: localStorage,
-      });
-      window.dispatchEvent(event);
-    } catch (e) {
-      console.warn('Could not dispatch storage event', e);
-      
-      const customEvent = new CustomEvent('localStorageChange', { 
-        detail: { key, oldValue, newValue: value } 
-      });
-      window.dispatchEvent(customEvent);
+      await supabase.auth.signOut();
+      navigate("/auth");
+    } catch (error) {
+      console.error("Error signing out:", error);
     }
   };
 
-  const handleChangeEmail = async () => {
-    try {
-      setLoading(true);
-      
-      if (!newEmail) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Please enter a new email address.",
-        });
-        return;
-      }
-
-      const { error } = await supabase.auth.updateUser({ email: newEmail });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Verification email sent",
-        description: "Please check your inbox to verify your new email address.",
-      });
-      
-      setIsChangingEmail(false);
-      setNewEmail("");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to change email. Please try again.",
-      });
-      console.error('Error changing email:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChangePassword = async () => {
-    try {
-      setLoading(true);
-      
-      if (!currentPassword || !newPassword || !confirmPassword) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Please fill in all password fields.",
-        });
-        return;
-      }
-      
-      if (newPassword !== confirmPassword) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "New passwords do not match.",
-        });
-        return;
-      }
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: currentPassword,
-      });
-
-      if (signInError) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Current password is incorrect.",
-        });
-        return;
-      }
-
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Password updated",
-        description: "Your password has been changed successfully.",
-      });
-      
-      setIsChangingPassword(false);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to change password. Please try again.",
-      });
-      console.error('Error changing password:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRetry = () => {
-    fetchProfile();
-  };
-
-  const handleContentNicheChange = (value: string) => {
-    setProfile(prev => ({ ...prev, content_niche: value }));
-    setIsCustomNiche(value === 'Other');
-  };
-
-  if (fetchError) {
-    return (
-      <AuthGuard>
-        <div className="container mx-auto py-20">
-          <div className="max-w-2xl mx-auto space-y-8">
-            <Alert variant="destructive">
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{fetchError}</AlertDescription>
-            </Alert>
-            <div className="text-center">
-              <Button onClick={handleRetry} disabled={loading}>
-                {loading ? "Retrying..." : "Retry"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </AuthGuard>
-    );
+  if (!user && !isLoading) {
+    return <Navigate to="/auth" />;
   }
 
   return (
-    <AuthGuard>
-      <div className="container mx-auto py-20">
-        <div className="max-w-2xl mx-auto space-y-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Account</h1>
-            <div className="inline-flex items-center rounded-lg border p-1 bg-card shadow-sm">
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  activeTab === 'settings'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-accent hover:text-accent-foreground'
-                }`}
-              >
-                Settings
-              </button>
-              <button
-                onClick={() => setActiveTab('customize')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  activeTab === 'customize'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-accent hover:text-accent-foreground'
-                }`}
-              >
-                Customize
-              </button>
-            </div>
-          </div>
-
-          {activeTab === 'settings' ? (
-            <div className="space-y-6">
-              <div className="widget-box p-6">
-                <h2 className="text-xl font-semibold mb-6">Email and Password</h2>
-                
-                <div className="space-y-6">
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="flex gap-2">
-                      <Input id="email" value={email} disabled className="flex-1" />
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setIsChangingEmail(!isChangingEmail)}
-                      >
-                        {isChangingEmail ? "Cancel" : "Change"}
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {isChangingEmail && (
-                    <div className="flex flex-col space-y-4 p-4 border rounded-md bg-accent/10">
-                      <div className="flex flex-col space-y-2">
-                        <Label htmlFor="newEmail">New Email</Label>
-                        <Input 
-                          id="newEmail" 
-                          type="email" 
-                          value={newEmail}
-                          onChange={(e) => setNewEmail(e.target.value)}
-                          placeholder="Enter new email address"
-                        />
-                      </div>
-                      <Button 
-                        onClick={handleChangeEmail} 
-                        disabled={loading}
-                      >
-                        {loading ? "Processing..." : "Update Email"}
-                      </Button>
-                    </div>
-                  )}
-                  
-                  <div className="flex flex-col space-y-2">
-                    <Label>Password</Label>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setIsChangingPassword(!isChangingPassword)}
-                    >
-                      {isChangingPassword ? "Cancel" : "Change Password"}
-                    </Button>
-                  </div>
-                  
-                  {isChangingPassword && (
-                    <div className="flex flex-col space-y-4 p-4 border rounded-md bg-accent/10">
-                      <div className="flex flex-col space-y-2">
-                        <Label htmlFor="currentPassword">Current Password</Label>
-                        <Input 
-                          id="currentPassword" 
-                          type="password" 
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          placeholder="Enter current password"
-                        />
-                      </div>
-                      <div className="flex flex-col space-y-2">
-                        <Label htmlFor="newPassword">New Password</Label>
-                        <Input 
-                          id="newPassword" 
-                          type="password" 
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="Enter new password"
-                        />
-                      </div>
-                      <div className="flex flex-col space-y-2">
-                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                        <Input 
-                          id="confirmPassword" 
-                          type="password" 
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          placeholder="Confirm new password"
-                        />
-                      </div>
-                      <Button 
-                        onClick={handleChangePassword} 
-                        disabled={loading}
-                      >
-                        {loading ? "Processing..." : "Update Password"}
-                      </Button>
-                    </div>
-                  )}
-                </div>
+    <div className="container max-w-screen-lg py-6 lg:py-10">
+      <div className="flex flex-col space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Account Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your account settings and preferences.
+          </p>
+        </div>
+        
+        <Tabs defaultValue="profile">
+          <TabsList className="w-full lg:w-auto">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="subscription">Subscription</TabsTrigger>
+          </TabsList>
+          
+          <Separator className="my-6" />
+          
+          <TabsContent value="profile" className="space-y-6">
+            {isLoading ? (
+              <div className="space-y-4 animate-pulse">
+                <div className="h-8 w-1/3 bg-muted rounded"></div>
+                <div className="h-10 w-full bg-muted rounded"></div>
+                <div className="h-10 w-full bg-muted rounded"></div>
+                <div className="h-10 w-full bg-muted rounded"></div>
               </div>
-
-              <div className="widget-box p-6">
-                <h2 className="text-xl font-semibold mb-6">Theme Settings</h2>
-                <RadioGroup
-                  value={theme}
-                  onValueChange={(value: "light" | "dark" | "system") => setTheme(value)}
-                  className="grid gap-4"
-                >
-                  {themeOptions.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <div key={option.value} className="relative">
-                        <RadioGroupItem
-                          value={option.value}
-                          id={`theme-${option.value}`}
-                          className="peer sr-only"
-                        />
-                        <Label
-                          htmlFor={`theme-${option.value}`}
-                          className="flex items-center gap-4 p-4 rounded-lg border-2 border-muted bg-accent hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                        >
-                          <Icon className="h-5 w-5" />
-                          <div>
-                            <div className="font-semibold">{option.title}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {option.description}
-                            </div>
-                          </div>
-                        </Label>
-                      </div>
-                    );
-                  })}
-                </RadioGroup>
-              </div>
-            </div>
-          ) : (
-            <div className="widget-box p-6">
-              <h2 className="text-xl font-semibold mb-6">Customize Content Settings</h2>
-              <p className="text-muted-foreground mb-6">
-                Customize your content settings to match your audience and niche. These settings will be used to generate content tailored to your needs.
-              </p>
-              
-              <form className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Account Type</h3>
-                  <RadioGroup
-                    value={profile.account_type}
-                    onValueChange={(value) => setProfile(prev => ({ ...prev, account_type: value }))}
-                    className="grid gap-4"
-                  >
-                    {accountTypes.map((option) => (
-                      <div key={option.value} className="relative">
-                        <RadioGroupItem
-                          value={option.value}
-                          id={`account-${option.value}`}
-                          className="peer sr-only"
-                        />
-                        <Label
-                          htmlFor={`account-${option.value}`}
-                          className="flex flex-col space-y-1 p-4 rounded-lg border-2 border-muted bg-accent hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                        >
-                          <div className="font-semibold">{option.title}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {option.description}
-                          </div>
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-                
-                {profile.account_type === 'personal' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Content Details</h3>
-                    
-                    <div className="space-y-4">
-                      <Label>Content Type</Label>
-                      <RadioGroup
-                        value={profile.content_type || ''}
-                        onValueChange={(value) => setProfile(prev => ({ ...prev, content_type: value }))}
-                        className="grid gap-4"
-                      >
-                        {contentTypes.map((option) => (
-                          <Card 
-                            key={option.value}
-                            className={`cursor-pointer ${profile.content_type === option.value ? 'ring-2 ring-primary' : ''}`}
-                            onClick={() => setProfile(prev => ({ ...prev, content_type: option.value }))}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-center gap-2">
-                                <RadioGroupItem 
-                                  value={option.value} 
-                                  id={`content-type-${option.value}`}
-                                  className="peer sr-only" 
-                                />
-                                <div className="flex-1">
-                                  <h4 className="font-medium">{option.title}</h4>
-                                  <p className="text-sm text-muted-foreground">{option.description}</p>
+            ) : (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Account Type</CardTitle>
+                      <CardDescription>
+                        Change the type of account you have.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <FormField
+                        control={form.control}
+                        name="accountType"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                              >
+                                <div className={`flex items-center space-x-2 rounded-lg border p-4 ${field.value === "personal" ? "border-primary bg-primary/5" : "border-border"}`}>
+                                  <RadioGroupItem value="personal" id="account-personal" className="sr-only" />
+                                  <label htmlFor="account-personal" className="flex flex-1 cursor-pointer items-center justify-between">
+                                    <div className="flex items-center space-x-4">
+                                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                                        <UserCircle className="h-4 w-4 text-primary" />
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-medium">Personal Brand</p>
+                                      </div>
+                                    </div>
+                                    {field.value === "personal" && (
+                                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                                    )}
+                                  </label>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </RadioGroup>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="contentNiche">Content Niche</Label>
-                      <RadioGroup
-                        value={profile.content_niche || ''}
-                        onValueChange={handleContentNicheChange}
-                        className="grid grid-cols-2 gap-2 mt-2"
-                      >
-                        {contentNiches.map((niche) => (
-                          <div key={niche.value} className="flex items-center space-x-2">
-                            <RadioGroupItem 
-                              id={`niche-${niche.value}`} 
-                              value={niche.value} 
-                            />
-                            <Label 
-                              htmlFor={`niche-${niche.value}`} 
-                              className="cursor-pointer"
-                            >
-                              {niche.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                      
-                      {(isCustomNiche || profile.content_niche === 'Other') && (
-                        <div className="mt-2">
-                          <Input
-                            placeholder="Specify your niche"
-                            value={isCustomNiche ? profile.content_niche || '' : ''}
-                            onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
+
+                                <div className={`flex items-center space-x-2 rounded-lg border p-4 ${field.value === "ecommerce" ? "border-primary bg-primary/5" : "border-border"}`}>
+                                  <RadioGroupItem value="ecommerce" id="account-ecommerce" className="sr-only" />
+                                  <label htmlFor="account-ecommerce" className="flex flex-1 cursor-pointer items-center justify-between">
+                                    <div className="flex items-center space-x-4">
+                                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                                        <Package2 className="h-4 w-4 text-primary" />
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-medium">E-commerce</p>
+                                      </div>
+                                    </div>
+                                    {field.value === "ecommerce" && (
+                                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                                    )}
+                                  </label>
+                                </div>
+
+                                <div className={`flex items-center space-x-2 rounded-lg border p-4 ${field.value === "business" ? "border-primary bg-primary/5" : "border-border"}`}>
+                                  <RadioGroupItem value="business" id="account-business" className="sr-only" />
+                                  <label htmlFor="account-business" className="flex flex-1 cursor-pointer items-center justify-between">
+                                    <div className="flex items-center space-x-4">
+                                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                                        <Building2 className="h-4 w-4 text-primary" />
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-medium">Business</p>
+                                      </div>
+                                    </div>
+                                    {field.value === "business" && (
+                                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                                    )}
+                                  </label>
+                                </div>
+                              </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {form.watch("accountType") === "personal" && (
+                    <>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Content Preferences</CardTitle>
+                          <CardDescription>
+                            Tell us about the content you want to create.
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="contentType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Content Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select content type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {contentTypes.map((type) => (
+                                      <SelectItem key={type.value} value={type.value}>
+                                        {type.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
+
+                          <div className="space-y-2">
+                            <FormLabel>Content Niche</FormLabel>
+                            <Tabs defaultValue={isCustomNiche ? "custom" : "predefined"} onValueChange={(value) => setIsCustomNiche(value === "custom")}>
+                              <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="predefined">Common Niches</TabsTrigger>
+                                <TabsTrigger value="custom">Custom Niche</TabsTrigger>
+                              </TabsList>
+                              <TabsContent value="predefined" className="space-y-4 pt-4">
+                                <FormField
+                                  control={form.control}
+                                  name="contentNiche"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select a niche" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {contentNiches.map((niche) => (
+                                            <SelectItem key={niche} value={niche}>
+                                              {niche}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TabsContent>
+                              <TabsContent value="custom" className="space-y-4 pt-4">
+                                <FormField
+                                  control={form.control}
+                                  name="customNiche"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Enter your custom niche..." {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TabsContent>
+                            </Tabs>
+                          </div>
+
+                          <FormField
+                            control={form.control}
+                            name="postingFrequency"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Posting Frequency</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select posting frequency" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {postingFrequencies.map((frequency) => (
+                                      <SelectItem key={frequency} value={frequency}>
+                                        {frequency}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="targetAudience"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Target Audience</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Who is your target audience?" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </CardContent>
+                      </Card>
+                    </>
+                  )}
+
+                  {form.watch("accountType") === "ecommerce" && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>E-commerce Details</CardTitle>
+                        <CardDescription>
+                          Tell us about your online store.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="productNiche"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Product Niche</FormLabel>
+                              <FormControl>
+                                <Input placeholder="What products do you sell?" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="targetAudience"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Target Audience</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Who is your target customer?" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="brandName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Brand Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Your store or brand name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {form.watch("accountType") === "business" && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Business Details</CardTitle>
+                        <CardDescription>
+                          Tell us about your business.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="businessNiche"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Business Niche</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Your industry or niche" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="targetAudience"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Target Audience</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Who are your ideal clients?" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="businessDescription"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Business Description</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Briefly describe your business and what you offer"
+                                  className="resize-none" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </form>
+              </Form>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="subscription" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Subscription Plan</CardTitle>
+                <CardDescription>
+                  Manage your subscription and billing information.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {isLoading ? (
+                  <div className="space-y-4 animate-pulse">
+                    <div className="h-8 w-1/3 bg-muted rounded"></div>
+                    <div className="h-10 w-full bg-muted rounded"></div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="grid gap-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Current Plan</p>
+                          <p className="text-sm text-muted-foreground">
+                            {subscription?.tier === "free" && "Free Plan"}
+                            {subscription?.tier === "pro" && "Pro Plan"}
+                            {subscription?.tier === "plus" && "Plus Plan"}
+                            {subscription?.tier === "business" && "Business Plan"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {subscription?.tier === "free" && "Free"}
+                            {subscription?.tier === "pro" && "$9.99/month"}
+                            {subscription?.tier === "plus" && "$14.99/month"}
+                            {subscription?.tier === "business" && "$39.99/month"}
+                          </p>
+                        </div>
+                      </div>
+                      {subscription?.current_period_end && subscription?.tier !== "free" && (
+                        <div className="flex items-center">
+                          <div className="text-sm text-muted-foreground">
+                            Next billing date: {new Date(subscription.current_period_end).toLocaleDateString()}
+                          </div>
                         </div>
                       )}
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="postingFrequency">Posting Frequency</Label>
-                      <RadioGroup
-                        value={profile.posting_frequency || ''}
-                        onValueChange={(value) => setProfile(prev => ({ ...prev, posting_frequency: value }))}
-                        className="grid gap-2 mt-2"
-                      >
-                        {postingFrequencies.map((frequency) => (
-                          <div key={frequency.value} className="flex items-center space-x-2">
-                            <RadioGroupItem 
-                              id={`frequency-${frequency.value}`} 
-                              value={frequency.value} 
-                            />
-                            <Label 
-                              htmlFor={`frequency-${frequency.value}`} 
-                              className="cursor-pointer"
-                            >
-                              {frequency.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </div>
-                    
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="targetAudience">Target Audience</Label>
-                      <Input
-                        id="targetAudience"
-                        value={profile.target_audience || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
-                        placeholder="Describe your target audience"
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="postingPlatform">Primary Posting Platform</Label>
-                      <Input
-                        id="postingPlatform"
-                        value={profile.posting_platforms?.[0] || ''}
-                        onChange={(e) => 
-                          setProfile(prev => ({ 
-                            ...prev, 
-                            posting_platforms: e.target.value ? [e.target.value] : [] 
-                          }))
-                        }
-                        placeholder="Which platform do you primarily post on?"
-                      />
+                    <div className="mt-6 space-x-4">
+                      <Button asChild>
+                        <Link to="/billing">Manage Subscription</Link>
+                      </Button>
+                      {subscription?.tier === "free" && (
+                        <Button variant="outline" onClick={() => setShowLinkDialog(true)}>
+                          Link Existing Subscription
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
-                
-                {profile.account_type === 'business' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Business Details</h3>
-                    
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="businessDescription">Business Description</Label>
-                      <Textarea
-                        id="businessDescription"
-                        value={profile.business_description || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, business_description: e.target.value }))}
-                        placeholder="Describe what your business does"
-                        className="min-h-[80px]"
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="businessNiche">Business Niche</Label>
-                      <Input
-                        id="businessNiche"
-                        value={profile.business_niche || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, business_niche: e.target.value }))}
-                        placeholder="What industry is your business in? (e.g., consulting, education)"
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="contentNiche">Content Niche</Label>
-                      <Input
-                        id="contentNiche"
-                        value={profile.content_niche || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
-                        placeholder="What topics will your content focus on?"
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="targetAudience">Target Audience</Label>
-                      <Input
-                        id="targetAudience"
-                        value={profile.target_audience || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
-                        placeholder="Describe your target audience"
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="postingPlatform">Primary Posting Platform</Label>
-                      <Input
-                        id="postingPlatform"
-                        value={profile.posting_platforms?.[0] || ''}
-                        onChange={(e) => 
-                          setProfile(prev => ({ 
-                            ...prev, 
-                            posting_platforms: e.target.value ? [e.target.value] : [] 
-                          }))
-                        }
-                        placeholder="Which platform do you primarily post on?"
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                {profile.account_type === 'ecommerce' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">E-commerce Details</h3>
-                    
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="productNiche">Product Niche</Label>
-                      <Input
-                        id="productNiche"
-                        value={profile.product_niche || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, product_niche: e.target.value }))}
-                        placeholder="What products do you sell? (e.g., clothing, electronics)"
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="contentNiche">Content Niche</Label>
-                      <Input
-                        id="contentNiche"
-                        value={profile.content_niche || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, content_niche: e.target.value }))}
-                        placeholder="What topics will your content focus on?"
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="targetAudience">Target Audience</Label>
-                      <Input
-                        id="targetAudience"
-                        value={profile.target_audience || ''}
-                        onChange={(e) => setProfile(prev => ({ ...prev, target_audience: e.target.value }))}
-                        placeholder="Describe your target audience"
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col space-y-2">
-                      <Label htmlFor="postingPlatform">Primary Posting Platform</Label>
-                      <Input
-                        id="postingPlatform"
-                        value={profile.posting_platforms?.[0] || ''}
-                        onChange={(e) => 
-                          setProfile(prev => ({ 
-                            ...prev, 
-                            posting_platforms: e.target.value ? [e.target.value] : [] 
-                          }))
-                        }
-                        placeholder="Which platform do you primarily post on?"
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex justify-end">
-                  <Button 
-                    type="button"
-                    onClick={handleUpdateProfile}
-                    disabled={loading}
-                  >
-                    {loading ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          )}
-        </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Account</CardTitle>
+                <CardDescription>
+                  Manage your account settings.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button variant="destructive" onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-    </AuthGuard>
+      
+      <LinkSubscriptionDialog open={showLinkDialog} onOpenChange={setShowLinkDialog} />
+    </div>
   );
-}
+};
+
+export default Account;

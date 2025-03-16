@@ -6,12 +6,55 @@ const corsHeaders = {
 
 export const onRequestPost = async (context: any) => {
   try {
-    const { niche, audience, videoType, platform } = await context.request.json();
+    const { 
+      niche, 
+      audience, 
+      videoType, 
+      platform, 
+      customIdeas, 
+      previousIdeas, 
+      numIdeas,
+      accountType,
+      businessDescription,
+      contentType,
+      postingFrequency
+    } = await context.request.json();
 
-    const prompt = `Generate 5 viral video ideas for ${platform} with the following criteria:
+    // Build a more detailed prompt based on user profile
+    let promptDetails = '';
+    
+    // Add account type specific details
+    if (accountType === 'personal') {
+      promptDetails += `You're generating ideas for a personal brand creator.\n`;
+      
+      if (contentType) {
+        promptDetails += `- Content Type: ${contentType === 'talking_head' ? 'Talking head videos where the creator speaks directly to camera' : 
+                          contentType === 'text_based' ? 'Text-overlay style videos with visuals or b-roll footage' : 
+                          'Mixed format videos combining talking head segments with text overlays'}\n`;
+      }
+      
+      if (postingFrequency) {
+        promptDetails += `- Posting Frequency: ${postingFrequency}\n`;
+      }
+    } else if (accountType === 'ecommerce') {
+      promptDetails += `You're generating ideas for an e-commerce business selling products.\n`;
+    } else if (accountType === 'business') {
+      promptDetails += `You're generating ideas for a business.\n`;
+      if (businessDescription) {
+        promptDetails += `- Business Description: ${businessDescription}\n`;
+      }
+    }
+
+    const prompt = `Generate ${numIdeas || 5} viral video ideas for ${platform} with the following criteria:
+    ${promptDetails}
     - Niche: ${niche}
     - Target Audience: ${audience}
     - Video Type: ${videoType}
+    
+    ${customIdeas ? `Consider these custom ideas as inspiration:\n${customIdeas}\n` : ''}
+    
+    ${previousIdeas && previousIdeas.titles && previousIdeas.titles.length > 0 ? 
+      `Please avoid these previously generated ideas:\n${previousIdeas.titles.join("\n")}\n` : ''}
     
     For each idea, provide:
     - A catchy title

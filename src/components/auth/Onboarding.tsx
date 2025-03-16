@@ -1,92 +1,60 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import React, { useState, useEffect } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ChevronRight } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, Package2, UserCircle, Building2, PlusCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 
-type AccountType = 'personal' | 'ecommerce' | 'business';
-type ContentType = 'talking_head' | 'text_based' | 'mixed';
-type ContentNiche = 'Education' | 'Entertainment' | 'Lifestyle' | 'Technology' | 'Fashion & Beauty' | 'Health & Fitness' | 'Other' | string;
-type PostingFrequency = 'daily' | 'multiple_times_a_week' | 'weekly' | 'monthly' | 'irregularly';
+// Define the form schema
+const accountFormSchema = z.object({
+  accountType: z.enum(["personal", "ecommerce", "business"]),
+  contentNiche: z.string().optional(),
+  productNiche: z.string().optional(),
+  businessNiche: z.string().optional(),
+  targetAudience: z.string().optional(),
+  brandName: z.string().optional(),
+  businessDescription: z.string().optional(),
+  contentType: z.string().optional(),
+  postingFrequency: z.string().optional(),
+  customNiche: z.string().optional(),
+});
 
-const accountTypes = [
-  {
-    value: 'personal',
-    title: 'Create ideas for my personal brand',
-    description: 'Perfect for content creators, influencers, and personal branding',
-  },
-  {
-    value: 'ecommerce',
-    title: 'Create ideas for my e-commerce brand',
-    description: 'Ideal for online stores and digital product sellers',
-  },
-  {
-    value: 'business',
-    title: 'Create ideas for my business',
-    description: 'Great for companies and organizations looking to grow their online presence',
-  },
-];
+type AccountFormValues = z.infer<typeof accountFormSchema>;
 
-const contentTypes = [
-  {
-    value: 'talking_head',
-    title: 'Talking Head Videos',
-    description: 'Face-to-camera videos where you directly speak to your audience',
-    imageUrl: '/images/talking_head.jpg'
-  },
-  {
-    value: 'text_based',
-    title: 'Text-Based Visual Content',
-    description: 'Videos with animated text, graphics, and visuals with minimal on-camera presence',
-    imageUrl: '/images/text_based.jpg'
-  },
-  {
-    value: 'mixed',
-    title: 'Mixed Content Approach',
-    description: 'Combination of talking head segments with text-based visuals for variety',
-    imageUrl: '/images/mixed_content.jpg'
-  },
-];
-
+// Predefined content niches
 const contentNiches = [
-  { value: 'Education', label: 'Education & Learning' },
-  { value: 'Entertainment', label: 'Entertainment & Comedy' },
-  { value: 'Lifestyle', label: 'Lifestyle & Daily Vlogs' },
-  { value: 'Technology', label: 'Technology & Gadgets' },
-  { value: 'Fashion & Beauty', label: 'Fashion & Beauty' },
-  { value: 'Health & Fitness', label: 'Health & Fitness' },
-  { value: 'Other', label: 'Other (Custom)' },
+  "Education",
+  "Entertainment",
+  "Lifestyle",
+  "Technology",
+  "Fashion & Beauty",
+  "Health & Fitness"
 ];
 
+// Posting frequency options
 const postingFrequencies = [
-  { value: 'daily', label: 'Daily (5-7 times per week)' },
-  { value: 'multiple_times_a_week', label: 'Multiple times a week (2-4 times)' },
-  { value: 'weekly', label: 'Weekly (Once a week)' },
-  { value: 'monthly', label: 'Monthly (1-3 times per month)' },
-  { value: 'irregularly', label: 'Irregular schedule' },
+  "Daily",
+  "3-5 times per week",
+  "1-2 times per week",
+  "A few times a month",
+  "Monthly"
 ];
 
-const platformOptions = [
-  { id: 'instagram', label: 'Instagram' },
-  { id: 'tiktok', label: 'TikTok' },
-  { id: 'youtube', label: 'YouTube' },
-  { id: 'linkedin', label: 'LinkedIn' },
-  { id: 'twitter', label: 'Twitter/X' },
-  { id: 'facebook', label: 'Facebook' },
-  { id: 'pinterest', label: 'Pinterest' },
+// Content type options
+const contentTypes = [
+  { value: "talking_head", label: "Talking Head Videos", description: "Face-to-camera content where you speak directly to your audience" },
+  { value: "text_based", label: "Text-Overlay Videos", description: "Videos that primarily use text overlays with visuals or b-roll footage" },
+  { value: "mixed", label: "Mixed Format", description: "Combination of talking head segments with text overlays and visual elements" }
 ];
 
 interface OnboardingProps {
@@ -96,662 +64,530 @@ interface OnboardingProps {
 }
 
 const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
-  const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1);
-  const [selectedType, setSelectedType] = useState<AccountType>('personal');
-  const [brandName, setBrandName] = useState('');
-  
-  // Personal brand specific fields
-  const [contentNiche, setContentNiche] = useState<ContentNiche>('');
-  const [customNiche, setCustomNiche] = useState('');
-  const [targetAudience, setTargetAudience] = useState('');
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [contentType, setContentType] = useState<ContentType | ''>('');
-  const [postingFrequency, setPostingFrequency] = useState<PostingFrequency | ''>('');
-  
-  // Business specific fields
-  const [businessDescription, setBusinessDescription] = useState('');
-  const [businessNiche, setBusinessNiche] = useState('');
-  
-  // E-commerce specific
-  const [productNiche, setProductNiche] = useState('');
-  
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCustomNiche, setIsCustomNiche] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleNextStep = () => {
-    if (!selectedType) {
-      toast({
-        variant: "destructive",
-        title: "Please select an account type",
-      });
-      return;
-    }
-    setStep(2);
-  };
+  // Initialize the form
+  const form = useForm<AccountFormValues>({
+    resolver: zodResolver(accountFormSchema),
+    defaultValues: {
+      accountType: "personal",
+      contentNiche: "",
+      productNiche: "",
+      businessNiche: "",
+      targetAudience: "",
+      brandName: "",
+      businessDescription: "",
+      contentType: "",
+      postingFrequency: "",
+      customNiche: "",
+    },
+  });
 
-  const handlePlatformChange = (platform: string) => {
-    setSelectedPlatforms((current) => {
-      if (current.includes(platform)) {
-        return current.filter((p) => p !== platform);
-      } else {
-        return [...current, platform];
+  // Check for existing user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          setUserId(session.user.id);
+          
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .single();
+            
+          if (profile) {
+            form.setValue("accountType", profile.account_type || "personal");
+            form.setValue("contentNiche", profile.content_niche || "");
+            form.setValue("productNiche", profile.product_niche || "");
+            form.setValue("businessNiche", profile.business_niche || "");
+            form.setValue("targetAudience", profile.target_audience || "");
+            form.setValue("brandName", profile.brand_name || "");
+            form.setValue("businessDescription", profile.business_description || "");
+            form.setValue("contentType", profile.content_type || "");
+            form.setValue("postingFrequency", profile.posting_frequency || "");
+            
+            // Check if the content niche is custom
+            if (profile.content_niche && !contentNiches.includes(profile.content_niche)) {
+              setIsCustomNiche(true);
+              form.setValue("customNiche", profile.content_niche);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
       }
-    });
-  };
+    };
+    
+    fetchUserData();
+  }, [form]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
+  const onSubmit = async (data: AccountFormValues) => {
+    if (!userId) return;
+    
+    setIsSubmitting(true);
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Determine which niche field to use based on account type
+      let nicheField = "";
+      if (data.accountType === "personal") {
+        nicheField = isCustomNiche ? data.customNiche || "" : data.contentNiche || "";
+      } else if (data.accountType === "ecommerce") {
+        nicheField = data.productNiche || "";
+      } else {
+        nicheField = data.businessNiche || "";
+      }
       
-      if (sessionError) throw sessionError;
-      if (!session?.user) {
-        navigate('/auth');
-        return;
-      }
-
-      // Combine niche fields correctly
-      const finalContentNiche = contentNiche === 'Other' && customNiche 
-        ? customNiche 
-        : contentNiche;
-
-      // Base profile data common to all account types
-      const profileData: Record<string, any> = {
-        account_type: selectedType,
-        brand_name: brandName,
-        target_audience: targetAudience,
-        posting_platforms: selectedPlatforms,
-        onboarding_completed: true,
-      };
-
-      // Add specific fields based on account type
-      if (selectedType === 'personal') {
-        profileData.content_niche = finalContentNiche;
-        profileData.content_type = contentType;
-        profileData.posting_frequency = postingFrequency;
-      } else if (selectedType === 'business') {
-        profileData.content_niche = finalContentNiche;
-        profileData.business_niche = businessNiche;
-        profileData.business_description = businessDescription;
-      } else if (selectedType === 'ecommerce') {
-        profileData.content_niche = finalContentNiche;
-        profileData.product_niche = productNiche;
-      }
-
-      console.log("Saving profile data:", profileData);
-
+      // Update profile in Supabase
       const { error } = await supabase
-        .from('profiles')
-        .update(profileData)
-        .eq('id', session.user.id);
+        .from("profiles")
+        .update({
+          account_type: data.accountType,
+          content_niche: data.accountType === "personal" ? nicheField : data.contentNiche,
+          product_niche: data.accountType === "ecommerce" ? nicheField : data.productNiche,
+          business_niche: data.accountType === "business" ? nicheField : data.businessNiche,
+          target_audience: data.targetAudience,
+          brand_name: data.brandName,
+          business_description: data.businessDescription,
+          onboarding_completed: true,
+          content_type: data.contentType,
+          posting_frequency: data.postingFrequency,
+        })
+        .eq("id", userId);
 
       if (error) throw error;
-
-      // Update localStorage with correct values based on account type
-      let nicheToStore = finalContentNiche || "";
-      let videoTypeToStore = finalContentNiche || "";
       
-      if (selectedType === 'business' && businessNiche) {
-        nicheToStore = businessNiche;
-        videoTypeToStore = businessNiche;
-      } else if (selectedType === 'ecommerce' && productNiche) {
-        nicheToStore = productNiche;
-        videoTypeToStore = productNiche;
-      }
-      
-      localStorage.setItem("niche", nicheToStore);
-      localStorage.setItem("videoType", videoTypeToStore);
-      localStorage.setItem("audience", targetAudience || "");
-      if (selectedPlatforms?.length > 0) {
-        localStorage.setItem("platform", selectedPlatforms[0]);
-      }
-
       toast({
-        title: "Welcome to TrendAI!",
-        description: "Your preferences have been saved.",
+        title: "Profile updated!",
+        description: "Your account has been set up successfully.",
       });
-
+      
       onComplete();
     } catch (error: any) {
-      console.error("Error in handleSubmit:", error);
+      console.error("Error updating profile:", error);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Error updating profile",
         description: error.message,
       });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleStepChange = async (nextStep: number) => {
-    // Only validate when moving to next step, not when going back
-    if (nextStep > step) {
-      // Validate step 2 based on account type
-      if (step === 2 && selectedType === 'personal' && nextStep === 3) {
-        if (!contentType) {
-          toast({
-            variant: "destructive",
-            title: "Missing information",
-            description: "Please select a content type",
-          });
-          return;
-        }
-      }
-      
-      // Validate final step based on account type before submission
-      if (nextStep === 4) {
-        if (selectedType === 'personal' && (!finalContentNiche() || !targetAudience || selectedPlatforms.length === 0 || !postingFrequency)) {
-          toast({
-            variant: "destructive",
-            title: "Missing information",
-            description: "Please fill out all required fields",
-          });
-          return;
-        }
-        
-        if (selectedType === 'business' && (!businessDescription || !businessNiche || !contentNiche || !targetAudience || selectedPlatforms.length === 0)) {
-          toast({
-            variant: "destructive",
-            title: "Missing information",
-            description: "Please fill out all required fields",
-          });
-          return;
-        }
-        
-        if (selectedType === 'ecommerce' && (!productNiche || !contentNiche || !targetAudience || selectedPlatforms.length === 0)) {
-          toast({
-            variant: "destructive",
-            title: "Missing information",
-            description: "Please fill out all required fields",
-          });
-          return;
-        }
-      }
-    }
-    
-    setStep(nextStep);
-  };
-
-  const finalContentNiche = () => {
-    return contentNiche === 'Other' && customNiche 
-      ? customNiche 
-      : contentNiche;
-  };
-
-  const renderContentTypeStep = () => {
-    return (
-      <>
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-dark mb-2">
-            What type of content do you want to create?
-          </h1>
-          <p className="text-dark/70">
-            This helps us tailor your content ideas to your preferred format
-          </p>
-        </div>
-
-        <div className="grid gap-6">
-          {contentTypes.map((type) => (
-            <Card 
-              key={type.value} 
-              className={`cursor-pointer relative overflow-hidden transition-all ${
-                contentType === type.value 
-                  ? 'ring-2 ring-primary border-primary' 
-                  : 'hover:border-primary/50'
-              }`}
-              onClick={() => setContentType(type.value as ContentType)}
-            >
-              <div className="absolute top-4 right-4 z-10">
-                <RadioGroupItem 
-                  value={type.value} 
-                  id={`content-${type.value}`} 
-                  checked={contentType === type.value}
-                  className="h-6 w-6"
-                />
-              </div>
-              <CardContent className="p-6 grid md:grid-cols-5 gap-4">
-                <div className="md:col-span-2">
-                  <div className="aspect-video rounded-md bg-muted flex items-center justify-center overflow-hidden">
-                    {type.imageUrl ? (
-                      <img 
-                        src={type.imageUrl} 
-                        alt={type.title} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="text-muted-foreground">Image placeholder</div>
-                    )}
-                  </div>
-                </div>
-                <div className="md:col-span-3">
-                  <h3 className="font-semibold text-lg mb-2">{type.title}</h3>
-                  <p className="text-muted-foreground text-sm">{type.description}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="flex justify-between mt-8">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => handleStepChange(2)}
-          >
-            Back
-          </Button>
-          <Button
-            type="button"
-            onClick={() => handleStepChange(4)}
-            disabled={!contentType}
-          >
-            Continue
-          </Button>
-        </div>
-      </>
-    );
-  };
-
-  const renderPersonalDetailsStep = () => {
-    return (
-      <>
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-dark mb-2">
-            Tell us about your content
-          </h1>
-          <p className="text-dark/70">
-            Help us understand your content focus
-          </p>
-        </div>
-
-        <form className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="contentNiche">What niche is your account?</Label>
-            <RadioGroup
-              value={contentNiche}
-              onValueChange={setContentNiche}
-              className="grid grid-cols-2 gap-2 mt-2"
-            >
-              {contentNiches.map((niche) => (
-                <div key={niche.value} className="flex items-center space-x-2">
-                  <RadioGroupItem 
-                    id={`niche-${niche.value}`} 
-                    value={niche.value} 
-                  />
-                  <Label 
-                    htmlFor={`niche-${niche.value}`} 
-                    className="cursor-pointer"
-                  >
-                    {niche.label}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-            
-            {contentNiche === 'Other' && (
-              <div className="mt-4">
-                <Label htmlFor="customNiche">Specify your niche</Label>
-                <Input
-                  id="customNiche"
-                  placeholder="Enter your custom niche"
-                  value={customNiche}
-                  onChange={(e) => setCustomNiche(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="postingFrequency">How often do you want to post?</Label>
-            <RadioGroup
-              value={postingFrequency}
-              onValueChange={setPostingFrequency as (value: string) => void}
-              className="grid gap-2 mt-2"
-            >
-              {postingFrequencies.map((frequency) => (
-                <div key={frequency.value} className="flex items-center space-x-2">
-                  <RadioGroupItem 
-                    id={`frequency-${frequency.value}`} 
-                    value={frequency.value} 
-                  />
-                  <Label 
-                    htmlFor={`frequency-${frequency.value}`} 
-                    className="cursor-pointer"
-                  >
-                    {frequency.label}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="targetAudience">Target Audience</Label>
-            <Input
-              id="targetAudience"
-              placeholder="Who is your content for? (e.g., 25-34 year-old fitness enthusiasts)"
-              value={targetAudience}
-              onChange={(e) => setTargetAudience(e.target.value)}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Posting Platforms</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              {platformOptions.map((platform) => (
-                <div key={platform.id} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={platform.id} 
-                    checked={selectedPlatforms.includes(platform.id)} 
-                    onCheckedChange={() => handlePlatformChange(platform.id)}
-                  />
-                  <Label 
-                    htmlFor={platform.id} 
-                    className="cursor-pointer"
-                  >
-                    {platform.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                if (selectedType === 'personal') {
-                  handleStepChange(3); // Go back to content type step
-                } else {
-                  handleStepChange(2); // Go back to account type step
-                }
-              }}
-            >
-              Back
-            </Button>
-            <Button
-              type="submit"
-              onClick={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? (
-                <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              ) : (
-                "Complete Setup"
-              )}
-            </Button>
-          </div>
-        </form>
-      </>
-    );
-  };
-
-  // Modified renderTypeSpecificFields to include the enhanced personal brand flow
-  const renderTypeSpecificFields = () => {
-    switch (selectedType) {
-      case 'personal':
-        return (
-          <>
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-medium">What will your content focus on?</h3>
-                <p className="text-muted-foreground mt-1">
-                  This will help us generate more relevant ideas for your content
-                </p>
-              </div>
-              
-              <div className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStep(1)}
-                >
-                  Back
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => handleStepChange(3)}
-                >
-                  Continue
-                </Button>
-              </div>
-            </div>
-          </>
-        );
-      case 'business':
-        return (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="businessDescription">Business Description (what your business does)</Label>
-              <Textarea
-                id="businessDescription"
-                placeholder="Describe your business and its main offerings"
-                value={businessDescription}
-                onChange={(e) => setBusinessDescription(e.target.value)}
-                className="min-h-[80px]"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="businessNiche">Business Niche</Label>
-              <Input
-                id="businessNiche"
-                placeholder="E.g., SaaS, Consulting, Retail, etc."
-                value={businessNiche}
-                onChange={(e) => setBusinessNiche(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contentNiche">Content Niche</Label>
-              <Input
-                id="contentNiche"
-                placeholder="What topics will your content focus on?"
-                value={contentNiche}
-                onChange={(e) => setContentNiche(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="targetAudience">Target Audience</Label>
-              <Input
-                id="targetAudience"
-                placeholder="Who is your content for? (e.g., 25-34 year-old fitness enthusiasts)"
-                value={targetAudience}
-                onChange={(e) => setTargetAudience(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Posting Platforms</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {platformOptions.map((platform) => (
-                  <div key={platform.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={platform.id} 
-                      checked={selectedPlatforms.includes(platform.id)} 
-                      onCheckedChange={() => handlePlatformChange(platform.id)}
-                    />
-                    <Label 
-                      htmlFor={platform.id} 
-                      className="cursor-pointer"
-                    >
-                      {platform.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        );
-      case 'ecommerce':
-        return (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="productNiche">Product Niche (what you sell)</Label>
-              <Input
-                id="productNiche"
-                placeholder="Describe your products or product categories"
-                value={productNiche}
-                onChange={(e) => setProductNiche(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contentNiche">Content Niche</Label>
-              <Input
-                id="contentNiche"
-                placeholder="What topics will your content focus on?"
-                value={contentNiche}
-                onChange={(e) => setContentNiche(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="targetAudience">Target Audience</Label>
-              <Input
-                id="targetAudience"
-                placeholder="Who is your content for? (e.g., 25-34 year-old fitness enthusiasts)"
-                value={targetAudience}
-                onChange={(e) => setTargetAudience(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Posting Platforms</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {platformOptions.map((platform) => (
-                  <div key={platform.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={platform.id} 
-                      checked={selectedPlatforms.includes(platform.id)} 
-                      onCheckedChange={() => handlePlatformChange(platform.id)}
-                    />
-                    <Label 
-                      htmlFor={platform.id} 
-                      className="cursor-pointer"
-                    >
-                      {platform.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        );
-      default:
-        return null;
+  // Navigate to next step
+  const nextStep = () => {
+    if (step < getMaxSteps()) {
+      setStep(step + 1);
+    } else {
+      form.handleSubmit(onSubmit)();
     }
   };
 
-  const renderStep = () => {
-    switch (step) {
-      case 1: // Account Type Selection
-        return (
-          <>
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-dark mb-2">
-                Welcome to TrendAI
-              </h1>
-              <p className="text-dark/70">
-                Let's personalize your experience. How will you be using TrendAI?
-              </p>
-            </div>
+  // Navigate to previous step
+  const prevStep = () => {
+    if (step > 1) {
+      setStep(step - 1);
+    }
+  };
 
-            <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className="space-y-8">
-              <div className="space-y-2">
-                <Label htmlFor="brandName">Brand or Channel Name</Label>
-                <Input
-                  id="brandName"
-                  placeholder="Enter your brand or channel name"
-                  value={brandName}
-                  onChange={(e) => setBrandName(e.target.value)}
-                />
-              </div>
-              
+  // Get max steps based on account type
+  const getMaxSteps = () => {
+    const accountType = form.getValues("accountType");
+    if (accountType === "personal") return 4;
+    if (accountType === "ecommerce") return 3;
+    return 3; // business
+  };
+
+  // Render account type selection step
+  const renderStep1 = () => (
+    <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="accountType"
+        render={({ field }) => (
+          <FormItem className="space-y-1">
+            <FormLabel className="text-base font-semibold">What type of account are you creating?</FormLabel>
+            <FormControl>
               <RadioGroup
-                value={selectedType}
-                onValueChange={(value) => setSelectedType(value as AccountType)}
-                className="grid gap-4"
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                className="grid grid-cols-1 gap-4 pt-2"
               >
-                {accountTypes.map((type) => (
-                  <div key={type.value} className="relative">
-                    <RadioGroupItem
-                      value={type.value}
-                      id={type.value}
-                      className="peer sr-only"
-                    />
-                    <Label
-                      htmlFor={type.value}
-                      className="flex flex-col p-4 rounded-lg border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                    >
-                      <span className="font-semibold">{type.title}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {type.description}
-                      </span>
-                    </Label>
+                <div className={`flex items-center space-x-2 rounded-lg border p-4 ${field.value === "personal" ? "border-primary bg-primary/5" : "border-border"}`}>
+                  <RadioGroupItem value="personal" id="personal" className="sr-only" />
+                  <label htmlFor="personal" className="flex flex-1 cursor-pointer items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                        <UserCircle className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Personal Brand</p>
+                        <p className="text-sm text-muted-foreground">
+                          For creators, influencers, and personal accounts
+                        </p>
+                      </div>
+                    </div>
+                    {field.value === "personal" && (
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
+                    )}
+                  </label>
+                </div>
+
+                <div className={`flex items-center space-x-2 rounded-lg border p-4 ${field.value === "ecommerce" ? "border-primary bg-primary/5" : "border-border"}`}>
+                  <RadioGroupItem value="ecommerce" id="ecommerce" className="sr-only" />
+                  <label htmlFor="ecommerce" className="flex flex-1 cursor-pointer items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                        <Package2 className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">E-commerce</p>
+                        <p className="text-sm text-muted-foreground">
+                          For online stores and product-based businesses
+                        </p>
+                      </div>
+                    </div>
+                    {field.value === "ecommerce" && (
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
+                    )}
+                  </label>
+                </div>
+
+                <div className={`flex items-center space-x-2 rounded-lg border p-4 ${field.value === "business" ? "border-primary bg-primary/5" : "border-border"}`}>
+                  <RadioGroupItem value="business" id="business" className="sr-only" />
+                  <label htmlFor="business" className="flex flex-1 cursor-pointer items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                        <Building2 className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Business</p>
+                        <p className="text-sm text-muted-foreground">
+                          For service providers, agencies, and companies
+                        </p>
+                      </div>
+                    </div>
+                    {field.value === "business" && (
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
+                    )}
+                  </label>
+                </div>
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+
+  // Render personal brand step
+  const renderPersonalStep2 = () => (
+    <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="contentType"
+        render={({ field }) => (
+          <FormItem className="space-y-1">
+            <FormLabel className="text-base font-semibold">What type of content do you want to post?</FormLabel>
+            <FormControl>
+              <RadioGroup
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                className="grid grid-cols-1 gap-4 pt-2"
+              >
+                {contentTypes.map((type) => (
+                  <div 
+                    key={type.value}
+                    className={`flex items-center space-x-2 rounded-lg border p-4 ${field.value === type.value ? "border-primary bg-primary/5" : "border-border"}`}
+                  >
+                    <RadioGroupItem value={type.value} id={type.value} className="sr-only" />
+                    <label htmlFor={type.value} className="flex flex-1 cursor-pointer items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <p className="text-sm font-medium">{type.label}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {type.description}
+                          </p>
+                        </div>
+                      </div>
+                      {field.value === type.value && (
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                      )}
+                    </label>
                   </div>
                 ))}
               </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading || !selectedType}
+  // Render niche selection step
+  const renderPersonalStep3 = () => (
+    <div className="space-y-4">
+      <div className="space-y-4">
+        <FormLabel className="text-base font-semibold">What niche is your account?</FormLabel>
+        
+        <Tabs defaultValue={isCustomNiche ? "custom" : "predefined"} onValueChange={(value) => setIsCustomNiche(value === "custom")}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="predefined">Common Niches</TabsTrigger>
+            <TabsTrigger value="custom">Custom Niche</TabsTrigger>
+          </TabsList>
+          <TabsContent value="predefined" className="space-y-4 pt-4">
+            <FormField
+              control={form.control}
+              name="contentNiche"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="grid grid-cols-2 gap-2"
+                    >
+                      {contentNiches.map((niche) => (
+                        <div key={niche} className={`flex items-center space-x-2 rounded-lg border p-3 ${field.value === niche ? "border-primary bg-primary/5" : "border-border"}`}>
+                          <RadioGroupItem value={niche} id={`niche-${niche}`} className="sr-only" />
+                          <label htmlFor={`niche-${niche}`} className="flex flex-1 cursor-pointer items-center justify-between">
+                            <span className="text-sm">{niche}</span>
+                            {field.value === niche && (
+                              <CheckCircle2 className="h-4 w-4 text-primary" />
+                            )}
+                          </label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+          <TabsContent value="custom" className="space-y-4 pt-4">
+            <FormField
+              control={form.control}
+              name="customNiche"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="Enter your custom niche..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+
+  // Render posting frequency step
+  const renderPersonalStep4 = () => (
+    <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="postingFrequency"
+        render={({ field }) => (
+          <FormItem className="space-y-1">
+            <FormLabel className="text-base font-semibold">How often do you want to post on your account?</FormLabel>
+            <FormControl>
+              <RadioGroup
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                className="grid grid-cols-1 gap-3 pt-2"
               >
-                Continue <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </form>
-          </>
-        );
-      case 2: // Account Type Specific Step
-        return (
-          <div className="space-y-6">
-            {renderTypeSpecificFields()}
-            
-            {selectedType !== 'personal' && (
-              <div className="flex gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStep(1)}
-                  className="w-full"
-                >
-                  Back
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => handleStepChange(4)}
-                  className="w-full"
-                >
-                  Continue
-                </Button>
-              </div>
-            )}
-          </div>
-        );
-      case 3: // Content Type Selection (Personal brand only)
-        return renderContentTypeStep();
-      case 4: // Final details step
-        return renderPersonalDetailsStep();
-      default:
-        return null;
+                {postingFrequencies.map((frequency) => (
+                  <div 
+                    key={frequency}
+                    className={`flex items-center space-x-2 rounded-lg border p-3 ${field.value === frequency ? "border-primary bg-primary/5" : "border-border"}`}
+                  >
+                    <RadioGroupItem value={frequency} id={`freq-${frequency}`} className="sr-only" />
+                    <label htmlFor={`freq-${frequency}`} className="flex flex-1 cursor-pointer items-center justify-between">
+                      <span className="text-sm">{frequency}</span>
+                      {field.value === frequency && (
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                      )}
+                    </label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+
+  // Render e-commerce step
+  const renderEcommerceStep2 = () => (
+    <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="productNiche"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Product Niche</FormLabel>
+            <FormControl>
+              <Input placeholder="What products do you sell?" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="targetAudience"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Target Audience</FormLabel>
+            <FormControl>
+              <Input placeholder="Who is your target customer?" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="brandName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Brand Name</FormLabel>
+            <FormControl>
+              <Input placeholder="Your store or brand name" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+
+  // Render business step
+  const renderBusinessStep2 = () => (
+    <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="businessNiche"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Business Niche</FormLabel>
+            <FormControl>
+              <Input placeholder="Your industry or niche" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="targetAudience"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Target Audience</FormLabel>
+            <FormControl>
+              <Input placeholder="Who are your ideal clients?" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="businessDescription"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Business Description</FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="Briefly describe your business and what you offer"
+                className="resize-none" 
+                {...field} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+
+  // Render current step
+  const renderStep = () => {
+    const accountType = form.getValues("accountType");
+    
+    if (step === 1) return renderStep1();
+    
+    if (accountType === "personal") {
+      if (step === 2) return renderPersonalStep2();
+      if (step === 3) return renderPersonalStep3();
+      if (step === 4) return renderPersonalStep4();
+    } else if (accountType === "ecommerce") {
+      if (step === 2) return renderEcommerceStep2();
+    } else if (accountType === "business") {
+      if (step === 2) return renderBusinessStep2();
     }
+    
+    return null;
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl p-0 gap-0">
-        <div className="p-8">
-          {renderStep()}
-        </div>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Set up your account</DialogTitle>
+          <DialogDescription>
+            Tell us about yourself so we can provide the best experience for you.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {renderStep()}
+          </form>
+        </Form>
+        
+        <DialogFooter className="flex justify-between">
+          {step > 1 && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={prevStep}
+              disabled={isSubmitting}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+          )}
+          <div className={step === 1 ? "w-full flex justify-end" : ""}>
+            <Button 
+              type="button" 
+              onClick={nextStep}
+              disabled={isSubmitting}
+            >
+              {step < getMaxSteps() ? (
+                <>
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              ) : (
+                isSubmitting ? 'Saving...' : 'Complete'
+              )}
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

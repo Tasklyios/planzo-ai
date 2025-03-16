@@ -29,6 +29,8 @@ export const useIdeaGenerator = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [accountType, setAccountType] = useState<string>("personal");
+  const [contentType, setContentType] = useState<string>("");
+  const [postingFrequency, setPostingFrequency] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -51,6 +53,17 @@ export const useIdeaGenerator = () => {
             if (profile.account_type) {
               console.log("Setting account type to:", profile.account_type);
               setAccountType(profile.account_type);
+            }
+            
+            // Store additional profile data
+            if (profile.content_type) {
+              console.log("Setting content type to:", profile.content_type);
+              setContentType(profile.content_type);
+            }
+            
+            if (profile.posting_frequency) {
+              console.log("Setting posting frequency to:", profile.posting_frequency);
+              setPostingFrequency(profile.posting_frequency);
             }
             
             // Only set form values from profile if they exist AND are relevant to current account type
@@ -127,6 +140,17 @@ export const useIdeaGenerator = () => {
               if (profile.account_type) {
                 console.log("Setting account type to:", profile.account_type);
                 setAccountType(profile.account_type);
+              }
+              
+              // Set additional profile data
+              if (profile.content_type) {
+                console.log("Setting content type to:", profile.content_type);
+                setContentType(profile.content_type);
+              }
+              
+              if (profile.posting_frequency) {
+                console.log("Setting posting frequency to:", profile.posting_frequency);
+                setPostingFrequency(profile.posting_frequency);
               }
               
               // Only set values if they're not already set by the user AND relevant to current account type
@@ -206,6 +230,8 @@ export const useIdeaGenerator = () => {
     console.log("Platform:", currentPlatform);
     console.log("Custom Ideas:", currentCustomIdeas);
     console.log("Account Type:", accountType);
+    console.log("Content Type:", contentType);
+    console.log("Posting Frequency:", postingFrequency);
 
     setLoading(true);
     setError(null);
@@ -262,19 +288,34 @@ export const useIdeaGenerator = () => {
       }
 
       let currentAccountType = accountType;
+      let currentContentType = contentType;
+      let currentPostingFrequency = postingFrequency;
+      
       try {
         const { data: profileData } = await supabase
           .from("profiles")
-          .select("account_type")
+          .select("account_type, content_type, posting_frequency, business_description")
           .eq("id", session.user.id)
           .single();
         
-        if (profileData?.account_type) {
-          currentAccountType = profileData.account_type;
-          console.log("Updated account type from database:", currentAccountType);
+        if (profileData) {
+          if (profileData.account_type) {
+            currentAccountType = profileData.account_type;
+            console.log("Updated account type from database:", currentAccountType);
+          }
+          
+          if (profileData.content_type) {
+            currentContentType = profileData.content_type;
+            console.log("Updated content type from database:", currentContentType);
+          }
+          
+          if (profileData.posting_frequency) {
+            currentPostingFrequency = profileData.posting_frequency;
+            console.log("Updated posting frequency from database:", currentPostingFrequency);
+          }
         }
       } catch (error) {
-        console.error("Error fetching latest account type:", error);
+        console.error("Error fetching latest profile data:", error);
       }
 
       console.log("Calling generate-ideas function with auth header and current form data");
@@ -294,7 +335,9 @@ export const useIdeaGenerator = () => {
           previousIdeas: previousIdeasContext,
           numIdeas: 5,
           accountType: currentAccountType,
-          businessDescription: profile?.business_description || ""
+          businessDescription: profile?.business_description || "",
+          contentType: currentContentType,
+          postingFrequency: currentPostingFrequency
         },
         headers: {
           Authorization: authHeader
@@ -389,7 +432,7 @@ export const useIdeaGenerator = () => {
     } finally {
       setLoading(false);
     }
-  }, [niche, audience, videoType, platform, customIdeas, previousIdeasContext, toast, accountType]);
+  }, [niche, audience, videoType, platform, customIdeas, previousIdeasContext, toast, accountType, contentType, postingFrequency]);
 
   return {
     niche,
@@ -411,6 +454,10 @@ export const useIdeaGenerator = () => {
     error,
     setError,
     accountType,
-    setAccountType
+    setAccountType,
+    contentType,
+    setContentType,
+    postingFrequency,
+    setPostingFrequency
   };
 };
