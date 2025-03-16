@@ -15,6 +15,12 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Function to check if the current URL has password reset parameters
+  const isPasswordResetFlow = () => {
+    const searchParams = new URLSearchParams(location.search);
+    return searchParams.has('type') && searchParams.get('type') === 'recovery';
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
@@ -25,7 +31,11 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         if (error) {
           console.error("Authentication check error:", error);
           setIsAuthenticated(false);
-          navigate("/auth", { state: { from: location.pathname } });
+          
+          // Don't redirect if this is a password reset flow
+          if (!isPasswordResetFlow()) {
+            navigate("/auth", { state: { from: location.pathname } });
+          }
           return;
         }
         
@@ -33,7 +43,11 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           console.log("No session found, redirecting to auth");
           setIsAuthenticated(false);
           localStorage.clear(); // Clear all localStorage on session check failure
-          navigate("/auth", { state: { from: location.pathname } });
+          
+          // Don't redirect if this is a password reset flow
+          if (!isPasswordResetFlow()) {
+            navigate("/auth", { state: { from: location.pathname } });
+          }
         } else {
           console.log("Session found, user is authenticated", session.user.id);
           setIsAuthenticated(true);
@@ -41,7 +55,11 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       } catch (error) {
         console.error("Error checking authentication:", error);
         setIsAuthenticated(false);
-        navigate("/auth", { state: { from: location.pathname } });
+        
+        // Don't redirect if this is a password reset flow
+        if (!isPasswordResetFlow()) {
+          navigate("/auth", { state: { from: location.pathname } });
+        }
       } finally {
         setIsLoading(false);
       }
@@ -63,18 +81,23 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         console.log("User signed in or token refreshed", session?.user.id);
         setIsAuthenticated(true);
         
-        // Skip redirect for verification, otherwise redirect to dashboard if user signs in
+        // Skip redirect for verification and password reset flows, otherwise redirect to dashboard
         const isEmailVerification = location.pathname === '/auth' && 
                                   (location.search.includes('access_token') || 
                                     location.search.includes('error_description') ||
                                     location.search.includes('token_hash'));
         
-        if (!isEmailVerification) {
+        const isPasswordReset = isPasswordResetFlow();
+        
+        if (!isEmailVerification && !isPasswordReset) {
           const currentPath = location.pathname;
           if (currentPath === "/" || currentPath === "/auth") {
             navigate("/dashboard");
           }
         }
+      } else if (event === "PASSWORD_RECOVERY") {
+        // Make sure we show the reset password form
+        navigate("/auth?type=recovery");
       }
     });
 
@@ -84,13 +107,18 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     };
   }, [navigate, location]);
 
+  // For password reset flow, we need to return children without authentication
+  if (isPasswordResetFlow() && location.pathname === "/auth") {
+    return <>{children}</>;
+  }
+
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">
       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
     </div>;
   }
 
-  // Only render children if the user is authenticated
+  // Only render children if the user is authenticated or it's a special case
   return isAuthenticated ? <>{children}</> : null;
 };
 
