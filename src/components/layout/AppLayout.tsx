@@ -1,5 +1,20 @@
-The AI didn't actually intend to modify the `src/components/layout/AppLayout.tsx` file. It was just mentioning that file as a placeholder while focusing on updating the email template files. There were no actual changes proposed for the AppLayout.tsx file.
 
-The AI's main changes were to update the email template files to use Supabase's template variables like `{{ .ConfirmationURL }}` instead of the sample URLs, and to enhance the EmailTemplateViewer component with better instructions.
+import { ReactNode } from "react";
+import AppSidebar from "./AppSidebar";
 
-Since no actual changes were intended for AppLayout.tsx, there's no new code to provide for that file. The existing code in your AppLayout.tsx file should remain unchanged.
+interface AppLayoutProps {
+  children: ReactNode;
+}
+
+const AppLayout = ({ children }: AppLayoutProps) => {
+  return (
+    <div className="flex min-h-screen bg-background">
+      <AppSidebar />
+      <main className="flex-1 p-4 md:p-6 overflow-auto">
+        {children}
+      </main>
+    </div>
+  );
+};
+
+export default AppLayout;
