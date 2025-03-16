@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { GeneratedIdea } from "@/types/idea";
+import { getEmojiForIdea } from "@/utils/emojiUtils";
 
 interface IdeasGridProps {
   ideas: GeneratedIdea[];
@@ -59,6 +60,9 @@ const IdeasGrid = ({
         const cleanCategory = typeof idea.category === 'string' ? idea.category.replace(/^"|"$/g, '') : 'General';
         const cleanDescription = typeof idea.description === 'string' ? idea.description.replace(/^"|"$/g, '') : '';
         
+        // Get appropriate emoji for this idea
+        const ideaEmoji = getEmojiForIdea(cleanTitle, cleanCategory);
+        
         return (
           <div
             key={idea.id}
@@ -70,7 +74,7 @@ const IdeasGrid = ({
                   {cleanCategory}
                 </span>
                 <h3 className="text-sm md:text-lg font-medium text-foreground">
-                  {cleanTitle}
+                  {ideaEmoji} {cleanTitle}
                 </h3>
               </div>
               <div className="flex gap-1 md:gap-2">

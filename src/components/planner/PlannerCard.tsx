@@ -1,12 +1,12 @@
 
 import { Draggable } from "react-beautiful-dnd";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import EditIdea from "@/components/EditIdea";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { getEmojiForIdea } from "@/utils/emojiUtils";
 import { DeleteIcon } from "./DeleteIcon";
 
 interface PlannerCardProps {
@@ -15,6 +15,7 @@ interface PlannerCardProps {
   title: string;
   description: string;
   color?: string;
+  category?: string;
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -31,9 +32,8 @@ const colorClasses: { [key: string]: string } = {
   pink: "border-pink-500"
 };
 
-export function PlannerCard({ id, index, title, description, color = "blue", onEdit, onDelete }: PlannerCardProps) {
+export function PlannerCard({ id, index, title, description, color = "blue", category = "General", onEdit, onDelete }: PlannerCardProps) {
   const [showEdit, setShowEdit] = useState(false);
-  const { toast } = useToast();
 
   const handleEditClose = () => {
     setShowEdit(false);
@@ -63,6 +63,9 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
   };
 
   const borderColorClass = colorClasses[color || 'blue'] || colorClasses.blue;
+  
+  // Get emoji based on title and category
+  const ideaEmoji = getEmojiForIdea(title, category);
 
   return (
     <>
@@ -96,7 +99,7 @@ export function PlannerCard({ id, index, title, description, color = "blue", onE
                 <Pencil className="h-4 w-4" />
               </Button>
             </div>
-            <h4 className="font-medium mb-1 pr-8">{title}</h4>
+            <h4 className="font-medium mb-1 pr-8">{ideaEmoji} {title}</h4>
             <p className="text-sm text-muted-foreground">{description}</p>
           </div>
         )}
