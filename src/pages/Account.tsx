@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -19,7 +18,6 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import LinkSubscriptionDialog from "@/components/billing/LinkSubscriptionDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// Define predefined options
 const contentNiches = [
   "Education",
   "Entertainment",
@@ -44,7 +42,6 @@ const contentTypes = [
   { value: "mixed", label: "Mixed Format", description: "Combination of talking head segments with text overlays and visual elements" }
 ];
 
-// Define the form schema
 const profileFormSchema = z.object({
   accountType: z.enum(["personal", "ecommerce", "business"]),
   contentNiche: z.string().optional(),
@@ -99,7 +96,6 @@ const Account = () => {
         
         setUser(session.user);
         
-        // Fetch profile
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("*")
@@ -109,8 +105,13 @@ const Account = () => {
         if (profileError) throw profileError;
         
         if (profile) {
-          // Set form values from profile
-          form.setValue("accountType", profile.account_type || "personal");
+          const accountType = profile.account_type || "personal";
+          if (accountType === "personal" || accountType === "ecommerce" || accountType === "business") {
+            form.setValue("accountType", accountType as "personal" | "ecommerce" | "business");
+          } else {
+            form.setValue("accountType", "personal");
+          }
+          
           form.setValue("contentNiche", profile.content_niche || "");
           form.setValue("productNiche", profile.product_niche || "");
           form.setValue("businessNiche", profile.business_niche || "");
@@ -120,14 +121,12 @@ const Account = () => {
           form.setValue("contentType", profile.content_type || "");
           form.setValue("postingFrequency", profile.posting_frequency || "");
           
-          // Check if the content niche is custom
           if (profile.content_niche && !contentNiches.includes(profile.content_niche)) {
             setIsCustomNiche(true);
             form.setValue("customNiche", profile.content_niche);
           }
         }
         
-        // Fetch subscription
         const { data: subscriptionData, error: subscriptionError } = await supabase
           .from("user_subscriptions")
           .select("*")
@@ -160,7 +159,6 @@ const Account = () => {
       
       if (!user) return;
       
-      // Determine which niche field to use based on account type
       let nicheField = "";
       if (data.accountType === "personal") {
         nicheField = isCustomNiche ? data.customNiche || "" : data.contentNiche || "";
@@ -170,7 +168,6 @@ const Account = () => {
         nicheField = data.businessNiche || "";
       }
       
-      // Update profile
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -644,7 +641,11 @@ const Account = () => {
         </Tabs>
       </div>
       
-      <LinkSubscriptionDialog open={showLinkDialog} onOpenChange={setShowLinkDialog} />
+      {showLinkDialog && (
+        <LinkSubscriptionDialog 
+          onOpenChange={setShowLinkDialog} 
+        />
+      )}
     </div>
   );
 };

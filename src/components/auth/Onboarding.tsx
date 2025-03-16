@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Define the form schema
+// Define the form schema with appropriate types
 const accountFormSchema = z.object({
   accountType: z.enum(["personal", "ecommerce", "business"]),
   contentNiche: z.string().optional(),
@@ -103,7 +103,14 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
             .single();
             
           if (profile) {
-            form.setValue("accountType", profile.account_type || "personal");
+            // Ensure accountType is properly validated as one of the allowed enum values
+            const accountType = profile.account_type || "personal";
+            if (accountType === "personal" || accountType === "ecommerce" || accountType === "business") {
+              form.setValue("accountType", accountType as "personal" | "ecommerce" | "business");
+            } else {
+              form.setValue("accountType", "personal"); // Default to personal if invalid
+            }
+            
             form.setValue("contentNiche", profile.content_niche || "");
             form.setValue("productNiche", profile.product_niche || "");
             form.setValue("businessNiche", profile.business_niche || "");
