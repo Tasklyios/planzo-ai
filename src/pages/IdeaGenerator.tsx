@@ -1,10 +1,9 @@
 
-import { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { IdeaGenerator as OriginalIdeaGenerator } from '@/pages/Generator';
+import Generator from '@/pages/Generator';
 
 const IdeaGenerator = () => {
-  return <OriginalIdeaGenerator />;
+  return <Generator />;
 };
 
 export default IdeaGenerator;
