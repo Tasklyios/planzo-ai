@@ -102,7 +102,7 @@ export default function AppSidebar() {
   ];
   
   return (
-    <div className="h-full flex flex-col bg-card border-r px-3 py-4">
+    <div className="h-full flex flex-col bg-card border-r px-3 py-4 overflow-y-auto">
       <div className="flex items-center justify-center mb-6 px-4">
         <Logo />
       </div>

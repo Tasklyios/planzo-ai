@@ -8,11 +8,15 @@ interface AppLayoutProps {
 
 const AppLayout = ({ children }: AppLayoutProps) => {
   return (
-    <div className="flex min-h-screen bg-background">
-      <AppSidebar />
-      <main className="flex-1 p-4 md:p-6 overflow-auto">
-        {children}
-      </main>
+    <div className="h-screen flex flex-col">
+      <div className="flex-1 flex overflow-hidden pt-16">
+        <div className="hidden md:block w-64 flex-shrink-0">
+          <AppSidebar />
+        </div>
+        <main className="flex-1 p-4 md:p-6 overflow-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
 };
