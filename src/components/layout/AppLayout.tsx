@@ -10,7 +10,7 @@ interface AppLayoutProps {
 const AppLayout = ({ children }: AppLayoutProps) => {
   return (
     <div className="h-screen flex flex-col">
-      <div className="flex-1 flex overflow-hidden pt-16">
+      <div className="flex-1 flex overflow-hidden">
         <div className="hidden md:block w-64 flex-shrink-0">
           <AppSidebar />
         </div>

@@ -11,11 +11,13 @@ import {
   AnchorIcon,
   LayoutGrid,
   Settings,
-  Sparkles
+  Sparkles,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SidebarItemProps {
   icon: React.ReactNode;
@@ -30,7 +32,7 @@ const SidebarItem = ({ icon, label, href, active }: SidebarItemProps) => (
       variant="ghost" 
       className={cn(
         "w-full justify-start mb-1 font-normal",
-        active ? "bg-accent" : "hover:bg-accent"
+        active ? "bg-primary text-primary-foreground" : "hover:bg-accent"
       )}
     >
       {icon}
@@ -38,6 +40,23 @@ const SidebarItem = ({ icon, label, href, active }: SidebarItemProps) => (
     </Button>
   </Link>
 );
+
+const LogoutItem = ({ icon, label }: { icon: React.ReactNode; label: string }) => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+  
+  return (
+    <Button 
+      variant="ghost" 
+      className="w-full justify-start mb-1 font-normal hover:bg-accent"
+      onClick={handleLogout}
+    >
+      {icon}
+      <span className="ml-2">{label}</span>
+    </Button>
+  );
+};
 
 export default function AppSidebar() {
   const location = useLocation();
@@ -52,44 +71,44 @@ export default function AppSidebar() {
           label: "Dashboard", 
           href: "/dashboard", 
           icon: <Home className="h-5 w-5" /> 
-        }
-      ]
-    },
-    {
-      title: "Content Creation",
-      items: [
-        { 
-          label: "Content Generator", 
-          href: "/generator", 
-          icon: <Sparkles className="h-5 w-5" /> 
         },
-        { 
-          label: "Script Generator", 
-          href: "/script", 
-          icon: <FileText className="h-5 w-5" /> 
-        },
-        { 
-          label: "Hook Generator", 
-          href: "/hooks", 
-          icon: <AnchorIcon className="h-5 w-5" /> 
-        },
-        { 
-          label: "Find Your Style", 
-          href: "/find-your-style", 
-          icon: <Settings className="h-5 w-5" /> 
-        }
-      ]
-    },
-    {
-      title: "Planning & Organization",
-      items: [
         { 
           label: "Content Planner", 
           href: "/planner", 
           icon: <LayoutGrid className="h-5 w-5" /> 
         },
         { 
-          label: "Ideas", 
+          label: "Content Calendar", 
+          href: "/calendar", 
+          icon: <Calendar className="h-5 w-5" /> 
+        }
+      ]
+    },
+    {
+      title: "Generate",
+      items: [
+        { 
+          label: "Generate Ideas", 
+          href: "/generator", 
+          icon: <Sparkles className="h-5 w-5" /> 
+        },
+        { 
+          label: "Generate Scripts", 
+          href: "/script", 
+          icon: <FileText className="h-5 w-5" /> 
+        },
+        { 
+          label: "Generate Hooks", 
+          href: "/hooks", 
+          icon: <AnchorIcon className="h-5 w-5" /> 
+        }
+      ]
+    },
+    {
+      title: "Library",
+      items: [
+        { 
+          label: "Saved Ideas", 
           href: "/ideas", 
           icon: <Lightbulb className="h-5 w-5" /> 
         },
@@ -97,34 +116,30 @@ export default function AppSidebar() {
           label: "Saved Hooks", 
           href: "/saved-hooks", 
           icon: <Lightbulb className="h-5 w-5" /> 
-        },
-        { 
-          label: "Calendar", 
-          href: "/calendar", 
-          icon: <Calendar className="h-5 w-5" /> 
-        }
-      ]
-    },
-    {
-      title: "Account",
-      items: [
-        { 
-          label: "Account", 
-          href: "/account", 
-          icon: <User className="h-5 w-5" /> 
-        },
-        { 
-          label: "Billing", 
-          href: "/billing", 
-          icon: <CreditCard className="h-5 w-5" /> 
         }
       ]
     }
   ];
+
+  const accountCategory = {
+    title: "Account",
+    items: [
+      { 
+        label: "My Account", 
+        href: "/account", 
+        icon: <User className="h-5 w-5" /> 
+      },
+      { 
+        label: "Billing", 
+        href: "/billing", 
+        icon: <CreditCard className="h-5 w-5" /> 
+      }
+    ]
+  };
   
   return (
     <div className="h-full flex flex-col bg-card border-r px-3 py-4 overflow-y-auto">
-      <div className="flex items-center justify-center mb-6 px-4">
+      <div className="flex items-center mb-6 px-4">
         <Logo />
       </div>
       <div className="space-y-6 flex-1">
@@ -149,6 +164,28 @@ export default function AppSidebar() {
             )}
           </div>
         ))}
+      </div>
+      <div className="pt-4 mt-4 border-t border-border">
+        <div className="space-y-2">
+          <h3 className="font-medium text-xs uppercase text-muted-foreground px-4">
+            {accountCategory.title}
+          </h3>
+          <div className="space-y-1">
+            {accountCategory.items.map((item) => (
+              <SidebarItem 
+                key={item.href}
+                icon={item.icon}
+                label={item.label}
+                href={item.href}
+                active={currentPath === item.href}
+              />
+            ))}
+            <LogoutItem 
+              icon={<LogOut className="h-5 w-5" />}
+              label="Log Out"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
