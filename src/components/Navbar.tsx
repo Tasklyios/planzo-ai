@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -91,7 +90,6 @@ const Navbar = () => {
           </Link>
         </div>
         
-        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
           
           <DropdownMenu>
@@ -181,7 +179,6 @@ const Navbar = () => {
             </DropdownMenu>
           </div>
 
-          {/* Mobile Navigation */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant={isLandingPage ? "outline" : "ghost"} className="md:hidden" size="icon">

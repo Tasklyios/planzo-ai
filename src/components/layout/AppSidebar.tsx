@@ -11,8 +11,7 @@ import {
   AnchorIcon,
   LayoutGrid,
   Settings,
-  Sparkles,
-  Mail
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -99,11 +98,6 @@ export default function AppSidebar() {
       label: "Billing", 
       href: "/billing", 
       icon: <CreditCard className="h-5 w-5" /> 
-    },
-    { 
-      label: "Email Templates", 
-      href: "/email-templates", 
-      icon: <Mail className="h-5 w-5" /> 
     }
   ];
   
