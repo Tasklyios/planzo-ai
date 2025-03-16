@@ -1,202 +1,240 @@
 
-import { useLocation, Link } from "react-router-dom";
-import { Logo } from "@/components/ui/logo";
-import { 
-  Calendar, 
-  Home, 
-  Lightbulb, 
-  FileText, 
-  User, 
-  CreditCard, 
-  AnchorIcon,
-  LayoutGrid,
-  Settings,
-  Sparkles,
-  LogOut
-} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { 
+  ArrowRightLeft, 
+  Calendar, 
+  Clock, 
+  CreditCard, 
+  Home, 
+  Layers, 
+  LogOut, 
+  MessageSquare, 
+  Rocket, 
+  Settings, 
+  User, 
+  PanelLeftOpen,
+  Sparkles,
+  FileText,
+  BookOpen,
+  Save,
+  Heart 
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-interface SidebarItemProps {
-  icon: React.ReactNode;
-  label: string;
-  href: string;
-  active?: boolean;
-  onClick?: () => void;
-}
-
-const SidebarItem = ({ icon, label, href, active, onClick }: SidebarItemProps) => (
-  <Link to={href} className="w-full" onClick={onClick}>
-    <Button 
-      variant="ghost" 
-      className={cn(
-        "w-full justify-start mb-1 font-normal",
-        active ? "bg-primary text-primary-foreground" : "hover:bg-accent"
-      )}
-    >
-      {icon}
-      <span className="ml-2">{label}</span>
-    </Button>
-  </Link>
-);
-
-const LogoutItem = ({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) => {
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    if (onClick) onClick();
-  };
-  
-  return (
-    <Button 
-      variant="ghost" 
-      className="w-full justify-start mb-1 font-normal hover:bg-accent"
-      onClick={handleLogout}
-    >
-      {icon}
-      <span className="ml-2">{label}</span>
-    </Button>
-  );
-};
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AppSidebarProps {
   isMobile?: boolean;
   closeDrawer?: () => void;
 }
 
-export default function AppSidebar({ isMobile = false, closeDrawer }: AppSidebarProps) {
+const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
   const location = useLocation();
-  const currentPath = location.pathname;
-  
-  // Grouped navigation items by category
-  const navCategories = [
-    {
-      title: "Overview",
-      items: [
-        { 
-          label: "Dashboard", 
-          href: "/dashboard", 
-          icon: <Home className="h-5 w-5" /> 
-        },
-        { 
-          label: "Content Planner", 
-          href: "/planner", 
-          icon: <LayoutGrid className="h-5 w-5" /> 
-        },
-        { 
-          label: "Content Calendar", 
-          href: "/calendar", 
-          icon: <Calendar className="h-5 w-5" /> 
-        }
-      ]
-    },
-    {
-      title: "Generate",
-      items: [
-        { 
-          label: "Generate Ideas", 
-          href: "/generator", 
-          icon: <Sparkles className="h-5 w-5" /> 
-        },
-        { 
-          label: "Generate Scripts", 
-          href: "/script", 
-          icon: <FileText className="h-5 w-5" /> 
-        },
-        { 
-          label: "Generate Hooks", 
-          href: "/hooks", 
-          icon: <AnchorIcon className="h-5 w-5" /> 
-        }
-      ]
-    },
-    {
-      title: "Library",
-      items: [
-        { 
-          label: "Saved Ideas", 
-          href: "/ideas", 
-          icon: <Lightbulb className="h-5 w-5" /> 
-        },
-        { 
-          label: "Saved Hooks", 
-          href: "/saved-hooks", 
-          icon: <Lightbulb className="h-5 w-5" /> 
-        }
-      ]
-    }
-  ];
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const accountCategory = {
-    title: "Account",
-    items: [
-      { 
-        label: "My Account", 
-        href: "/account", 
-        icon: <User className="h-5 w-5" /> 
-      },
-      { 
-        label: "Billing", 
-        href: "/billing", 
-        icon: <CreditCard className="h-5 w-5" /> 
-      }
-    ]
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
-  
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account."
+      });
+      navigate("/auth");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        variant: "destructive",
+        title: "Error signing out",
+        description: "There was a problem signing you out. Please try again."
+      });
+    }
+    
+    if (closeDrawer) {
+      closeDrawer();
+    }
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (closeDrawer) {
+      closeDrawer();
+    }
+  };
+
   return (
-    <div className="h-full flex flex-col bg-card border-r px-3 py-4 overflow-y-auto">
-      <div className="flex items-center mb-6 px-4">
-        <Logo />
+    <ScrollArea className="h-full py-6 px-4">
+      <div className="flex items-center justify-between mb-8 px-2">
+        <Link to="/" className="flex items-center gap-2" onClick={closeDrawer}>
+          <Sparkles className="h-6 w-6 text-primary" />
+          <span className="font-semibold text-xl">ContentAI</span>
+        </Link>
+        {isMobile && (
+          <Button variant="ghost" size="icon" onClick={closeDrawer}>
+            <PanelLeftOpen className="h-5 w-5" />
+          </Button>
+        )}
       </div>
-      <div className="space-y-6 flex-1">
-        {navCategories.map((category, index) => (
-          <div key={index} className="space-y-2">
-            <h3 className="font-medium text-xs uppercase text-muted-foreground px-4">
-              {category.title}
-            </h3>
-            <div className="space-y-1">
-              {category.items.map((item) => (
-                <SidebarItem 
-                  key={item.href}
-                  icon={item.icon}
-                  label={item.label}
-                  href={item.href}
-                  active={currentPath === item.href}
-                  onClick={isMobile && closeDrawer ? closeDrawer : undefined}
-                />
-              ))}
-            </div>
-            {index < navCategories.length - 1 && (
-              <Separator className="my-2" />
-            )}
-          </div>
-        ))}
-      </div>
-      <div className="pt-4 mt-4 border-t border-border">
+
+      <div className="space-y-6">
         <div className="space-y-2">
-          <h3 className="font-medium text-xs uppercase text-muted-foreground px-4">
-            {accountCategory.title}
-          </h3>
+          <h3 className="px-4 text-sm font-medium text-muted-foreground">Overview</h3>
           <div className="space-y-1">
-            {accountCategory.items.map((item) => (
-              <SidebarItem 
-                key={item.href}
-                icon={item.icon}
-                label={item.label}
-                href={item.href}
-                active={currentPath === item.href}
-                onClick={isMobile && closeDrawer ? closeDrawer : undefined}
-              />
-            ))}
-            <LogoutItem 
-              icon={<LogOut className="h-5 w-5" />}
-              label="Log Out"
-              onClick={isMobile && closeDrawer ? closeDrawer : undefined}
-            />
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/dashboard") && "bg-primary/10 text-primary font-medium"
+              )}
+              onClick={() => handleNavigation("/dashboard")}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Dashboard
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/content-planner") && "bg-primary/10 text-primary font-medium"
+              )}
+              onClick={() => handleNavigation("/content-planner")}
+            >
+              <Clock className="mr-2 h-4 w-4" />
+              Content Planner
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/calendar") && "bg-primary/10 text-primary font-medium"
+              )}
+              onClick={() => handleNavigation("/calendar")}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Content Calendar
+            </Button>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-2">
+          <h3 className="px-4 text-sm font-medium text-muted-foreground">Generate</h3>
+          <div className="space-y-1">
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/idea-generator") && "bg-primary/10 text-primary font-medium"
+              )}
+              onClick={() => handleNavigation("/idea-generator")}
+            >
+              <Rocket className="mr-2 h-4 w-4" />
+              Generate Ideas
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/script") && "bg-primary/10 text-primary font-medium"
+              )}
+              onClick={() => handleNavigation("/script")}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Generate Scripts
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/hooks") && "bg-primary/10 text-primary font-medium"
+              )}
+              onClick={() => handleNavigation("/hooks")}
+            >
+              <ArrowRightLeft className="mr-2 h-4 w-4" />
+              Generate Hooks
+            </Button>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-2">
+          <h3 className="px-4 text-sm font-medium text-muted-foreground">Library</h3>
+          <div className="space-y-1">
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/ideas") && "bg-primary/10 text-primary font-medium"
+              )}
+              onClick={() => handleNavigation("/ideas")}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Saved Ideas
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/saved-hooks") && "bg-primary/10 text-primary font-medium"
+              )}
+              onClick={() => handleNavigation("/saved-hooks")}
+            >
+              <Heart className="mr-2 h-4 w-4" />
+              Saved Hooks
+            </Button>
+          </div>
+        </div>
+
+        <Separator />
+        
+        <div className="space-y-2">
+          <h3 className="px-4 text-sm font-medium text-muted-foreground">Account</h3>
+          <div className="space-y-1">
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/account") && "bg-primary/10 text-primary font-medium"
+              )}
+              onClick={() => handleNavigation("/account")}
+            >
+              <User className="mr-2 h-4 w-4" />
+              My Account
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/billing") && "bg-primary/10 text-primary font-medium"
+              )}
+              onClick={() => handleNavigation("/billing")}
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              Billing
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground"
+              onClick={handleSignOut}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Log Out
+            </Button>
           </div>
         </div>
       </div>
-    </div>
+    </ScrollArea>
   );
-}
+};
+
+export default AppSidebar;

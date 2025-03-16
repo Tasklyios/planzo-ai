@@ -13,11 +13,10 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, Package2, UserCircle, Building2, LogOut, Mail, Key, CreditCard, Sun, Moon } from "lucide-react";
+import { AlertCircle, CheckCircle2, Package2, UserCircle, Building2, LogOut, Mail, Key, CreditCard, Sun, Moon, Save } from "lucide-react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import LinkSubscriptionDialog from "@/components/billing/LinkSubscriptionDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "@/hooks/use-theme";
 
 const contentNiches = [
@@ -70,6 +69,9 @@ const Account = () => {
   const { theme, setTheme } = useTheme();
   const [userEmail, setUserEmail] = useState("");
   const [isResetEmailSent, setIsResetEmailSent] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [isEmailChanging, setIsEmailChanging] = useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -101,6 +103,7 @@ const Account = () => {
         
         setUser(session.user);
         setUserEmail(session.user.email || "");
+        setNewEmail(session.user.email || "");
         
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
@@ -263,6 +266,45 @@ const Account = () => {
     }
   };
 
+  const updateEmail = async () => {
+    if (!newEmail || newEmail === userEmail) {
+      setIsEditingEmail(false);
+      return;
+    }
+
+    try {
+      setIsEmailChanging(true);
+      
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Email update initiated",
+        description: "Check your new email for a confirmation link.",
+      });
+      
+      setIsEditingEmail(false);
+    } catch (error: any) {
+      console.error("Error updating email:", error);
+      toast({
+        variant: "destructive",
+        title: "Error updating email",
+        description: error.message,
+      });
+    } finally {
+      setIsEmailChanging(false);
+    }
+  };
+
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+    setTheme(newTheme);
+    toast({
+      title: "Theme updated",
+      description: `Theme changed to ${newTheme} mode.`,
+    });
+  };
+
   if (!user && !isLoading) {
     return <Navigate to="/auth" />;
   }
@@ -308,11 +350,46 @@ const Account = () => {
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                           <Mail className="h-5 w-5 text-primary" />
                         </div>
-                        <div>
-                          <p className="font-medium">{userEmail}</p>
-                          <p className="text-sm text-muted-foreground">Your account email</p>
-                        </div>
+                        {isEditingEmail ? (
+                          <div className="flex-1 flex items-center space-x-2">
+                            <Input 
+                              value={newEmail} 
+                              onChange={(e) => setNewEmail(e.target.value)}
+                              type="email"
+                              placeholder="Enter new email"
+                              className="max-w-xs"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setIsEditingEmail(false)}
+                              disabled={isEmailChanging}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              onClick={updateEmail}
+                              disabled={isEmailChanging}
+                            >
+                              {isEmailChanging ? "Saving..." : <Save className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="font-medium">{userEmail}</p>
+                            <p className="text-sm text-muted-foreground">Your account email</p>
+                          </div>
+                        )}
                       </div>
+                      {!isEditingEmail && (
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setIsEditingEmail(true)}
+                        >
+                          Change Email
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -403,26 +480,35 @@ const Account = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-col space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                            {theme === "dark" ? (
-                              <Moon className="h-5 w-5 text-primary" />
-                            ) : (
-                              <Sun className="h-5 w-5 text-primary" />
-                            )}
+                    <div className="flex flex-col space-y-6">
+                      <div className="grid grid-cols-3 gap-4">
+                        <Button 
+                          variant={theme === "light" ? "default" : "outline"} 
+                          className="flex flex-col items-center justify-center h-24 p-4"
+                          onClick={() => handleThemeChange("light")}
+                        >
+                          <Sun className="h-8 w-8 mb-2" />
+                          <span>Light</span>
+                        </Button>
+                        <Button 
+                          variant={theme === "dark" ? "default" : "outline"} 
+                          className="flex flex-col items-center justify-center h-24 p-4"
+                          onClick={() => handleThemeChange("dark")}
+                        >
+                          <Moon className="h-8 w-8 mb-2" />
+                          <span>Dark</span>
+                        </Button>
+                        <Button 
+                          variant={theme === "system" ? "default" : "outline"} 
+                          className="flex flex-col items-center justify-center h-24 p-4"
+                          onClick={() => handleThemeChange("system")}
+                        >
+                          <div className="h-8 w-8 mb-2 flex items-center justify-center">
+                            <Sun className="h-5 w-5 dark:hidden" />
+                            <Moon className="h-5 w-5 hidden dark:block" />
                           </div>
-                          <div>
-                            <p className="font-medium">Theme</p>
-                            <p className="text-sm text-muted-foreground">
-                              {theme === "dark" ? "Dark mode" : theme === "light" ? "Light mode" : "System default"}
-                            </p>
-                          </div>
-                        </div>
-                        <div>
-                          <ThemeToggle />
-                        </div>
+                          <span>System</span>
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -864,3 +950,4 @@ const Account = () => {
 };
 
 export default Account;
+
