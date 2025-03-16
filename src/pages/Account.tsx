@@ -13,10 +13,12 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, Package2, UserCircle, Building2, LogOut } from "lucide-react";
+import { AlertCircle, CheckCircle2, Package2, UserCircle, Building2, LogOut, Mail, Key, CreditCard, Sun, Moon } from "lucide-react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import LinkSubscriptionDialog from "@/components/billing/LinkSubscriptionDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTheme } from "@/hooks/use-theme";
 
 const contentNiches = [
   "Education",
@@ -65,6 +67,9 @@ const Account = () => {
   const [subscription, setSubscription] = useState<any>(null);
   const [isCustomNiche, setIsCustomNiche] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [userEmail, setUserEmail] = useState("");
+  const [isResetEmailSent, setIsResetEmailSent] = useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -95,6 +100,7 @@ const Account = () => {
         }
         
         setUser(session.user);
+        setUserEmail(session.user.email || "");
         
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
@@ -229,6 +235,34 @@ const Account = () => {
     setShowLinkDialog(false);
   };
 
+  const sendPasswordResetEmail = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+      
+      if (error) throw error;
+      
+      setIsResetEmailSent(true);
+      
+      toast({
+        title: "Password reset link sent",
+        description: "Check your email for a password reset link.",
+      });
+    } catch (error: any) {
+      console.error("Error sending reset email:", error);
+      toast({
+        variant: "destructive",
+        title: "Error sending reset email",
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!user && !isLoading) {
     return <Navigate to="/auth" />;
   }
@@ -243,19 +277,179 @@ const Account = () => {
           </p>
         </div>
         
-        <Tabs defaultValue="profile">
+        <Tabs defaultValue="account">
           <TabsList className="w-full lg:w-auto">
+            <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
           </TabsList>
           
           <Separator className="my-6" />
           
-          <TabsContent value="profile" className="space-y-6">
+          <TabsContent value="account" className="space-y-6">
             {isLoading ? (
               <div className="space-y-4 animate-pulse">
                 <div className="h-8 w-1/3 bg-muted rounded"></div>
                 <div className="h-10 w-full bg-muted rounded"></div>
+                <div className="h-10 w-full bg-muted rounded"></div>
+              </div>
+            ) : (
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Email Address</CardTitle>
+                    <CardDescription>
+                      Your email address and account settings.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                          <Mail className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{userEmail}</p>
+                          <p className="text-sm text-muted-foreground">Your account email</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Password</CardTitle>
+                    <CardDescription>
+                      Reset your account password.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                          <Key className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Password Reset</p>
+                          <p className="text-sm text-muted-foreground">Send a password reset link to your email</p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        onClick={sendPasswordResetEmail}
+                        disabled={isLoading || isResetEmailSent}
+                      >
+                        {isResetEmailSent ? "Email Sent" : "Reset Password"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Billing</CardTitle>
+                    <CardDescription>
+                      Manage your subscription and billing information.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid gap-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Current Plan</p>
+                          <p className="text-sm text-muted-foreground">
+                            {subscription?.tier === "free" && "Free Plan"}
+                            {subscription?.tier === "pro" && "Pro Plan"}
+                            {subscription?.tier === "plus" && "Plus Plan"}
+                            {subscription?.tier === "business" && "Business Plan"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {subscription?.tier === "free" && "Free"}
+                            {subscription?.tier === "pro" && "$9.99/month"}
+                            {subscription?.tier === "plus" && "$14.99/month"}
+                            {subscription?.tier === "business" && "$39.99/month"}
+                          </p>
+                        </div>
+                      </div>
+                      {subscription?.current_period_end && subscription?.tier !== "free" && (
+                        <div className="flex items-center">
+                          <div className="text-sm text-muted-foreground">
+                            Next billing date: {new Date(subscription.current_period_end).toLocaleDateString()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-6 space-x-4">
+                      <Button asChild>
+                        <Link to="/billing">Manage Subscription</Link>
+                      </Button>
+                      {subscription?.tier === "free" && (
+                        <Button variant="outline" onClick={() => setShowLinkDialog(true)}>
+                          Link Existing Subscription
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Appearance</CardTitle>
+                    <CardDescription>
+                      Customize how the app looks and feels.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                            {theme === "dark" ? (
+                              <Moon className="h-5 w-5 text-primary" />
+                            ) : (
+                              <Sun className="h-5 w-5 text-primary" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium">Theme</p>
+                            <p className="text-sm text-muted-foreground">
+                              {theme === "dark" ? "Dark mode" : theme === "light" ? "Light mode" : "System default"}
+                            </p>
+                          </div>
+                        </div>
+                        <div>
+                          <ThemeToggle />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Sign Out</CardTitle>
+                    <CardDescription>
+                      Sign out of your account.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="destructive" onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </Button>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="profile" className="space-y-6">
+            {isLoading ? (
+              <div className="space-y-4 animate-pulse">
+                <div className="h-8 w-1/3 bg-muted rounded"></div>
                 <div className="h-10 w-full bg-muted rounded"></div>
                 <div className="h-10 w-full bg-muted rounded"></div>
               </div>
