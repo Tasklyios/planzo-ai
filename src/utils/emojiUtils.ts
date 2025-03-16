@@ -10,7 +10,6 @@ export function getEmojiForIdea(title: string, category: string): string {
     'hack': '🔧',
     'hacks': '🔧',
     'review': '⭐️',
-    'reaction': '😲',
     'story': '📖',
     'stories': '📖',
     'vlog': '📹',
@@ -20,7 +19,6 @@ export function getEmojiForIdea(title: string, category: string): string {
     'transformation': '✨',
     'challenge': '🏆',
     'trend': '📈',
-    'asmr': '👂',
     'unboxing': '📦',
     'comparison': '⚖️',
     'debate': '🗣️',
@@ -111,7 +109,7 @@ export function getEmojiForIdea(title: string, category: string): string {
     'golf': '🏌️',
     'shopping': '🛍️',
     'haul': '🛒',
-    'asmr': '🎧',
+    'sound design': '🎧', // Changed ASMR to sound design (first instance)
     'comedy': '😂',
     'funny': '🤣',
     'humor': '😆',
@@ -124,8 +122,8 @@ export function getEmojiForIdea(title: string, category: string): string {
     'facts': '💯',
     'trivia': '🎯',
     'lifehack': '🔍',
-    'reaction': '😮',
-    'review': '✅',
+    'reaction video': '😮', // Changed to be more specific
+    'product review': '✅', // Changed to be more specific
     'analysis': '🔎',
   };
 
