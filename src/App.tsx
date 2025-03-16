@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,7 @@ import ContentPlanner from "@/pages/ContentPlanner";
 import FindYourStyle from "@/pages/FindYourStyle";
 import Hooks from "@/pages/Hooks";
 import SavedHooks from "@/pages/SavedHooks";
+import EmailTemplates from "@/pages/EmailTemplates";
 import { Toaster } from "@/components/ui/toaster";
 import AuthGuard from "@/components/AuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
@@ -131,6 +133,7 @@ function App() {
                   <Route path="/calendar" element={<Calendar />} />
                   <Route path="/account" element={<Account />} />
                   <Route path="/billing" element={<Billing />} />
+                  <Route path="/email-templates" element={<EmailTemplates />} />
                   
                   <Route path="*" element={<NotFound />} />
                 </Route>
