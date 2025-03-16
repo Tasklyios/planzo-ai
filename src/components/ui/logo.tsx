@@ -10,11 +10,11 @@ export function Logo({ className = "", size = "medium" }: LogoProps) {
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
   
-  // Size mappings - reduced by 15% from previous sizes
+  // Size mappings
   const sizeMap = {
-    small: "h-7", // ~28px (reduced from h-8 which is 32px)
-    medium: "h-8.5", // ~34px (reduced from h-10 which is 40px)
-    large: "h-10", // ~40px (reduced from h-12 which is 48px)
+    small: "h-7", // 28px
+    medium: "h-8", // 32px
+    large: "h-10", // 40px
   };
   
   // Use different logo sources based on theme

@@ -20,7 +20,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <div className="h-screen flex flex-col">
-      <div className="md:hidden flex items-center justify-between p-4 border-b">
+      <div className="md:hidden flex items-center justify-between p-3 border-b">
         <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
           <DrawerTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -38,7 +38,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         </div>
       </div>
       <div className="flex-1 flex overflow-hidden">
-        <div className="hidden md:block w-64 flex-shrink-0">
+        <div className="hidden md:block w-56 flex-shrink-0">
           <AppSidebar />
         </div>
         <main className="flex-1 overflow-auto">
