@@ -1,3 +1,4 @@
+
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -90,3 +91,5 @@ export interface StyleProfile {
   is_active: boolean;
   created_at?: string;
 }
+
+export type AccountType = 'personal' | 'ecommerce' | 'business';

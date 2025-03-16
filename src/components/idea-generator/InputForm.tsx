@@ -27,6 +27,10 @@ interface InputFormProps {
   setVideoType: (value: string) => void;
   setPlatform: (value: string) => void;
   setCustomIdeas: (value: string) => void;
+  accountType?: string;
+  setAccountType?: (value: string) => void;
+  onGenerate?: () => void;
+  isGenerating?: boolean;
 }
 
 type AccountType = 'personal' | 'ecommerce' | 'business';
@@ -42,8 +46,15 @@ const InputForm = ({
   setVideoType,
   setPlatform,
   setCustomIdeas,
+  accountType: propAccountType,
+  setAccountType: propSetAccountType,
+  onGenerate,
+  isGenerating
 }: InputFormProps) => {
-  const [accountType, setAccountType] = useState<AccountType>('personal');
+  const [localAccountType, setLocalAccountType] = useState<AccountType>('personal');
+  const accountType = propAccountType || localAccountType;
+  const setAccountType = propSetAccountType || setLocalAccountType;
+
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [productNiche, setProductNiche] = useState("");
@@ -76,7 +87,10 @@ const InputForm = ({
         
         console.log(`InputForm: Account type is ${newAccountType}${accountTypeChanged ? ' (changed from ' + lastFetchedAccountType + ')' : ''}`);
         
-        setAccountType(newAccountType);
+        setLocalAccountType(newAccountType);
+        if (propSetAccountType) {
+          propSetAccountType(newAccountType);
+        }
         setLastFetchedAccountType(newAccountType);
         
         setProductNiche(profile.product_niche || "");
@@ -419,6 +433,18 @@ const InputForm = ({
           </CollapsibleContent>
         </Collapsible>
       </div>
+      
+      {onGenerate && (
+        <div className="flex justify-center">
+          <button 
+            onClick={onGenerate} 
+            disabled={isGenerating} 
+            className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white dark:text-white px-8 py-2 rounded-full font-medium flex items-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            {isGenerating ? "Generating..." : "Generate Ideas"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

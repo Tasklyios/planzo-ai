@@ -6,12 +6,20 @@ interface GeneratorHeaderProps {
   activeTab?: 'input' | 'ideas';
   setActiveTab?: React.Dispatch<React.SetStateAction<'input' | 'ideas'>>;
   hasIdeas?: boolean;
+  loading?: boolean;
+  onRefresh?: () => void;
+  onToggleForm?: () => void;
+  showForm?: boolean;
 }
 
 const GeneratorHeader: React.FC<GeneratorHeaderProps> = ({ 
   activeTab, 
   setActiveTab, 
-  hasIdeas = false 
+  hasIdeas = false,
+  loading,
+  onRefresh,
+  onToggleForm,
+  showForm
 }) => {
   return (
     <div className="text-center mb-8">
