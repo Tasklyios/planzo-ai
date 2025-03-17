@@ -8,7 +8,7 @@ const TrustBadge = () => {
   
   return (
     <Badge 
-      className="flex items-center gap-2 py-2 px-4 bg-gray-50 text-gray-900 rounded-full border border-gray-100 shadow-sm"
+      className="flex items-center gap-2 py-2 px-4 bg-gray-100 text-gray-900 rounded-full border border-gray-200 shadow-sm"
     >
       <div className="flex">
         {[...Array(5)].map((_, i) => (

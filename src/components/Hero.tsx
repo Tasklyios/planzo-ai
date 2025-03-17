@@ -7,15 +7,15 @@ const Hero = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative overflow-hidden bg-white pt-12 md:pt-16 lg:pt-24">
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-white z-0 h-[90%]"></div>
+    <section className="relative overflow-hidden bg-pure-white pt-12 md:pt-16 lg:pt-24">
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white z-0 h-[90%]"></div>
       <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
         <div className="flex flex-col items-center text-center mb-12 md:mb-16">
           <div className="mb-4 md:mb-6">
             <TrustBadge />
           </div>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-4 md:mb-6">
-            <span className="text-primary">AI-Powered</span> Video Content Creation
+            <span className="bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent">AI-Powered</span> Video Content Creation
             <span className="block mt-2">Made Simple</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
@@ -23,7 +23,7 @@ const Hero = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg rounded-full" 
+              className="bg-gradient-to-r from-blue-500 to-blue-400 hover:opacity-90 text-white px-8 py-6 text-lg rounded-full" 
               onClick={() => navigate("/auth")}
             >
               Start Creating for Free
