@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,7 @@ import {
   User, 
   Bookmark,
   CreditCard,
-  PaintBucket,
-  ChevronUp
+  PaintBucket
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -88,14 +88,14 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
 
   return (
     <div className="flex flex-col h-full relative">
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 mb-2">
         <Link to="/" className="flex items-center" onClick={closeDrawer}>
           <Logo size="large" className="ml-[-4px]" />
         </Link>
       </div>
       
       <ScrollArea className="flex-1 px-3 pb-20">
-        <div className="space-y-1">
+        <div className="space-y-4">
           <Accordion
             type="multiple"
             defaultValue={["overview", "create", "library"]}
@@ -153,7 +153,7 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="create" className="border-none">
+            <AccordionItem value="create" className="border-none mt-2">
               <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
                 <span className="text-xs font-medium text-muted-foreground">CREATE</span>
               </AccordionTrigger>
@@ -205,7 +205,7 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="library" className="border-none">
+            <AccordionItem value="library" className="border-none mt-2">
               <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
                 <span className="text-xs font-medium text-muted-foreground">LIBRARY</span>
               </AccordionTrigger>
