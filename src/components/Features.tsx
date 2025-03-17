@@ -27,8 +27,8 @@ const Features = () => {
     },
     {
       icon: <FileVideo className="text-primary h-8 w-8" />,
-      title: "Caption Generator",
-      description: "Auto-generate captivating captions that boost engagement and make your content more accessible.",
+      title: "Content Planner",
+      description: "Track your production progress with our in-built progress tracker.",
       image: "/placeholder.svg",
       height: "h-[340px]", // Medium height
     },
