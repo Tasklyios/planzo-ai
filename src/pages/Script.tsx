@@ -19,6 +19,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Script = () => {
   const [title, setTitle] = useState("");
@@ -40,6 +41,7 @@ const Script = () => {
   const [userScript, setUserScript] = useState("");
   const WORDS_PER_MINUTE = 150;
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (durationUnit === "seconds" && duration.includes('.')) {
@@ -345,20 +347,22 @@ const Script = () => {
   };
 
   return (
-    <div className="container py-6 space-y-8 max-w-full">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Script Generator</h1>
-        <div className="flex gap-2">
+    <div className="container py-4 md:py-6 space-y-4 md:space-y-8 max-w-full px-2 md:px-4">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+        <h1 className="text-2xl md:text-3xl font-bold">Script Generator</h1>
+        <div className="flex flex-wrap gap-2">
           {script && (
-            <Button variant="outline" onClick={clearScript}>
+            <Button variant="outline" onClick={clearScript} size={isMobile ? "sm" : "default"} className="h-9">
               <Undo2 className="h-4 w-4 mr-2" />
-              Clear Script
+              Clear
             </Button>
           )}
           <Button 
             variant="outline" 
             onClick={activeTab === "generator" ? generateScript : improveUserScript} 
             disabled={activeTab === "generator" ? isGenerating : isImproving}
+            size={isMobile ? "sm" : "default"}
+            className="h-9"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${(activeTab === "generator" ? isGenerating : isImproving) ? 'animate-spin' : ''}`} />
             Regenerate
@@ -366,24 +370,26 @@ const Script = () => {
           <Button 
             onClick={activeTab === "generator" ? generateScript : improveUserScript} 
             disabled={activeTab === "generator" ? isGenerating : isImproving}
+            size={isMobile ? "sm" : "default"}
+            className="h-9"
           >
             {activeTab === "generator" ? (
               isGenerating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating...
+                  {isMobile ? "Loading..." : "Generating..."}
                 </>
               ) : (
-                "Generate Script"
+                <>Generate{!isMobile && " Script"}</>
               )
             ) : (
               isImproving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Improving...
+                  {isMobile ? "Loading..." : "Improving..."}
                 </>
               ) : (
-                "Improve Script"
+                <>Improve{!isMobile && " Script"}</>
               )
             )}
           </Button>
@@ -391,16 +397,16 @@ const Script = () => {
       </div>
 
       <Tabs defaultValue="generator" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="generator">Generate New Script</TabsTrigger>
-          <TabsTrigger value="improve">Improve Your Script</TabsTrigger>
+        <TabsList className="mb-4 md:mb-6 w-full">
+          <TabsTrigger value="generator" className="flex-1">Generate New Script</TabsTrigger>
+          <TabsTrigger value="improve" className="flex-1">Improve Your Script</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="generator" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-6">
+        <TabsContent value="generator" className="space-y-4 md:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <div className="space-y-4 md:space-y-6">
               <Card>
-                <CardContent className="pt-6 space-y-4">
+                <CardContent className="pt-4 md:pt-6 space-y-4">
                   <div className="flex items-center space-x-2">
                     <Switch 
                       id="use-saved-idea" 
@@ -411,21 +417,21 @@ const Script = () => {
                   </div>
                   
                   {useSavedIdea ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                       <div className="space-y-2">
                         <Label>Select a saved idea</Label>
                         <VideoIdeaSelector onSelectIdea={handleSelectIdea} />
                       </div>
                       
                       {savedIdea && (
-                        <div className="space-y-2 p-4 bg-muted rounded-md">
+                        <div className="space-y-2 p-3 md:p-4 bg-muted rounded-md">
                           <p className="font-medium">{savedIdea.title}</p>
                           <p className="text-sm text-muted-foreground">{savedIdea.description}</p>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="title">Video Title</Label>
                         <Input
@@ -443,7 +449,7 @@ const Script = () => {
                           placeholder="Describe what your video is about"
                           value={description}
                           onChange={(e) => setDescription(e.target.value)}
-                          rows={4}
+                          rows={isMobile ? 3 : 4}
                         />
                       </div>
                     </div>
@@ -452,9 +458,9 @@ const Script = () => {
               </Card>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               <Card>
-                <CardContent className="pt-6 space-y-4">
+                <CardContent className="pt-4 md:pt-6 space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="content-style">Content Style</Label>
                     <Select
@@ -475,7 +481,7 @@ const Script = () => {
                     </Select>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <Timer className="h-4 w-4 text-muted-foreground" />
@@ -484,7 +490,7 @@ const Script = () => {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
                               <HelpCircle className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
@@ -497,7 +503,7 @@ const Script = () => {
                       </TooltipProvider>
                     </div>
 
-                    <div className="flex space-x-3">
+                    <div className="flex space-x-2 md:space-x-3">
                       <div className="flex-1">
                         <Input
                           id="duration"
@@ -539,11 +545,11 @@ const Script = () => {
                     />
                     
                     {selectedHook && (
-                      <div className="mt-2 p-3 bg-muted rounded-md relative">
+                      <div className="mt-2 p-2 md:p-3 bg-muted rounded-md relative">
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="absolute top-2 right-2 h-6 w-6" 
+                          className="absolute top-1 right-1 md:top-2 md:right-2 h-6 w-6" 
                           onClick={handleRemoveHook}
                           aria-label="Remove hook"
                         >
@@ -553,67 +559,22 @@ const Script = () => {
                       </div>
                     )}
                   </div>
-
-                  <div className="border-t pt-4 mt-2">
-                    <Collapsible 
-                      open={userScriptOpen} 
-                      onOpenChange={setUserScriptOpen}
-                      className="border rounded-md p-4"
-                    >
-                      <CollapsibleTrigger className="flex items-center justify-between w-full">
-                        <div className="flex items-center">
-                          <Upload className="h-4 w-4 mr-2" />
-                          <span>Already have a basic script? Add it here!</span>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Diamond className="h-4 w-4 ml-2 text-blue-500" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="max-w-xs">
-                                  Premium feature - Available on paid plans
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                        {userScriptOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-4 space-y-4">
-                        <Textarea
-                          id="base-script"
-                          placeholder="Paste your existing script..."
-                          value={baseScript}
-                          onChange={(e) => setBaseScript(e.target.value)}
-                          rows={6}
-                        />
-                        <div className="flex items-center space-x-2">
-                          <Switch 
-                            id="use-base-script" 
-                            checked={isUsingBaseScript}
-                            onCheckedChange={setIsUsingBaseScript}
-                          />
-                          <Label htmlFor="use-base-script">Use this script as a starting point</Label>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </div>
                 </CardContent>
               </Card>
             </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="improve" className="space-y-6">
+        <TabsContent value="improve" className="space-y-4 md:space-y-6">
           <Card>
-            <CardContent className="pt-6 space-y-4">
+            <CardContent className="pt-4 md:pt-6 space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="user-script">Paste Your Script Here</Label>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
                           <HelpCircle className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
@@ -630,7 +591,7 @@ const Script = () => {
                   placeholder="Paste your script text here..."
                   value={userScript}
                   onChange={(e) => setUserScript(e.target.value)}
-                  rows={8}
+                  rows={isMobile ? 6 : 8}
                   className="w-full"
                 />
               </div>
@@ -661,41 +622,106 @@ const Script = () => {
       </Tabs>
 
       {script && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="mt-8">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">{activeTab === "improve" ? "Improved Script" : "Generated Script"}</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          <Card className="mt-4 md:mt-8">
+            <CardContent className="pt-4 md:pt-6">
+              <div className="flex justify-between items-center mb-3 md:mb-4">
+                <h2 className="text-lg md:text-xl font-semibold">{activeTab === "improve" ? "Improved Script" : "Generated Script"}</h2>
                 {useSavedIdea && savedIdea && (
                   <Button 
                     onClick={saveScriptToIdea} 
                     disabled={isSavingScript}
                     variant="secondary"
+                    size={isMobile ? "sm" : "default"}
+                    className="h-8"
                   >
                     {isSavingScript ? (
                       <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
                         Saving...
                       </>
                     ) : (
                       <>
-                        <Save className="h-4 w-4 mr-2" />
+                        <Save className="h-3 w-3 mr-2" />
                         Save to Idea
                       </>
                     )}
                   </Button>
                 )}
               </div>
-              <div className="whitespace-pre-wrap bg-muted p-4 rounded-md h-[400px] overflow-y-auto">
+              <div className="whitespace-pre-wrap bg-muted p-3 md:p-4 rounded-md h-[250px] md:h-[400px] overflow-y-auto text-sm md:text-base">
                 {script}
               </div>
             </CardContent>
           </Card>
           
-          <Card className="mt-8">
-            <CardContent className="pt-6">
-              <h2 className="text-xl font-semibold mb-4">Script Coach</h2>
-              <ChatWidget script={script} onScriptUpdate={handleScriptUpdate} />
+          <Card className="mt-4 md:mt-8">
+            <CardContent className="pt-4 md:pt-6">
+              <div className="flex items-center justify-between mb-3 md:mb-4">
+                <h2 className="text-lg md:text-xl font-semibold">Script Coach</h2>
+                
+                <div className="flex items-center">
+                  <Collapsible 
+                    open={userScriptOpen} 
+                    onOpenChange={setUserScriptOpen}
+                    className="w-full"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size={isMobile ? "sm" : "default"} 
+                        className="h-8 flex items-center gap-1.5"
+                      >
+                        <Upload className="h-3.5 w-3.5" />
+                        <span className="text-xs md:text-sm whitespace-nowrap">Add Basic Script</span>
+                        {userScriptOpen ? (
+                          <ChevronUp className="h-3.5 w-3.5 ml-1" />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5 ml-1" />
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Diamond className="h-4 w-4 ml-2 text-blue-500" />
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p className="max-w-xs">
+                            Premium feature - Available on paid plans
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    <CollapsibleContent className="absolute right-0 mt-2 p-4 bg-background border rounded-md shadow-md w-[calc(100%-2rem)] md:w-[400px] z-10">
+                      <div className="space-y-4">
+                        <Textarea
+                          id="base-script"
+                          placeholder="Paste your existing script..."
+                          value={baseScript}
+                          onChange={(e) => setBaseScript(e.target.value)}
+                          rows={5}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <Switch 
+                            id="use-base-script" 
+                            checked={isUsingBaseScript}
+                            onCheckedChange={setIsUsingBaseScript}
+                          />
+                          <Label htmlFor="use-base-script" className="text-sm">
+                            Use this script as a starting point
+                          </Label>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
+              </div>
+              
+              <div className="h-[250px] md:h-[400px]">
+                <ChatWidget script={script} onScriptUpdate={handleScriptUpdate} />
+              </div>
             </CardContent>
           </Card>
         </div>
