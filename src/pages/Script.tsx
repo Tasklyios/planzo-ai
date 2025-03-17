@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RefreshCw, Undo2, Save, HelpCircle, Timer, X, Upload, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, RefreshCw, Undo2, Save, HelpCircle, Timer, X, Upload, ChevronDown, ChevronUp, Diamond } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -449,37 +448,6 @@ const Script = () => {
                       </div>
                     </div>
                   )}
-
-                  <Collapsible 
-                    open={userScriptOpen} 
-                    onOpenChange={setUserScriptOpen}
-                    className="border rounded-md p-4 mt-4"
-                  >
-                    <CollapsibleTrigger className="flex items-center justify-between w-full">
-                      <div className="flex items-center">
-                        <Upload className="h-4 w-4 mr-2" />
-                        <span>Already have a basic script? Add it here!</span>
-                      </div>
-                      {userScriptOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-4 space-y-4">
-                      <Textarea
-                        id="base-script"
-                        placeholder="Paste your existing script..."
-                        value={baseScript}
-                        onChange={(e) => setBaseScript(e.target.value)}
-                        rows={6}
-                      />
-                      <div className="flex items-center space-x-2">
-                        <Switch 
-                          id="use-base-script" 
-                          checked={isUsingBaseScript}
-                          onCheckedChange={setIsUsingBaseScript}
-                        />
-                        <Label htmlFor="use-base-script">Use this script as a starting point</Label>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
                 </CardContent>
               </Card>
             </div>
@@ -584,6 +552,51 @@ const Script = () => {
                         <p className="text-sm pr-6">{selectedHook}</p>
                       </div>
                     )}
+                  </div>
+
+                  <div className="border-t pt-4 mt-2">
+                    <Collapsible 
+                      open={userScriptOpen} 
+                      onOpenChange={setUserScriptOpen}
+                      className="border rounded-md p-4"
+                    >
+                      <CollapsibleTrigger className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          <Upload className="h-4 w-4 mr-2" />
+                          <span>Already have a basic script? Add it here!</span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Diamond className="h-4 w-4 ml-2 text-blue-500" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">
+                                  Premium feature - Available on paid plans
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        {userScriptOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-4 space-y-4">
+                        <Textarea
+                          id="base-script"
+                          placeholder="Paste your existing script..."
+                          value={baseScript}
+                          onChange={(e) => setBaseScript(e.target.value)}
+                          rows={6}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <Switch 
+                            id="use-base-script" 
+                            checked={isUsingBaseScript}
+                            onCheckedChange={setIsUsingBaseScript}
+                          />
+                          <Label htmlFor="use-base-script">Use this script as a starting point</Label>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
                   </div>
                 </CardContent>
               </Card>
