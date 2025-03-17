@@ -31,6 +31,7 @@ interface IdeaData {
   scheduled_for?: string | null;
   is_saved?: boolean;
   status?: string;
+  user_id?: string;
 }
 
 const availableColors = [
@@ -52,13 +53,30 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const fetchIdea = async () => {
     try {
       console.log("Fetching idea with ID:", ideaId);
+      
+      // Get current session to ensure we have the user_id
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        toast({
+          variant: "destructive",
+          title: "Authentication error",
+          description: "You must be logged in to edit ideas",
+        });
+        onClose();
+        return;
+      }
+      
       const { data, error } = await supabase
         .from("video_ideas")
         .select("*")
         .eq("id", ideaId)
+        .eq("user_id", sessionData.session.user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching idea:", error);
+        throw error;
+      }
       
       console.log("Fetched idea data:", data);
       setIdea(data);
@@ -80,15 +98,31 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     try {
       setDeleting(true);
       
+      // Get current session to ensure we have the user_id
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        toast({
+          variant: "destructive",
+          title: "Authentication error",
+          description: "You must be logged in to delete ideas",
+        });
+        return;
+      }
+      
       const { error } = await supabase
         .from("video_ideas")
         .update({ 
           scheduled_for: null,
-          is_saved: window.location.pathname !== "/calendar"
+          is_saved: window.location.pathname !== "/calendar",
+          user_id: sessionData.session.user.id
         })
-        .eq("id", idea.id);
+        .eq("id", idea.id)
+        .eq("user_id", sessionData.session.user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Delete error:", error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -121,6 +155,17 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       setSaving(true);
       console.log("Saving idea with data:", idea);
       
+      // Get current session to ensure we have the user_id
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        toast({
+          variant: "destructive",
+          title: "Authentication error",
+          description: "You must be logged in to save ideas",
+        });
+        return;
+      }
+      
       const { error } = await supabase
         .from("video_ideas")
         .update({
@@ -135,9 +180,11 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           hook_category: idea.hook_category,
           scheduled_for: idea.scheduled_for,
           is_saved: true,
-          status: idea.status || "ideas"
+          status: idea.status || "ideas",
+          user_id: sessionData.session.user.id // Explicitly set user_id
         })
-        .eq("id", idea.id);
+        .eq("id", idea.id)
+        .eq("user_id", sessionData.session.user.id);
 
       if (error) {
         console.error("Error saving idea:", error);

@@ -102,7 +102,10 @@ export default function Ideas() {
       // Update the database
       const { error } = await supabase
         .from("video_ideas")
-        .update({ is_saved: false })
+        .update({ 
+          is_saved: false,
+          user_id: sessionData.session.user.id // Explicitly set user_id
+        })
         .eq("id", ideaId)
         .eq("user_id", sessionData.session.user.id);
 
@@ -146,7 +149,8 @@ export default function Ideas() {
         .from("video_ideas")
         .update({
           scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
-          is_saved: true // Always ensure it's saved when adding to calendar
+          is_saved: true, // Always ensure it's saved when adding to calendar
+          user_id: userId // Explicitly set user_id
         })
         .eq("id", addingToCalendar.idea.id)
         .eq("user_id", userId);

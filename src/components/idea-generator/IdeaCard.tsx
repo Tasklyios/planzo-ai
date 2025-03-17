@@ -30,7 +30,9 @@ export default function IdeaCard({
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(idea.is_saved);
 
-  const handleAddToCalendar = () => {
+  const handleAddToCalendar = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
     console.log("IdeaCard - Adding to calendar:", idea);
     onAddToCalendar({
       idea,
@@ -47,12 +49,24 @@ export default function IdeaCard({
     try {
       console.log("Toggling save for idea:", idea.id, "Current saved status:", saved);
       
+      // Get current session to ensure we have the user_id
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        toast({
+          variant: "destructive",
+          title: "Authentication error",
+          description: "You must be logged in to save ideas",
+        });
+        return;
+      }
+      
       // Update in the database
       const { error } = await supabase
         .from('video_ideas')
         .update({ 
           is_saved: !saved,
-          status: 'ideas' // When saving, always set to ideas column
+          status: 'ideas', // When saving, always set to ideas column
+          user_id: sessionData.session.user.id // Explicitly set user_id
         })
         .eq('id', idea.id);
 
