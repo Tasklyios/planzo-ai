@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -195,10 +196,10 @@ const CalendarPage = () => {
         </div>
       </div>
       <Calendar
-        mode="month"
+        mode="single"
         selected={date}
-        onSelect={setDate}
-        className="rounded-md border"
+        onSelect={(newDate) => newDate && setDate(newDate)}
+        className="rounded-md border pointer-events-auto"
         events={calendarEvents}
         onEventClick={handleEventClick}
       />
