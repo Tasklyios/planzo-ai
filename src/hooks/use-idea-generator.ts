@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { GeneratedIdea, PreviousIdeasContext, AccountType } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
@@ -400,7 +399,9 @@ export const useIdeaGenerator = () => {
         tags: Array.isArray(idea.tags) ? idea.tags.map((tag: any) => 
           typeof tag === 'string' ? tag.replace(/^"|"$/g, '') : tag
         ) : [],
-        is_saved: false
+        status: 'generated',
+        is_saved: false,
+        user_id: session.user.id // Explicitly set user_id for database compatibility
       }));
 
       const newTitles = formattedIdeas.map((idea: any) => idea.title);
@@ -417,14 +418,9 @@ export const useIdeaGenerator = () => {
       if (session?.user?.id) {
         const userId = session.user.id;
         
-        // Set the expiration timestamp to 24 hours from now
-        const expirationDate = new Date();
-        expirationDate.setHours(expirationDate.getHours() + 24);
-        
         const ideasWithMetadata = formattedIdeas.map((idea: any) => ({
           ...idea,
-          user_id: userId,
-          expires_at: expirationDate.toISOString() // Add expiration timestamp
+          user_id: userId // Ensure user_id is set correctly
         }));
         
         try {
@@ -464,7 +460,6 @@ export const useIdeaGenerator = () => {
       console.error("Error generating ideas:", error);
       setError(`Error generating ideas: ${error.message || "Unknown error"}`);
       setIdeas([]);
-      setLoading(false);
     } finally {
       setLoading(false);
     }

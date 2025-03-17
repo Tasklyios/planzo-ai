@@ -76,7 +76,7 @@ export default function IdeaCard({
         .from('video_ideas')
         .update({ 
           is_saved: !saved,
-          status: !saved ? 'ideas' : idea.status, // When saving, set to ideas column
+          status: !saved ? 'ideas' : idea.status || 'generated', // When saving, set to ideas column
           user_id: userId // Explicitly set user_id
         })
         .eq('id', idea.id);
