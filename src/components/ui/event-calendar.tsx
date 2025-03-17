@@ -3,6 +3,7 @@ import * as React from "react";
 import { Calendar as DayPickerCalendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { DayProps } from "react-day-picker";
+import { DateRange } from "react-day-picker";
 
 export interface CalendarEvent {
   id: string;
@@ -17,8 +18,8 @@ export interface EventCalendarProps {
   events?: CalendarEvent[];
   onEventClick?: (event: CalendarEvent) => void;
   mode?: "single" | "multiple" | "range" | "default";
-  selected?: Date | Date[] | { from?: Date; to?: Date } | undefined;
-  onSelect?: (date: Date | Date[] | { from?: Date; to?: Date } | undefined) => void;
+  selected?: Date | Date[] | DateRange | undefined;
+  onSelect?: (date: Date | Date[] | DateRange | undefined) => void;
   [key: string]: any; // Allow any other props to be passed through
 }
 
@@ -114,11 +115,19 @@ export function EventCalendar({
           onSelect: onSelect as (dates: Date[] | undefined) => void,
         };
       case "range":
+        // Ensure selected is a valid DateRange for the range mode
+        const rangeSelected = selected as DateRange;
+        // If from or to is undefined, create a valid DateRange
+        const validRange: DateRange = {
+          from: rangeSelected?.from || new Date(),
+          to: rangeSelected?.to
+        };
+        
         return {
           ...baseProps,
           mode: "range" as const,
-          selected: selected as { from?: Date; to?: Date },
-          onSelect: onSelect as (range: { from?: Date; to?: Date } | undefined) => void,
+          selected: validRange,
+          onSelect: onSelect as (range: DateRange | undefined) => void,
         };
       default:
         return {
