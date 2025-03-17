@@ -1,15 +1,12 @@
 
 import { 
-  MessageSquare,
-  Mic, 
+  Lightbulb,
   BookOpen, 
   Split,
-  Image,
-  Download,
   Calendar,
-  Lightbulb,
+  Target,
   Sparkles,
-  Target
+  FileVideo
 } from "lucide-react";
 
 const Features = () => {
@@ -18,31 +15,43 @@ const Features = () => {
       icon: <Lightbulb className="text-primary h-8 w-8" />,
       title: "AI Idea Generator",
       description: "Get endless viral-worthy video ideas specifically designed for your niche and audience.",
+      image: "/placeholder.svg",
+      height: "h-[320px]", // Varying heights
     },
     {
       icon: <BookOpen className="text-primary h-8 w-8" />,
       title: "Script Generator",
       description: "Create engaging scripts optimized for short-form video performance with a few clicks.",
+      image: "/placeholder.svg",
+      height: "h-[380px]", // Taller box
     },
     {
-      icon: <Mic className="text-primary h-8 w-8" />,
-      title: "AI Voiceovers",
-      description: "Generate natural-sounding voiceovers for your videos in multiple languages and styles.",
+      icon: <FileVideo className="text-primary h-8 w-8" />,
+      title: "Caption Generator",
+      description: "Auto-generate captivating captions that boost engagement and make your content more accessible.",
+      image: "/placeholder.svg",
+      height: "h-[340px]", // Medium height
     },
     {
       icon: <Calendar className="text-primary h-8 w-8" />,
       title: "Content Calendar",
       description: "Plan and schedule your content with an intuitive drag-and-drop calendar interface.",
+      image: "/placeholder.svg",
+      height: "h-[360px]", // Another variation
     },
     {
       icon: <Target className="text-primary h-8 w-8" />,
       title: "Trend Analysis",
       description: "Stay ahead with AI-powered insights on trending topics in your content niche.",
+      image: "/placeholder.svg",
+      height: "h-[320px]", // Back to smaller
     },
     {
       icon: <Sparkles className="text-primary h-8 w-8" />,
       title: "Hook Generator",
       description: "Create attention-grabbing hooks that stop the scroll and increase engagement.",
+      image: "/placeholder.svg",
+      height: "h-[400px]", // Tallest box
     }
   ];
 
@@ -63,10 +72,26 @@ const Features = () => {
           {features.map((feature, index) => (
             <div 
               key={index} 
-              className="bg-white border border-gray-100 rounded-xl p-8 hover:shadow-md transition-shadow"
+              className={`bg-white border border-gray-100 rounded-xl p-6 hover:shadow-md transition-all ${feature.height} flex flex-col`}
             >
-              <div className="mb-5">{feature.icon}</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="bg-blue-50 p-2 rounded-lg">{feature.icon}</div>
+                <h3 className="text-xl font-bold text-gray-900">{feature.title}</h3>
+              </div>
+              
+              <div className="relative overflow-hidden rounded-lg mb-4 flex-grow">
+                <img 
+                  src={feature.image} 
+                  alt={feature.title}
+                  className="w-full h-40 object-cover transition-transform hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity">
+                  <div className="absolute bottom-3 left-3 right-3 text-white text-sm font-medium">
+                    See examples
+                  </div>
+                </div>
+              </div>
+              
               <p className="text-gray-600">{feature.description}</p>
             </div>
           ))}
