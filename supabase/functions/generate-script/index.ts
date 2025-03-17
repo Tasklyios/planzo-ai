@@ -226,6 +226,14 @@ ${scriptDescription ? `Context: ${scriptDescription}` : ''}`;
       if (scriptCategory) {
         userPrompt += `\nCategory: ${scriptCategory}`;
       }
+
+      // If userScript is provided (base script), add it to the prompt
+      if (userScript) {
+        userPrompt += `\n\nHere's a basic script I've drafted that you should improve and expand upon:
+${userScript}
+
+Please rewrite this script to make it more professional and engaging while keeping the core message intact.`;
+      }
     }
 
     // Call OpenAI API with gpt-4o-mini model

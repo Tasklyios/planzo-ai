@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RefreshCw, Undo2, Save, HelpCircle, Timer, X, Upload } from "lucide-react";
+import { Loader2, RefreshCw, Undo2, Save, HelpCircle, Timer, X, Upload, ChevronDown, ChevronUp } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -15,6 +15,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatWidget from "@/components/ChatWidget";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 const Script = () => {
   const [title, setTitle] = useState("");
@@ -28,9 +33,12 @@ const Script = () => {
   const [isSavingScript, setIsSavingScript] = useState(false);
   const [duration, setDuration] = useState("60");
   const [durationUnit, setDurationUnit] = useState("seconds");
-  const [userScript, setUserScript] = useState("");
+  const [userScriptOpen, setUserScriptOpen] = useState(false);
+  const [baseScript, setBaseScript] = useState("");
+  const [isUsingBaseScript, setIsUsingBaseScript] = useState(false);
   const [activeTab, setActiveTab] = useState("generator");
   const [isImproving, setIsImproving] = useState(false);
+  const [userScript, setUserScript] = useState("");
   const WORDS_PER_MINUTE = 150;
   const { toast } = useToast();
 
@@ -105,6 +113,8 @@ const Script = () => {
         wordsPerMinute: WORDS_PER_MINUTE,
         userId,
         savedIdea: useSavedIdea ? savedIdea : null,
+        userScript: isUsingBaseScript ? baseScript : null,
+        isImprovement: isUsingBaseScript
       });
 
       const { data, error } = await supabase.functions.invoke('generate-script', {
@@ -118,6 +128,8 @@ const Script = () => {
           wordsPerMinute: WORDS_PER_MINUTE,
           userId,
           savedIdea: useSavedIdea ? savedIdea : null,
+          userScript: isUsingBaseScript ? baseScript : null,
+          isImprovement: isUsingBaseScript
         },
       });
 
@@ -437,6 +449,37 @@ const Script = () => {
                       </div>
                     </div>
                   )}
+
+                  <Collapsible 
+                    open={userScriptOpen} 
+                    onOpenChange={setUserScriptOpen}
+                    className="border rounded-md p-4 mt-4"
+                  >
+                    <CollapsibleTrigger className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <Upload className="h-4 w-4 mr-2" />
+                        <span>Already have a basic script? Add it here!</span>
+                      </div>
+                      {userScriptOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-4 space-y-4">
+                      <Textarea
+                        id="base-script"
+                        placeholder="Paste your existing script..."
+                        value={baseScript}
+                        onChange={(e) => setBaseScript(e.target.value)}
+                        rows={6}
+                      />
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          id="use-base-script" 
+                          checked={isUsingBaseScript}
+                          onCheckedChange={setIsUsingBaseScript}
+                        />
+                        <Label htmlFor="use-base-script">Use this script as a starting point</Label>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </CardContent>
               </Card>
             </div>
