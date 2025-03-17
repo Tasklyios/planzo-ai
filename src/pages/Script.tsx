@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RefreshCw, Undo2, Save, HelpCircle, Timer } from "lucide-react";
+import { Loader2, RefreshCw, Undo2, Save, HelpCircle, Timer, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -225,6 +225,14 @@ const Script = () => {
     setSelectedHook(hookText);
   };
 
+  const handleRemoveHook = () => {
+    setSelectedHook("");
+    toast({
+      title: "Hook removed",
+      description: "The hook has been removed from your script.",
+    });
+  };
+
   const handleSelectIdea = (idea: any) => {
     setSavedIdea(idea);
     setUseSavedIdea(true);
@@ -412,8 +420,17 @@ const Script = () => {
                 />
                 
                 {selectedHook && (
-                  <div className="mt-2 p-3 bg-muted rounded-md">
-                    <p className="text-sm">{selectedHook}</p>
+                  <div className="mt-2 p-3 bg-muted rounded-md relative">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute top-2 right-2 h-6 w-6" 
+                      onClick={handleRemoveHook}
+                      aria-label="Remove hook"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                    <p className="text-sm pr-6">{selectedHook}</p>
                   </div>
                 )}
               </div>
