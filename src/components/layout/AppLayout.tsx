@@ -38,13 +38,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         </div>
       </div>
       <div className="flex-1 flex overflow-hidden">
-        <div className="hidden md:block w-56 flex-shrink-0">
+        <div className="hidden md:block w-56 flex-shrink-0 border-r border-border bg-card/40">
           <AppSidebar />
         </div>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-background">
           <div className="container mx-auto p-4 md:p-6">
             <div className="mb-4 hidden md:block">
-              <SearchBar />
+              <div className="border border-border rounded-lg overflow-hidden">
+                <SearchBar />
+              </div>
             </div>
             {children}
           </div>

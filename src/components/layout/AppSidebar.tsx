@@ -72,19 +72,19 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
   };
 
   return (
-    <ScrollArea className="h-full py-2 px-2">
-      <div className="flex items-center justify-between mb-2 px-1">
-        <Link to="/" className="flex items-center gap-2" onClick={closeDrawer}>
-          <Logo size="small" />
-        </Link>
-        {isMobile && (
-          <Button variant="ghost" size="icon" onClick={closeDrawer}>
-            <PanelLeftOpen className="h-5 w-5" />
-          </Button>
-        )}
-      </div>
+    <ScrollArea className="h-full py-2">
+      <div className="space-y-1 px-2">
+        <div className="flex items-center mb-2">
+          <Link to="/" className="flex items-center gap-2" onClick={closeDrawer}>
+            <Logo size="small" />
+          </Link>
+          {isMobile && (
+            <Button variant="ghost" size="icon" onClick={closeDrawer}>
+              <PanelLeftOpen className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
 
-      <div className="space-y-1">
         <div className="space-y-1">
           <h3 className="px-2 text-xs font-medium text-muted-foreground">Overview</h3>
           <div className="space-y-0">
