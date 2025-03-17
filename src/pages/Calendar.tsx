@@ -1,6 +1,4 @@
-
 import React, { useState, useEffect } from "react";
-import { Calendar } from "@/components/ui/calendar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,14 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import EditIdea from "@/components/EditIdea";
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  date: Date;
-  color: string;
-  allDay?: boolean;
-}
+import { EventCalendar, CalendarEvent } from "@/components/ui/event-calendar";
 
 interface ScheduledPost {
   id: string;
@@ -127,7 +118,6 @@ const CalendarPage = () => {
       
       setScheduledPosts(formattedPosts);
       
-      // Transform scheduled posts to calendar events
       const events: CalendarEvent[] = formattedPosts.map((post) => {
         console.log("Creating calendar event for post:", post.title, post.scheduled_for);
         return {
@@ -195,7 +185,7 @@ const CalendarPage = () => {
           <div className="font-medium">{format(date, "MMMM yyyy")}</div>
         </div>
       </div>
-      <Calendar
+      <EventCalendar
         mode="single"
         selected={date}
         onSelect={(newDate) => newDate && setDate(newDate)}
