@@ -72,6 +72,15 @@ const IdeasGrid = ({
     return <div className="py-4 text-center text-muted-foreground">No valid ideas found. Please try generating again.</div>;
   }
 
+  const handleBookmarkToggle = (e: React.MouseEvent, idea: GeneratedIdea) => {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log("Toggling bookmark for idea:", idea.id, "Current saved status:", idea.is_saved);
+    if (onBookmarkToggle) {
+      onBookmarkToggle(idea.id);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {validIdeas.map((idea) => {
@@ -182,7 +191,7 @@ const IdeasGrid = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onBookmarkToggle(idea.id)}
+                        onClick={(e) => handleBookmarkToggle(e, idea)}
                         className={cn(
                           "ml-2 cursor-pointer transition-all duration-300 ease-in-out hover:scale-110",
                           idea.is_saved

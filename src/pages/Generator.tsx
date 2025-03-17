@@ -80,6 +80,8 @@ const Generator = () => {
         return;
       }
 
+      console.log("Adding idea to calendar:", addingToCalendar.idea.id, "with date:", addingToCalendar.scheduledFor);
+      
       const {
         error: updateError
       } = await supabase.from("video_ideas")
@@ -133,9 +135,13 @@ const Generator = () => {
   const handleBookmarkToggle = async (ideaId: string) => {
     try {
       const ideaToUpdate = ideas.find(idea => idea.id === ideaId);
-      if (!ideaToUpdate) return;
+      if (!ideaToUpdate) {
+        console.error("Idea not found:", ideaId);
+        return;
+      }
       
       const newSavedState = !ideaToUpdate.is_saved;
+      console.log("Toggling bookmark for idea:", ideaId, "Current saved status:", ideaToUpdate.is_saved, "New status:", newSavedState);
       
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -148,8 +154,13 @@ const Generator = () => {
         return;
       }
       
-      console.log("Updating bookmark for idea:", ideaId, "to:", newSavedState);
+      setIdeas(prevIdeas => prevIdeas.map(idea => 
+        idea.id === ideaId 
+          ? { ...idea, is_saved: newSavedState } 
+          : idea
+      ));
       
+      console.log("Updating bookmark for idea:", ideaId, "to:", newSavedState);
       const {
         error
       } = await supabase.from("video_ideas").update({
@@ -159,13 +170,13 @@ const Generator = () => {
       
       if (error) {
         console.error("Bookmark update error:", error);
+        setIdeas(prevIdeas => prevIdeas.map(idea => 
+          idea.id === ideaId 
+            ? { ...idea, is_saved: !newSavedState } 
+            : idea
+        ));
         throw new Error(`Error updating bookmark: ${error.message}`);
       }
-      
-      setIdeas(prevIdeas => prevIdeas.map(idea => idea.id === ideaId ? {
-        ...idea,
-        is_saved: newSavedState
-      } : idea));
       
       toast({
         title: newSavedState ? "Idea saved" : "Idea unsaved",
@@ -307,13 +318,22 @@ const Generator = () => {
                 </div>
                 <IdeasGrid 
                   ideas={ideas} 
-                  onAddToCalendar={idea => setAddingToCalendar({
-                    idea,
-                    title: idea.title,
-                    scheduledFor: new Date().toISOString().split('T')[0]
-                  })} 
-                  onEdit={setEditingIdeaId} 
-                  onBookmarkToggle={handleBookmarkToggle} 
+                  onAddToCalendar={(idea) => {
+                    console.log("Adding to calendar:", idea);
+                    setAddingToCalendar({
+                      idea,
+                      title: idea.title,
+                      scheduledFor: new Date().toISOString().split('T')[0]
+                    });
+                  }} 
+                  onEdit={(ideaId) => {
+                    console.log("Editing idea:", ideaId);
+                    setEditingIdeaId(ideaId);
+                  }} 
+                  onBookmarkToggle={(ideaId) => {
+                    console.log("Toggling bookmark for idea:", ideaId);
+                    handleBookmarkToggle(ideaId);
+                  }} 
                 />
               </>
             ) : !error ? (

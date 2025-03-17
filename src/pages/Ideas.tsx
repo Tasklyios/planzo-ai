@@ -13,12 +13,14 @@ export default function Ideas() {
   const [ideas, setIdeas] = useState<GeneratedIdea[]>([]);
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [addingToCalendar, setAddingToCalendar] = useState<AddToCalendarIdea | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
 
   const fetchSavedIdeas = async () => {
     try {
+      setIsLoading(true);
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
       
@@ -68,6 +70,8 @@ export default function Ideas() {
         description: "Failed to load saved ideas: " + (error.message || "Unknown error"),
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -85,7 +89,12 @@ export default function Ideas() {
       
       // Find the idea in the current state
       const ideaToRemove = ideas.find(idea => idea.id === ideaId);
-      if (!ideaToRemove) return;
+      if (!ideaToRemove) {
+        console.error("Idea not found:", ideaId);
+        return;
+      }
+      
+      console.log("Removing bookmark for idea:", ideaId);
       
       // Optimistically update UI
       setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== ideaId));
@@ -99,6 +108,7 @@ export default function Ideas() {
 
       if (error) {
         // If there's an error, revert the optimistic update
+        console.error("Error removing bookmark:", error);
         await fetchSavedIdeas();
         throw error;
       }
@@ -129,17 +139,22 @@ export default function Ideas() {
         return;
       }
 
-      // Fix: Update both scheduled_for and is_saved
+      console.log("Adding to calendar:", addingToCalendar.idea.id, "with date:", addingToCalendar.scheduledFor);
+
+      // Always ensure both scheduled_for and is_saved are set
       const { error } = await supabase
         .from("video_ideas")
         .update({
           scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
-          is_saved: true // Keep saved when adding to calendar
+          is_saved: true // Always ensure it's saved when adding to calendar
         })
         .eq("id", addingToCalendar.idea.id)
         .eq("user_id", userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error adding to calendar:", error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -147,6 +162,7 @@ export default function Ideas() {
       });
 
       setAddingToCalendar(null);
+      
       // Navigate to calendar to see the added idea
       navigate("/calendar");
     } catch (error: any) {
@@ -172,15 +188,25 @@ export default function Ideas() {
           <p className="text-muted-foreground mt-2">Browse and manage your bookmarked video ideas</p>
         </div>
 
-        {ideas.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading saved ideas...</p>
+          </div>
+        ) : ideas.length > 0 ? (
           <IdeasGrid
             ideas={ideas}
-            onAddToCalendar={(idea) => setAddingToCalendar({
-              idea,
-              title: idea.title,
-              scheduledFor: new Date().toISOString().split('T')[0],
-            })}
-            onEdit={(ideaId) => setEditingIdeaId(ideaId)}
+            onAddToCalendar={(idea) => {
+              console.log("Adding to calendar:", idea);
+              setAddingToCalendar({
+                idea,
+                title: idea.title,
+                scheduledFor: new Date().toISOString().split('T')[0],
+              });
+            }}
+            onEdit={(ideaId) => {
+              console.log("Editing idea:", ideaId);
+              setEditingIdeaId(ideaId);
+            }}
             onBookmarkToggle={handleBookmarkToggle}
           />
         ) : (
