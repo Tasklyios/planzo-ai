@@ -19,7 +19,7 @@ export function Logo({ className = "", size = "medium" }: LogoProps) {
   
   // Use different logo sources based on theme
   const lightLogoSrc = "/lovable-uploads/8c458d9d-037f-4dbe-8a47-782b5bd31a4a.png";
-  const darkLogoSrc = "/lovable-uploads/76ed71b9-cb94-48eb-acd1-a0326fc07c10.png";
+  const darkLogoSrc = "/lovable-uploads/56f1a5a2-17d9-40ac-bfe2-e624875b2184.png";
   
   const logoSrc = isDarkMode ? darkLogoSrc : lightLogoSrc;
   
