@@ -43,7 +43,7 @@ const Features = () => {
       icon: <Layers className="text-primary h-8 w-8" />,
       title: "Multi-use Platform",
       description: "Tailored for personal branders, ecommerce, business owners and marketers - the go-to for all areas of social media.",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/198b073e-82cd-4021-ba1c-c7e7593c723c.png",
       height: "h-[320px]", // Back to smaller
     },
     {
