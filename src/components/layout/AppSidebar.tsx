@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -105,50 +104,49 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
             <AccordionItem value="overview" className="border-none">
               <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
                 <span className="text-xs font-medium text-muted-foreground">OVERVIEW</span>
-                <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200" />
               </AccordionTrigger>
               <AccordionContent className="pt-0.5 pb-1">
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
                       isActive("/dashboard") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/dashboard")}
                   >
-                    <LayoutGrid className="mr-2 h-4 w-4" />
+                    <LayoutGrid className="mr-1.5 h-4 w-4" />
                     Dashboard
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
                       isActive("/content-planner") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/content-planner")}
                   >
-                    <BookText className="mr-2 h-4 w-4" />
+                    <BookText className="mr-1.5 h-4 w-4" />
                     Content Planner
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
                       isActive("/calendar") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/calendar")}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-1.5 h-4 w-4" />
                     Calendar
                   </Button>
                 </div>
@@ -158,50 +156,49 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
             <AccordionItem value="create" className="border-none">
               <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
                 <span className="text-xs font-medium text-muted-foreground">CREATE</span>
-                <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200" />
               </AccordionTrigger>
               <AccordionContent className="pt-0.5 pb-1">
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
                       isActive("/idea-generator") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/idea-generator")}
                   >
-                    <LightbulbIcon className="mr-2 h-4 w-4" />
+                    <LightbulbIcon className="mr-1.5 h-4 w-4" />
                     Generate Ideas
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
                       isActive("/script") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/script")}
                   >
-                    <FileText className="mr-2 h-4 w-4" />
+                    <FileText className="mr-1.5 h-4 w-4" />
                     Generate Scripts
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
                       isActive("/hooks") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/hooks")}
                   >
-                    <Anchor className="mr-2 h-4 w-4" />
+                    <Anchor className="mr-1.5 h-4 w-4" />
                     Generate Hooks
                   </Button>
                 </div>
@@ -211,50 +208,49 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
             <AccordionItem value="library" className="border-none">
               <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
                 <span className="text-xs font-medium text-muted-foreground">LIBRARY</span>
-                <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200" />
               </AccordionTrigger>
               <AccordionContent className="pt-0.5 pb-1">
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
                       isActive("/ideas") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/ideas")}
                   >
-                    <LayoutGrid className="mr-2 h-4 w-4" />
+                    <LayoutGrid className="mr-1.5 h-4 w-4" />
                     Saved Ideas
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
                       isActive("/saved-hooks") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/saved-hooks")}
                   >
-                    <Bookmark className="mr-2 h-4 w-4" />
+                    <Bookmark className="mr-1.5 h-4 w-4" />
                     Saved Hooks
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
                       isActive("/find-your-style") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/find-your-style")}
                   >
-                    <PaintBucket className="mr-2 h-4 w-4" />
+                    <PaintBucket className="mr-1.5 h-4 w-4" />
                     Content Style
                   </Button>
                 </div>
@@ -268,42 +264,42 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
       <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card/40 p-2">
         <div className="space-y-0.5">
           <h3 className="px-2 text-xs font-medium text-muted-foreground">Account</h3>
-          <div className="space-y-0 pt-0.5">
+          <div className="space-y-0.5 pt-0.5">
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start h-9 px-3 py-2 text-sm",
+                "w-full justify-start h-8 px-2 py-1.5 text-sm",
                 isActive("/account") 
                   ? "bg-primary text-white font-medium" 
                   : "text-foreground"
               )}
               onClick={() => handleNavigation("/account")}
             >
-              <User className="mr-2 h-4 w-4" />
+              <User className="mr-1.5 h-4 w-4" />
               My Account
             </Button>
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start h-9 px-3 py-2 text-sm",
+                "w-full justify-start h-8 px-2 py-1.5 text-sm",
                 isActive("/billing") 
                   ? "bg-primary text-white font-medium" 
                   : "text-foreground"
               )}
               onClick={() => handleNavigation("/billing")}
             >
-              <CreditCard className="mr-2 h-4 w-4" />
+              <CreditCard className="mr-1.5 h-4 w-4" />
               Billing
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start h-9 px-3 py-2 text-sm text-muted-foreground"
+              className="w-full justify-start h-8 px-2 py-1.5 text-sm text-muted-foreground"
               onClick={handleSignOut}
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="mr-1.5 h-4 w-4" />
               Log Out
             </Button>
           </div>
