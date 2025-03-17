@@ -51,9 +51,8 @@ const Features = () => {
       icon: <Sparkles className="text-primary h-8 w-8" />,
       title: "Hook Generator",
       description: "Create attention-grabbing hooks that stop the scroll and increase engagement.",
-      image: "/lovable-uploads/43357dc3-5985-4e71-9624-af2d51151911.png",
-      height: "h-[500px]", // Increased height further to ensure image fits
-      aspectRatio: 0.5, // Adjusted aspect ratio to match the image's proportions better
+      image: "/lovable-uploads/e9483604-946a-4c32-b18e-13a6fb81d464.png", // Using the newly uploaded image
+      height: "h-[400px]", // Standard height for consistency
     }
   ];
 
@@ -82,21 +81,11 @@ const Features = () => {
               </div>
               
               <div className="relative rounded-lg mb-4 flex-grow overflow-hidden shadow-sm border border-gray-100">
-                {feature.aspectRatio ? (
-                  <AspectRatio ratio={feature.aspectRatio} className="w-full h-full">
-                    <img 
-                      src={feature.image} 
-                      alt={feature.title}
-                      className="w-full h-full object-contain rounded-lg transition-transform hover:scale-105"
-                    />
-                  </AspectRatio>
-                ) : (
-                  <img 
-                    src={feature.image} 
-                    alt={feature.title}
-                    className="w-full h-full object-cover rounded-lg transition-transform hover:scale-105"
-                  />
-                )}
+                <img 
+                  src={feature.image} 
+                  alt={feature.title}
+                  className="w-full h-full object-cover rounded-lg transition-transform hover:scale-105"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity rounded-lg"></div>
               </div>
               
