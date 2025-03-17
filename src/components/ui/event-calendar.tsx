@@ -51,7 +51,7 @@ export function EventCalendar({
   // Create a custom Day component to show events
   const CustomDay = React.useCallback(
     (dayProps: DayProps) => {
-      const { date, displayMonth, selected: daySelected, ...rest } = dayProps;
+      const { date, displayMonth, ...rest } = dayProps;
       const dateKey = date.toISOString().split('T')[0];
       const dayEvents = eventsByDate.get(dateKey) || [];
       const isCurrentDay = isToday(date);
@@ -66,7 +66,7 @@ export function EventCalendar({
           <div 
             {...rest} 
             className={cn(
-              rest.className,
+              "flex items-center justify-center w-full h-full", // Base styles
               isCurrentDay && "bg-accent border border-blue-300 font-bold",
               isSingleSelected && "bg-blue-500 text-white hover:bg-blue-600"
             )}
