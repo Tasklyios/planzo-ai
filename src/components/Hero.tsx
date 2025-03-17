@@ -61,8 +61,8 @@ const Hero = () => {
           <div className="mt-8 text-sm text-gray-500">No credit card required</div>
         </div>
         
-        {/* Image container with enhanced white stroke */}
-        <div className="relative max-w-4xl mx-auto rounded-3xl p-6 md:p-8 bg-pure-white shadow-xl border border-gray-100">
+        {/* Image container with enhanced white stroke - reduced on mobile */}
+        <div className="relative max-w-4xl mx-auto rounded-2xl md:rounded-3xl p-3 md:p-8 bg-pure-white shadow-xl border border-gray-100">
           <div className="relative rounded-xl overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-tr from-primary/80 to-blue-400/50 opacity-30 z-0"></div>
             <img
