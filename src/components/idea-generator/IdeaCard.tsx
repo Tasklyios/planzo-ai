@@ -29,7 +29,7 @@ export default function IdeaCard({
   const isCompact = variant === "compact";
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [saved, setSaved] = useState(idea.is_saved);
+  const [saved, setSaved] = useState(idea.is_saved || false);
   const navigate = useNavigate();
 
   const handleAddToCalendar = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -46,10 +46,13 @@ export default function IdeaCard({
   const handleSaveToggle = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     e.preventDefault();
+    if (loading) return; // Prevent multiple clicks during processing
+    
     setLoading(true);
     
     try {
-      console.log("Toggling save for idea:", idea.id, "Current saved status:", saved);
+      const newSavedState = !saved;
+      console.log("Toggling save for idea:", idea.id, "Current saved status:", saved, "New status:", newSavedState);
       
       // Get current session to ensure we have the user_id
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -71,8 +74,8 @@ export default function IdeaCard({
       const userId = sessionData.session.user.id;
       console.log("User ID for save toggle:", userId);
       
-      // Calculate new saved state (opposite of current state)
-      const newSavedState = !saved;
+      // Update local state immediately for better UX
+      setSaved(newSavedState);
       
       // Update in the database
       const { error } = await supabase
@@ -85,15 +88,15 @@ export default function IdeaCard({
         .eq('id', idea.id);
 
       if (error) {
+        // Revert local state if there's an error
+        setSaved(!newSavedState);
         console.error("Error saving idea:", error);
         throw error;
       }
-
-      // Update local state
-      setSaved(newSavedState);
       
       // Call callback if provided
       if (onSaveIdea) {
+        console.log("Calling onSaveIdea callback with id:", idea.id, "saved:", newSavedState);
         onSaveIdea(idea.id, newSavedState);
       }
       
@@ -194,6 +197,7 @@ export default function IdeaCard({
                 size={isCompact ? "icon" : "sm"}
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   onDeleteIdea(idea.id);
                 }}
                 className="h-8 w-8"

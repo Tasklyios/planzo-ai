@@ -81,6 +81,20 @@ const IdeasGrid = ({
     }
   };
 
+  const handleEditClick = (ideaId: string) => {
+    if (onEdit) {
+      console.log("Editing idea:", ideaId);
+      onEdit(ideaId);
+    }
+  };
+
+  const handleAddToCalendarClick = (idea: GeneratedIdea) => {
+    if (onAddToCalendar) {
+      console.log("IdeasGrid - Add to calendar clicked for idea:", idea);
+      onAddToCalendar(idea);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {validIdeas.map((idea) => {
@@ -114,10 +128,7 @@ const IdeasGrid = ({
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => {
-                            console.log("IdeasGrid - Add to calendar clicked for idea:", idea);
-                            onAddToCalendar(idea);
-                          }}
+                          onClick={() => handleAddToCalendarClick(idea)}
                           className="h-8 w-8 md:h-9 md:w-9"
                         >
                           <CalendarPlus className="h-4 w-4" />
@@ -136,7 +147,7 @@ const IdeasGrid = ({
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => onEdit(idea.id)}
+                          onClick={() => handleEditClick(idea.id)}
                           className="h-8 w-8 md:h-9 md:w-9"
                         >
                           <PenSquare className="h-4 w-4" />
