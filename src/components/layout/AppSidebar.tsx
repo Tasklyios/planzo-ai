@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { 
   ArrowRightLeft, 
   Calendar, 
-  Clock, 
+  Clipboard,
   CreditCard, 
   Home, 
   LogOut, 
@@ -21,24 +21,20 @@ import {
   BookOpen,
   Save,
   Heart,
-  ChevronDown
+  ChevronDown,
+  Anchor
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Logo } from "@/components/ui/logo";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { useState } from "react";
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useState } from "react";
 
 interface AppSidebarProps {
   isMobile?: boolean;
@@ -121,36 +117,36 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-8 px-2 py-1",
+                      "w-full justify-start h-10 px-3 py-2 text-base",
                       isActive("/dashboard") && "bg-primary/10 text-primary font-medium"
                     )}
                     onClick={() => handleNavigation("/dashboard")}
                   >
-                    <Home className="mr-2 h-4 w-4" />
+                    <Home className="mr-3 h-5 w-5" />
                     Dashboard
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-8 px-2 py-1",
+                      "w-full justify-start h-10 px-3 py-2 text-base",
                       isActive("/content-planner") && "bg-primary/10 text-primary font-medium"
                     )}
                     onClick={() => handleNavigation("/content-planner")}
                   >
-                    <Clock className="mr-2 h-4 w-4" />
+                    <Clipboard className="mr-3 h-5 w-5" />
                     Content Planner
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-8 px-2 py-1",
+                      "w-full justify-start h-10 px-3 py-2 text-base",
                       isActive("/calendar") && "bg-primary/10 text-primary font-medium"
                     )}
                     onClick={() => handleNavigation("/calendar")}
                   >
-                    <Calendar className="mr-2 h-4 w-4" />
+                    <Calendar className="mr-3 h-5 w-5" />
                     Content Calendar
                   </Button>
                 </div>
@@ -169,36 +165,36 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-8 px-2 py-1",
+                      "w-full justify-start h-10 px-3 py-2 text-base",
                       isActive("/idea-generator") && "bg-primary/10 text-primary font-medium"
                     )}
                     onClick={() => handleNavigation("/idea-generator")}
                   >
-                    <Rocket className="mr-2 h-4 w-4" />
+                    <Rocket className="mr-3 h-5 w-5" />
                     Generate Ideas
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-8 px-2 py-1",
+                      "w-full justify-start h-10 px-3 py-2 text-base",
                       isActive("/script") && "bg-primary/10 text-primary font-medium"
                     )}
                     onClick={() => handleNavigation("/script")}
                   >
-                    <FileText className="mr-2 h-4 w-4" />
+                    <FileText className="mr-3 h-5 w-5" />
                     Generate Scripts
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-8 px-2 py-1",
+                      "w-full justify-start h-10 px-3 py-2 text-base",
                       isActive("/hooks") && "bg-primary/10 text-primary font-medium"
                     )}
                     onClick={() => handleNavigation("/hooks")}
                   >
-                    <ArrowRightLeft className="mr-2 h-4 w-4" />
+                    <Anchor className="mr-3 h-5 w-5" />
                     Generate Hooks
                   </Button>
                 </div>
@@ -217,24 +213,24 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-8 px-2 py-1",
+                      "w-full justify-start h-10 px-3 py-2 text-base",
                       isActive("/ideas") && "bg-primary/10 text-primary font-medium"
                     )}
                     onClick={() => handleNavigation("/ideas")}
                   >
-                    <Save className="mr-2 h-4 w-4" />
+                    <Save className="mr-3 h-5 w-5" />
                     Saved Ideas
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-8 px-2 py-1",
+                      "w-full justify-start h-10 px-3 py-2 text-base",
                       isActive("/saved-hooks") && "bg-primary/10 text-primary font-medium"
                     )}
                     onClick={() => handleNavigation("/saved-hooks")}
                   >
-                    <Heart className="mr-2 h-4 w-4" />
+                    <Heart className="mr-3 h-5 w-5" />
                     Saved Hooks
                   </Button>
                 </div>
@@ -253,33 +249,33 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start h-8 px-2 py-1",
+                "w-full justify-start h-10 px-3 py-2 text-base",
                 isActive("/account") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/account")}
             >
-              <User className="mr-2 h-4 w-4" />
+              <User className="mr-3 h-5 w-5" />
               My Account
             </Button>
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start h-8 px-2 py-1",
+                "w-full justify-start h-10 px-3 py-2 text-base",
                 isActive("/billing") && "bg-primary/10 text-primary font-medium"
               )}
               onClick={() => handleNavigation("/billing")}
             >
-              <CreditCard className="mr-2 h-4 w-4" />
+              <CreditCard className="mr-3 h-5 w-5" />
               Billing
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start h-8 px-2 py-1 text-muted-foreground"
+              className="w-full justify-start h-10 px-3 py-2 text-base text-muted-foreground"
               onClick={handleSignOut}
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="mr-3 h-5 w-5" />
               Log Out
             </Button>
           </div>
