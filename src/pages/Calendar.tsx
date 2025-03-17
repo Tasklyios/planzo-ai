@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import EditIdea from "@/components/EditIdea";
 import { EventCalendar, CalendarEvent } from "@/components/ui/event-calendar";
+import { DeleteIcon } from "@/components/planner/DeleteIcon";
 
 interface ScheduledPost {
   id: string;
@@ -173,6 +173,29 @@ const CalendarPage = () => {
     setEditingIdeaId(ideaId);
   };
 
+  const handleDeleteIdea = async (ideaId: string) => {
+    try {
+      const { error } = await supabase
+        .from("video_ideas")
+        .update({ status: "draft" })
+        .eq("id", ideaId);
+      
+      if (error) throw error;
+      
+      await fetchScheduledPosts();
+      toast({
+        title: "Removed from calendar",
+        description: "The idea has been removed from your calendar",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to remove idea: " + error.message,
+      });
+    }
+  };
+
   const handleDateSelect = (newDate: Date | Date[] | { from?: Date; to?: Date } | undefined) => {
     if (newDate instanceof Date) {
       console.log("Date selected:", format(newDate, "yyyy-MM-dd"));
@@ -257,26 +280,39 @@ const CalendarPage = () => {
                   {selectedDatePosts.map(post => (
                     <Card key={post.id} className="hover:shadow-md transition-shadow border-l-4" style={{ borderLeftColor: post.color || '#2582ff' }}>
                       <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-start">
                             <h4 className="font-medium text-sm">{post.title}</h4>
-                            <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                              {post.description}
-                            </p>
-                            <div className="flex gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">
-                                {post.category}
-                              </Badge>
-                              {post.platform && (
-                                <Badge variant="outline" className="text-xs">
-                                  {post.platform}
-                                </Badge>
-                              )}
+                            <div className="flex gap-1">
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-7 w-7 p-0" 
+                                onClick={() => handleEditClick(post.id)}
+                              >
+                                <Pencil className="h-4 w-4 text-gray-500" />
+                                <span className="sr-only">Edit</span>
+                              </Button>
+                              <DeleteIcon 
+                                onDelete={() => handleDeleteIdea(post.id)}
+                                title="Remove from Calendar"
+                                description="This will remove the idea from your calendar but keep it in your drafts."
+                              />
                             </div>
                           </div>
-                          <Button size="sm" variant="ghost" onClick={() => handleEditClick(post.id)}>
-                            Edit
-                          </Button>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {post.description}
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-2 justify-center">
+                            <Badge variant="outline" className="text-xs">
+                              {post.category}
+                            </Badge>
+                            {post.platform && (
+                              <Badge variant="outline" className="text-xs">
+                                {post.platform}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

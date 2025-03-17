@@ -73,31 +73,29 @@ export function EventCalendar({
           className="relative flex flex-col items-center w-full h-full cursor-pointer" 
           onClick={handleDayClick}
         >
-          {/* Event indicators - positioned ABOVE the date */}
-          {dayEvents.length > 0 && (
-            <div className="flex justify-center gap-1 mb-1 mt-1">
-              {dayEvents.slice(0, 3).map((event) => (
-                <div
-                  key={event.id}
-                  className="h-1.5 w-1.5 rounded-full cursor-pointer"
-                  style={{ backgroundColor: event.color }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (onEventClick) {
-                      onEventClick(event);
-                    }
-                  }}
-                  title={event.title}
-                />
-              ))}
-              {dayEvents.length > 3 && (
-                <div className="text-[0.6rem] text-muted-foreground">
-                  +{dayEvents.length - 3}
-                </div>
-              )}
-            </div>
-          )}
+          {/* Fixed height container for event indicators - positioned ABOVE the date */}
+          <div className="flex justify-center gap-1 h-2 mb-1 mt-1">
+            {dayEvents.length > 0 && dayEvents.slice(0, 3).map((event) => (
+              <div
+                key={event.id}
+                className="h-1.5 w-1.5 rounded-full cursor-pointer"
+                style={{ backgroundColor: event.color }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (onEventClick) {
+                    onEventClick(event);
+                  }
+                }}
+                title={event.title}
+              />
+            ))}
+            {dayEvents.length > 3 && (
+              <div className="text-[0.6rem] text-muted-foreground">
+                +{dayEvents.length - 3}
+              </div>
+            )}
+          </div>
           
           {/* Display the date with appropriate highlighting */}
           <div 
@@ -120,7 +118,7 @@ export function EventCalendar({
   // The DayPicker component expects different props depending on the mode
   const getDayPickerProps = () => {
     const baseProps = {
-      className: cn("w-full", className),
+      className: cn("w-full h-full", className),
       components: {
         Day: CustomDay,
       },
