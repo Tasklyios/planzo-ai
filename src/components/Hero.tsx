@@ -1,6 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import TrustBadge from "@/components/TrustBadge";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -10,6 +11,9 @@ const Hero = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-white z-0 h-[90%]"></div>
       <div className="container mx-auto px-4 py-16 relative z-10">
         <div className="flex flex-col items-center text-center mb-16">
+          <div className="mb-6">
+            <TrustBadge />
+          </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-6">
             <span className="text-primary">AI-Powered</span> Video Content Creation
             <span className="block mt-2">Made Simple</span>
