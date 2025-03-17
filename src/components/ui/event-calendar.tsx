@@ -56,8 +56,10 @@ export function EventCalendar({
       
       return (
         <div className="relative">
-          {/* Original Day component from shadcn Calendar */}
-          <div {...rest} />
+          {/* Display the date number clearly */}
+          <div {...rest}>
+            {date.getDate()}
+          </div>
           
           {/* Event indicators */}
           {dayEvents.length > 0 && (
