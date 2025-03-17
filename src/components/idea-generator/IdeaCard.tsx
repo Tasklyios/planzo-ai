@@ -71,12 +71,15 @@ export default function IdeaCard({
       const userId = sessionData.session.user.id;
       console.log("User ID for save toggle:", userId);
       
+      // Calculate new saved state (opposite of current state)
+      const newSavedState = !saved;
+      
       // Update in the database
       const { error } = await supabase
         .from('video_ideas')
         .update({ 
-          is_saved: !saved,
-          status: !saved ? 'ideas' : idea.status || 'generated', // When saving, set to ideas column
+          is_saved: newSavedState,
+          status: newSavedState ? 'ideas' : idea.status || 'generated', // When saving, set to ideas column
           user_id: userId // Explicitly set user_id
         })
         .eq('id', idea.id);
@@ -87,18 +90,18 @@ export default function IdeaCard({
       }
 
       // Update local state
-      setSaved(!saved);
+      setSaved(newSavedState);
       
       // Call callback if provided
       if (onSaveIdea) {
-        onSaveIdea(idea.id, !saved);
+        onSaveIdea(idea.id, newSavedState);
       }
       
       toast({
-        title: saved ? "Idea Removed" : "Idea Saved",
-        description: saved 
-          ? "Idea removed from your saved collection"
-          : "Idea saved to your collection in the Ideas column",
+        title: newSavedState ? "Idea Saved" : "Idea Removed",
+        description: newSavedState 
+          ? "Idea saved to your collection in the Ideas column"
+          : "Idea removed from your saved collection",
       });
     } catch (error: any) {
       console.error('Error toggling save status:', error);
