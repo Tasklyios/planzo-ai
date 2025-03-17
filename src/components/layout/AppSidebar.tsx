@@ -5,24 +5,19 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { 
-  ArrowRightLeft, 
-  Calendar, 
-  Clipboard,
-  CreditCard, 
-  Home, 
-  LogOut, 
-  MessageSquare, 
-  Rocket, 
-  Settings, 
-  User, 
-  PanelLeftOpen,
-  Sparkles,
-  FileText,
   BookOpen,
-  Save,
-  Heart,
-  ChevronDown,
-  Anchor
+  Anchor, 
+  CalendarIcon, 
+  LayoutGrid,
+  BookText,
+  LogOut, 
+  LightbulbIcon, 
+  FileText, 
+  User, 
+  Bookmark,
+  CreditCard,
+  PaintBucket,
+  ChevronUp
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -45,7 +40,7 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [openSections, setOpenSections] = useState<string[]>(["overview", "generate", "library"]);
+  const [openSections, setOpenSections] = useState<string[]>(["overview", "create", "library"]);
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -100,154 +95,167 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
         </Link>
       </div>
       
-      <ScrollArea className="flex-1 px-2 pb-20">
-        <div className="space-y-0.5">
+      <ScrollArea className="flex-1 px-3 pb-20">
+        <div className="space-y-1">
           <Accordion
             type="multiple"
-            defaultValue={["overview", "generate", "library"]}
+            defaultValue={["overview", "create", "library"]}
             className="w-full"
           >
             <AccordionItem value="overview" className="border-none">
-              <AccordionTrigger className="py-1 px-2 hover:no-underline">
-                <h3 className="text-xs font-medium text-muted-foreground">Overview</h3>
+              <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
+                <span className="text-xs font-medium text-muted-foreground">OVERVIEW</span>
+                <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200" />
               </AccordionTrigger>
-              <AccordionContent className="pt-0.5 pb-0">
-                <div className="space-y-0">
+              <AccordionContent className="pt-0.5 pb-1">
+                <div className="space-y-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-10 px-2 py-1.5 text-sm",
+                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
                       isActive("/dashboard") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/dashboard")}
                   >
-                    <Home className="mr-1.5 h-4 w-4" />
+                    <LayoutGrid className="mr-2 h-4 w-4" />
                     Dashboard
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-10 px-2 py-1.5 text-sm",
+                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
                       isActive("/content-planner") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/content-planner")}
                   >
-                    <Clipboard className="mr-1.5 h-4 w-4" />
+                    <BookText className="mr-2 h-4 w-4" />
                     Content Planner
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-10 px-2 py-1.5 text-sm",
+                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
                       isActive("/calendar") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/calendar")}
                   >
-                    <Calendar className="mr-1.5 h-4 w-4" />
-                    Content Calendar
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    Calendar
                   </Button>
                 </div>
               </AccordionContent>
             </AccordionItem>
 
-            <Separator className="my-0.5" />
-
-            <AccordionItem value="generate" className="border-none">
-              <AccordionTrigger className="py-1 px-2 hover:no-underline">
-                <h3 className="text-xs font-medium text-muted-foreground">Generate</h3>
+            <AccordionItem value="create" className="border-none">
+              <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
+                <span className="text-xs font-medium text-muted-foreground">CREATE</span>
+                <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200" />
               </AccordionTrigger>
-              <AccordionContent className="pt-0.5 pb-0">
-                <div className="space-y-0">
+              <AccordionContent className="pt-0.5 pb-1">
+                <div className="space-y-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-10 px-2 py-1.5 text-sm",
+                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
                       isActive("/idea-generator") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/idea-generator")}
                   >
-                    <Rocket className="mr-1.5 h-4 w-4" />
+                    <LightbulbIcon className="mr-2 h-4 w-4" />
                     Generate Ideas
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-10 px-2 py-1.5 text-sm",
+                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
                       isActive("/script") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/script")}
                   >
-                    <FileText className="mr-1.5 h-4 w-4" />
+                    <FileText className="mr-2 h-4 w-4" />
                     Generate Scripts
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-10 px-2 py-1.5 text-sm",
+                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
                       isActive("/hooks") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/hooks")}
                   >
-                    <Anchor className="mr-1.5 h-4 w-4" />
+                    <Anchor className="mr-2 h-4 w-4" />
                     Generate Hooks
                   </Button>
                 </div>
               </AccordionContent>
             </AccordionItem>
 
-            <Separator className="my-0.5" />
-
             <AccordionItem value="library" className="border-none">
-              <AccordionTrigger className="py-1 px-2 hover:no-underline">
-                <h3 className="text-xs font-medium text-muted-foreground">Library</h3>
+              <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
+                <span className="text-xs font-medium text-muted-foreground">LIBRARY</span>
+                <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200" />
               </AccordionTrigger>
-              <AccordionContent className="pt-0.5 pb-0">
-                <div className="space-y-0">
+              <AccordionContent className="pt-0.5 pb-1">
+                <div className="space-y-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-10 px-2 py-1.5 text-sm",
+                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
                       isActive("/ideas") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/ideas")}
                   >
-                    <Save className="mr-1.5 h-4 w-4" />
+                    <LayoutGrid className="mr-2 h-4 w-4" />
                     Saved Ideas
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "w-full justify-start h-10 px-2 py-1.5 text-sm",
+                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
                       isActive("/saved-hooks") 
                         ? "bg-primary text-white font-medium" 
                         : "text-foreground"
                     )}
                     onClick={() => handleNavigation("/saved-hooks")}
                   >
-                    <Heart className="mr-1.5 h-4 w-4" />
+                    <Bookmark className="mr-2 h-4 w-4" />
                     Saved Hooks
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start rounded-md h-9 px-3 py-2 text-sm",
+                      isActive("/find-your-style") 
+                        ? "bg-primary text-white font-medium" 
+                        : "text-foreground"
+                    )}
+                    onClick={() => handleNavigation("/find-your-style")}
+                  >
+                    <PaintBucket className="mr-2 h-4 w-4" />
+                    Content Style
                   </Button>
                 </div>
               </AccordionContent>
@@ -265,37 +273,37 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start h-10 px-2 py-1.5 text-sm",
+                "w-full justify-start h-9 px-3 py-2 text-sm",
                 isActive("/account") 
                   ? "bg-primary text-white font-medium" 
                   : "text-foreground"
               )}
               onClick={() => handleNavigation("/account")}
             >
-              <User className="mr-1.5 h-4 w-4" />
+              <User className="mr-2 h-4 w-4" />
               My Account
             </Button>
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "w-full justify-start h-10 px-2 py-1.5 text-sm",
+                "w-full justify-start h-9 px-3 py-2 text-sm",
                 isActive("/billing") 
                   ? "bg-primary text-white font-medium" 
                   : "text-foreground"
               )}
               onClick={() => handleNavigation("/billing")}
             >
-              <CreditCard className="mr-1.5 h-4 w-4" />
+              <CreditCard className="mr-2 h-4 w-4" />
               Billing
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start h-10 px-2 py-1.5 text-sm text-muted-foreground"
+              className="w-full justify-start h-9 px-3 py-2 text-sm text-muted-foreground"
               onClick={handleSignOut}
             >
-              <LogOut className="mr-1.5 h-4 w-4" />
+              <LogOut className="mr-2 h-4 w-4" />
               Log Out
             </Button>
           </div>
