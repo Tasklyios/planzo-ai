@@ -22,7 +22,10 @@ export default function Ideas() {
     try {
       setIsLoading(true);
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw sessionError;
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw sessionError;
+      }
       
       if (!sessionData.session?.user.id) {
         toast({
@@ -42,7 +45,10 @@ export default function Ideas() {
         .eq("user_id", sessionData.session.user.id)
         .eq("is_saved", true);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching saved ideas:", error);
+        throw error;
+      }
       
       console.log("Fetched saved ideas:", data);
       
@@ -81,8 +87,18 @@ export default function Ideas() {
 
   const handleBookmarkToggle = async (ideaId: string) => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw sessionError;
+      }
+      
       if (!sessionData.session) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to update ideas",
+          variant: "destructive"
+        });
         navigate("/auth");
         return;
       }
@@ -134,10 +150,20 @@ export default function Ideas() {
     if (!addingToCalendar) return;
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw sessionError;
+      }
+      
       const userId = sessionData.session?.user.id;
 
       if (!userId) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to add ideas to calendar",
+          variant: "destructive"
+        });
         navigate("/auth");
         return;
       }
@@ -150,7 +176,8 @@ export default function Ideas() {
         .update({
           scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
           is_saved: true, // Always ensure it's saved when adding to calendar
-          user_id: userId // Explicitly set user_id
+          user_id: userId, // Explicitly set user_id
+          title: addingToCalendar.title // Update the title if it was edited
         })
         .eq("id", addingToCalendar.idea.id)
         .eq("user_id", userId);

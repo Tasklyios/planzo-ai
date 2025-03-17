@@ -23,6 +23,7 @@ const AddToCalendarDialog = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     console.log("Submitting add to calendar form with idea:", idea);
     onAddToCalendar();
   };

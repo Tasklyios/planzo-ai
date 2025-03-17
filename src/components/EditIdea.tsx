@@ -55,7 +55,12 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       console.log("Fetching idea with ID:", ideaId);
       
       // Get current session to ensure we have the user_id
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw sessionError;
+      }
+      
       if (!sessionData.session) {
         toast({
           variant: "destructive",
@@ -66,11 +71,14 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         return;
       }
       
+      const userId = sessionData.session.user.id;
+      console.log("User ID from session:", userId);
+      
       const { data, error } = await supabase
         .from("video_ideas")
         .select("*")
         .eq("id", ideaId)
-        .eq("user_id", sessionData.session.user.id)
+        .eq("user_id", userId)
         .single();
 
       if (error) {
@@ -85,7 +93,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to load idea details.",
+        description: "Failed to load idea details: " + (error.message || "Unknown error"),
       });
     } finally {
       setLoading(false);
@@ -99,7 +107,12 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       setDeleting(true);
       
       // Get current session to ensure we have the user_id
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw sessionError;
+      }
+      
       if (!sessionData.session) {
         toast({
           variant: "destructive",
@@ -108,16 +121,18 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         });
         return;
       }
+
+      const userId = sessionData.session.user.id;
       
       const { error } = await supabase
         .from("video_ideas")
         .update({ 
           scheduled_for: null,
           is_saved: window.location.pathname !== "/calendar",
-          user_id: sessionData.session.user.id
+          user_id: userId
         })
         .eq("id", idea.id)
-        .eq("user_id", sessionData.session.user.id);
+        .eq("user_id", userId);
 
       if (error) {
         console.error("Delete error:", error);
@@ -136,7 +151,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete idea. Please try again.",
+        description: "Failed to delete idea: " + (error.message || "Unknown error"),
       });
     } finally {
       setDeleting(false);
@@ -156,7 +171,12 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       console.log("Saving idea with data:", idea);
       
       // Get current session to ensure we have the user_id
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw sessionError;
+      }
+      
       if (!sessionData.session) {
         toast({
           variant: "destructive",
@@ -165,6 +185,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         });
         return;
       }
+
+      const userId = sessionData.session.user.id;
       
       const { error } = await supabase
         .from("video_ideas")
@@ -181,10 +203,10 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           scheduled_for: idea.scheduled_for,
           is_saved: true,
           status: idea.status || "ideas",
-          user_id: sessionData.session.user.id // Explicitly set user_id
+          user_id: userId // Explicitly set user_id
         })
         .eq("id", idea.id)
-        .eq("user_id", sessionData.session.user.id);
+        .eq("user_id", userId);
 
       if (error) {
         console.error("Error saving idea:", error);
@@ -312,7 +334,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           <div className="grid gap-2">
             <label>Tags (comma-separated)</label>
             <Input
-              value={idea.tags.join(", ")}
+              value={idea.tags ? idea.tags.join(", ") : ""}
               onChange={(e) => setIdea({ ...idea, tags: e.target.value.split(",").map(t => t.trim()) })}
             />
           </div>

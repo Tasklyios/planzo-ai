@@ -50,7 +50,12 @@ export default function IdeaCard({
       console.log("Toggling save for idea:", idea.id, "Current saved status:", saved);
       
       // Get current session to ensure we have the user_id
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw new Error("Authentication error: " + sessionError.message);
+      }
+      
       if (!sessionData.session) {
         toast({
           variant: "destructive",
@@ -65,7 +70,7 @@ export default function IdeaCard({
         .from('video_ideas')
         .update({ 
           is_saved: !saved,
-          status: 'ideas', // When saving, always set to ideas column
+          status: !saved ? 'ideas' : idea.status, // When saving, set to ideas column
           user_id: sessionData.session.user.id // Explicitly set user_id
         })
         .eq('id', idea.id);
@@ -94,7 +99,7 @@ export default function IdeaCard({
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update idea status",
+        description: "Failed to update idea status: " + (error.message || "Unknown error"),
       });
     } finally {
       setLoading(false);
@@ -104,7 +109,7 @@ export default function IdeaCard({
   const handleCopyToClipboard = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     try {
-      const textToCopy = `${idea.title}\n\n${idea.description}\n\nCategory: ${idea.category}\nTags: ${idea.tags.join(', ')}`;
+      const textToCopy = `${idea.title}\n\n${idea.description}\n\nCategory: ${idea.category}\nTags: ${idea.tags?.join(', ') || ''}`;
       navigator.clipboard.writeText(textToCopy);
       toast({
         title: "Copied to clipboard",
