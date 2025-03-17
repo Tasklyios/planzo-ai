@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import IdeasGrid from "@/components/idea-generator/IdeasGrid";
@@ -177,7 +176,8 @@ export default function Ideas() {
           scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
           is_saved: true, // Always ensure it's saved when adding to calendar
           user_id: userId, // Explicitly set user_id
-          title: addingToCalendar.title // Update the title if it was edited
+          title: addingToCalendar.title, // Update the title if it was edited
+          status: 'calendar' // Make sure status is set to calendar
         })
         .eq("id", addingToCalendar.idea.id)
         .eq("user_id", userId);

@@ -96,7 +96,8 @@ const Generator = () => {
           scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
           is_saved: true,
           title: updatedTitle,
-          user_id: userId
+          user_id: userId,
+          status: 'calendar'
         })
         .eq("id", addingToCalendar.idea.id);
       
@@ -111,7 +112,8 @@ const Generator = () => {
               ...idea, 
               scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(), 
               is_saved: true,
-              title: updatedTitle 
+              title: updatedTitle,
+              status: 'calendar'
             } 
           : idea
       ));

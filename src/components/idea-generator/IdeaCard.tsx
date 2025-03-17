@@ -67,13 +67,16 @@ export default function IdeaCard({
         return;
       }
       
+      const userId = sessionData.session.user.id;
+      console.log("User ID for save toggle:", userId);
+      
       // Update in the database
       const { error } = await supabase
         .from('video_ideas')
         .update({ 
           is_saved: !saved,
           status: !saved ? 'ideas' : idea.status, // When saving, set to ideas column
-          user_id: sessionData.session.user.id // Explicitly set user_id
+          user_id: userId // Explicitly set user_id
         })
         .eq('id', idea.id);
 

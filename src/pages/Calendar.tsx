@@ -29,6 +29,7 @@ interface VideoIdea {
   script?: string;
   user_id?: string;
   scheduled_for?: string;
+  status?: string;
 }
 
 interface ScheduledPost extends VideoIdea {
@@ -121,6 +122,8 @@ export default function Calendar() {
         return;
       }
 
+      console.log("Fetching scheduled posts for user:", sessionData.session.user.id);
+
       const { data: scheduledData, error: scheduledError } = await supabase
         .from("video_ideas")
         .select(`
@@ -135,19 +138,26 @@ export default function Calendar() {
           is_saved,
           script,
           user_id,
-          scheduled_for
+          scheduled_for,
+          status
         `)
         .eq("user_id", sessionData.session.user.id)
         .not("scheduled_for", "is", null);  // Only get ideas with a scheduled_for date
 
-      if (scheduledError) throw scheduledError;
+      if (scheduledError) {
+        console.error("Error fetching scheduled posts:", scheduledError);
+        throw scheduledError;
+      }
+
+      console.log("Fetched scheduled posts:", scheduledData);
 
       if (scheduledData) {
+        // Update any scheduled items to ensure they're saved
         for (const post of scheduledData) {
           if (!post.is_saved) {
             await supabase
               .from("video_ideas")
-              .update({ is_saved: true })
+              .update({ is_saved: true, status: 'calendar' })
               .eq("id", post.id)
               .eq("user_id", sessionData.session.user.id);
           }
@@ -159,12 +169,15 @@ export default function Calendar() {
         scheduled_for: post.scheduled_for || new Date().toISOString(),
       })) || [];
 
+      console.log("Formatted posts for calendar:", formattedPosts);
+      
       setScheduledPosts(formattedPosts);
     } catch (error: any) {
+      console.error("Error fetching scheduled posts:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to load scheduled posts",
       });
     } finally {
       setLoading(false);
