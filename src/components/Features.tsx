@@ -29,7 +29,7 @@ const Features = () => {
       icon: <FileVideo className="text-primary h-8 w-8" />,
       title: "Content Planner",
       description: "Track your production progress with our in-built progress tracker.",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/f0d4f71c-2d30-4ea0-aa6e-e7c6a73a896f.png",
       height: "h-[340px]", // Medium height
     },
     {
