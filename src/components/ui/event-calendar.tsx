@@ -2,6 +2,7 @@
 import * as React from "react";
 import { Calendar as DayPickerCalendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { DayProps } from "react-day-picker";
 
 export interface CalendarEvent {
   id: string;
@@ -11,9 +12,14 @@ export interface CalendarEvent {
   allDay?: boolean;
 }
 
-interface EventCalendarProps extends React.ComponentProps<typeof DayPickerCalendar> {
+export interface EventCalendarProps {
+  className?: string;
   events?: CalendarEvent[];
   onEventClick?: (event: CalendarEvent) => void;
+  mode?: "single" | "multiple" | "range" | "default";
+  selected?: Date | Date[] | { from?: Date; to?: Date } | undefined;
+  onSelect?: (date: Date | Date[] | { from?: Date; to?: Date } | undefined) => void;
+  [key: string]: any; // Allow any other props to be passed through
 }
 
 export function EventCalendar({
@@ -42,7 +48,7 @@ export function EventCalendar({
       <DayPickerCalendar
         className={className}
         components={{
-          Day: ({ date, ...dayProps }) => {
+          Day: ({ date, ...dayProps }: DayProps) => {
             const dateKey = date.toISOString().split('T')[0];
             const dayEvents = eventsByDate.get(dateKey) || [];
             
