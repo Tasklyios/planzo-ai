@@ -1,3 +1,4 @@
+
 import { 
   Lightbulb,
   BookOpen, 
@@ -78,13 +79,13 @@ const Features = () => {
                 <h3 className="text-xl font-bold text-gray-900">{feature.title}</h3>
               </div>
               
-              <div className="relative overflow-hidden rounded-lg mb-4 flex-grow">
+              <div className="relative rounded-lg mb-4 flex-grow overflow-hidden shadow-sm border border-gray-100">
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-40 object-cover transition-transform hover:scale-105"
+                  className="w-full h-full object-cover rounded-lg transition-transform hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity rounded-lg">
                   <div className="absolute bottom-3 left-3 right-3 text-white text-sm font-medium">
                     See examples
                   </div>
