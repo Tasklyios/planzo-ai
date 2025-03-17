@@ -20,12 +20,11 @@ interface VideoIdea {
   id: string;
   title: string;
   description: string;
-  platform?: string;
-  created_at: string;
-  color?: string;
-  category?: string;
+  category: string;
   tags?: string[];
   is_saved?: boolean;
+  platform?: string;
+  color?: string;
   script?: string;
   user_id?: string;
   scheduled_for?: string;
@@ -116,8 +115,20 @@ export default function Calendar() {
 
   const fetchScheduledPosts = async () => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
+      setLoading(true);
+      
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        throw sessionError;
+      }
+      
       if (!sessionData.session?.user.id) {
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please log in to view your calendar",
+        });
         navigate("/auth");
         return;
       }
@@ -130,11 +141,12 @@ export default function Calendar() {
           id,
           title,
           description,
-          platform,
-          created_at,
-          color,
           category,
           tags,
+          platform,
+          color,
+          hook_text,
+          hook_category,
           is_saved,
           script,
           user_id,
@@ -142,7 +154,8 @@ export default function Calendar() {
           status
         `)
         .eq("user_id", sessionData.session.user.id)
-        .not("scheduled_for", "is", null);  // Only get ideas with a scheduled_for date
+        .not("scheduled_for", "is", null)
+        .eq("status", "calendar");
 
       if (scheduledError) {
         console.error("Error fetching scheduled posts:", scheduledError);
@@ -152,7 +165,6 @@ export default function Calendar() {
       console.log("Fetched scheduled posts:", scheduledData);
 
       if (scheduledData) {
-        // Update any scheduled items to ensure they're saved
         for (const post of scheduledData) {
           if (!post.is_saved) {
             await supabase
@@ -164,10 +176,10 @@ export default function Calendar() {
         }
       }
 
-      const formattedPosts: ScheduledPost[] = scheduledData?.map(post => ({
+      const formattedPosts: ScheduledPost[] = (scheduledData?.map(post => ({
         ...post,
         scheduled_for: post.scheduled_for || new Date().toISOString(),
-      })) || [];
+      })) || []);
 
       console.log("Formatted posts for calendar:", formattedPosts);
       

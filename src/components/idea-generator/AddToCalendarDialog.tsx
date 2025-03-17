@@ -28,6 +28,8 @@ const AddToCalendarDialog = ({
     onAddToCalendar();
   };
 
+  const currentDate = new Date().toISOString().split('T')[0];
+
   return (
     <Dialog open={!!idea} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -54,9 +56,10 @@ const AddToCalendarDialog = ({
             <Input
               id="date"
               type="date"
-              value={idea.scheduledFor || ""}
+              value={idea.scheduledFor || currentDate}
               onChange={(e) => onUpdate('scheduledFor', e.target.value)}
               className="w-full"
+              min={currentDate}
               required
             />
           </div>
