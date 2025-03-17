@@ -149,11 +149,14 @@ const CalendarPage = () => {
   }, []);
 
   const handleEventClick = (event: CalendarEvent) => {
+    console.log("Event clicked:", event);
     setSelectedEvent(event);
     setOpen(true);
   };
 
   const handleEditClick = (ideaId: string) => {
+    console.log("Opening edit dialog for idea:", ideaId);
+    setOpen(false);
     setEditingIdeaId(ideaId);
   };
 
@@ -230,12 +233,7 @@ const CalendarPage = () => {
                   </>
                 )}
               </div>
-              <Button onClick={() => {
-                setOpen(false);
-                if (selectedEvent) {
-                  handleEditClick(selectedEvent.id);
-                }
-              }}>Edit</Button>
+              <Button onClick={() => handleEditClick(selectedEvent.id)}>Edit</Button>
             </>
           )}
         </DialogContent>

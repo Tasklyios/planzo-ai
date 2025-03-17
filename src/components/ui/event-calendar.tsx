@@ -68,8 +68,11 @@ export function EventCalendar({
                   className="h-1.5 w-1.5 rounded-full cursor-pointer"
                   style={{ backgroundColor: event.color }}
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    onEventClick?.(event);
+                    if (onEventClick) {
+                      onEventClick(event);
+                    }
                   }}
                   title={event.title}
                 />
@@ -116,11 +119,11 @@ export function EventCalendar({
         };
       case "range":
         // Ensure selected is a valid DateRange for the range mode
-        const rangeSelected = selected as DateRange;
-        // If from or to is undefined, create a valid DateRange
+        const selectedRange = selected as DateRange;
+        // Create a valid DateRange with required 'from' property
         const validRange: DateRange = {
-          from: rangeSelected?.from || new Date(),
-          to: rangeSelected?.to
+          from: selectedRange?.from || new Date(),
+          to: selectedRange?.to
         };
         
         return {
