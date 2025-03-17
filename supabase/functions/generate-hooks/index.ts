@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.1";
@@ -62,62 +61,43 @@ serve(async (req) => {
 
     console.log("Hook allocation:", hookAllocation);
 
-    // Updated system prompt to match Planzo AI's personality and expertise
-    const systemPrompt = `You are Planzo AI, a specialist in creating viral-worthy content for social media. You excel at crafting hooks that stop users from scrolling on platforms like TikTok, YouTube Shorts, and Instagram Reels.
+    // Simplified system prompt to reduce token usage
+    const systemPrompt = `You create viral hooks for social media. Generate engaging openers for videos on platforms like TikTok and Instagram Reels.`;
 
-You understand audience psychology, engagement triggers, and platform-specific trends. Your hooks are designed to maximize curiosity, emotional response, and viewer retention in the critical first few seconds of a video.`;
-
-    let userPrompt = `Generate EXACTLY ${totalHooks} different hooks about ${topic}`;
+    // More concise user prompt
+    let userPrompt = `Generate ${totalHooks} hooks about ${topic}`;
     
     if (audience && audience.trim()) {
       userPrompt += ` for ${audience}`;
     }
 
     if (details && details.trim()) {
-      userPrompt += `\nAdditional context: ${details}`;
+      userPrompt += `\nContext: ${details}`;
     }
 
     // Create prompt with specific allocation instructions
-    userPrompt += `\n\nGenerate hooks distributed EXACTLY as follows (${totalHooks} hooks total):`;
+    userPrompt += `\n\nDistribute ${totalHooks} hooks as follows:`;
     
     for (const [type, count] of Object.entries(hookAllocation)) {
       if (count > 0) {
-        userPrompt += `\n- ${count} ${type.toUpperCase()} hooks: `;
-        
-        switch(type) {
-          case "question":
-            userPrompt += "Hooks that pose an intriguing question to the viewer";
-            break;
-          case "statistic":
-            userPrompt += "Hooks that lead with a surprising statistic or fact";
-            break;
-          case "story":
-            userPrompt += "Hooks that begin with a mini-story or scenario";
-            break;
-          case "challenge":
-            userPrompt += "Hooks that challenge a common belief or present a controversial take";
-            break;
-        }
+        userPrompt += `\n- ${count} ${type.toUpperCase()} hooks`;
       }
     }
     
     userPrompt += `\n
-FORMAT YOUR RESPONSE AS A JSON ARRAY of objects with "hook", "explanation", and "category" properties:
+FORMAT AS JSON:
 [
   {
-    "hook": "The actual hook text that would start the video",
-    "explanation": "Why this hook works and when to use it",
+    "hook": "The hook text",
+    "explanation": "Brief explanation",
     "category": "${validHookTypes[0]}"
-  },
-  // more hooks...
+  }
 ]
+Categories must be: ${validHookTypes.map(t => `"${t}"`).join(", ")}.
+Response must be valid JSON only.`;
 
-The category MUST be one of: ${validHookTypes.map(t => `"${t}"`).join(", ")}.
-Make sure to create EXACTLY the specified number of hooks for each category.
-DO NOT include any text outside of the JSON format. Your entire response should be valid JSON.`;
-
-    // Call the OpenAI API
-    console.log('Calling OpenAI API for hook generation with prompt:', userPrompt);
+    // Call the OpenAI API with gpt-4o-mini
+    console.log('Calling OpenAI API for hook generation');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -125,13 +105,13 @@ DO NOT include any text outside of the JSON format. Your entire response should 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini', // Changed to mini version
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: 800, // Reduced token limit
       }),
     });
 

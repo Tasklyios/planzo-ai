@@ -45,7 +45,8 @@ export const onRequestPost = async (context: any) => {
       }
     }
 
-    const prompt = `Generate ${numIdeas || 5} viral video ideas for ${platform} with the following criteria:
+    // Create a more concise prompt to reduce token usage
+    const prompt = `Generate ${numIdeas || 5} viral video ideas for ${platform} with:
     ${promptDetails}
     - Niche: ${niche}
     - Target Audience: ${audience}
@@ -54,15 +55,9 @@ export const onRequestPost = async (context: any) => {
     ${customIdeas ? `Consider these custom ideas as inspiration:\n${customIdeas}\n` : ''}
     
     ${previousIdeas && previousIdeas.titles && previousIdeas.titles.length > 0 ? 
-      `Please avoid these previously generated ideas:\n${previousIdeas.titles.join("\n")}\n` : ''}
+      `Avoid these previously generated ideas:\n${previousIdeas.titles.join(", ")}\n` : ''}
     
-    For each idea, provide:
-    - A catchy title
-    - A brief description
-    - Category
-    - 3 relevant hashtags (without the # symbol)
-    
-    Format the response as JSON with this structure:
+    Format as JSON with this structure:
     {
       "ideas": [
         {
@@ -81,11 +76,13 @@ export const onRequestPost = async (context: any) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o-mini', // Using the most cost-effective model
         messages: [
           { role: 'system', content: 'You are a social media content strategist who helps creators make viral content.' },
           { role: 'user', content: prompt }
         ],
+        temperature: 0.7,
+        max_tokens: 1000, // Capping the output token length
       }),
     });
 
