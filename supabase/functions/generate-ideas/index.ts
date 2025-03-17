@@ -121,7 +121,7 @@ TONE: ${styleProfile.tone}` : ''}
 ${contentStyle ? `CONTENT STYLE: ${contentStyle}` : ''}
 ${contentPersonality ? `CONTENT PERSONALITY: ${contentPersonality}` : ''}`;
 
-    // Updated user prompt with more specificity
+    // Updated user prompt with more specificity and ecommerce balance instructions
     let userPrompt = `Generate 5 viral content ideas for ${validAccountType} creator in "${niche}" targeting "${audience}" on ${platform}.
 
 DO NOT generate generic, fluffy ideas. EVERY idea must be:
@@ -136,11 +136,11 @@ ${postingFrequency ? `FREQUENCY: Content will be posted ${postingFrequency.repla
 
 ${validAccountType === 'ecommerce' ? 
 `For ECOMMERCE content:
-- 4 of 5 ideas MUST be purely educational with ZERO product mentions
-- Focus on evidence-based solutions to specific problems faced by your target audience
-- Ideas should cite real results (e.g., "This technique increased conversions by 37% in our A/B test")
-- Include specific numbers and metrics whenever possible
-- Only 1 idea can subtly mention product category (not specific products)
+- At least 3 of 5 ideas MUST be purely educational with ZERO product mentions
+- These educational ideas should focus on the AUDIENCE'S needs and challenges, not your product
+- Focus on value-first content that builds trust and establishes expertise
+- Include ideas that target common pain points or aspirations of your audience, even if not directly related to your products
+- The remaining ideas can subtly incorporate product category mentions (not specific products)
 - NO selling language or promotional content in educational ideas` : ''}
 
 ${validAccountType === 'business' ? 
