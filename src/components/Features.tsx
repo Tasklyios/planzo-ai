@@ -16,42 +16,42 @@ const Features = () => {
       title: "AI Idea Generator",
       description: "Get endless viral-worthy video ideas specifically designed for your niche and audience.",
       image: "/lovable-uploads/6cccbc30-6b0d-48df-aefb-edcac316d83b.png",
-      height: "h-[320px]", // Varying heights
+      height: "h-[320px]", // Keeping original height
     },
     {
       icon: <BookOpen className="text-primary h-8 w-8" />,
       title: "Script Generator",
       description: "Create engaging scripts optimized for short-form video performance with a few clicks.",
       image: "/lovable-uploads/ee976f87-1280-478e-8abb-0b4a424ab070.png",
-      height: "h-[380px]", // Taller box
+      height: "h-[380px]", // Keeping original height
     },
     {
       icon: <FileVideo className="text-primary h-8 w-8" />,
       title: "Content Planner",
       description: "Track your production progress with our in-built progress tracker.",
       image: "/lovable-uploads/f0d4f71c-2d30-4ea0-aa6e-e7c6a73a896f.png",
-      height: "h-[340px]", // Medium height
+      height: "h-[340px]", // Keeping original height
     },
     {
       icon: <Calendar className="text-primary h-8 w-8" />,
       title: "Content Calendar",
       description: "Plan and schedule your content with an intuitive drag-and-drop calendar interface.",
       image: "/lovable-uploads/7adf90d6-42f1-4b14-a7ad-f173e2e3d7a1.png",
-      height: "h-[360px]", // Another variation
+      height: "h-[360px]", // Keeping original height
     },
     {
       icon: <Layers className="text-primary h-8 w-8" />,
       title: "Multi-use Platform",
       description: "Tailored for personal branders, ecommerce, business owners and marketers - the go-to for all areas of social media.",
       image: "/lovable-uploads/198b073e-82cd-4021-ba1c-c7e7593c723c.png",
-      height: "h-[380px]", // Increased height to show the entire image
+      height: "h-[420px]", // Increased height to fully show the image
     },
     {
       icon: <Sparkles className="text-primary h-8 w-8" />,
       title: "Hook Generator",
       description: "Create attention-grabbing hooks that stop the scroll and increase engagement.",
       image: "/lovable-uploads/43357dc3-5985-4e71-9624-af2d51151911.png",
-      height: "h-[400px]", // Tallest box
+      height: "h-[440px]", // Increased height to fully show the image
     }
   ];
 
