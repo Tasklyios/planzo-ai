@@ -40,17 +40,38 @@ serve(async (req) => {
 
   try {
     // Get request parameters
-    const { title, description, contentStyle, hook, targetLength, targetDuration, wordsPerMinute, userId, savedIdea } = await req.json();
+    const { 
+      title, 
+      description, 
+      contentStyle, 
+      hook, 
+      targetLength, 
+      targetDuration, 
+      wordsPerMinute, 
+      userId, 
+      savedIdea,
+      userScript,
+      isImprovement
+    } = await req.json();
 
-    // Validate required fields
-    if ((!title && !savedIdea) || (!savedIdea && !title)) {
-      return new Response(
-        JSON.stringify({ error: 'Title or saved idea is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Validate required fields based on mode
+    if (isImprovement) {
+      if (!userScript) {
+        return new Response(
+          JSON.stringify({ error: 'User script is required for improvement' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      if ((!title && !savedIdea) || (!savedIdea && !title)) {
+        return new Response(
+          JSON.stringify({ error: 'Title or saved idea is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
-    console.log(`Starting script generation for: ${savedIdea ? savedIdea.title : title}`);
+    console.log(`Starting ${isImprovement ? 'script improvement' : 'script generation'} for: ${isImprovement ? 'user script' : (savedIdea ? savedIdea.title : title)}`);
 
     // Check if the user exists and usage limits
     if (userId) {
@@ -143,42 +164,68 @@ serve(async (req) => {
     }
 
     // Detect if this is an ecommerce product-focused content or not
-    const isProductFocused = detectProductFocus(scriptTitle, scriptDescription, scriptCategory);
+    const isProductFocused = !isImprovement && detectProductFocus(scriptTitle, scriptDescription, scriptCategory);
     
-    // Simplified system prompt to reduce token usage
-    let systemPrompt = `Create a ${timeRangeDescription} script for "${scriptTitle}" that:
+    let systemPrompt = "";
+    let userPrompt = "";
+
+    if (isImprovement) {
+      // System prompt for improving an existing script
+      systemPrompt = `You are an expert script writer who specializes in improving social media video scripts. 
+Your task is to transform the user's script into a more viral and engaging version while preserving the core message.
+
+Guidelines:
+- Maintain the original intent and key message
+- Make the script more conversational and engaging
+- Add hooks and techniques that work well on social media
+- Include [action notes] in brackets when appropriate
+- Use techniques that will boost engagement (e.g., pattern interrupts, curiosity gaps)
+- Keep the same approximate length as the original
+- Format for the specified content style: ${contentStyle || "engaging"}`;
+
+      // User prompt for improvement
+      userPrompt = `Here is my script that needs improvement:
+
+${userScript}
+
+Please rewrite this script to make it more engaging and viral-worthy while keeping the core message intact.`;
+
+    } else {
+      // Simplified system prompt to reduce token usage
+      systemPrompt = `Create a ${timeRangeDescription} script for "${scriptTitle}" that:
 - Starts with a hook${hook ? " (provided below)" : ""}
 - Uses natural speech
 - Includes [action notes] in brackets when needed
 - Is concise for social media${targetWordCount ? `\n- Aims for ~${targetWordCount} words` : ''}`;
 
-    // Condense account-specific instructions
-    if (accountType === 'ecommerce') {
-      systemPrompt += `\n${isProductFocused ? "- Balance education with subtle product references" : "- Focus entirely on providing valuable, educational content"}`;
-    } else if (accountType === 'personal') {
-      systemPrompt += "\n- Be personal and relatable";
-      
-      if (contentType === 'talking_head') {
-        systemPrompt += "\n- Write for direct camera speech with [action notes]";
-      } else if (contentType === 'text_based') {
-        systemPrompt += "\n- Format for on-screen text with [TEXT OVERLAY] markers";
+      // Condense account-specific instructions
+      if (accountType === 'ecommerce') {
+        systemPrompt += `\n${isProductFocused ? "- Balance education with subtle product references" : "- Focus entirely on providing valuable, educational content"}`;
+      } else if (accountType === 'personal') {
+        systemPrompt += "\n- Be personal and relatable";
+        
+        if (contentType === 'talking_head') {
+          systemPrompt += "\n- Write for direct camera speech with [action notes]";
+        } else if (contentType === 'text_based') {
+          systemPrompt += "\n- Format for on-screen text with [TEXT OVERLAY] markers";
+        }
+      } else if (accountType === 'business') {
+        systemPrompt += "\n- Balance professionalism with authenticity";
       }
-    } else if (accountType === 'business') {
-      systemPrompt += "\n- Balance professionalism with authenticity";
-    }
 
-    // Create a simplified user prompt
-    let userPrompt = `Script for: "${scriptTitle}"
+      // Create a simplified user prompt
+      userPrompt = `Script for: "${scriptTitle}"
 ${scriptDescription ? `Context: ${scriptDescription}` : ''}`;
 
-    // Add the hook to the prompt if provided
-    if (hook) {
-      userPrompt += `\nStart with: "${hook}"`;
-    }
+      // Add the hook to the prompt if provided
+      if (hook) {
+        userPrompt += `\nStart with: "${hook}"`;
+      }
 
-    // Add category-specific guidance if needed
-    if (scriptCategory) {
-      userPrompt += `\nCategory: ${scriptCategory}`;
+      // Add category-specific guidance if needed
+      if (scriptCategory) {
+        userPrompt += `\nCategory: ${scriptCategory}`;
+      }
     }
 
     // Call OpenAI API with gpt-4o-mini model
