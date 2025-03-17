@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash, CalendarIcon, BookmarkIcon, Copy } from "lucide-react";
@@ -9,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import clsx from "clsx";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface IdeaCardProps {
   idea: GeneratedIdea;
@@ -29,6 +29,7 @@ export default function IdeaCard({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(idea.is_saved);
+  const navigate = useNavigate();
 
   const handleAddToCalendar = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -62,6 +63,7 @@ export default function IdeaCard({
           title: "Authentication error",
           description: "You must be logged in to save ideas",
         });
+        navigate("/auth");
         return;
       }
       

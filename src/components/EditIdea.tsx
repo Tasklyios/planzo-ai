@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -68,6 +67,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           description: "You must be logged in to edit ideas",
         });
         onClose();
+        navigate("/auth");
         return;
       }
       
@@ -183,6 +183,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           title: "Authentication error",
           description: "You must be logged in to save ideas",
         });
+        navigate("/auth");
         return;
       }
 

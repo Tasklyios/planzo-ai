@@ -76,21 +76,29 @@ const Generator = () => {
       
       const userId = sessionData.session?.user.id;
       if (!userId) {
+        toast({
+          title: "Authentication required", 
+          description: "Please login to add ideas to calendar",
+          variant: "destructive"
+        });
         navigate("/auth");
         return;
       }
 
       console.log("Adding idea to calendar:", addingToCalendar.idea.id, "with date:", addingToCalendar.scheduledFor);
       
+      const updatedTitle = addingToCalendar.title || addingToCalendar.idea.title;
+      
       const {
         error: updateError
       } = await supabase.from("video_ideas")
         .update({
           scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
-          is_saved: true
+          is_saved: true,
+          title: updatedTitle,
+          user_id: userId
         })
-        .eq("id", addingToCalendar.idea.id)
-        .eq("user_id", userId);
+        .eq("id", addingToCalendar.idea.id);
       
       if (updateError) {
         console.error("Error adding to calendar:", updateError);
@@ -102,7 +110,8 @@ const Generator = () => {
           ? { 
               ...idea, 
               scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(), 
-              is_saved: true 
+              is_saved: true,
+              title: updatedTitle 
             } 
           : idea
       ));
