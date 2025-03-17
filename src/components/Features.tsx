@@ -8,6 +8,7 @@ import {
   Sparkles,
   FileVideo
 } from "lucide-react";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const Features = () => {
   const features = [
@@ -44,14 +45,15 @@ const Features = () => {
       title: "Multi-use Platform",
       description: "Tailored for personal branders, ecommerce, business owners and marketers - the go-to for all areas of social media.",
       image: "/lovable-uploads/198b073e-82cd-4021-ba1c-c7e7593c723c.png",
-      height: "h-[420px]", // Increased height to fully show the image
+      height: "h-[420px]", // Keeping original height 
     },
     {
       icon: <Sparkles className="text-primary h-8 w-8" />,
       title: "Hook Generator",
       description: "Create attention-grabbing hooks that stop the scroll and increase engagement.",
       image: "/lovable-uploads/43357dc3-5985-4e71-9624-af2d51151911.png",
-      height: "h-[440px]", // Increased height to fully show the image
+      height: "h-[480px]", // Increased height further to ensure image fits
+      aspectRatio: 0.65, // Added custom aspect ratio to fit the taller image
     }
   ];
 
@@ -80,11 +82,21 @@ const Features = () => {
               </div>
               
               <div className="relative rounded-lg mb-4 flex-grow overflow-hidden shadow-sm border border-gray-100">
-                <img 
-                  src={feature.image} 
-                  alt={feature.title}
-                  className="w-full h-full object-cover rounded-lg transition-transform hover:scale-105"
-                />
+                {feature.aspectRatio ? (
+                  <AspectRatio ratio={feature.aspectRatio} className="w-full h-full">
+                    <img 
+                      src={feature.image} 
+                      alt={feature.title}
+                      className="w-full h-full object-cover rounded-lg transition-transform hover:scale-105"
+                    />
+                  </AspectRatio>
+                ) : (
+                  <img 
+                    src={feature.image} 
+                    alt={feature.title}
+                    className="w-full h-full object-cover rounded-lg transition-transform hover:scale-105"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity rounded-lg"></div>
               </div>
               
