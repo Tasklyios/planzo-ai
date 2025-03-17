@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -156,6 +157,12 @@ const CalendarPage = () => {
     setEditingIdeaId(ideaId);
   };
 
+  const handleDateSelect = (newDate: Date | Date[] | { from?: Date; to?: Date } | undefined) => {
+    if (newDate instanceof Date) {
+      setDate(newDate);
+    }
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex items-center justify-between p-6">
@@ -188,7 +195,7 @@ const CalendarPage = () => {
       <EventCalendar
         mode="single"
         selected={date}
-        onSelect={(newDate) => newDate && setDate(newDate)}
+        onSelect={handleDateSelect}
         className="rounded-md border pointer-events-auto"
         events={calendarEvents}
         onEventClick={handleEventClick}
