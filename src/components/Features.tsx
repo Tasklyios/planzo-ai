@@ -1,4 +1,3 @@
-
 import { 
   Lightbulb,
   BookOpen, 
@@ -15,7 +14,7 @@ const Features = () => {
       icon: <Lightbulb className="text-primary h-8 w-8" />,
       title: "AI Idea Generator",
       description: "Get endless viral-worthy video ideas specifically designed for your niche and audience.",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/6cccbc30-6b0d-48df-aefb-edcac316d83b.png",
       height: "h-[320px]", // Varying heights
     },
     {
