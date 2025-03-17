@@ -26,6 +26,9 @@ export function EventCalendar({
   className,
   events = [],
   onEventClick,
+  mode,
+  selected,
+  onSelect,
   ...props
 }: EventCalendarProps) {
   // Group events by date for easier rendering
@@ -43,48 +46,91 @@ export function EventCalendar({
     return map;
   }, [events]);
 
+  // Create a custom Day component to show events
+  const CustomDay = React.useCallback(
+    (dayProps: DayProps) => {
+      const { date, ...rest } = dayProps;
+      const dateKey = date.toISOString().split('T')[0];
+      const dayEvents = eventsByDate.get(dateKey) || [];
+      
+      return (
+        <div className="relative">
+          {/* Original Day component from shadcn Calendar */}
+          <div {...rest} />
+          
+          {/* Event indicators */}
+          {dayEvents.length > 0 && (
+            <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1">
+              {dayEvents.slice(0, 3).map((event) => (
+                <div
+                  key={event.id}
+                  className="h-1.5 w-1.5 rounded-full cursor-pointer"
+                  style={{ backgroundColor: event.color }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEventClick?.(event);
+                  }}
+                  title={event.title}
+                />
+              ))}
+              {dayEvents.length > 3 && (
+                <div className="text-[0.6rem] text-muted-foreground">
+                  +{dayEvents.length - 3}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    },
+    [eventsByDate, onEventClick]
+  );
+
+  // We need to pass the correct props based on the mode
+  // The DayPicker component expects different props depending on the mode
+  const getDayPickerProps = () => {
+    const baseProps = {
+      className,
+      components: {
+        Day: CustomDay,
+      },
+      ...props,
+    };
+
+    // Return appropriate props based on mode
+    switch (mode) {
+      case "single":
+        return {
+          ...baseProps,
+          mode: "single" as const,
+          selected: selected as Date,
+          onSelect: onSelect as (date: Date | undefined) => void,
+        };
+      case "multiple":
+        return {
+          ...baseProps,
+          mode: "multiple" as const,
+          selected: selected as Date[],
+          onSelect: onSelect as (dates: Date[] | undefined) => void,
+        };
+      case "range":
+        return {
+          ...baseProps,
+          mode: "range" as const,
+          selected: selected as { from?: Date; to?: Date },
+          onSelect: onSelect as (range: { from?: Date; to?: Date } | undefined) => void,
+        };
+      default:
+        return {
+          ...baseProps,
+          mode: "default" as const,
+        };
+    }
+  };
+
   return (
     <div className="relative">
-      <DayPickerCalendar
-        className={className}
-        components={{
-          Day: ({ date, ...dayProps }: DayProps) => {
-            const dateKey = date.toISOString().split('T')[0];
-            const dayEvents = eventsByDate.get(dateKey) || [];
-            
-            return (
-              <div className="relative">
-                {/* Original Day component from shadcn Calendar */}
-                <div {...dayProps} />
-                
-                {/* Event indicators */}
-                {dayEvents.length > 0 && (
-                  <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1">
-                    {dayEvents.slice(0, 3).map((event) => (
-                      <div
-                        key={event.id}
-                        className="h-1.5 w-1.5 rounded-full cursor-pointer"
-                        style={{ backgroundColor: event.color }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEventClick?.(event);
-                        }}
-                        title={event.title}
-                      />
-                    ))}
-                    {dayEvents.length > 3 && (
-                      <div className="text-[0.6rem] text-muted-foreground">
-                        +{dayEvents.length - 3}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          },
-        }}
-        {...props}
-      />
+      <DayPickerCalendar {...getDayPickerProps()} />
     </div>
   );
 }
