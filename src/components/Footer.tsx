@@ -1,4 +1,6 @@
 
+import { Link } from "react-router-dom";
+
 const Footer = () => {
   return (
     <footer className="bg-gray-50 text-gray-600 py-16">
@@ -60,8 +62,8 @@ const Footer = () => {
         <div className="border-t border-gray-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p>&copy; {new Date().getFullYear()} Planzo AI. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
-            <a href="#" className="text-sm hover:text-primary transition-colors">Privacy Policy</a>
-            <a href="#" className="text-sm hover:text-primary transition-colors">Terms of Service</a>
+            <Link to="/privacy-policy" className="text-sm hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="text-sm hover:text-primary transition-colors">Terms of Service</Link>
             <a href="#" className="text-sm hover:text-primary transition-colors">Cookie Policy</a>
           </div>
         </div>

@@ -17,6 +17,8 @@ import FindYourStyle from "@/pages/FindYourStyle";
 import Hooks from "@/pages/Hooks";
 import SavedHooks from "@/pages/SavedHooks";
 import EmailTemplates from "@/pages/EmailTemplates";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TermsOfService";
 import { Toaster } from "@/components/ui/toaster";
 import AuthGuard from "@/components/AuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
@@ -120,6 +122,14 @@ function App() {
               <Route 
                 path="/auth" 
                 element={isAuthenticated ? <Navigate to="/dashboard" /> : <Auth />} 
+              />
+              <Route 
+                path="/privacy-policy" 
+                element={<PrivacyPolicy />} 
+              />
+              <Route 
+                path="/terms-of-service" 
+                element={<TermsOfService />} 
               />
               <Route element={<AuthGuard><Outlet /></AuthGuard>}>
                 <Route element={<AppLayout><Outlet /></AppLayout>}>

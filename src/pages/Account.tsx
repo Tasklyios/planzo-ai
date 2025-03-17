@@ -18,6 +18,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import LinkSubscriptionDialog from "@/components/billing/LinkSubscriptionDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTheme } from "@/hooks/use-theme";
+import AccountFooter from "@/components/AccountFooter";
 
 const contentNiches = [
   "Education",
@@ -945,9 +946,10 @@ const Account = () => {
           onSuccess={handleSubscriptionLinked} 
         />
       )}
+      
+      <AccountFooter />
     </div>
   );
 };
 
 export default Account;
-
