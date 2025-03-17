@@ -50,7 +50,7 @@ export function EventCalendar({
   // Create a custom Day component to show events
   const CustomDay = React.useCallback(
     (dayProps: DayProps) => {
-      const { date, ...rest } = dayProps;
+      const { date, displayMonth, ...rest } = dayProps;
       const dateKey = date.toISOString().split('T')[0];
       const dayEvents = eventsByDate.get(dateKey) || [];
       
