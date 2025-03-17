@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -35,13 +34,11 @@ const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
-  const [open, setOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
+  const [selectedDatePosts, setSelectedDatePosts] = useState<ScheduledPost[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
-  const [selectedDatePosts, setSelectedDatePosts] = useState<ScheduledPost[]>([]);
 
   const getRandomColor = (id: string): string => {
     const colors = ["red", "green", "blue", "yellow", "purple", "orange"];
@@ -163,14 +160,13 @@ const CalendarPage = () => {
   };
 
   const handleEventClick = (event: CalendarEvent) => {
-    console.log("Event clicked:", event);
-    setSelectedEvent(event);
-    setOpen(true);
+    const date = event.date;
+    setSelectedDate(date);
+    updateSelectedDatePosts(date);
   };
 
   const handleEditClick = (ideaId: string) => {
     console.log("Opening edit dialog for idea:", ideaId);
-    setOpen(false);
     setEditingIdeaId(ideaId);
   };
 
@@ -279,41 +275,6 @@ const CalendarPage = () => {
           </Card>
         </div>
       </div>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{selectedEvent?.title}</DialogTitle>
-          </DialogHeader>
-          {selectedEvent && (
-            <>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input id="title" value={selectedEvent.title} readOnly />
-                </div>
-                {scheduledPosts.find(post => post.id === selectedEvent.id) && (
-                  <>
-                    <div className="grid gap-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={scheduledPosts.find(post => post.id === selectedEvent.id)?.description || ""}
-                        readOnly
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Category</Label>
-                      <Badge>{scheduledPosts.find(post => post.id === selectedEvent.id)?.category}</Badge>
-                    </div>
-                  </>
-                )}
-              </div>
-              <Button onClick={() => handleEditClick(selectedEvent.id)}>Edit</Button>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {editingIdeaId && (
         <EditIdea

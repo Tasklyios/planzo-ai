@@ -4,6 +4,7 @@ import { Calendar as DayPickerCalendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { DayProps } from "react-day-picker";
 import { DateRange } from "react-day-picker";
+import { format, isToday } from "date-fns";
 
 export interface CalendarEvent {
   id: string;
@@ -50,14 +51,26 @@ export function EventCalendar({
   // Create a custom Day component to show events
   const CustomDay = React.useCallback(
     (dayProps: DayProps) => {
-      const { date, displayMonth, ...rest } = dayProps;
+      const { date, displayMonth, selected: daySelected, ...rest } = dayProps;
       const dateKey = date.toISOString().split('T')[0];
       const dayEvents = eventsByDate.get(dateKey) || [];
+      const isCurrentDay = isToday(date);
       
+      // Determine if this day is selected (for single mode)
+      const isSingleSelected = mode === "single" && selected instanceof Date && 
+        format(date, "yyyy-MM-dd") === format(selected, "yyyy-MM-dd");
+
       return (
         <div className="relative">
-          {/* Display the date number clearly */}
-          <div {...rest}>
+          {/* Display the date with appropriate highlighting */}
+          <div 
+            {...rest} 
+            className={cn(
+              rest.className,
+              isCurrentDay && "bg-accent border border-blue-300 font-bold",
+              isSingleSelected && "bg-blue-500 text-white hover:bg-blue-600"
+            )}
+          >
             {date.getDate()}
           </div>
           
@@ -89,7 +102,7 @@ export function EventCalendar({
         </div>
       );
     },
-    [eventsByDate, onEventClick]
+    [eventsByDate, onEventClick, mode, selected]
   );
 
   // We need to pass the correct props based on the mode
