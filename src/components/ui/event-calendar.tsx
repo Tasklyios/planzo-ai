@@ -61,22 +61,10 @@ export function EventCalendar({
         format(date, "yyyy-MM-dd") === format(selected, "yyyy-MM-dd");
 
       return (
-        <div className="relative">
-          {/* Display the date with appropriate highlighting */}
-          <div 
-            {...rest} 
-            className={cn(
-              "flex items-center justify-center w-full h-full", // Base styles
-              isCurrentDay && "bg-accent border border-blue-300 font-bold",
-              isSingleSelected && "bg-blue-500 text-white hover:bg-blue-600"
-            )}
-          >
-            {date.getDate()}
-          </div>
-          
-          {/* Event indicators */}
+        <div className="relative flex flex-col items-center">
+          {/* Event indicators - now positioned ABOVE the date */}
           {dayEvents.length > 0 && (
-            <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1">
+            <div className="flex justify-center gap-1 mb-1">
               {dayEvents.slice(0, 3).map((event) => (
                 <div
                   key={event.id}
@@ -99,6 +87,18 @@ export function EventCalendar({
               )}
             </div>
           )}
+          
+          {/* Display the date with appropriate highlighting */}
+          <div 
+            {...rest} 
+            className={cn(
+              "flex items-center justify-center w-7 h-7 rounded-full transition-colors", // Apple-like rounded circle
+              isCurrentDay && !isSingleSelected && "border border-blue-500 font-semibold text-blue-600",
+              isSingleSelected && "bg-blue-500 text-white hover:bg-blue-600"
+            )}
+          >
+            {date.getDate()}
+          </div>
         </div>
       );
     },

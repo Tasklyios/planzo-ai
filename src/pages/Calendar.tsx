@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -152,17 +153,19 @@ const CalendarPage = () => {
   }, []);
 
   const updateSelectedDatePosts = (date: Date, posts: ScheduledPost[] = scheduledPosts) => {
+    console.log("Updating selected date posts for:", format(date, "yyyy-MM-dd"));
     const postsForSelectedDate = posts.filter(post => {
-      const postDate = new Date(post.scheduled_for || new Date());
+      if (!post.scheduled_for) return false;
+      const postDate = new Date(post.scheduled_for);
       return isSameDay(postDate, date);
     });
+    console.log("Found posts for date:", postsForSelectedDate.length);
     setSelectedDatePosts(postsForSelectedDate);
   };
 
   const handleEventClick = (event: CalendarEvent) => {
-    const date = event.date;
-    setSelectedDate(date);
-    updateSelectedDatePosts(date);
+    setSelectedDate(event.date);
+    updateSelectedDatePosts(event.date);
   };
 
   const handleEditClick = (ideaId: string) => {
@@ -172,6 +175,7 @@ const CalendarPage = () => {
 
   const handleDateSelect = (newDate: Date | Date[] | { from?: Date; to?: Date } | undefined) => {
     if (newDate instanceof Date) {
+      console.log("Date selected:", format(newDate, "yyyy-MM-dd"));
       setSelectedDate(newDate);
       updateSelectedDatePosts(newDate);
     }
@@ -221,29 +225,33 @@ const CalendarPage = () => {
             mode="single"
             selected={selectedDate}
             onSelect={handleDateSelect}
-            className="rounded-md border pointer-events-auto"
+            className="rounded-md border shadow-sm pointer-events-auto"
             events={calendarEvents}
             onEventClick={handleEventClick}
           />
         </div>
 
         <div className="md:col-span-1">
-          <Card>
-            <CardHeader>
+          <Card className="shadow-sm">
+            <CardHeader className="bg-slate-50 dark:bg-slate-800">
               <CardTitle className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5" />
+                <CalendarIcon className="h-5 w-5 text-blue-500" />
                 <span>{format(selectedDate, "EEEE, MMMM d, yyyy")}</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              {selectedDatePosts.length === 0 ? (
+            <CardContent className="p-4">
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+              ) : selectedDatePosts.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No content scheduled for this day
                 </div>
               ) : (
                 <div className="space-y-4">
                   {selectedDatePosts.map(post => (
-                    <Card key={post.id} className="hover:shadow-md transition-shadow">
+                    <Card key={post.id} className="hover:shadow-md transition-shadow border-l-4" style={{ borderLeftColor: post.color || '#2582ff' }}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div>
