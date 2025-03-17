@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.1";
@@ -113,17 +114,19 @@ serve(async (req) => {
     // Get user information to personalize the script generation
     let userProfile = null;
     let accountType = "personal";
+    let contentType = null;
     if (userId) {
       try {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('content_style, content_personality, account_type')
+          .select('content_style, content_personality, account_type, content_type')
           .eq('id', userId)
           .maybeSingle();
           
         if (!profileError && profile) {
           userProfile = profile;
           accountType = profile.account_type || "personal";
+          contentType = profile.content_type || null;
           console.log("User profile retrieved:", userProfile);
         }
       } catch (error) {
@@ -175,6 +178,27 @@ FOR PERSONAL CREATOR CONTENT:
 - Share genuine insights and experiences
 - Use stories to illustrate points rather than just facts
 `;
+
+      // Add content type specific instructions for personal accounts
+      if (contentType === 'talking_head') {
+        systemPrompt += `
+CONTENT TYPE: TALKING HEAD VIDEO
+- Write for a creator speaking directly to camera
+- Include facial expressions and gestures in [action notes]
+- Focus on natural speech patterns with "umms" and "you knows" where appropriate
+- Include moments where you suggest showing relevant b-roll while still talking
+`;
+      } else if (contentType === 'text_based') {
+        systemPrompt += `
+CONTENT TYPE: TEXT-OVERLAY VIDEO
+- Format content in short, impactful segments that can appear as text on screen
+- Structure as lists, tips, or step-by-step instructions
+- Keep points concise and clear for on-screen text
+- Format for trending sounds with text overlay revealing content progressively
+- Include [TEXT OVERLAY: "your text here"] markers to indicate important on-screen text
+- For lists, use [NUMBER ON SCREEN: 1] format to indicate list progression
+`;
+      }
     } else if (accountType === 'business') {
       systemPrompt += `
 FOR BUSINESS CONTENT:
