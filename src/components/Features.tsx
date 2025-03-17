@@ -45,15 +45,15 @@ const Features = () => {
       title: "Multi-use Platform",
       description: "Tailored for personal branders, ecommerce, business owners and marketers - the go-to for all areas of social media.",
       image: "/lovable-uploads/198b073e-82cd-4021-ba1c-c7e7593c723c.png",
-      height: "h-[420px]", // Keeping original height 
+      height: "h-[420px]", // Keeping original height
     },
     {
       icon: <Sparkles className="text-primary h-8 w-8" />,
       title: "Hook Generator",
       description: "Create attention-grabbing hooks that stop the scroll and increase engagement.",
       image: "/lovable-uploads/43357dc3-5985-4e71-9624-af2d51151911.png",
-      height: "h-[480px]", // Increased height further to ensure image fits
-      aspectRatio: 0.65, // Added custom aspect ratio to fit the taller image
+      height: "h-[500px]", // Increased height further to ensure image fits
+      aspectRatio: 0.5, // Adjusted aspect ratio to match the image's proportions better
     }
   ];
 
@@ -87,7 +87,7 @@ const Features = () => {
                     <img 
                       src={feature.image} 
                       alt={feature.title}
-                      className="w-full h-full object-cover rounded-lg transition-transform hover:scale-105"
+                      className="w-full h-full object-contain rounded-lg transition-transform hover:scale-105"
                     />
                   </AspectRatio>
                 ) : (
