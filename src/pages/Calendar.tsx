@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +32,7 @@ interface ScheduledPost {
 }
 
 const CalendarPage = () => {
-  const [date, setDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
   const [open, setOpen] = useState(false);
@@ -40,6 +41,7 @@ const CalendarPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
+  const [selectedDatePosts, setSelectedDatePosts] = useState<ScheduledPost[]>([]);
 
   const getRandomColor = (id: string): string => {
     const colors = ["red", "green", "blue", "yellow", "purple", "orange"];
@@ -132,6 +134,10 @@ const CalendarPage = () => {
       
       console.log("Calendar events:", events);
       setCalendarEvents(events);
+      
+      // Update selected date posts
+      updateSelectedDatePosts(selectedDate, formattedPosts);
+      
       setLoading(false);
     } catch (error: any) {
       console.error("Error fetching scheduled posts:", error);
@@ -148,6 +154,14 @@ const CalendarPage = () => {
     fetchScheduledPosts();
   }, []);
 
+  const updateSelectedDatePosts = (date: Date, posts: ScheduledPost[] = scheduledPosts) => {
+    const postsForSelectedDate = posts.filter(post => {
+      const postDate = new Date(post.scheduled_for || new Date());
+      return isSameDay(postDate, date);
+    });
+    setSelectedDatePosts(postsForSelectedDate);
+  };
+
   const handleEventClick = (event: CalendarEvent) => {
     console.log("Event clicked:", event);
     setSelectedEvent(event);
@@ -162,7 +176,8 @@ const CalendarPage = () => {
 
   const handleDateSelect = (newDate: Date | Date[] | { from?: Date; to?: Date } | undefined) => {
     if (newDate instanceof Date) {
-      setDate(newDate);
+      setSelectedDate(newDate);
+      updateSelectedDatePosts(newDate);
     }
   };
 
@@ -180,7 +195,11 @@ const CalendarPage = () => {
             variant="outline"
             size="sm"
             className="h-8 w-8 p-0"
-            onClick={() => setDate(new Date(date.getFullYear(), date.getMonth() - 1, 1))}
+            onClick={() => {
+              const prevMonth = new Date(selectedDate);
+              prevMonth.setMonth(prevMonth.getMonth() - 1);
+              setSelectedDate(prevMonth);
+            }}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -188,21 +207,78 @@ const CalendarPage = () => {
             variant="outline"
             size="sm"
             className="h-8 w-8 p-0"
-            onClick={() => setDate(new Date(date.getFullYear(), date.getMonth() + 1, 1))}
+            onClick={() => {
+              const nextMonth = new Date(selectedDate);
+              nextMonth.setMonth(nextMonth.getMonth() + 1);
+              setSelectedDate(nextMonth);
+            }}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <div className="font-medium">{format(date, "MMMM yyyy")}</div>
+          <div className="font-medium">{format(selectedDate, "MMMM yyyy")}</div>
         </div>
       </div>
-      <EventCalendar
-        mode="single"
-        selected={date}
-        onSelect={handleDateSelect}
-        className="rounded-md border pointer-events-auto"
-        events={calendarEvents}
-        onEventClick={handleEventClick}
-      />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <EventCalendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleDateSelect}
+            className="rounded-md border pointer-events-auto"
+            events={calendarEvents}
+            onEventClick={handleEventClick}
+          />
+        </div>
+
+        <div className="md:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5" />
+                <span>{format(selectedDate, "EEEE, MMMM d, yyyy")}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedDatePosts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No content scheduled for this day
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {selectedDatePosts.map(post => (
+                    <Card key={post.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="font-medium text-sm">{post.title}</h4>
+                            <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                              {post.description}
+                            </p>
+                            <div className="flex gap-2 mt-2">
+                              <Badge variant="outline" className="text-xs">
+                                {post.category}
+                              </Badge>
+                              {post.platform && (
+                                <Badge variant="outline" className="text-xs">
+                                  {post.platform}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Button size="sm" variant="ghost" onClick={() => handleEditClick(post.id)}>
+                            Edit
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[425px]">
