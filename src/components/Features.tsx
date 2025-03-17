@@ -4,7 +4,7 @@ import {
   BookOpen, 
   Split,
   Calendar,
-  Target,
+  Layers,
   Sparkles,
   FileVideo
 } from "lucide-react";
@@ -36,13 +36,13 @@ const Features = () => {
       icon: <Calendar className="text-primary h-8 w-8" />,
       title: "Content Calendar",
       description: "Plan and schedule your content with an intuitive drag-and-drop calendar interface.",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/7adf90d6-42f1-4b14-a7ad-f173e2e3d7a1.png",
       height: "h-[360px]", // Another variation
     },
     {
-      icon: <Target className="text-primary h-8 w-8" />,
-      title: "Trend Analysis",
-      description: "Stay ahead with AI-powered insights on trending topics in your content niche.",
+      icon: <Layers className="text-primary h-8 w-8" />,
+      title: "Multi-use Platform",
+      description: "Tailored for personal branders, ecommerce, business owners and marketers - the go-to for all areas of social media.",
       image: "/placeholder.svg",
       height: "h-[320px]", // Back to smaller
     },
@@ -85,7 +85,6 @@ const Features = () => {
                   alt={feature.title}
                   className="w-full h-full object-cover rounded-lg transition-transform hover:scale-105"
                 />
-                {/* Removed the "See examples" text from the hover overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity rounded-lg"></div>
               </div>
               
