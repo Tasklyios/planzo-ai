@@ -83,8 +83,6 @@ export function PlannerCard({ id, index, title, description, color = "blue", cat
             )}
             style={{
               ...provided.draggableProps.style,
-              left: snapshot.isDragging ? provided.draggableProps.style?.left : undefined,
-              top: snapshot.isDragging ? provided.draggableProps.style?.top : undefined,
               width: "100%",
               cursor: snapshot.isDragging ? "grabbing" : "grab"
             }}
