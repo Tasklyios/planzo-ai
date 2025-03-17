@@ -60,11 +60,22 @@ export function EventCalendar({
       const isSingleSelected = mode === "single" && selected instanceof Date && 
         format(date, "yyyy-MM-dd") === format(selected, "yyyy-MM-dd");
 
+      // Handle click on the entire day cell
+      const handleDayClick = (e: React.MouseEvent) => {
+        if (onSelect && mode === "single") {
+          onSelect(date);
+        }
+        // Don't prevent default or stop propagation here to allow DayPicker's built-in handlers to work
+      };
+
       return (
-        <div className="relative flex flex-col items-center">
-          {/* Event indicators - now positioned ABOVE the date */}
+        <div 
+          className="relative flex flex-col items-center w-full h-full cursor-pointer" 
+          onClick={handleDayClick}
+        >
+          {/* Event indicators - positioned ABOVE the date */}
           {dayEvents.length > 0 && (
-            <div className="flex justify-center gap-1 mb-1">
+            <div className="flex justify-center gap-1 mb-1 mt-1">
               {dayEvents.slice(0, 3).map((event) => (
                 <div
                   key={event.id}
@@ -102,14 +113,14 @@ export function EventCalendar({
         </div>
       );
     },
-    [eventsByDate, onEventClick, mode, selected]
+    [eventsByDate, onEventClick, mode, selected, onSelect]
   );
 
   // We need to pass the correct props based on the mode
   // The DayPicker component expects different props depending on the mode
   const getDayPickerProps = () => {
     const baseProps = {
-      className,
+      className: cn("w-full", className),
       components: {
         Day: CustomDay,
       },
@@ -156,7 +167,7 @@ export function EventCalendar({
   };
 
   return (
-    <div className="relative">
+    <div className="w-full h-full">
       <DayPickerCalendar {...getDayPickerProps()} />
     </div>
   );
