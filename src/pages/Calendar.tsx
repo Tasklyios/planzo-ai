@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { format, isSameDay } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -30,6 +29,18 @@ interface ScheduledPost {
   scheduled_for?: string;
   status?: string;
 }
+
+// Map color names to actual hex values for display
+const colorMap: Record<string, string> = {
+  red: "#ef4444",
+  orange: "#f97316",
+  yellow: "#eab308",
+  green: "#22c55e",
+  blue: "#3b82f6",
+  indigo: "#6366f1",
+  purple: "#a855f7",
+  pink: "#ec4899",
+};
 
 const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -251,7 +262,10 @@ const CalendarPage = () => {
                 selected={selectedDate}
                 onSelect={handleDateSelect}
                 className="rounded-md pointer-events-auto w-full h-full"
-                events={calendarEvents}
+                events={calendarEvents.map(event => ({
+                  ...event,
+                  color: event.color.startsWith('#') ? event.color : colorMap[event.color] || '#3b82f6'
+                }))}
                 onEventClick={handleEventClick}
               />
             </CardContent>
@@ -278,12 +292,20 @@ const CalendarPage = () => {
               ) : (
                 <div className="space-y-4">
                   {selectedDatePosts.map(post => (
-                    <Card key={post.id} className="hover:shadow-md transition-shadow border-l-4" style={{ borderLeftColor: post.color || '#2582ff' }}>
+                    <Card 
+                      key={post.id} 
+                      className="hover:shadow-md transition-shadow border-l-4" 
+                      style={{ 
+                        borderLeftColor: post.color ? 
+                          (post.color.startsWith('#') ? post.color : colorMap[post.color] || '#3b82f6') : 
+                          '#3b82f6' 
+                      }}
+                    >
                       <CardContent className="p-4">
                         <div className="flex flex-col gap-2">
                           <div className="flex justify-between items-start">
                             <h4 className="font-medium text-sm">{post.title}</h4>
-                            <div className="flex gap-1">
+                            <div className="flex items-center space-x-1">
                               <Button 
                                 size="sm" 
                                 variant="ghost" 

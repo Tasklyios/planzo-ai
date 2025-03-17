@@ -5,11 +5,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Wand2, Trash2 } from "lucide-react";
-import { Check } from "lucide-react";
+import { Wand2, Trash2, Check } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface EditIdeaProps {
   ideaId: string | null;
@@ -33,21 +33,41 @@ interface IdeaData {
   user_id?: string;
 }
 
-const availableColors = [
+const standardColors = [
   'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple', 'pink'
-] as const;
+];
+
+// Map color names to actual hex values for display
+const colorMap: Record<string, string> = {
+  red: "#ef4444",
+  orange: "#f97316",
+  yellow: "#eab308",
+  green: "#22c55e",
+  blue: "#3b82f6",
+  indigo: "#6366f1",
+  purple: "#a855f7",
+  pink: "#ec4899",
+};
 
 const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const [idea, setIdea] = useState<IdeaData | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [customColor, setCustomColor] = useState("#3b82f6"); // Default blue
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (ideaId) fetchIdea();
   }, [ideaId]);
+
+  useEffect(() => {
+    // Set custom color when idea loads if it's not in standard colors
+    if (idea?.color && !standardColors.includes(idea.color)) {
+      setCustomColor(idea.color);
+    }
+  }, [idea]);
 
   const fetchIdea = async () => {
     try {
@@ -260,6 +280,16 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     setIdea({ ...idea, scheduled_for: newDate.toISOString() });
   };
 
+  const selectColor = (color: string) => {
+    setIdea({ ...idea, color });
+  };
+
+  const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newColor = e.target.value;
+    setCustomColor(newColor);
+    selectColor(newColor);
+  };
+
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
@@ -269,22 +299,68 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <label>Color</label>
-            <div className="flex flex-wrap gap-2">
-              {availableColors.map((color) => (
+            <div className="flex flex-wrap gap-2 items-center">
+              {standardColors.map((color) => (
                 <Button
                   key={color}
-                  variant={idea.color === color ? "default" : "outline"}
+                  type="button"
+                  variant="outline"
                   size="sm"
-                  className={`bg-${color}-500 hover:bg-${color}-600 relative`}
-                  onClick={() => setIdea({ ...idea, color })}
+                  className={`w-8 h-8 rounded-full p-0 border-2 ${idea.color === color ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'}`}
+                  style={{ backgroundColor: colorMap[color] }}
+                  onClick={() => selectColor(color)}
                 >
-                  <div className="h-4 w-4 flex items-center justify-center">
-                    {idea.color === color && (
-                      <Check className="h-3 w-3 text-white" />
-                    )}
-                  </div>
+                  {idea.color === color && (
+                    <Check className="h-3 w-3 text-white" />
+                  )}
+                  <span className="sr-only">{color}</span>
                 </Button>
               ))}
+              
+              {/* Custom color picker */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={`w-8 h-8 rounded-full p-0 border-2 ${!standardColors.includes(idea.color || '') ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'}`}
+                    style={{ 
+                      backgroundColor: !standardColors.includes(idea.color || '') 
+                        ? idea.color 
+                        : '#ffffff',
+                      backgroundImage: !standardColors.includes(idea.color || '') ? 'none' : 'linear-gradient(45deg, #f59e0b 0%, #3b82f6 50%, #ec4899 100%)'
+                    }}
+                  >
+                    {!standardColors.includes(idea.color || '') && (
+                      <Check className="h-3 w-3 text-white" />
+                    )}
+                    <span className="sr-only">Custom color</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="custom-color" className="text-sm font-medium">
+                      Pick a custom color
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        id="custom-color"
+                        type="color"
+                        value={customColor}
+                        onChange={handleCustomColorChange}
+                        className="w-10 h-10 p-1 cursor-pointer"
+                      />
+                      <Input 
+                        type="text"
+                        value={customColor}
+                        onChange={handleCustomColorChange}
+                        className="w-24"
+                      />
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
