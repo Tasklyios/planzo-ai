@@ -31,6 +31,7 @@ export default function IdeaCard({
   const [saved, setSaved] = useState(idea.is_saved);
 
   const handleAddToCalendar = () => {
+    console.log("IdeaCard - Adding to calendar:", idea);
     onAddToCalendar({
       idea,
       title: idea.title,
@@ -40,9 +41,12 @@ export default function IdeaCard({
 
   const handleSaveToggle = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
+    e.preventDefault();
     setLoading(true);
     
     try {
+      console.log("Toggling save for idea:", idea.id, "Current saved status:", saved);
+      
       // Update in the database
       const { error } = await supabase
         .from('video_ideas')
@@ -52,7 +56,10 @@ export default function IdeaCard({
         })
         .eq('id', idea.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving idea:", error);
+        throw error;
+      }
 
       // Update local state
       setSaved(!saved);

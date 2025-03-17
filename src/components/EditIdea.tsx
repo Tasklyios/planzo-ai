@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -40,6 +41,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const [idea, setIdea] = useState<IdeaData | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -116,7 +118,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     if (!idea) return;
 
     try {
-      console.log("Saving idea with status:", idea.status, "is_saved:", true);
+      setSaving(true);
+      console.log("Saving idea with data:", idea);
       
       const { error } = await supabase
         .from("video_ideas")
@@ -136,7 +139,10 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         })
         .eq("id", idea.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving idea:", error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -144,11 +150,14 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       });
       onClose();
     } catch (error: any) {
+      console.error("Save error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to save idea",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -317,8 +326,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="button" onClick={handleSave}>
-              Save Changes
+            <Button type="button" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </DialogFooter>

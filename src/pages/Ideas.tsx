@@ -128,7 +128,7 @@ export default function Ideas() {
   };
 
   const handleAddToCalendar = async () => {
-    if (!addingToCalendar?.idea) return;
+    if (!addingToCalendar) return;
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -139,7 +139,7 @@ export default function Ideas() {
         return;
       }
 
-      console.log("Adding to calendar:", addingToCalendar.idea.id, "with date:", addingToCalendar.scheduledFor);
+      console.log("Adding to calendar:", addingToCalendar);
 
       // Always ensure both scheduled_for and is_saved are set
       const { error } = await supabase

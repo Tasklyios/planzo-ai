@@ -114,7 +114,10 @@ const IdeasGrid = ({
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => onAddToCalendar(idea)}
+                          onClick={() => {
+                            console.log("IdeasGrid - Add to calendar clicked for idea:", idea);
+                            onAddToCalendar(idea);
+                          }}
                           className="h-8 w-8 md:h-9 md:w-9"
                         >
                           <CalendarPlus className="h-4 w-4" />
