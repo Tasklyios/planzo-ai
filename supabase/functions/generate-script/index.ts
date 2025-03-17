@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.1";
@@ -9,6 +10,13 @@ const corsHeaders = {
 
 // Standard speaking rate to use throughout the application
 const STANDARD_SPEAKING_RATE = 150; // words per minute
+
+// Helper function to detect if content is product-focused
+function detectProductFocus(title: string, description: string, category: string): boolean {
+  const productTerms = ['product', 'sell', 'selling', 'purchase', 'buy', 'shop', 'store', 'ecommerce', 'e-commerce', 'retail'];
+  const combinedText = `${title} ${description} ${category}`.toLowerCase();
+  return productTerms.some(term => combinedText.includes(term));
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -183,5 +191,43 @@ ${scriptDescription ? `Context: ${scriptDescription}` : ''}`;
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      }),
+    });
 
+    if (!response.ok) {
+      console.error('OpenAI API error:', response.status, response.statusText);
+      return new Response(
+        JSON.stringify({ error: `OpenAI API error: ${response.status} ${response.statusText}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
+    const data = await response.json();
+    console.log('Received response from OpenAI');
+
+    const script = data.choices[0].message.content.trim();
+
+    // Return the generated script
+    return new Response(
+      JSON.stringify({ 
+        script, 
+        wordCount: script.split(/\s+/).length,
+        estimatedDuration: Math.round(script.split(/\s+/).length / STANDARD_SPEAKING_RATE * 10) / 10
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('Error in script generation:', error);
+    return new Response(
+      JSON.stringify({ error: `Error generating script: ${error.message}` }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
