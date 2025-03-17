@@ -9,12 +9,35 @@ const Hero = () => {
   return (
     <section className="relative overflow-hidden bg-pure-white pt-12 md:pt-16 lg:pt-24">
       <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white z-0 h-[90%]"></div>
+      
+      {/* Technical pattern on the sides */}
+      <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
+        <div className="absolute left-0 top-0 w-1/3 h-full">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <pattern id="tech-pattern-left" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M0 20 L20 0 L40 20 L20 40 Z" fill="none" stroke="#2582ff" strokeWidth="1" />
+              <circle cx="20" cy="20" r="2" fill="#2582ff" />
+            </pattern>
+            <rect x="0" y="0" width="100%" height="100%" fill="url(#tech-pattern-left)" />
+          </svg>
+        </div>
+        <div className="absolute right-0 top-0 w-1/3 h-full">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <pattern id="tech-pattern-right" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+              <rect x="0" y="0" width="10" height="10" fill="#2582ff" opacity="0.2" />
+              <rect x="15" y="15" width="10" height="10" fill="#2582ff" opacity="0.2" />
+            </pattern>
+            <rect x="0" y="0" width="100%" height="100%" fill="url(#tech-pattern-right)" />
+          </svg>
+        </div>
+      </div>
+      
       <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
         <div className="flex flex-col items-center text-center mb-12 md:mb-16">
           <div className="mb-4 md:mb-6">
             <TrustBadge />
           </div>
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-4 md:mb-6">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-4 md:mb-6">
             <span className="bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent">AI-Powered</span> Video Content Creation
             <span className="block mt-2">Made Simple</span>
           </h1>
