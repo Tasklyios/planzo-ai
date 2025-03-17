@@ -142,6 +142,18 @@ export default function Calendar() {
 
       if (scheduledError) throw scheduledError;
 
+      if (scheduledData) {
+        for (const post of scheduledData) {
+          if (!post.is_saved) {
+            await supabase
+              .from("video_ideas")
+              .update({ is_saved: true })
+              .eq("id", post.id)
+              .eq("user_id", sessionData.session.user.id);
+          }
+        }
+      }
+
       const formattedPosts: ScheduledPost[] = scheduledData?.map(post => ({
         ...post,
         scheduled_for: post.scheduled_for || new Date().toISOString(),
@@ -169,7 +181,6 @@ export default function Calendar() {
         return;
       }
 
-      // Format the selected date to ISO string for database storage
       const scheduledDate = new Date(selectedDate);
       const scheduledISOString = scheduledDate.toISOString();
 
@@ -183,7 +194,7 @@ export default function Calendar() {
           color: "blue",
           tags: [],
           category: "",
-          scheduled_for: scheduledISOString, // Use the selected date from the calendar
+          scheduled_for: scheduledISOString,
           is_saved: true
         })
         .select()
@@ -248,7 +259,8 @@ export default function Calendar() {
       const { error: updateError } = await supabase
         .from("video_ideas")
         .update({
-          scheduled_for: destinationDate
+          scheduled_for: destinationDate,
+          is_saved: true
         })
         .eq("id", draggableId);
 
@@ -258,7 +270,8 @@ export default function Calendar() {
         if (post.id === draggableId) {
           return {
             ...post,
-            scheduled_for: destinationDate
+            scheduled_for: destinationDate,
+            is_saved: true
           };
         }
         return post;
@@ -304,7 +317,7 @@ export default function Calendar() {
       );
     }
 
-    return null; // Don't render task widgets on desktop
+    return null;
   };
 
   const isSelectedDate = (date: Date) => {
@@ -368,7 +381,6 @@ export default function Calendar() {
     <>
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="container mx-auto py-8 flex flex-col md:flex-row gap-6">
-          {/* Mobile Calendar View */}
           <div className="md:hidden w-full bg-card rounded-xl shadow-sm border border-border p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-xl">{format(currentDate, "MMMM yyyy")}</h3>
@@ -456,7 +468,6 @@ export default function Calendar() {
             </div>
           </div>
 
-          {/* Desktop Calendar View */}
           <div className="hidden md:block flex-grow bg-card rounded-xl shadow-sm border border-border">
             <div className="p-6 border-b border-border flex items-center justify-between">
               <h3 className="font-semibold text-2xl">{format(currentDate, "MMMM yyyy")}</h3>
@@ -540,7 +551,6 @@ export default function Calendar() {
             </div>
           </div>
 
-          {/* Daily View Sidebar */}
           <div className="hidden md:block w-1/3">
             <div className="bg-card rounded-xl shadow-sm border border-border p-6 space-y-6">
               <div className="flex items-center justify-between">

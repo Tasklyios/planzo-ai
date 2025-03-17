@@ -129,6 +129,7 @@ export default function Ideas() {
         return;
       }
 
+      // Fix: Update both scheduled_for and is_saved
       const { error } = await supabase
         .from("video_ideas")
         .update({
@@ -146,8 +147,6 @@ export default function Ideas() {
       });
 
       setAddingToCalendar(null);
-      // Remove from this page since it's now in the calendar
-      setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== addingToCalendar.idea.id));
       // Navigate to calendar to see the added idea
       navigate("/calendar");
     } catch (error: any) {

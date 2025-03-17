@@ -97,7 +97,11 @@ const Generator = () => {
       
       setIdeas(prevIdeas => prevIdeas.map(idea => 
         idea.id === addingToCalendar.idea.id 
-          ? { ...idea, scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(), is_saved: true } 
+          ? { 
+              ...idea, 
+              scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(), 
+              is_saved: true 
+            } 
           : idea
       ));
       
