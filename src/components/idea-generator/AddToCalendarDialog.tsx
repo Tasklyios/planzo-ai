@@ -43,7 +43,7 @@ const AddToCalendarDialog = ({
             <Input
               id="title"
               type="text"
-              value={idea.title}
+              value={idea.title || ""}
               onChange={(e) => onUpdate('title', e.target.value)}
               className="w-full"
               required
@@ -54,7 +54,7 @@ const AddToCalendarDialog = ({
             <Input
               id="date"
               type="date"
-              value={idea.scheduledFor}
+              value={idea.scheduledFor || ""}
               onChange={(e) => onUpdate('scheduledFor', e.target.value)}
               className="w-full"
               required
