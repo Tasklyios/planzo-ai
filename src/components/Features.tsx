@@ -22,7 +22,7 @@ const Features = () => {
       icon: <BookOpen className="text-primary h-8 w-8" />,
       title: "Script Generator",
       description: "Create engaging scripts optimized for short-form video performance with a few clicks.",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/ee976f87-1280-478e-8abb-0b4a424ab070.png",
       height: "h-[380px]", // Taller box
     },
     {
@@ -85,11 +85,8 @@ const Features = () => {
                   alt={feature.title}
                   className="w-full h-full object-cover rounded-lg transition-transform hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity rounded-lg">
-                  <div className="absolute bottom-3 left-3 right-3 text-white text-sm font-medium">
-                    See examples
-                  </div>
-                </div>
+                {/* Removed the "See examples" text from the hover overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity rounded-lg"></div>
               </div>
               
               <p className="text-gray-600">{feature.description}</p>
