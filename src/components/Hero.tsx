@@ -64,8 +64,8 @@ const Hero = () => {
         <div className="relative max-w-5xl mx-auto rounded-xl shadow-2xl overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-tr from-primary/80 to-blue-400/50 opacity-30 z-0"></div>
           <img
-            src="https://storage.googleapis.com/uxpilot-auth.appspot.com/3516410965-89c7ff372bd4166625c6.png"
-            alt="Planzo AI Dashboard"
+            src="/lovable-uploads/d68dfb23-7965-4309-b905-63166c7e9fee.png"
+            alt="Planzo AI Content Planner"
             className="w-full h-auto relative z-10 rounded-xl"
           />
         </div>
