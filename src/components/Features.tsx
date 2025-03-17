@@ -44,13 +44,13 @@ const Features = () => {
       title: "Multi-use Platform",
       description: "Tailored for personal branders, ecommerce, business owners and marketers - the go-to for all areas of social media.",
       image: "/lovable-uploads/198b073e-82cd-4021-ba1c-c7e7593c723c.png",
-      height: "h-[320px]", // Back to smaller
+      height: "h-[380px]", // Increased height to show the entire image
     },
     {
       icon: <Sparkles className="text-primary h-8 w-8" />,
       title: "Hook Generator",
       description: "Create attention-grabbing hooks that stop the scroll and increase engagement.",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/43357dc3-5985-4e71-9624-af2d51151911.png",
       height: "h-[400px]", // Tallest box
     }
   ];
