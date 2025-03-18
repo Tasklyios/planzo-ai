@@ -51,7 +51,8 @@ serve(async (req) => {
       userId, 
       savedIdea,
       userScript,
-      isImprovement
+      isImprovement,
+      roughScript
     } = await req.json();
 
     // Validate required fields based on mode
@@ -227,8 +228,15 @@ ${scriptDescription ? `Context: ${scriptDescription}` : ''}`;
         userPrompt += `\nCategory: ${scriptCategory}`;
       }
 
-      // If userScript is provided (base script), add it to the prompt
-      if (userScript) {
+      // If roughScript (from the main generator) is provided, add it to the prompt
+      if (baseScript) {
+        userPrompt += `\n\nHere's a rough script I've drafted that you should use as a starting point:
+${baseScript}
+
+Please build upon this script to make it more professional and engaging while keeping the core ideas.`;
+      }
+      // If userScript is provided (base script from collapsible), add it to the prompt
+      else if (userScript) {
         userPrompt += `\n\nHere's a basic script I've drafted that you should improve and expand upon:
 ${userScript}
 

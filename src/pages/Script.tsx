@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -454,6 +455,48 @@ const Script = () => {
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Add rough script input box */}
+              <Card>
+                <CardContent className="pt-4 md:pt-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor="rough-script">Already have a rough script? Add it here</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <HelpCircle className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">
+                              The AI will use your rough script as a starting point and enhance it based on your other inputs
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+
+                  <Textarea
+                    id="rough-script"
+                    placeholder="Paste your rough script here..."
+                    value={baseScript}
+                    onChange={(e) => setBaseScript(e.target.value)}
+                    rows={isMobile ? 3 : 4}
+                  />
+
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      id="use-base-script" 
+                      checked={isUsingBaseScript}
+                      onCheckedChange={setIsUsingBaseScript}
+                    />
+                    <Label htmlFor="use-base-script">Use this as a starting point for the AI</Label>
+                  </div>
                 </CardContent>
               </Card>
             </div>
