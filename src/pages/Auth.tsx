@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Lock, Mail, CheckCircle } from "lucide-react";
+import { Lock, Mail, CheckCircle, User } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import {
   Dialog,
@@ -50,6 +50,8 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -130,7 +132,9 @@ const Auth = () => {
           options: {
             data: {
               // Set default user metadata to ensure profile creation works
-              account_type: 'personal'
+              account_type: 'personal',
+              first_name: firstName,
+              last_name: lastName
             }
           }
         });
@@ -577,6 +581,46 @@ const Auth = () => {
             )
           ) : (
             <form onSubmit={handleAuth} className="space-y-6">
+              {isSignUp && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[#333333]" htmlFor="firstName">
+                      First Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" size={20} />
+                      <input
+                        id="firstName"
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-white text-[#333333] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        placeholder="Enter your first name"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[#333333]" htmlFor="lastName">
+                      Last Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-[#777777]" size={20} />
+                      <input
+                        id="lastName"
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-white text-[#333333] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        placeholder="Enter your last name"
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+              
               <div className="space-y-2">
                 <label className="text-sm font-medium text-[#333333]" htmlFor="email">
                   Email
@@ -676,4 +720,3 @@ const Auth = () => {
 };
 
 export default Auth;
-

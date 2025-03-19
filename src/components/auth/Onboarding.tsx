@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -19,6 +18,8 @@ import { Progress } from "@/components/ui/progress";
 // Define the form schema with appropriate types
 const accountFormSchema = z.object({
   accountType: z.enum(["personal", "ecommerce", "business"]),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   contentNiche: z.string().optional(),
   productNiche: z.string().optional(),
   businessNiche: z.string().optional(),
@@ -78,6 +79,8 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     resolver: zodResolver(accountFormSchema),
     defaultValues: {
       accountType: "personal",
+      firstName: "",
+      lastName: "",
       contentNiche: "",
       productNiche: "",
       businessNiche: "",
@@ -113,6 +116,10 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
             } else {
               form.setValue("accountType", "personal"); // Default to personal if invalid
             }
+            
+            // Set first and last name
+            form.setValue("firstName", profile.first_name || "");
+            form.setValue("lastName", profile.last_name || "");
             
             form.setValue("contentNiche", profile.content_niche || "");
             form.setValue("productNiche", profile.product_niche || "");
@@ -158,6 +165,8 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
         .from("profiles")
         .update({
           account_type: data.accountType,
+          first_name: data.firstName,
+          last_name: data.lastName,
           content_niche: data.accountType === "personal" ? nicheField : data.contentNiche,
           product_niche: data.accountType === "ecommerce" ? nicheField : data.productNiche,
           business_niche: data.accountType === "business" ? nicheField : data.businessNiche,
@@ -171,6 +180,14 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
         .eq("id", userId);
 
       if (error) throw error;
+      
+      // Update user metadata to include first and last name
+      await supabase.auth.updateUser({
+        data: {
+          first_name: data.firstName,
+          last_name: data.lastName
+        }
+      });
       
       toast({
         title: "Profile updated!",
@@ -206,12 +223,12 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     }
   };
 
-  // Get max steps based on account type
+  // Get max steps based on account type - increased by 1 for the name step
   const getMaxSteps = () => {
     const accountType = form.getValues("accountType");
-    if (accountType === "personal") return 4;
-    if (accountType === "ecommerce") return 3;
-    return 3; // business
+    if (accountType === "personal") return 5; // Was 4, now 5
+    if (accountType === "ecommerce") return 4; // Was 3, now 4
+    return 4; // business - Was 3, now 4
   };
 
   // Calculate progress percentage
@@ -294,6 +311,44 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
                   </label>
                 </div>
               </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+
+  // New step for name input - we'll insert this as the new Step 2
+  const renderNameStep = () => (
+    <div className="space-y-4">
+      <div className="mb-4">
+        <h3 className="text-base font-semibold">What's your name?</h3>
+        <p className="text-sm text-muted-foreground">We'll use this to personalize your experience</p>
+      </div>
+      
+      <FormField
+        control={form.control}
+        name="firstName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>First Name</FormLabel>
+            <FormControl>
+              <Input placeholder="Enter your first name" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={form.control}
+        name="lastName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Last Name</FormLabel>
+            <FormControl>
+              <Input placeholder="Enter your last name" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -544,15 +599,16 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     const accountType = form.getValues("accountType");
     
     if (step === 1) return renderStep1();
+    if (step === 2) return renderNameStep(); // New name step at position 2
     
     if (accountType === "personal") {
-      if (step === 2) return renderPersonalStep2();
-      if (step === 3) return renderPersonalStep3();
-      if (step === 4) return renderPersonalStep4();
+      if (step === 3) return renderPersonalStep2(); // Shifted by 1
+      if (step === 4) return renderPersonalStep3(); // Shifted by 1
+      if (step === 5) return renderPersonalStep4(); // Shifted by 1
     } else if (accountType === "ecommerce") {
-      if (step === 2) return renderEcommerceStep2();
+      if (step === 3) return renderEcommerceStep2(); // Shifted by 1
     } else if (accountType === "business") {
-      if (step === 2) return renderBusinessStep2();
+      if (step === 3) return renderBusinessStep2(); // Shifted by 1
     }
     
     return null;

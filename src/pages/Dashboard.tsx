@@ -40,7 +40,7 @@ const Dashboard = () => {
   const [recentIdeas, setRecentIdeas] = useState<IdeaType[]>([]);
   const [scheduledContent, setScheduledContent] = useState<ScheduledContentType[]>([]);
   const [totalIdeas, setTotalIdeas] = useState(0);
-  const [userName, setUserName] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [greeting, setGreeting] = useState("");
 
   useEffect(() => {
@@ -49,10 +49,21 @@ const Dashboard = () => {
       if (!session) {
         navigate("/auth");
       } else {
-        // Extract first name from email
-        const email = session.user?.email || "";
-        const nameFromEmail = email.split('@')[0];
-        setUserName(nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1));
+        // Fetch user profile to get first name
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("first_name")
+          .eq("id", session.user.id)
+          .single();
+          
+        if (!error && profile && profile.first_name) {
+          setFirstName(profile.first_name);
+        } else {
+          // Fallback to extracting name from email if first_name is not available
+          const email = session.user?.email || "";
+          const nameFromEmail = email.split('@')[0];
+          setFirstName(nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1));
+        }
       }
     };
 
@@ -112,7 +123,7 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 pt-8">
         <section className="mb-12">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-2">{greeting}, {userName} 😄</h1>
+            <h1 className="text-4xl font-bold text-foreground mb-2">{greeting}, {firstName} 😄</h1>
             <p className="text-xl text-muted-foreground">
               You have <span className="font-bold text-primary">{scheduledContent.length}</span> upcoming video ideas to create
             </p>
