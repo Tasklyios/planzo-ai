@@ -82,9 +82,20 @@ const libraryCollapsible = {
   ],
 };
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  isMobile?: boolean;
+  closeDrawer?: () => void;
+}
+
+export function AppSidebar({ isMobile, closeDrawer }: AppSidebarProps) {
   const [createOpen, setCreateOpen] = useState(true);
   const [libraryOpen, setLibraryOpen] = useState(true);
+
+  const handleNavLinkClick = () => {
+    if (isMobile && closeDrawer) {
+      closeDrawer();
+    }
+  };
 
   return (
     <div className="w-64 flex flex-col bg-card min-h-screen border-r border-card-foreground/10 p-4">
@@ -104,6 +115,7 @@ export function AppSidebar() {
                   isActive && "bg-accent text-foreground"
                 )
               }
+              onClick={handleNavLinkClick}
             >
               <span className="mr-2">{item.icon}</span>
               <span>{item.title}</span>
@@ -134,6 +146,7 @@ export function AppSidebar() {
                       isActive && "bg-accent text-foreground"
                     )
                   }
+                  onClick={handleNavLinkClick}
                 >
                   <span className="mr-2">{item.icon}</span>
                   <span>{item.title}</span>
@@ -166,6 +179,7 @@ export function AppSidebar() {
                       isActive && "bg-accent text-foreground"
                     )
                   }
+                  onClick={handleNavLinkClick}
                 >
                   <span className="mr-2">{item.icon}</span>
                   <span>{item.title}</span>
