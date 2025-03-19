@@ -51,11 +51,12 @@ export function SearchBar() {
 
       const userId = sessionData.session.user.id;
 
-      // Fetch video ideas
+      // Fetch video ideas (only saved ones)
       const { data: ideaResults, error: ideaError } = await supabase
         .from('video_ideas')
         .select('id, title, created_at')
         .eq('user_id', userId)
+        .eq('is_saved', true)
         .ilike('title', `%${searchQuery}%`)
         .limit(8);
 

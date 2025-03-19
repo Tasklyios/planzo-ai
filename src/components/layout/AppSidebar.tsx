@@ -1,312 +1,180 @@
 
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { 
-  BookOpen,
-  Anchor, 
-  CalendarIcon, 
-  LayoutGrid,
-  BookText,
-  LogOut, 
-  LightbulbIcon, 
-  FileText, 
-  User, 
-  Bookmark,
-  CreditCard,
-  PaintBucket
-} from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
-import { Logo } from "@/components/ui/logo";
+import { NavLink } from "react-router-dom";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  Grid3X3,
+  BookCopy,
+  Calendar,
+  LightbulbIcon,
+  Film,
+  BookOpen,
+  Anchor,
+  BookmarkIcon,
+  ChevronDown,
+  ChevronRight,
+  Palette,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { SearchBar } from "@/components/SearchBar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useState } from "react";
 
-interface AppSidebarProps {
-  isMobile?: boolean;
-  closeDrawer?: () => void;
-}
+const menuItems = [
+  {
+    title: "Overview",
+    icon: <Grid3X3 className="h-5 w-5" />,
+    href: "/dashboard",
+  },
+  {
+    title: "Content Planner",
+    icon: <BookCopy className="h-5 w-5" />,
+    href: "/planner",
+  },
+  {
+    title: "Calendar",
+    icon: <Calendar className="h-5 w-5" />,
+    href: "/calendar",
+  },
+];
 
-const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [openSections, setOpenSections] = useState<string[]>(["overview", "create", "library"]);
+const createCollapsible = {
+  title: "Create",
+  items: [
+    {
+      title: "Generate Ideas",
+      icon: <LightbulbIcon className="h-5 w-5" />,
+      href: "/generator",
+    },
+    {
+      title: "Generate Scripts",
+      icon: <BookOpen className="h-5 w-5" />,
+      href: "/script",
+    },
+    {
+      title: "Generate Hooks",
+      icon: <Anchor className="h-5 w-5" />,
+      href: "/hooks",
+    },
+  ],
+};
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
+const libraryCollapsible = {
+  title: "Library",
+  items: [
+    {
+      title: "Saved Ideas",
+      icon: <Film className="h-5 w-5" />,
+      href: "/ideas",
+    },
+    {
+      title: "Saved Hooks",
+      icon: <BookmarkIcon className="h-5 w-5" />,
+      href: "/saved-hooks",
+    },
+    {
+      title: "Content Style",
+      icon: <Palette className="h-5 w-5" />,
+      href: "/find-your-style",
+    },
+  ],
+};
 
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Signed out successfully",
-        description: "You have been signed out of your account."
-      });
-      navigate("/auth");
-    } catch (error) {
-      console.error("Error signing out:", error);
-      toast({
-        variant: "destructive",
-        title: "Error signing out",
-        description: "There was a problem signing you out. Please try again."
-      });
-    }
-    
-    if (closeDrawer) {
-      closeDrawer();
-    }
-  };
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    if (closeDrawer) {
-      closeDrawer();
-    }
-  };
-
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => 
-      prev.includes(section) 
-        ? prev.filter(s => s !== section) 
-        : [...prev, section]
-    );
-  };
-
-  const isSectionOpen = (section: string) => {
-    return openSections.includes(section);
-  };
+export function AppSidebar() {
+  const [createOpen, setCreateOpen] = useState(true);
+  const [libraryOpen, setLibraryOpen] = useState(true);
 
   return (
-    <div className="flex flex-col h-full relative">
-      <div className="px-4 py-4 mb-2">
-        <Link to="/" className="flex items-center" onClick={closeDrawer}>
-          <Logo size="large" className="ml-[-4px]" />
-        </Link>
-      </div>
-      
-      <ScrollArea className="flex-1 px-3 pb-20">
-        <div className="space-y-4">
-          <Accordion
-            type="multiple"
-            defaultValue={["overview", "create", "library"]}
-            className="w-full"
-          >
-            <AccordionItem value="overview" className="border-none">
-              <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
-                <span className="text-xs font-medium text-muted-foreground">OVERVIEW</span>
-              </AccordionTrigger>
-              <AccordionContent className="pt-0.5 pb-1">
-                <div className="space-y-0.5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
-                      isActive("/dashboard") 
-                        ? "bg-primary text-white font-medium" 
-                        : "text-foreground"
-                    )}
-                    onClick={() => handleNavigation("/dashboard")}
-                  >
-                    <LayoutGrid className="mr-1.5 h-4 w-4" />
-                    Dashboard
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
-                      isActive("/content-planner") 
-                        ? "bg-primary text-white font-medium" 
-                        : "text-foreground"
-                    )}
-                    onClick={() => handleNavigation("/content-planner")}
-                  >
-                    <BookText className="mr-1.5 h-4 w-4" />
-                    Content Planner
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
-                      isActive("/calendar") 
-                        ? "bg-primary text-white font-medium" 
-                        : "text-foreground"
-                    )}
-                    onClick={() => handleNavigation("/calendar")}
-                  >
-                    <CalendarIcon className="mr-1.5 h-4 w-4" />
-                    Calendar
-                  </Button>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="create" className="border-none mt-2">
-              <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
-                <span className="text-xs font-medium text-muted-foreground">CREATE</span>
-              </AccordionTrigger>
-              <AccordionContent className="pt-0.5 pb-1">
-                <div className="space-y-0.5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
-                      isActive("/idea-generator") 
-                        ? "bg-primary text-white font-medium" 
-                        : "text-foreground"
-                    )}
-                    onClick={() => handleNavigation("/idea-generator")}
-                  >
-                    <LightbulbIcon className="mr-1.5 h-4 w-4" />
-                    Generate Ideas
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
-                      isActive("/script") 
-                        ? "bg-primary text-white font-medium" 
-                        : "text-foreground"
-                    )}
-                    onClick={() => handleNavigation("/script")}
-                  >
-                    <FileText className="mr-1.5 h-4 w-4" />
-                    Generate Scripts
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
-                      isActive("/hooks") 
-                        ? "bg-primary text-white font-medium" 
-                        : "text-foreground"
-                    )}
-                    onClick={() => handleNavigation("/hooks")}
-                  >
-                    <Anchor className="mr-1.5 h-4 w-4" />
-                    Generate Hooks
-                  </Button>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="library" className="border-none mt-2">
-              <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
-                <span className="text-xs font-medium text-muted-foreground">LIBRARY</span>
-              </AccordionTrigger>
-              <AccordionContent className="pt-0.5 pb-1">
-                <div className="space-y-0.5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
-                      isActive("/ideas") 
-                        ? "bg-primary text-white font-medium" 
-                        : "text-foreground"
-                    )}
-                    onClick={() => handleNavigation("/ideas")}
-                  >
-                    <LayoutGrid className="mr-1.5 h-4 w-4" />
-                    Saved Ideas
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
-                      isActive("/saved-hooks") 
-                        ? "bg-primary text-white font-medium" 
-                        : "text-foreground"
-                    )}
-                    onClick={() => handleNavigation("/saved-hooks")}
-                  >
-                    <Bookmark className="mr-1.5 h-4 w-4" />
-                    Saved Hooks
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
-                      isActive("/find-your-style") 
-                        ? "bg-primary text-white font-medium" 
-                        : "text-foreground"
-                    )}
-                    onClick={() => handleNavigation("/find-your-style")}
-                  >
-                    <PaintBucket className="mr-1.5 h-4 w-4" />
-                    Content Style
-                  </Button>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+    <div className="w-64 flex flex-col bg-card min-h-screen border-r border-card-foreground/10 p-4">
+      <div className="space-y-4">
+        <div className="w-full">
+          <SearchBar />
         </div>
-      </ScrollArea>
-      
-      {/* Sticky Account Section - Always Expanded */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card/40 p-2">
-        <div className="space-y-0.5">
-          <h3 className="px-2 text-xs font-medium text-muted-foreground">Account</h3>
-          <div className="space-y-0.5 pt-0.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "w-full justify-start h-8 px-2 py-1.5 text-sm",
-                isActive("/account") 
-                  ? "bg-primary text-white font-medium" 
-                  : "text-foreground"
+
+        <div className="space-y-2">
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.href}
+              to={item.href}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center h-9 rounded-md px-3 text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors",
+                  isActive && "bg-accent text-foreground"
+                )
+              }
+            >
+              <span className="mr-2">{item.icon}</span>
+              <span>{item.title}</span>
+            </NavLink>
+          ))}
+        </div>
+
+        <div className="space-y-2">
+          <Collapsible open={createOpen} onOpenChange={setCreateOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full h-9 rounded-md px-3 text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">
+              <div className="flex items-center">
+                <span className="text-sm font-medium">{createCollapsible.title}</span>
+              </div>
+              {createOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
               )}
-              onClick={() => handleNavigation("/account")}
-            >
-              <User className="mr-1.5 h-4 w-4" />
-              My Account
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "w-full justify-start h-8 px-2 py-1.5 text-sm",
-                isActive("/billing") 
-                  ? "bg-primary text-white font-medium" 
-                  : "text-foreground"
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pl-2 space-y-1">
+              {createCollapsible.items.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center h-9 rounded-md px-3 text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors",
+                      isActive && "bg-accent text-foreground"
+                    )
+                  }
+                >
+                  <span className="mr-2">{item.icon}</span>
+                  <span>{item.title}</span>
+                </NavLink>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+
+        <div className="space-y-2">
+          <Collapsible open={libraryOpen} onOpenChange={setLibraryOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full h-9 rounded-md px-3 text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors">
+              <div className="flex items-center">
+                <span className="text-sm font-medium">{libraryCollapsible.title}</span>
+              </div>
+              {libraryOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
               )}
-              onClick={() => handleNavigation("/billing")}
-            >
-              <CreditCard className="mr-1.5 h-4 w-4" />
-              Billing
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start h-8 px-2 py-1.5 text-sm text-muted-foreground"
-              onClick={handleSignOut}
-            >
-              <LogOut className="mr-1.5 h-4 w-4" />
-              Log Out
-            </Button>
-          </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pl-2 space-y-1">
+              {libraryCollapsible.items.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center h-9 rounded-md px-3 text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors",
+                      isActive && "bg-accent text-foreground"
+                    )
+                  }
+                >
+                  <span className="mr-2">{item.icon}</span>
+                  <span>{item.title}</span>
+                </NavLink>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </div>
     </div>
   );
-};
-
-export default AppSidebar;
+}
