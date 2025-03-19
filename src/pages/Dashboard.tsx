@@ -1,21 +1,25 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import {
   LightbulbIcon,
-  PenSquareIcon,
   CalendarIcon,
   TrendingUpIcon,
-  BookmarkIcon,
-  MoreVerticalIcon,
-  User,
-  CreditCard,
-  LogOut,
   Rocket,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PricingSheet from "@/components/pricing/PricingSheet";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface IdeaType {
   title: string;
@@ -24,6 +28,7 @@ interface IdeaType {
 }
 
 interface ScheduledContentType {
+  id: string;
   title: string;
   platform: string;
   scheduled_for: string;
@@ -35,37 +40,42 @@ const Dashboard = () => {
   const [recentIdeas, setRecentIdeas] = useState<IdeaType[]>([]);
   const [scheduledContent, setScheduledContent] = useState<ScheduledContentType[]>([]);
   const [totalIdeas, setTotalIdeas] = useState(0);
+  const [userName, setUserName] = useState("");
+  const [greeting, setGreeting] = useState("");
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
+      } else {
+        // Extract first name from email
+        const email = session.user?.email || "";
+        const nameFromEmail = email.split('@')[0];
+        setUserName(nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1));
       }
     };
 
+    // Set greeting based on time of day
+    const setTimeBasedGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) setGreeting("Good morning");
+      else if (hour < 18) setGreeting("Good afternoon");
+      else setGreeting("Good evening");
+    };
+
+    setTimeBasedGreeting();
     checkUser();
     fetchData();
   }, [navigate]);
 
   const fetchData = async () => {
     try {
-      // Fetch recent ideas
-      const { data: ideas, error: ideasError } = await supabase
-        .from("video_ideas")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(2);
-
-      if (ideasError) throw ideasError;
-      setRecentIdeas(ideas);
-
       // Fetch scheduled content
       const { data: scheduled, error: scheduledError } = await supabase
         .from("scheduled_content")
         .select("*")
-        .order("scheduled_for", { ascending: true })
-        .limit(2);
+        .order("scheduled_for", { ascending: true });
 
       if (scheduledError) throw scheduledError;
       setScheduledContent(scheduled);
@@ -89,24 +99,25 @@ const Dashboard = () => {
     const d = new Date(date);
     return d.toLocaleDateString('en-US', {
       weekday: 'long',
+      month: 'short',
+      day: 'numeric',
       hour: 'numeric',
       minute: 'numeric',
       hour12: true
     });
   };
 
-  const getTimeSince = (date: string) => {
-    const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
-    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
-    return `${Math.floor(seconds / 86400)} days ago`;
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 pt-8">
         <section className="mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-8">Welcome back!</h1>
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-foreground mb-2">{greeting}, {userName} 😄</h1>
+            <p className="text-xl text-muted-foreground">
+              You have <span className="font-bold text-primary">{scheduledContent.length}</span> upcoming video ideas to create
+            </p>
+          </div>
+          
           <div className="grid md:grid-cols-3 gap-6">
             <button 
               onClick={() => navigate('/ideas')}
@@ -177,42 +188,56 @@ const Dashboard = () => {
 
         <section className="bg-card rounded-xl p-8 border border-border mb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-foreground">Upcoming Posts</h2>
-            <button className="text-primary bg-primary/10 px-4 py-2 rounded-full hover:bg-primary/20 transition-colors">
+            <h2 className="text-2xl font-bold text-foreground">Upcoming Video Ideas</h2>
+            <button 
+              onClick={() => navigate('/calendar')}
+              className="text-primary bg-primary/10 px-4 py-2 rounded-full hover:bg-primary/20 transition-colors"
+            >
               Open Calendar
             </button>
           </div>
-          <div className="space-y-4">
-            {scheduledContent.map((content, index) => (
-              <div key={index} className="flex items-center p-4 bg-accent rounded-lg hover:bg-accent/80 transition-all">
-                <div className="w-12 h-12 bg-card rounded-lg flex items-center justify-center mr-4 border border-border">
-                  {content.platform === "TikTok" ? (
-                    <i className="fa-brands fa-tiktok text-xl text-primary"></i>
-                  ) : (
-                    <i className="fa-brands fa-instagram text-xl text-primary"></i>
-                  )}
-                </div>
-                <div className="flex-grow">
-                  <h3 className="font-semibold text-foreground">{content.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Scheduled for {formatDate(content.scheduled_for)}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className={`px-3 py-1 ${
-                    content.platform === "TikTok" 
-                      ? "bg-primary/10 text-primary" 
-                      : "bg-primary/10 text-primary"
-                  } rounded-full text-sm`}>
-                    {content.platform}
-                  </span>
-                  <button className="text-primary">
-                    <MoreVerticalIcon className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          
+          {scheduledContent.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date & Time</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Platform</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {scheduledContent.map((content) => (
+                  <TableRow key={content.id} className="hover:bg-accent/50 cursor-pointer">
+                    <TableCell className="font-medium">{formatDate(content.scheduled_for)}</TableCell>
+                    <TableCell>{content.title}</TableCell>
+                    <TableCell>
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        content.platform === "TikTok" 
+                          ? "bg-pink-500/10 text-pink-500" 
+                          : content.platform === "Instagram"
+                          ? "bg-purple-500/10 text-purple-500"
+                          : "bg-primary/10 text-primary"
+                      }`}>
+                        {content.platform}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No scheduled content yet.</p>
+              <Button 
+                onClick={() => navigate('/calendar')}
+                variant="outline" 
+                className="mt-4"
+              >
+                Schedule Your First Video
+              </Button>
+            </div>
+          )}
         </section>
       </main>
     </div>
