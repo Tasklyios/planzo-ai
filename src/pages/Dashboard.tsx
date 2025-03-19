@@ -78,7 +78,7 @@ const Dashboard = () => {
         .order("scheduled_for", { ascending: true });
 
       if (scheduledError) throw scheduledError;
-      setScheduledContent(scheduled);
+      setScheduledContent(scheduled || []);
 
       // Get total ideas count
       const { count } = await supabase
