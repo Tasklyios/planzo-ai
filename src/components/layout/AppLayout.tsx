@@ -1,6 +1,6 @@
 
 import { ReactNode, useState } from "react";
-import AppSidebar from "./AppSidebar";
+import { AppSidebar } from "./AppSidebar";
 import { SearchBar } from "@/components/SearchBar";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
