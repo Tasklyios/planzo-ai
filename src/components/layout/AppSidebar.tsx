@@ -1,166 +1,312 @@
 
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { useTheme } from "@/hooks/use-theme";
-import { useToast } from "@/components/ui/use-toast";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Home,
-  Calendar,
-  Lightbulb,
-  User,
-  CreditCard,
-  LogOut,
-  Moon,
-  Sun,
-  Settings,
-  Rocket,
-  Mail,
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { 
+  BookOpen,
+  Anchor, 
+  CalendarIcon, 
+  LayoutGrid,
   BookText,
-  Search,
-  ArrowUp,
+  LogOut, 
+  LightbulbIcon, 
+  FileText, 
+  User, 
+  Bookmark,
+  CreditCard,
+  PaintBucket
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
+import { Logo } from "@/components/ui/logo";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { useState } from "react";
 
 interface AppSidebarProps {
   isMobile?: boolean;
   closeDrawer?: () => void;
 }
 
-export default function AppSidebar({ isMobile = false, closeDrawer }: AppSidebarProps) {
+const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const [openSections, setOpenSections] = useState<string[]>(["overview", "create", "library"]);
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
 
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
-      navigate("/auth");
       toast({
         title: "Signed out successfully",
+        description: "You have been signed out of your account."
       });
+      navigate("/auth");
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
         variant: "destructive",
-        title: "Sign out failed",
+        title: "Error signing out",
+        description: "There was a problem signing you out. Please try again."
       });
     }
-  };
-
-  const handleNavLinkClick = (path: string) => {
-    navigate(path);
-    if (isMobile && closeDrawer) {
+    
+    if (closeDrawer) {
       closeDrawer();
     }
   };
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (closeDrawer) {
+      closeDrawer();
+    }
+  };
+
+  const toggleSection = (section: string) => {
+    setOpenSections(prev => 
+      prev.includes(section) 
+        ? prev.filter(s => s !== section) 
+        : [...prev, section]
+    );
+  };
+
+  const isSectionOpen = (section: string) => {
+    return openSections.includes(section);
+  };
+
   return (
-    <div className="flex flex-col h-full py-4">
-      <div className="px-3 pb-2 text-2xl font-bold text-center">
-        <Link 
-          to="/dashboard" 
-          className="flex items-center justify-center"
-          onClick={() => isMobile && closeDrawer && closeDrawer()}
-        >
-          <span className="text-primary">Creator</span>
-          <span className="ml-1">AI</span>
+    <div className="flex flex-col h-full relative">
+      <div className="px-4 py-4 mb-2">
+        <Link to="/" className="flex items-center" onClick={closeDrawer}>
+          <Logo size="large" className="ml-[-4px]" />
         </Link>
       </div>
+      
+      <ScrollArea className="flex-1 px-3 pb-20">
+        <div className="space-y-4">
+          <Accordion
+            type="multiple"
+            defaultValue={["overview", "create", "library"]}
+            className="w-full"
+          >
+            <AccordionItem value="overview" className="border-none">
+              <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
+                <span className="text-xs font-medium text-muted-foreground">OVERVIEW</span>
+              </AccordionTrigger>
+              <AccordionContent className="pt-0.5 pb-1">
+                <div className="space-y-0.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
+                      isActive("/dashboard") 
+                        ? "bg-primary text-white font-medium" 
+                        : "text-foreground"
+                    )}
+                    onClick={() => handleNavigation("/dashboard")}
+                  >
+                    <LayoutGrid className="mr-1.5 h-4 w-4" />
+                    Dashboard
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
+                      isActive("/content-planner") 
+                        ? "bg-primary text-white font-medium" 
+                        : "text-foreground"
+                    )}
+                    onClick={() => handleNavigation("/content-planner")}
+                  >
+                    <BookText className="mr-1.5 h-4 w-4" />
+                    Content Planner
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
+                      isActive("/calendar") 
+                        ? "bg-primary text-white font-medium" 
+                        : "text-foreground"
+                    )}
+                    onClick={() => handleNavigation("/calendar")}
+                  >
+                    <CalendarIcon className="mr-1.5 h-4 w-4" />
+                    Calendar
+                  </Button>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-      <div className="mt-4 flex-1 px-3 space-y-1">
-        <Button
-          variant={location.pathname === "/dashboard" ? "default" : "ghost"}
-          className={cn("w-full justify-start", location.pathname === "/dashboard" ? "bg-primary" : "")}
-          onClick={() => handleNavLinkClick("/dashboard")}
-        >
-          <Home className="mr-2 h-4 w-4" />
-          Dashboard
-        </Button>
-        <Button
-          variant={location.pathname === "/ideas" ? "default" : "ghost"}
-          className={cn("w-full justify-start", location.pathname === "/ideas" ? "bg-primary" : "")}
-          onClick={() => handleNavLinkClick("/ideas")}
-        >
-          <Lightbulb className="mr-2 h-4 w-4" />
-          Ideas
-        </Button>
-        <Button
-          variant={location.pathname === "/calendar" ? "default" : "ghost"}
-          className={cn("w-full justify-start", location.pathname === "/calendar" ? "bg-primary" : "")}
-          onClick={() => handleNavLinkClick("/calendar")}
-        >
-          <Calendar className="mr-2 h-4 w-4" />
-          Calendar
-        </Button>
-        <Button
-          variant={location.pathname === "/hooks" ? "default" : "ghost"}
-          className={cn("w-full justify-start", location.pathname === "/hooks" ? "bg-primary" : "")}
-          onClick={() => handleNavLinkClick("/hooks")}
-        >
-          <ArrowUp className="mr-2 h-4 w-4" />
-          Hooks
-        </Button>
-        <Button
-          variant={location.pathname === "/script" ? "default" : "ghost"}
-          className={cn("w-full justify-start", location.pathname === "/script" ? "bg-primary" : "")}
-          onClick={() => handleNavLinkClick("/script")}
-        >
-          <BookText className="mr-2 h-4 w-4" />
-          Scripts
-        </Button>
-        <Button
-          variant={location.pathname === "/email-templates" ? "default" : "ghost"}
-          className={cn("w-full justify-start", location.pathname === "/email-templates" ? "bg-primary" : "")}
-          onClick={() => handleNavLinkClick("/email-templates")}
-        >
-          <Mail className="mr-2 h-4 w-4" />
-          Email Templates
-        </Button>
-      </div>
+            <AccordionItem value="create" className="border-none mt-2">
+              <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
+                <span className="text-xs font-medium text-muted-foreground">CREATE</span>
+              </AccordionTrigger>
+              <AccordionContent className="pt-0.5 pb-1">
+                <div className="space-y-0.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
+                      isActive("/idea-generator") 
+                        ? "bg-primary text-white font-medium" 
+                        : "text-foreground"
+                    )}
+                    onClick={() => handleNavigation("/idea-generator")}
+                  >
+                    <LightbulbIcon className="mr-1.5 h-4 w-4" />
+                    Generate Ideas
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
+                      isActive("/script") 
+                        ? "bg-primary text-white font-medium" 
+                        : "text-foreground"
+                    )}
+                    onClick={() => handleNavigation("/script")}
+                  >
+                    <FileText className="mr-1.5 h-4 w-4" />
+                    Generate Scripts
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
+                      isActive("/hooks") 
+                        ? "bg-primary text-white font-medium" 
+                        : "text-foreground"
+                    )}
+                    onClick={() => handleNavigation("/hooks")}
+                  >
+                    <Anchor className="mr-1.5 h-4 w-4" />
+                    Generate Hooks
+                  </Button>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-      <div className="px-3 mt-auto space-y-1">
-        <Button
-          variant="outline"
-          className="w-full justify-start"
-          onClick={() => handleNavLinkClick("/account")}
-        >
-          <User className="mr-2 h-4 w-4" />
-          Account
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full justify-start"
-          onClick={() => handleNavLinkClick("/billing")}
-        >
-          <CreditCard className="mr-2 h-4 w-4" />
-          Billing
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="w-full justify-start"
-        >
-          {theme === "dark" ? (
-            <>
-              <Sun className="mr-2 h-4 w-4" /> Light Mode
-            </>
-          ) : (
-            <>
-              <Moon className="mr-2 h-4 w-4" /> Dark Mode
-            </>
-          )}
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-destructive hover:text-destructive"
-          onClick={handleSignOut}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          Sign Out
-        </Button>
+            <AccordionItem value="library" className="border-none mt-2">
+              <AccordionTrigger className="py-1 px-2 hover:no-underline group flex justify-between">
+                <span className="text-xs font-medium text-muted-foreground">LIBRARY</span>
+              </AccordionTrigger>
+              <AccordionContent className="pt-0.5 pb-1">
+                <div className="space-y-0.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
+                      isActive("/ideas") 
+                        ? "bg-primary text-white font-medium" 
+                        : "text-foreground"
+                    )}
+                    onClick={() => handleNavigation("/ideas")}
+                  >
+                    <LayoutGrid className="mr-1.5 h-4 w-4" />
+                    Saved Ideas
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
+                      isActive("/saved-hooks") 
+                        ? "bg-primary text-white font-medium" 
+                        : "text-foreground"
+                    )}
+                    onClick={() => handleNavigation("/saved-hooks")}
+                  >
+                    <Bookmark className="mr-1.5 h-4 w-4" />
+                    Saved Hooks
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
+                      isActive("/find-your-style") 
+                        ? "bg-primary text-white font-medium" 
+                        : "text-foreground"
+                    )}
+                    onClick={() => handleNavigation("/find-your-style")}
+                  >
+                    <PaintBucket className="mr-1.5 h-4 w-4" />
+                    Content Style
+                  </Button>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </ScrollArea>
+      
+      {/* Sticky Account Section - Always Expanded */}
+      <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card/40 p-2">
+        <div className="space-y-0.5">
+          <h3 className="px-2 text-xs font-medium text-muted-foreground">Account</h3>
+          <div className="space-y-0.5 pt-0.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "w-full justify-start h-8 px-2 py-1.5 text-sm",
+                isActive("/account") 
+                  ? "bg-primary text-white font-medium" 
+                  : "text-foreground"
+              )}
+              onClick={() => handleNavigation("/account")}
+            >
+              <User className="mr-1.5 h-4 w-4" />
+              My Account
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "w-full justify-start h-8 px-2 py-1.5 text-sm",
+                isActive("/billing") 
+                  ? "bg-primary text-white font-medium" 
+                  : "text-foreground"
+              )}
+              onClick={() => handleNavigation("/billing")}
+            >
+              <CreditCard className="mr-1.5 h-4 w-4" />
+              Billing
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start h-8 px-2 py-1.5 text-sm text-muted-foreground"
+              onClick={handleSignOut}
+            >
+              <LogOut className="mr-1.5 h-4 w-4" />
+              Log Out
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default AppSidebar;
