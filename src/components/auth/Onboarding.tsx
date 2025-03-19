@@ -19,6 +19,8 @@ import { Progress } from "@/components/ui/progress";
 // Define the form schema with appropriate types
 const accountFormSchema = z.object({
   accountType: z.enum(["personal", "ecommerce", "business"]),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   contentNiche: z.string().optional(),
   productNiche: z.string().optional(),
   businessNiche: z.string().optional(),
@@ -78,6 +80,8 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     resolver: zodResolver(accountFormSchema),
     defaultValues: {
       accountType: "personal",
+      firstName: "",
+      lastName: "",
       contentNiche: "",
       productNiche: "",
       businessNiche: "",
@@ -114,6 +118,8 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
               form.setValue("accountType", "personal"); // Default to personal if invalid
             }
             
+            form.setValue("firstName", profile.first_name || "");
+            form.setValue("lastName", profile.last_name || "");
             form.setValue("contentNiche", profile.content_niche || "");
             form.setValue("productNiche", profile.product_niche || "");
             form.setValue("businessNiche", profile.business_niche || "");
@@ -167,6 +173,8 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
           onboarding_completed: true,
           content_type: data.contentType,
           posting_frequency: data.postingFrequency,
+          first_name: data.firstName,
+          last_name: data.lastName,
         })
         .eq("id", userId);
 
@@ -209,9 +217,9 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
   // Get max steps based on account type
   const getMaxSteps = () => {
     const accountType = form.getValues("accountType");
-    if (accountType === "personal") return 4;
-    if (accountType === "ecommerce") return 3;
-    return 3; // business
+    if (accountType === "personal") return 5;
+    if (accountType === "ecommerce") return 4;
+    return 4; // business
   };
 
   // Calculate progress percentage
@@ -302,8 +310,48 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     </div>
   );
 
+  // Render name fields for all account types
+  const renderNameStep = () => (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-base font-semibold mb-2">Tell us your name</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          This will be used to personalize your experience
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="firstName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>First Name</FormLabel>
+              <FormControl>
+                <Input placeholder="First Name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="lastName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Last Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Last Name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </div>
+  );
+
   // Render personal brand step
-  const renderPersonalStep2 = () => (
+  const renderPersonalStep3 = () => (
     <div className="space-y-4">
       <FormField
         control={form.control}
@@ -348,7 +396,7 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
   );
 
   // Render niche selection step
-  const renderPersonalStep3 = () => (
+  const renderPersonalStep4 = () => (
     <div className="space-y-4">
       <div className="space-y-4">
         <FormLabel className="text-base font-semibold">What niche is your account?</FormLabel>
@@ -408,7 +456,7 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
   );
 
   // Render posting frequency step
-  const renderPersonalStep4 = () => (
+  const renderPersonalStep5 = () => (
     <div className="space-y-4">
       <FormField
         control={form.control}
@@ -446,7 +494,7 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
   );
 
   // Render e-commerce step
-  const renderEcommerceStep2 = () => (
+  const renderEcommerceStep3 = () => (
     <div className="space-y-4">
       <FormField
         control={form.control}
@@ -491,7 +539,7 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
   );
 
   // Render business step
-  const renderBusinessStep2 = () => (
+  const renderBusinessStep3 = () => (
     <div className="space-y-4">
       <FormField
         control={form.control}
@@ -544,15 +592,18 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     const accountType = form.getValues("accountType");
     
     if (step === 1) return renderStep1();
+    if (step === 2) return renderNameStep(); // Name fields for all account types
     
     if (accountType === "personal") {
-      if (step === 2) return renderPersonalStep2();
       if (step === 3) return renderPersonalStep3();
       if (step === 4) return renderPersonalStep4();
+      if (step === 5) return renderPersonalStep5();
     } else if (accountType === "ecommerce") {
-      if (step === 2) return renderEcommerceStep2();
+      if (step === 3) return renderEcommerceStep3();
+      // step 4 will be handled by the existing flow
     } else if (accountType === "business") {
-      if (step === 2) return renderBusinessStep2();
+      if (step === 3) return renderBusinessStep3();
+      // step 4 will be handled by the existing flow
     }
     
     return null;

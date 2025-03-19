@@ -45,7 +45,9 @@ export type Database = {
           content_style: string | null
           content_type: string | null
           created_at: string
+          first_name: string | null
           id: string
+          last_name: string | null
           onboarding_completed: boolean
           posting_frequency: string | null
           posting_platforms: string[] | null
@@ -63,7 +65,9 @@ export type Database = {
           content_style?: string | null
           content_type?: string | null
           created_at?: string
+          first_name?: string | null
           id: string
+          last_name?: string | null
           onboarding_completed?: boolean
           posting_frequency?: string | null
           posting_platforms?: string[] | null
@@ -81,7 +85,9 @@ export type Database = {
           content_style?: string | null
           content_type?: string | null
           created_at?: string
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           onboarding_completed?: boolean
           posting_frequency?: string | null
           posting_platforms?: string[] | null
