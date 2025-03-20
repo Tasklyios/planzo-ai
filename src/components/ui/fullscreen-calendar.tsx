@@ -59,7 +59,8 @@ interface FullScreenCalendarProps {
   showSidePanel?: boolean;
 }
 
-// Updated column start classes to correctly align with days of the week (Sunday = 1, Monday = 2, etc.)
+// Properly defined column start classes to correctly align with days of the week
+// Sunday = 1, Monday = 2, etc.
 const colStartClasses = [
   "",
   "col-start-1", // Sunday
@@ -132,9 +133,13 @@ export function FullScreenCalendar({
 
   // Ensure days are properly calculated from the start of the week to the end of the month
   const days = React.useMemo(() => {
+    const startWeek = startOfWeek(firstDayCurrentMonth, { weekStartsOn: 0 });  // Start on Sunday (0)
+    const endMonth = endOfMonth(firstDayCurrentMonth);
+    const endWeekDay = endOfWeek(endMonth, { weekStartsOn: 0 });  // End on Saturday
+    
     return eachDayOfInterval({
-      start: startOfWeek(firstDayCurrentMonth, { weekStartsOn: 0 }),  // Start on Sunday (0)
-      end: endOfWeek(endOfMonth(firstDayCurrentMonth), { weekStartsOn: 0 }),  // End on Saturday
+      start: startWeek,
+      end: endWeekDay,
     });
   }, [firstDayCurrentMonth]);
 
@@ -185,6 +190,11 @@ export function FullScreenCalendar({
     if (event.category === 'hook') return <Bookmark className="h-3 w-3" />;
     if (event.category === 'script') return <FileText className="h-3 w-3" />;
     return <LightbulbIcon className="h-3 w-3" />;
+  };
+
+  // Find events for a specific day
+  const getEventsForDay = (day: Date) => {
+    return calendarData.find(data => isSameDay(data.day, day))?.events || [];
   };
 
   return (
@@ -260,19 +270,18 @@ export function FullScreenCalendar({
           {/* Calendar Days */}
           <div className="flex-1 overflow-y-auto">
             {/* Desktop View */}
-            <div className="hidden h-full w-full grid-rows-6 lg:grid lg:grid-cols-7">
+            <div className="hidden h-full w-full grid-cols-7 grid-rows-6 lg:grid">
               {days.map((day, dayIdx) => {
                 // Get events for this day
-                const dayEvents = calendarData.filter(data => 
-                  isSameDay(data.day, day)
-                );
+                const dayEvents = getEventsForDay(day);
+                const dayDate = format(day, 'yyyy-MM-dd');
                 
                 return (
                   <div
-                    key={day.toString()}
+                    key={dayDate}
                     onClick={() => handleDayClick(day)}
                     className={cn(
-                      // Only apply colStartClasses to the first week
+                      // Apply colStartClasses only to the first week
                       dayIdx < 7 && colStartClasses[getDay(day)],
                       !isEqual(day, selectedDay) &&
                         !isToday(day) &&
@@ -312,9 +321,9 @@ export function FullScreenCalendar({
                       </button>
                     </header>
                     <div className="flex-1 p-2.5">
-                      {dayEvents.map((dayData) => (
-                        <div key={dayData.day.toString()} className="space-y-1.5">
-                          {dayData.events.slice(0, 1).map((event) => (
+                      {dayEvents.length > 0 && (
+                        <div className="space-y-1.5">
+                          {dayEvents.slice(0, 1).map((event) => (
                             <div
                               key={event.id}
                               className="flex flex-col items-start gap-1 rounded-lg border p-2 text-xs leading-tight"
@@ -330,24 +339,24 @@ export function FullScreenCalendar({
                             >
                               <div className="flex items-center gap-1 w-full">
                                 {getEventIcon(event)}
-                                <p className="font-medium leading-none truncate max-w-[120px]">
+                                <p className="font-medium leading-none truncate max-w-[100px]">
                                   {event.title}
                                 </p>
                               </div>
                               {event.platform && (
-                                <p className="leading-none text-muted-foreground truncate max-w-[120px]">
+                                <p className="leading-none text-muted-foreground truncate max-w-[100px]">
                                   {event.platform}
                                 </p>
                               )}
                             </div>
                           ))}
-                          {dayData.events.length > 1 && (
+                          {dayEvents.length > 1 && (
                             <div className="text-xs text-muted-foreground">
-                              + {dayData.events.length - 1} more
+                              + {dayEvents.length - 1} more
                             </div>
                           )}
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 );
@@ -358,14 +367,13 @@ export function FullScreenCalendar({
             <div className="isolate grid w-full grid-cols-7 grid-rows-6 border-x lg:hidden">
               {days.map((day, dayIdx) => {
                 // Find events for this day to add indicators
-                const dayEvents = calendarData.filter(data => 
-                  isSameDay(data.day, day)
-                );
+                const dayEvents = getEventsForDay(day);
+                const dayDate = format(day, 'yyyy-MM-dd');
                 
                 return (
                   <button
                     onClick={() => handleDayClick(day)}
-                    key={day.toString()}
+                    key={dayDate}
                     type="button"
                     className={cn(
                       isEqual(day, selectedDay) && "text-primary-foreground",
@@ -397,24 +405,17 @@ export function FullScreenCalendar({
                       {format(day, "d")}
                     </time>
                     {dayEvents.length > 0 && (
-                      <div>
-                        {dayEvents.map((data) => (
-                          <div
-                            key={data.day.toString()}
-                            className="-mx-0.5 mt-auto flex flex-wrap-reverse"
-                          >
-                            {data.events.map((event) => (
-                              <span
-                                key={event.id}
-                                className="mx-0.5 mt-1 h-1.5 w-1.5 rounded-full"
-                                style={{
-                                  backgroundColor: event.color ? 
-                                    (event.color.startsWith('#') ? event.color : colorMap[event.color] || '#3b82f6') : 
-                                    '#3b82f6'
-                                }}
-                              />
-                            ))}
-                          </div>
+                      <div className="-mx-0.5 mt-auto flex flex-wrap-reverse">
+                        {dayEvents.map((event) => (
+                          <span
+                            key={event.id}
+                            className="mx-0.5 mt-1 h-1.5 w-1.5 rounded-full"
+                            style={{
+                              backgroundColor: event.color ? 
+                                (event.color.startsWith('#') ? event.color : colorMap[event.color] || '#3b82f6') : 
+                                '#3b82f6'
+                            }}
+                          />
                         ))}
                       </div>
                     )}
