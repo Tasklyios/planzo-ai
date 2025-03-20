@@ -192,14 +192,6 @@ export function FullScreenCalendar({
         <div className="flex flex-col space-y-4 p-4 md:flex-row md:items-center md:justify-between md:space-y-0 lg:flex-none">
           <div className="flex flex-auto">
             <div className="flex items-center gap-4">
-              <div className="hidden w-20 flex-col items-center justify-center rounded-lg border bg-muted p-0.5 md:flex">
-                <h1 className="p-1 text-xs uppercase text-muted-foreground">
-                  {format(today, "MMM")}
-                </h1>
-                <div className="flex w-full items-center justify-center rounded-lg border bg-background p-0.5 text-lg font-bold">
-                  <span>{format(today, "d")}</span>
-                </div>
-              </div>
               <div className="flex flex-col">
                 <h2 className="text-lg font-semibold text-foreground">
                   {format(firstDayCurrentMonth, "MMMM, yyyy")}
@@ -261,8 +253,8 @@ export function FullScreenCalendar({
           </div>
 
           {/* Calendar Days */}
-          <div className="flex text-xs leading-6 lg:flex-auto">
-            <div className="hidden w-full border-x lg:grid lg:grid-cols-7 lg:grid-rows-6">
+          <div className="flex flex-1 text-xs leading-6 lg:flex-auto">
+            <div className="hidden w-full lg:grid lg:grid-cols-7 lg:grid-rows-6 lg:flex-1">
               {days.map((day, dayIdx) =>
                 !isDesktop ? (
                   <button
@@ -333,7 +325,7 @@ export function FullScreenCalendar({
                         !isToday(day) &&
                         !isSameMonth(day, firstDayCurrentMonth) &&
                         "bg-accent/50 text-muted-foreground",
-                      "relative flex flex-col border-b border-r hover:bg-muted focus:z-10 cursor-pointer min-h-[100px]",
+                      "relative flex flex-col border-b border-r hover:bg-muted focus:z-10 cursor-pointer min-h-[80px]",
                       !isEqual(day, selectedDay) && "hover:bg-accent/75",
                     )}
                   >
