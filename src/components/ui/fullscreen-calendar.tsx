@@ -6,7 +6,6 @@ import {
   add,
   eachDayOfInterval,
   endOfMonth,
-  endOfWeek,
   format,
   getDay,
   isEqual,
@@ -14,8 +13,10 @@ import {
   isSameMonth,
   isToday,
   parse,
+  startOfMonth,
   startOfToday,
   startOfWeek,
+  endOfWeek,
 } from "date-fns"
 import {
   ChevronLeft,
@@ -45,11 +46,6 @@ export interface CalendarEvent {
   allDay?: boolean;
 }
 
-interface CalendarData {
-  day: Date;
-  events: CalendarEvent[];
-}
-
 interface FullScreenCalendarProps {
   events: CalendarEvent[];
   onDateSelect?: (date: Date) => void;
@@ -58,19 +54,6 @@ interface FullScreenCalendarProps {
   selectedDate?: Date;
   showSidePanel?: boolean;
 }
-
-// Properly defined column start classes to correctly align with days of the week
-// Sunday = 1, Monday = 2, etc.
-const colStartClasses = [
-  "",
-  "col-start-1", // Sunday
-  "col-start-2", // Monday
-  "col-start-3", // Tuesday
-  "col-start-4", // Wednesday
-  "col-start-5", // Thursday
-  "col-start-6", // Friday
-  "col-start-7", // Saturday
-]
 
 // Map color names to actual hex values for display
 const colorMap: Record<string, string> = {
@@ -94,58 +77,37 @@ export function FullScreenCalendar({
 }: FullScreenCalendarProps) {
   const today = startOfToday()
   const [selectedDay, setSelectedDay] = React.useState(initialSelectedDate || today)
-  const [currentMonth, setCurrentMonth] = React.useState(
-    format(initialSelectedDate || today, "MMM-yyyy"),
-  )
+  const [currentMonth, setCurrentMonth] = React.useState(format(initialSelectedDate || today, "MMM-yyyy"))
   const firstDayCurrentMonth = parse(currentMonth, "MMM-yyyy", new Date())
   const isDesktop = useMediaQuery("(min-width: 768px)")
 
-  // Convert events to the CalendarData format
-  const calendarData: CalendarData[] = React.useMemo(() => {
-    const daysWithEvents = events.reduce((acc: Record<string, CalendarData>, event) => {
-      const dateKey = format(event.date, 'yyyy-MM-dd');
-      if (!acc[dateKey]) {
-        acc[dateKey] = {
-          day: new Date(event.date),
-          events: [],
-        };
-      }
-      acc[dateKey].events.push(event);
-      return acc;
-    }, {});
+  // Calculate days in month with proper padding for first and last week
+  const days = React.useMemo(() => {
+    const monthStart = startOfMonth(firstDayCurrentMonth)
+    const monthEnd = endOfMonth(firstDayCurrentMonth)
+    const calendarStart = startOfWeek(monthStart)
+    const calendarEnd = endOfWeek(monthEnd)
 
-    return Object.values(daysWithEvents);
-  }, [events]);
+    return eachDayOfInterval({ start: calendarStart, end: calendarEnd })
+  }, [firstDayCurrentMonth])
 
   // When selectedDay changes, notify parent
   React.useEffect(() => {
     if (onDateSelect) {
-      onDateSelect(selectedDay);
+      onDateSelect(selectedDay)
     }
-  }, [selectedDay, onDateSelect]);
+  }, [selectedDay, onDateSelect])
 
   // If initialSelectedDate changes from parent, update local state
   React.useEffect(() => {
     if (initialSelectedDate) {
-      setSelectedDay(initialSelectedDate);
+      setSelectedDay(initialSelectedDate)
     }
-  }, [initialSelectedDate]);
-
-  // Ensure days are properly calculated from the start of the week to the end of the month
-  const days = React.useMemo(() => {
-    const startWeek = startOfWeek(firstDayCurrentMonth, { weekStartsOn: 0 });  // Start on Sunday (0)
-    const endMonth = endOfMonth(firstDayCurrentMonth);
-    const endWeekDay = endOfWeek(endMonth, { weekStartsOn: 0 });  // End on Saturday
-    
-    return eachDayOfInterval({
-      start: startWeek,
-      end: endWeekDay,
-    });
-  }, [firstDayCurrentMonth]);
+  }, [initialSelectedDate])
 
   function previousMonth() {
-    const firstDayNextMonth = add(firstDayCurrentMonth, { months: -1 })
-    setCurrentMonth(format(firstDayNextMonth, "MMM-yyyy"))
+    const firstDayPrevMonth = add(firstDayCurrentMonth, { months: -1 })
+    setCurrentMonth(format(firstDayPrevMonth, "MMM-yyyy"))
   }
 
   function nextMonth() {
@@ -157,45 +119,48 @@ export function FullScreenCalendar({
     setCurrentMonth(format(today, "MMM-yyyy"))
     setSelectedDay(today)
     if (onDateSelect) {
-      onDateSelect(today);
+      onDateSelect(today)
     }
   }
 
   const handleDayClick = (day: Date) => {
-    setSelectedDay(day);
+    setSelectedDay(day)
     if (onDateSelect) {
-      onDateSelect(day);
+      onDateSelect(day)
     }
-  };
+  }
 
   const handleAddEvent = () => {
     if (onAddEvent) {
-      onAddEvent(selectedDay);
+      onAddEvent(selectedDay)
     }
-  };
+  }
 
   const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation()
     if (onEventClick) {
-      onEventClick(event);
+      onEventClick(event)
     }
-  };
+  }
 
   // Get events for the selected day
   const selectedDayEvents = events.filter(event => 
     isSameDay(event.date, selectedDay)
-  );
+  )
+
+  // Get events for a specific day
+  const getEventsForDay = (day: Date) => {
+    return events.filter(event => isSameDay(event.date, day))
+  }
 
   const getEventIcon = (event: CalendarEvent) => {
-    if (event.category === 'hook') return <Bookmark className="h-3 w-3" />;
-    if (event.category === 'script') return <FileText className="h-3 w-3" />;
-    return <LightbulbIcon className="h-3 w-3" />;
-  };
+    if (event.category === 'hook') return <Bookmark className="h-3 w-3" />
+    if (event.category === 'script') return <FileText className="h-3 w-3" />
+    return <LightbulbIcon className="h-3 w-3" />
+  }
 
-  // Find events for a specific day
-  const getEventsForDay = (day: Date) => {
-    return calendarData.find(data => isSameDay(data.day, day))?.events || [];
-  };
+  // Week days header
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
   return (
     <div className={cn(
@@ -209,46 +174,38 @@ export function FullScreenCalendar({
             <div className="flex items-center gap-4">
               <div className="flex flex-col">
                 <h2 className="text-lg font-semibold text-foreground">
-                  {format(firstDayCurrentMonth, "MMMM, yyyy")}
+                  {format(firstDayCurrentMonth, "MMMM yyyy")}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {format(firstDayCurrentMonth, "MMM d, yyyy")} -{" "}
-                  {format(endOfMonth(firstDayCurrentMonth), "MMM d, yyyy")}
+                  Today: {format(today, "MMMM d, yyyy")}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
-            <div className="inline-flex w-full -space-x-px rounded-lg shadow-sm shadow-black/5 md:w-auto rtl:space-x-reverse">
-              <Button
-                onClick={previousMonth}
-                className="rounded-none shadow-none first:rounded-s-lg last:rounded-e-lg focus-visible:z-10"
-                variant="outline"
-                size="icon"
-                aria-label="Navigate to previous month"
-              >
-                <ChevronLeft size={16} strokeWidth={2} aria-hidden="true" />
-              </Button>
-              <Button
-                onClick={nextMonth}
-                className="rounded-none shadow-none first:rounded-s-lg last:rounded-e-lg focus-visible:z-10"
-                variant="outline"
-                size="icon"
-                aria-label="Navigate to next month"
-              >
-                <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
-              </Button>
-            </div>
-
-            <Separator orientation="vertical" className="hidden h-6 md:block" />
-            <Separator
-              orientation="horizontal"
-              className="block w-full md:hidden"
-            />
-
-            <Button className="w-full gap-2 md:w-auto" onClick={handleAddEvent}>
-              <PlusCircle size={16} strokeWidth={2} aria-hidden="true" />
+          <div className="flex items-center gap-2">
+            <Button onClick={goToToday} variant="outline" size="sm">
+              Today
+            </Button>
+            <Button
+              onClick={previousMonth}
+              variant="outline"
+              size="icon"
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={nextMonth}
+              variant="outline"
+              size="icon"
+              aria-label="Next month"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Separator orientation="vertical" className="h-6 mx-2" />
+            <Button className="gap-2" onClick={handleAddEvent}>
+              <PlusCircle className="h-4 w-4" />
               <span>New Post</span>
             </Button>
           </div>
@@ -257,76 +214,54 @@ export function FullScreenCalendar({
         {/* Calendar Grid */}
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Week Days Header */}
-          <div className="grid grid-cols-7 border text-center text-xs font-semibold leading-6">
-            <div className="border-r py-2.5">Sun</div>
-            <div className="border-r py-2.5">Mon</div>
-            <div className="border-r py-2.5">Tue</div>
-            <div className="border-r py-2.5">Wed</div>
-            <div className="border-r py-2.5">Thu</div>
-            <div className="border-r py-2.5">Fri</div>
-            <div className="py-2.5">Sat</div>
+          <div className="grid grid-cols-7 border-b border-t bg-muted/20">
+            {weekDays.map((day, index) => (
+              <div key={index} className="py-2 text-center text-sm font-medium">
+                {day}
+              </div>
+            ))}
           </div>
 
-          {/* Calendar Days */}
+          {/* Calendar Days Grid */}
           <div className="flex-1 overflow-y-auto">
-            {/* Desktop View */}
-            <div className="hidden h-full w-full grid-cols-7 grid-rows-6 lg:grid">
-              {days.map((day, dayIdx) => {
+            <div className="grid h-full grid-cols-7 auto-rows-fr">
+              {days.map((day) => {
                 // Get events for this day
-                const dayEvents = getEventsForDay(day);
-                const dayDate = format(day, 'yyyy-MM-dd');
+                const dayEvents = getEventsForDay(day)
+                const isSelectedDay = isSameDay(day, selectedDay)
+                const isCurrentMonth = isSameMonth(day, firstDayCurrentMonth)
+                const dayKey = format(day, 'yyyy-MM-dd')
                 
                 return (
                   <div
-                    key={dayDate}
+                    key={dayKey}
                     onClick={() => handleDayClick(day)}
                     className={cn(
-                      // Apply colStartClasses only to the first week
-                      dayIdx < 7 && colStartClasses[getDay(day)],
-                      !isEqual(day, selectedDay) &&
-                        !isToday(day) &&
-                        !isSameMonth(day, firstDayCurrentMonth) &&
-                        "bg-accent/50 text-muted-foreground",
-                      "relative flex h-auto min-h-[100px] flex-col border-b border-r hover:bg-muted focus:z-10 cursor-pointer",
-                      !isEqual(day, selectedDay) && "hover:bg-accent/75",
+                      "relative p-2 border-b border-r min-h-[100px] transition-colors",
+                      isSelectedDay && "bg-primary/10",
+                      !isCurrentMonth && "bg-muted/30 text-muted-foreground",
+                      "hover:bg-muted/50 cursor-pointer"
                     )}
                   >
-                    <header className="flex items-center justify-between p-2.5">
-                      <button
-                        type="button"
-                        className={cn(
-                          isEqual(day, selectedDay) && "text-primary-foreground",
-                          !isEqual(day, selectedDay) &&
-                            !isToday(day) &&
-                            isSameMonth(day, firstDayCurrentMonth) &&
-                            "text-foreground",
-                          !isEqual(day, selectedDay) &&
-                            !isToday(day) &&
-                            !isSameMonth(day, firstDayCurrentMonth) &&
-                            "text-muted-foreground",
-                          isEqual(day, selectedDay) &&
-                            isToday(day) &&
-                            "border-none bg-primary",
-                          isEqual(day, selectedDay) &&
-                            !isToday(day) &&
-                            "bg-foreground",
-                          (isEqual(day, selectedDay) || isToday(day)) &&
-                            "font-semibold",
-                          "flex h-7 w-7 items-center justify-center rounded-full text-xs hover:border",
-                        )}
-                      >
-                        <time dateTime={format(day, "yyyy-MM-dd")}>
-                          {format(day, "d")}
-                        </time>
-                      </button>
-                    </header>
-                    <div className="flex-1 p-2.5">
+                    <div className={cn(
+                      "flex justify-end mb-2",
+                      isToday(day) && "font-bold text-primary"
+                    )}>
+                      <span className={cn(
+                        "flex items-center justify-center w-6 h-6 text-xs",
+                        isToday(day) && "bg-primary text-primary-foreground rounded-full"
+                      )}>
+                        {format(day, "d")}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-1">
                       {dayEvents.length > 0 && (
-                        <div className="space-y-1.5">
-                          {dayEvents.slice(0, 1).map((event) => (
+                        <div className="space-y-1">
+                          {dayEvents.slice(0, 2).map((event) => (
                             <div
                               key={event.id}
-                              className="flex flex-col items-start gap-1 rounded-lg border p-2 text-xs leading-tight"
+                              className="flex flex-col rounded-md border p-1 text-xs"
                               style={{ 
                                 backgroundColor: event.color ? 
                                   `${event.color.startsWith('#') ? event.color : colorMap[event.color] || '#3b82f6'}15` : 
@@ -339,88 +274,22 @@ export function FullScreenCalendar({
                             >
                               <div className="flex items-center gap-1 w-full">
                                 {getEventIcon(event)}
-                                <p className="font-medium leading-none truncate max-w-[100px]">
+                                <p className="font-medium leading-none truncate max-w-[80px]">
                                   {event.title}
                                 </p>
                               </div>
-                              {event.platform && (
-                                <p className="leading-none text-muted-foreground truncate max-w-[100px]">
-                                  {event.platform}
-                                </p>
-                              )}
                             </div>
                           ))}
-                          {dayEvents.length > 1 && (
+                          {dayEvents.length > 2 && (
                             <div className="text-xs text-muted-foreground">
-                              + {dayEvents.length - 1} more
+                              + {dayEvents.length - 2} more
                             </div>
                           )}
                         </div>
                       )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Mobile View */}
-            <div className="isolate grid w-full grid-cols-7 grid-rows-6 border-x lg:hidden">
-              {days.map((day, dayIdx) => {
-                // Find events for this day to add indicators
-                const dayEvents = getEventsForDay(day);
-                const dayDate = format(day, 'yyyy-MM-dd');
-                
-                return (
-                  <button
-                    onClick={() => handleDayClick(day)}
-                    key={dayDate}
-                    type="button"
-                    className={cn(
-                      isEqual(day, selectedDay) && "text-primary-foreground",
-                      !isEqual(day, selectedDay) &&
-                        !isToday(day) &&
-                        isSameMonth(day, firstDayCurrentMonth) &&
-                        "text-foreground",
-                      !isEqual(day, selectedDay) &&
-                        !isToday(day) &&
-                        !isSameMonth(day, firstDayCurrentMonth) &&
-                        "text-muted-foreground",
-                      (isEqual(day, selectedDay) || isToday(day)) &&
-                        "font-semibold",
-                      "flex h-14 flex-col border-b border-r px-3 py-2 hover:bg-muted focus:z-10",
-                    )}
-                  >
-                    <time
-                      dateTime={format(day, "yyyy-MM-dd")}
-                      className={cn(
-                        "ml-auto flex size-6 items-center justify-center rounded-full",
-                        isEqual(day, selectedDay) &&
-                          isToday(day) &&
-                          "bg-primary text-primary-foreground",
-                        isEqual(day, selectedDay) &&
-                          !isToday(day) &&
-                          "bg-primary text-primary-foreground",
-                      )}
-                    >
-                      {format(day, "d")}
-                    </time>
-                    {dayEvents.length > 0 && (
-                      <div className="-mx-0.5 mt-auto flex flex-wrap-reverse">
-                        {dayEvents.map((event) => (
-                          <span
-                            key={event.id}
-                            className="mx-0.5 mt-1 h-1.5 w-1.5 rounded-full"
-                            style={{
-                              backgroundColor: event.color ? 
-                                (event.color.startsWith('#') ? event.color : colorMap[event.color] || '#3b82f6') : 
-                                '#3b82f6'
-                            }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </button>
-                );
+                )
               })}
             </div>
           </div>
@@ -433,7 +302,7 @@ export function FullScreenCalendar({
           <Card className="border-0 rounded-none h-full">
             <CardHeader className="bg-slate-50 dark:bg-slate-800">
               <CardTitle className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5 text-blue-500" />
+                <CalendarIcon className="h-5 w-5 text-primary" />
                 <span>{format(selectedDay, "EEEE, MMMM d, yyyy")}</span>
               </CardTitle>
             </CardHeader>
