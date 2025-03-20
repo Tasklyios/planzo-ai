@@ -25,11 +25,16 @@ const SettingsProfile = () => {
       setUser(user);
 
       if (user) {
-        const { data: profileData } = await supabase
+        const { data: profileData, error } = await supabase
           .from("profiles")
           .select("account_type, content_niche, target_audience, content_style, enable_optimization")
           .eq("id", user.id)
           .single();
+
+        if (error) {
+          console.error("Error fetching profile:", error);
+          return;
+        }
 
         if (profileData) {
           setAccountType(profileData.account_type || "personal");

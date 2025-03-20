@@ -45,6 +45,7 @@ export type Database = {
           content_style: string | null
           content_type: string | null
           created_at: string
+          enable_optimization: boolean | null
           first_name: string | null
           id: string
           last_name: string | null
@@ -65,6 +66,7 @@ export type Database = {
           content_style?: string | null
           content_type?: string | null
           created_at?: string
+          enable_optimization?: boolean | null
           first_name?: string | null
           id: string
           last_name?: string | null
@@ -85,6 +87,7 @@ export type Database = {
           content_style?: string | null
           content_type?: string | null
           created_at?: string
+          enable_optimization?: boolean | null
           first_name?: string | null
           id?: string
           last_name?: string | null
