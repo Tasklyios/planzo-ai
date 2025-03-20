@@ -1,231 +1,148 @@
-
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { 
-  BookOpen,
-  Anchor, 
-  CalendarIcon, 
-  LayoutGrid,
-  BookText,
-  LogOut, 
-  LightbulbIcon, 
-  FileText, 
-  User, 
-  Bookmark,
-  CreditCard,
-  PaintBucket,
-  ChevronsUpDown,
-  Settings
-} from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { Logo } from "@/components/ui/logo";
-import {
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from "@/components/ui/sidebar-new";
 import { useState } from "react";
-import PricingSheet from "@/components/pricing/PricingSheet";
+import { useLocation, NavLink } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar-new";
 import {
-  InfoCard,
-  InfoCardContent,
-  InfoCardTitle,
-  InfoCardDescription,
-  InfoCardMedia,
-  InfoCardFooter,
-  InfoCardDismiss,
-  InfoCardAction,
-} from "@/components/ui/info-card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Home,
+  LayoutDashboard,
+  ListChecks,
+  Lightbulb,
+  Calendar,
+  Settings,
+  BrainCircuit,
+  Rocket,
+  Mail,
+  FileVideo2,
+  User,
+} from "lucide-react";
 
-interface AppSidebarProps {
-  isMobile?: boolean;
-  closeDrawer?: () => void;
-}
-
-const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
+const AppSidebarNew = ({ isMobile = false, closeDrawer = () => {} }) => {
+  const { isCollapsed } = useSidebar();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  const toggleAccountDropdown = () => {
+    setIsAccountDropdownOpen(!isAccountDropdownOpen);
   };
-
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Signed out successfully",
-        description: "You have been signed out of your account."
-      });
-      navigate("/auth");
-    } catch (error) {
-      console.error("Error signing out:", error);
-      toast({
-        variant: "destructive",
-        title: "Error signing out",
-        description: "There was a problem signing you out. Please try again."
-      });
-    }
-    
-    if (closeDrawer) {
-      closeDrawer();
-    }
-  };
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    if (closeDrawer) {
-      closeDrawer();
-    }
-    setAccountMenuOpen(false);
-  };
-
-  // Define the menu categories and items
-  const MENU_CATEGORIES = [
-    {
-      title: "OVERVIEW",
-      items: [
-        { path: '/dashboard', label: 'Dashboard', icon: <LayoutGrid className="h-4 w-4" /> },
-        { path: '/content-planner', label: 'Content Planner', icon: <BookText className="h-4 w-4" /> },
-        { path: '/calendar', label: 'Calendar', icon: <CalendarIcon className="h-4 w-4" /> },
-      ]
-    },
-    {
-      title: "CREATE",
-      items: [
-        { path: '/idea-generator', label: 'Generate Ideas', icon: <LightbulbIcon className="h-4 w-4" /> },
-        { path: '/script', label: 'Generate Scripts', icon: <FileText className="h-4 w-4" /> },
-        { path: '/hooks', label: 'Generate Hooks', icon: <Anchor className="h-4 w-4" /> },
-      ]
-    },
-    {
-      title: "LIBRARY",
-      items: [
-        { path: '/ideas', label: 'Saved Ideas', icon: <LayoutGrid className="h-4 w-4" /> },
-        { path: '/saved-hooks', label: 'Saved Hooks', icon: <Bookmark className="h-4 w-4" /> },
-        { path: '/find-your-style', label: 'Content Style', icon: <PaintBucket className="h-4 w-4" /> },
-      ]
-    }
-  ];
 
   return (
-    <div className="flex flex-col h-full relative">
-      <div className="px-4 py-4 mb-1">
-        <Link to="/" className="flex items-center" onClick={closeDrawer}>
-          <Logo size="large" className="ml-[-4px]" />
-        </Link>
+    <div className={cn("flex h-full flex-col overflow-auto bg-background", { "pb-20": isMobile })}>
+      <div className="px-3 py-2 flex items-center justify-between">
+        <span className="font-bold">Planzo</span>
       </div>
       
-      <SidebarContent className="gap-0">
-        {MENU_CATEGORIES.map((category) => (
-          <SidebarGroup key={category.title} className="p-0 py-0.5">
-            <SidebarGroupLabel className="h-6 px-4">{category.title}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-0 px-2">
-                {category.items.map((item) => (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton 
-                      isActive={isActive(item.path)}
-                      onClick={() => handleNavigation(item.path)}
-                      className="py-1.5"
-                    >
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
+      <div className="px-3 py-2">
+        <h4 className="mb-2 px-4 text-xs font-semibold uppercase text-muted-foreground">
+          {isCollapsed ? "Menu" : "Main Menu"}
+        </h4>
+        <div className="space-y-1">
+          <NavLink 
+            to="/dashboard" 
+            className={({ isActive }) => cn(
+              buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+              "justify-start w-full"
+            )}
+            onClick={() => isMobile && closeDrawer()}
+          >
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            {!isCollapsed && "Dashboard"}
+          </NavLink>
+          <NavLink 
+            to="/generator" 
+            className={({ isActive }) => cn(
+              buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+              "justify-start w-full"
+            )}
+            onClick={() => isMobile && closeDrawer()}
+          >
+            <BrainCircuit className="mr-2 h-4 w-4" />
+            {!isCollapsed && "Generator"}
+          </NavLink>
+          <NavLink 
+            to="/idea-generator" 
+            className={({ isActive }) => cn(
+              buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+              "justify-start w-full"
+            )}
+            onClick={() => isMobile && closeDrawer()}
+          >
+            <Lightbulb className="mr-2 h-4 w-4" />
+            {!isCollapsed && "Idea Generator"}
+          </NavLink>
+          <NavLink 
+            to="/content-planner" 
+            className={({ isActive }) => cn(
+              buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+              "justify-start w-full"
+            )}
+            onClick={() => isMobile && closeDrawer()}
+          >
+            <ListChecks className="mr-2 h-4 w-4" />
+            {!isCollapsed && "Content Planner"}
+          </NavLink>
+          <NavLink 
+            to="/script" 
+            className={({ isActive }) => cn(
+              buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+              "justify-start w-full"
+            )}
+            onClick={() => isMobile && closeDrawer()}
+          >
+            <FileVideo2 className="mr-2 h-4 w-4" />
+            {!isCollapsed && "Script"}
+          </NavLink>
+          <NavLink 
+            to="/hooks" 
+            className={({ isActive }) => cn(
+              buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+              "justify-start w-full"
+            )}
+            onClick={() => isMobile && closeDrawer()}
+          >
+            <Rocket className="mr-2 h-4 w-4" />
+            {!isCollapsed && "Hooks"}
+          </NavLink>
+          
+          <NavLink 
+            to="/settings" 
+            className={({ isActive }) => cn(
+              buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+              "justify-start w-full"
+            )}
+            onClick={() => isMobile && closeDrawer()}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            {!isCollapsed && "Settings"}
+          </NavLink>
+          
+          <NavLink 
+            to="/email-templates" 
+            className={({ isActive }) => cn(
+              buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+              "justify-start w-full"
+            )}
+            onClick={() => isMobile && closeDrawer()}
+          >
+            <Mail className="mr-2 h-4 w-4" />
+            {!isCollapsed && "Email Templates"}
+          </NavLink>
+        </div>
+      </div>
       
-      <SidebarFooter>
-        <InfoCard>
-          <InfoCardContent>
-            <InfoCardTitle>Upgrade Your Account</InfoCardTitle>
-            <InfoCardDescription>
-              Get access to all premium features and unlimited content generation.
-            </InfoCardDescription>
-            <InfoCardMedia
-              media={[
-                {
-                  src: "/placeholder.svg",
-                  alt: "Premium features"
-                }
-              ]}
-              shrinkHeight={60}
-              expandHeight={120}
-            />
-            <InfoCardFooter>
-              <InfoCardDismiss>Dismiss</InfoCardDismiss>
-              <InfoCardAction>
-                <Button variant="link" className="p-0 h-auto text-xs underline">
-                  <PricingSheet 
-                    trigger={
-                      <span>Upgrade now</span>
-                    }
-                  />
-                </Button>
-              </InfoCardAction>
-            </InfoCardFooter>
-          </InfoCardContent>
-        </InfoCard>
-        
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <DropdownMenu open={accountMenuOpen} onOpenChange={setAccountMenuOpen}>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton className="w-full justify-between gap-3 h-12 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <User className="h-5 w-5" />
-                      <div className="flex flex-col items-start">
-                        <span className="text-sm font-medium">My Account</span>
-                        <span className="text-xs text-muted-foreground">
-                          Settings & Billing
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => handleNavigation('/account')}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation('/billing')}>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    <span>Billing</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarFooter>
+      <div className="mt-auto border-t px-3 py-2">
+        <NavLink 
+          to="/account"
+          className={({ isActive }) => cn(
+            buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+            "justify-start w-full"
+          )}
+          onClick={() => isMobile && closeDrawer()}
+        >
+          <User className="mr-2 h-4 w-4" />
+          {!isCollapsed && "Account"}
+        </NavLink>
+      </div>
     </div>
   );
 };
