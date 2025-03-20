@@ -257,7 +257,7 @@ export function FullScreenCalendar({
 
             <Button className="w-full gap-2 md:w-auto" onClick={handleAddEvent}>
               <PlusCircle size={16} strokeWidth={2} aria-hidden="true" />
-              <span>New Event</span>
+              <span>New Post</span>
             </Button>
           </div>
         </div>

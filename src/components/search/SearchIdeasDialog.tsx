@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Calendar, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { GeneratedIdea } from "@/types/idea";
@@ -17,16 +17,14 @@ import { GeneratedIdea } from "@/types/idea";
 interface SearchIdeasDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  columnId: string;
-  columnTitle: string;
+  selectedDate: Date;
   onIdeaAdded?: () => void; // Add callback for when an idea is added
 }
 
 export function SearchIdeasDialog({ 
   open, 
   onOpenChange, 
-  columnId, 
-  columnTitle,
+  selectedDate,
   onIdeaAdded
 }: SearchIdeasDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,14 +42,13 @@ export function SearchIdeasDialog({
 
       setLoading(true);
       try {
-        // Get ideas that match the search query but aren't already in this column
-        // IMPORTANT: Only search for saved ideas (is_saved = true)
+        // Get ideas that match the search query but aren't already in the calendar
         const { data, error } = await supabase
           .from('video_ideas')
           .select('*')
           .ilike('title', `%${searchQuery}%`)
           .eq('is_saved', true) // Only search saved ideas
-          .not('status', 'eq', columnId)
+          .not('status', 'eq', 'calendar')
           .order('created_at', { ascending: false })
           .limit(10);
 
@@ -77,24 +74,25 @@ export function SearchIdeasDialog({
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, open, columnId, toast]);
+  }, [searchQuery, open, toast]);
 
-  // Add idea to column
-  const addIdeaToColumn = async (idea: GeneratedIdea) => {
+  // Add idea to calendar
+  const addIdeaToCalendar = async (idea: GeneratedIdea) => {
     try {
       const { error } = await supabase
         .from('video_ideas')
         .update({ 
-          status: columnId,
-          is_saved: true // Always mark as saved
+          status: 'calendar',
+          is_saved: true, // Always mark as saved
+          scheduled_for: selectedDate.toISOString()
         })
         .eq('id', idea.id);
 
       if (error) throw error;
 
       toast({
-        title: "Idea added",
-        description: `"${idea.title}" added to ${columnTitle}`,
+        title: "Added to calendar",
+        description: `"${idea.title}" added to your calendar for ${selectedDate.toLocaleDateString()}`,
       });
 
       // Remove the idea from the search results
@@ -110,22 +108,30 @@ export function SearchIdeasDialog({
         onOpenChange(false);
       }
     } catch (error: any) {
-      console.error('Error adding idea to column:', error);
+      console.error('Error adding idea to calendar:', error);
       toast({
         variant: "destructive",
-        title: "Failed to add idea",
-        description: "There was an error adding the idea to the column.",
+        title: "Failed to add to calendar",
+        description: "There was an error adding the idea to your calendar.",
       });
     }
+  };
+
+  const getRandomColorName = () => {
+    const colors = ["red", "orange", "yellow", "green", "blue", "indigo", "purple", "pink"];
+    return colors[Math.floor(Math.random() * colors.length)];
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add idea to {columnTitle}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            Add post to calendar
+          </DialogTitle>
           <DialogDescription>
-            Search for saved ideas to add to this column.
+            Search for saved ideas to add to your calendar for {selectedDate.toLocaleDateString()}
           </DialogDescription>
         </DialogHeader>
         
@@ -170,12 +176,21 @@ export function SearchIdeasDialog({
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-sm truncate">{idea.title}</h4>
                   <p className="text-xs text-muted-foreground truncate mt-1">{idea.description}</p>
+                  {idea.tags && idea.tags.length > 0 && (
+                    <div className="flex items-center gap-1 mt-2">
+                      <Tag className="h-3 w-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">
+                        {idea.tags.slice(0, 3).join(", ")}
+                        {idea.tags.length > 3 && ` +${idea.tags.length - 3} more`}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   className="h-7 w-7 ml-2 flex-shrink-0"
-                  onClick={() => addIdeaToColumn(idea)}
+                  onClick={() => addIdeaToCalendar(idea)}
                 >
                   <Plus className="h-4 w-4" />
                   <span className="sr-only">Add</span>

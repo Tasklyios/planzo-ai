@@ -1,15 +1,13 @@
 
 import React, { useState, useEffect } from "react";
-import { Calendar as CalendarIcon, Pencil, Trash2 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import EditIdea from "@/components/EditIdea";
-import { DeleteIcon } from "@/components/planner/DeleteIcon";
-import { FullScreenCalendar, CalendarEvent } from "@/components/ui/fullscreen-calendar";
 import { Card } from "@/components/ui/card";
+import { FullScreenCalendar, CalendarEvent } from "@/components/ui/fullscreen-calendar";
+import { SearchIdeasDialog } from "@/components/search/SearchIdeasDialog";
 
 interface ScheduledPost {
   id: string;
@@ -45,6 +43,7 @@ const CalendarPage = () => {
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [selectedDatePosts, setSelectedDatePosts] = useState<ScheduledPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -179,7 +178,8 @@ const CalendarPage = () => {
   };
 
   const handleAddEvent = (date: Date) => {
-    navigate("/idea-generator", { state: { addToCalendar: true, scheduledDate: date.toISOString() } });
+    setSelectedDate(date);
+    setSearchDialogOpen(true);
   };
 
   const handleDeleteIdea = async (ideaId: string) => {
@@ -242,6 +242,13 @@ const CalendarPage = () => {
           }}
         />
       )}
+
+      <SearchIdeasDialog
+        open={searchDialogOpen}
+        onOpenChange={setSearchDialogOpen}
+        selectedDate={selectedDate}
+        onIdeaAdded={fetchScheduledPosts}
+      />
     </div>
   );
 };
