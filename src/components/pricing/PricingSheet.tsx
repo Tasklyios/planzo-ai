@@ -207,7 +207,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent className="w-full sm:max-w-md md:max-w-xl lg:max-w-3xl xl:max-w-5xl overflow-y-auto p-0">
-        <div className="px-6 pt-4">
+        <div className="px-6">
           <SheetHeader>
             <SheetTitle className="text-2xl">Choose your plan</SheetTitle>
           </SheetHeader>
