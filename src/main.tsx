@@ -1,9 +1,7 @@
 
 import { createRoot } from 'react-dom/client'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App.tsx'
 import './index.css'
-import { Toaster } from "@/components/ui/toaster"
 
 // Properly declare the global variable to avoid TypeScript errors
 declare global {
@@ -12,15 +10,8 @@ declare global {
   }
 }
 
-// Disable the Lovable badge
+// Disable the Lovable badge by setting the LOVABLE_BADGE_ENABLED global variable to false
+// This prevents the badge from being displayed on the launched website
 window.LOVABLE_BADGE_ENABLED = false;
 
-// Create a client
-const queryClient = new QueryClient()
-
-createRoot(document.getElementById("root")!).render(
-  <QueryClientProvider client={queryClient}>
-    <App />
-    <Toaster />
-  </QueryClientProvider>
-);
+createRoot(document.getElementById("root")!).render(<App />);

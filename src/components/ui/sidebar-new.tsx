@@ -280,36 +280,6 @@ const SidebarContent = React.forwardRef<
 });
 SidebarContent.displayName = "SidebarContent";
 
-const SidebarHeader = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div">
->(({ className, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      data-sidebar="header"
-      className={cn("flex flex-col p-2", className)}
-      {...props}
-    />
-  );
-});
-SidebarHeader.displayName = "SidebarHeader";
-
-const SidebarBody = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div">
->(({ className, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      data-sidebar="body"
-      className={cn("flex flex-1 flex-col overflow-auto p-2", className)}
-      {...props}
-    />
-  );
-});
-SidebarBody.displayName = "SidebarBody";
-
 const SidebarGroup = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div">
@@ -449,6 +419,4 @@ export {
   SidebarFooter,
   SidebarProvider,
   useSidebar,
-  SidebarHeader,
-  SidebarBody,
 };
