@@ -3,11 +3,18 @@ import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog-onboarding";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Package2, UserCircle, Building2, PlusCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Package2, UserCircle, Building2, ArrowRight, ArrowLeft } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -611,59 +618,63 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Set up your account</DialogTitle>
-          <DialogDescription>
-            Tell us about yourself so we can provide the best experience for you.
-          </DialogDescription>
-        </DialogHeader>
-        
-        {/* Progress navigation */}
-        <div className="mb-4 space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              Step {step} of {getMaxSteps()}
-            </span>
+      <DialogContent className="gap-0 p-0 sm:max-w-[500px]">
+        <div className="p-6">
+          <DialogHeader>
+            <DialogTitle>Set up your account</DialogTitle>
+            <DialogDescription>
+              Tell us about yourself so we can provide the best experience for you.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {/* Progress navigation */}
+          <div className="mb-4 space-y-2 mt-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                Step {step} of {getMaxSteps()}
+              </span>
+            </div>
+            <Progress value={getProgressPercentage()} className="h-2" />
           </div>
-          <Progress value={getProgressPercentage()} className="h-2" />
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {renderStep()}
+            </form>
+          </Form>
+          
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6">
+            {step > 1 && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={prevStep}
+                disabled={isSubmitting}
+                className="mt-2 sm:mt-0"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            )}
+            <div className={step === 1 ? "w-full flex justify-end" : ""}>
+              <Button 
+                type="button" 
+                onClick={nextStep}
+                disabled={isSubmitting}
+                className="group"
+              >
+                {step < getMaxSteps() ? (
+                  <>
+                    Next
+                    <ArrowRight className="ml-2 h-4 w-4 opacity-60 transition-transform group-hover:translate-x-0.5" />
+                  </>
+                ) : (
+                  isSubmitting ? 'Saving...' : 'Complete'
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {renderStep()}
-          </form>
-        </Form>
-        
-        <DialogFooter className="flex justify-between">
-          {step > 1 && (
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={prevStep}
-              disabled={isSubmitting}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-          )}
-          <div className={step === 1 ? "w-full flex justify-end" : ""}>
-            <Button 
-              type="button" 
-              onClick={nextStep}
-              disabled={isSubmitting}
-            >
-              {step < getMaxSteps() ? (
-                <>
-                  Next
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              ) : (
-                isSubmitting ? 'Saving...' : 'Complete'
-              )}
-            </Button>
-          </div>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
