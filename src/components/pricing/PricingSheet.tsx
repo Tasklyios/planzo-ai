@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PricingSection } from "@/components/ui/pricing-section";
@@ -205,11 +206,13 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md md:max-w-xl lg:max-w-3xl xl:max-w-5xl overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-2xl">Choose your plan</SheetTitle>
-        </SheetHeader>
-        <div className="mt-6">
+      <SheetContent className="w-full sm:max-w-md md:max-w-xl lg:max-w-3xl xl:max-w-5xl overflow-y-auto p-0">
+        <div className="px-6 pt-4">
+          <SheetHeader>
+            <SheetTitle className="text-2xl">Choose your plan</SheetTitle>
+          </SheetHeader>
+        </div>
+        <div>
           <PricingSection 
             tiers={pricingTiers} 
             isYearly={isYearly} 
