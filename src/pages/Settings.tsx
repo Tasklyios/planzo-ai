@@ -10,7 +10,7 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState("general");
   
   return (
-    <div className="w-full max-w-none px-4 py-8">
+    <div className="container max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Settings</h1>
       
       <Card className="w-full">
@@ -20,7 +20,7 @@ const Settings = () => {
             <CardDescription>Manage your account settings and preferences</CardDescription>
           </div>
           <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="general">
-            <TabsList className="grid grid-cols-4 h-9">
+            <TabsList className="grid w-full grid-cols-4 h-9">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="appearance">Appearance</TabsTrigger>
