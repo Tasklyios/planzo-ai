@@ -137,7 +137,7 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
           <SidebarGroup key={category.title} className="p-0 py-0.5">
             <SidebarGroupLabel className="h-6 px-4">{category.title}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="gap-0">
+              <SidebarMenu className="gap-0 px-2">
                 {category.items.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton 
