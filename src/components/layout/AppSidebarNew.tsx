@@ -1,4 +1,3 @@
-
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -96,7 +95,6 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
     setAccountMenuOpen(false);
   };
 
-  // Define the menu categories and items
   const MENU_CATEGORIES = [
     {
       title: "OVERVIEW",
@@ -208,6 +206,10 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem onClick={() => handleNavigation('/account')}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Account</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/settings')}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>

@@ -259,6 +259,36 @@ export type Database = {
           },
         ]
       }
+      social_accounts: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          platform: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          platform: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          platform?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       style_profiles: {
         Row: {
           content_personality: string | null
