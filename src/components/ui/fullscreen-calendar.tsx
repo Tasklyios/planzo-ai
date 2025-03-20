@@ -21,7 +21,6 @@ import {
   ChevronLeft,
   ChevronRight,
   PlusCircle,
-  Search,
   Calendar as CalendarIcon,
   FileText,
   Bookmark,
@@ -215,11 +214,7 @@ export function FullScreenCalendar({
           </div>
 
           <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
-            <Button variant="outline" size="icon" className="hidden lg:flex">
-              <Search size={16} strokeWidth={2} aria-hidden="true" />
-            </Button>
-
-            <Separator orientation="vertical" className="hidden h-6 lg:block" />
+            {/* Search button removed as requested */}
 
             <div className="inline-flex w-full -space-x-px rounded-lg shadow-sm shadow-black/5 md:w-auto rtl:space-x-reverse">
               <Button

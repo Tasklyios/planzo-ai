@@ -17,14 +17,18 @@ import { GeneratedIdea } from "@/types/idea";
 interface SearchIdeasDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedDate: Date;
-  onIdeaAdded?: () => void; // Add callback for when an idea is added
+  selectedDate?: Date;
+  columnId?: string;
+  columnTitle?: string;
+  onIdeaAdded?: () => void;
 }
 
 export function SearchIdeasDialog({ 
   open, 
   onOpenChange, 
   selectedDate,
+  columnId,
+  columnTitle,
   onIdeaAdded
 }: SearchIdeasDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,24 +80,45 @@ export function SearchIdeasDialog({
     return () => clearTimeout(timeoutId);
   }, [searchQuery, open, toast]);
 
-  // Add idea to calendar
-  const addIdeaToCalendar = async (idea: GeneratedIdea) => {
+  // Add idea to calendar or planner
+  const addIdea = async (idea: GeneratedIdea) => {
     try {
-      const { error } = await supabase
-        .from('video_ideas')
-        .update({ 
-          status: 'calendar',
-          is_saved: true, // Always mark as saved
-          scheduled_for: selectedDate.toISOString()
-        })
-        .eq('id', idea.id);
+      // If selectedDate is provided, add to calendar
+      if (selectedDate) {
+        const { error } = await supabase
+          .from('video_ideas')
+          .update({ 
+            status: 'calendar',
+            is_saved: true, // Always mark as saved
+            scheduled_for: selectedDate.toISOString()
+          })
+          .eq('id', idea.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Added to calendar",
-        description: `"${idea.title}" added to your calendar for ${selectedDate.toLocaleDateString()}`,
-      });
+        toast({
+          title: "Added to calendar",
+          description: `"${idea.title}" added to your calendar for ${selectedDate.toLocaleDateString()}`,
+        });
+      }
+      // If columnId is provided, add to planner
+      else if (columnId) {
+        const { error } = await supabase
+          .from('video_ideas')
+          .update({ 
+            status: 'planner',
+            is_saved: true,
+            planner_column: columnId 
+          })
+          .eq('id', idea.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Added to planner",
+          description: `"${idea.title}" added to ${columnTitle || 'your planner'}`,
+        });
+      }
 
       // Remove the idea from the search results
       setIdeas(ideas.filter(i => i.id !== idea.id));
@@ -108,11 +133,11 @@ export function SearchIdeasDialog({
         onOpenChange(false);
       }
     } catch (error: any) {
-      console.error('Error adding idea to calendar:', error);
+      console.error('Error adding idea:', error);
       toast({
         variant: "destructive",
-        title: "Failed to add to calendar",
-        description: "There was an error adding the idea to your calendar.",
+        title: "Failed to add idea",
+        description: "There was an error adding the idea. Please try again.",
       });
     }
   };
@@ -122,16 +147,29 @@ export function SearchIdeasDialog({
     return colors[Math.floor(Math.random() * colors.length)];
   };
 
+  // Determine the title and description based on context
+  const getDialogTitle = () => {
+    if (selectedDate) return "Add post to calendar";
+    if (columnId) return `Add to ${columnTitle || "column"}`;
+    return "Add saved idea";
+  };
+
+  const getDialogDescription = () => {
+    if (selectedDate) return `Search for saved ideas to add to your calendar for ${selectedDate.toLocaleDateString()}`;
+    if (columnId) return `Search for saved ideas to add to ${columnTitle || "this column"}`;
+    return "Search for your saved ideas";
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            Add post to calendar
+            {getDialogTitle()}
           </DialogTitle>
           <DialogDescription>
-            Search for saved ideas to add to your calendar for {selectedDate.toLocaleDateString()}
+            {getDialogDescription()}
           </DialogDescription>
         </DialogHeader>
         
@@ -190,7 +228,7 @@ export function SearchIdeasDialog({
                   variant="ghost" 
                   size="icon" 
                   className="h-7 w-7 ml-2 flex-shrink-0"
-                  onClick={() => addIdeaToCalendar(idea)}
+                  onClick={() => addIdea(idea)}
                 >
                   <Plus className="h-4 w-4" />
                   <span className="sr-only">Add</span>
