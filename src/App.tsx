@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Index from "./pages/Index";
@@ -9,7 +9,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
-import { useSupabaseUser as useUser } from "./hooks/useSupabaseUser";
+import { useSupabaseUser } from "./hooks/useSupabaseUser";
 import Account from "./pages/Account";
 
 // Import the new components
@@ -17,7 +17,7 @@ import SocialAccounts from "./pages/SocialAccounts";
 import NewSocialAccount from "./pages/NewSocialAccount";
 
 function App() {
-  const { isLoading, session } = useUser();
+  const { isLoading, session } = useSupabaseUser();
 
   // AuthGuard component
   const AuthGuard = ({ children }: { children: React.ReactNode }) => {

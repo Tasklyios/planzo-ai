@@ -1,336 +1,196 @@
 
-import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useSupabaseUser } from "@/hooks/useSupabaseUser";
-import { SocialAccount } from "@/types/socialAccount";
-import { cn } from "@/lib/utils";
-import { SidebarMenu, SidebarMenuSection, SidebarMenuItem } from "@/components/ui/sidebar-new";
-import { Button } from "@/components/ui/button";
-import {
-  Home,
-  Calendar,
-  BookText,
-  Lightbulb,
-  VideoIcon,
-  Anchor,
-  Settings,
-  LogOut,
-  Loader2,
-  User,
-  CreditCard,
-  UserCog,
-  ChevronRight
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  Home, PenSquare, Calendar, Lightbulb, 
+  FileText, BookText, UserRound, CreditCard,
+  Settings, Instagram, Users, PlusCircle
+} from 'lucide-react';
+import { useSupabaseUser } from '@/hooks/useSupabaseUser';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { invalidateQueries } from "@/services/cacheService";
-import { useToast } from "@/components/ui/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from '@/components/ui/button';
 
-const AppSidebarNew = ({ className }: { className?: string }) => {
-  const { user } = useSupabaseUser();
+interface AppSidebarNewProps {
+  isMobile?: boolean;
+  closeDrawer?: () => void;
+}
+
+interface SidebarItemProps {
+  icon?: React.ReactNode;
+  text: string;
+  href: string;
+  active: boolean;
+  onClick?: () => void;
+}
+
+const SidebarItem: React.FC<SidebarItemProps> = ({ icon, text, href, active, onClick }) => {
+  return (
+    <li>
+      <Link
+        to={href}
+        className={`flex items-center space-x-3 rounded-md px-3 py-2 text-sm ${
+          active ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'
+        }`}
+        onClick={onClick}
+      >
+        {icon && <span>{icon}</span>}
+        <span>{text}</span>
+      </Link>
+    </li>
+  );
+};
+
+interface SidebarMenuProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+const SidebarMenu: React.FC<SidebarMenuProps> = ({ title, children }) => {
+  return (
+    <div className="px-2 py-2">
+      <h2 className="mb-2 px-3 text-xs font-semibold text-muted-foreground">{title}</h2>
+      <ul className="space-y-1">{children}</ul>
+    </div>
+  );
+};
+
+const AppSidebarNew: React.FC<AppSidebarNewProps> = ({ isMobile, closeDrawer }) => {
   const location = useLocation();
-  const navigate = useNavigate();
+  const { user } = useSupabaseUser();
   const { toast } = useToast();
-  const [activeAccount, setActiveAccount] = useState<SocialAccount | null>(null);
-  const [accounts, setAccounts] = useState<SocialAccount[]>([]);
-  const [loadingAccounts, setLoadingAccounts] = useState(true);
-  const [switchingAccount, setSwitchingAccount] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchAccounts = async () => {
-      try {
-        setLoadingAccounts(true);
-        
-        const { data, error } = await supabase
-          .from("social_accounts")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-          
-        if (error) throw error;
-        
-        if (data) {
-          setAccounts(data as SocialAccount[]);
-          
-          // Find active account
-          const active = data.find(acc => acc.is_active);
-          setActiveAccount(active as SocialAccount || null);
-        }
-      } catch (error) {
-        console.error("Error fetching accounts:", error);
-      } finally {
-        setLoadingAccounts(false);
-      }
-    };
-    
-    fetchAccounts();
-    
-    // Subscribe to changes in the social_accounts table
-    const channel = supabase
-      .channel("social_accounts_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "social_accounts",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          fetchAccounts();
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
   
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
-  
-  const switchAccount = async (accountId: string) => {
-    if (!user || switchingAccount) return;
-    
-    setSwitchingAccount(accountId);
-    
-    try {
-      // Step 1: Set all accounts as inactive
-      const { error: updateError } = await supabase
-        .from("social_accounts")
-        .update({ is_active: false })
-        .eq("user_id", user.id);
-      
-      if (updateError) throw updateError;
-      
-      // Step 2: Set the selected account as active
-      const { error: activateError } = await supabase
-        .from("social_accounts")
-        .update({ is_active: true })
-        .eq("id", accountId);
-      
-      if (activateError) throw activateError;
-      
-      // Step 3: Invalidate queries
-      await invalidateQueries("switch_account");
-      
-      // Update local state
-      setAccounts(prev => 
-        prev.map(account => ({
-          ...account,
-          is_active: account.id === accountId
-        }))
-      );
-      
-      const newActiveAccount = accounts.find(acc => acc.id === accountId) || null;
-      setActiveAccount(newActiveAccount);
-      
-      toast({
-        title: "Account switched",
-        description: "Now using " + (newActiveAccount?.name || "new account")
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error switching account",
-        description: error.message,
-      });
-    } finally {
-      setSwitchingAccount(null);
+  const handleItemClick = () => {
+    if (isMobile && closeDrawer) {
+      closeDrawer();
     }
   };
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
-    <div className={cn("flex flex-col h-full py-2 px-2", className)}>
-      <SidebarMenu>
-        <SidebarMenuSection title="Overview">
-          <SidebarMenuItem 
-            icon={<Home />} 
+    <aside className="flex flex-col w-64 border-r bg-background h-screen">
+      <div className="p-4 flex-shrink-0">
+        <Link to="/dashboard" className="flex items-center gap-2">
+          <img src="/favicon.ico" alt="Logo" className="w-8 h-8" />
+          <span className="font-bold text-lg">Creator Studio</span>
+        </Link>
+      </div>
+      
+      <div className="flex-1 overflow-auto">
+        <SidebarMenu title="Create">
+          <SidebarItem 
+            icon={<Home size={18} />} 
             text="Dashboard" 
-            href="/dashboard"
-            active={location.pathname === '/dashboard'}
+            href="/dashboard" 
+            active={isActive('/dashboard')}
+            onClick={handleItemClick}
           />
-          <SidebarMenuItem 
-            icon={<Calendar />} 
-            text="Calendar"
-            href="/calendar"
-            active={location.pathname === '/calendar'}
+          <SidebarItem 
+            icon={<Lightbulb size={18} />} 
+            text="Idea Generator" 
+            href="/idea-generator" 
+            active={isActive('/idea-generator')}
+            onClick={handleItemClick}
           />
-          <SidebarMenuItem
-            icon={<BookText />}
-            text="Content Planner"
-            href="/content-planner"
-            active={location.pathname === '/content-planner'}
+          <SidebarItem 
+            icon={<FileText size={18} />} 
+            text="Script Generator" 
+            href="/script" 
+            active={isActive('/script')}
+            onClick={handleItemClick}
           />
-        </SidebarMenuSection>
+          
+          <SidebarItem 
+            icon={<BookText size={18} />} 
+            text="Hook Generator" 
+            href="/hooks" 
+            active={isActive('/hooks')}
+            onClick={handleItemClick}
+          />
+          <SidebarItem 
+            icon={<PenSquare size={18} />} 
+            text="Content Planner" 
+            href="/content-planner" 
+            active={isActive('/content-planner')}
+            onClick={handleItemClick}
+          />
+          <SidebarItem 
+            icon={<Calendar size={18} />} 
+            text="Calendar" 
+            href="/calendar" 
+            active={isActive('/calendar')}
+            onClick={handleItemClick}
+          />
+        </SidebarMenu>
         
-        <SidebarMenuSection title="Create">
-          <SidebarMenuItem
-            icon={<Lightbulb />}
-            text="Idea Generator"
-            href="/idea-generator"
-            active={location.pathname === '/idea-generator'}
+        <SidebarMenu title="Saved">
+          <SidebarItem 
+            text="Ideas" 
+            href="/ideas" 
+            active={isActive('/ideas')}
+            onClick={handleItemClick}
           />
-          <SidebarMenuItem
-            icon={<VideoIcon />}
-            text="Script Generator"
-            href="/script"
-            active={location.pathname === '/script'}
+          <SidebarItem 
+            text="Hooks" 
+            href="/saved-hooks" 
+            active={isActive('/saved-hooks')}
+            onClick={handleItemClick}
           />
-          <SidebarMenuItem
-            icon={<Anchor />}
-            text="Hook Generator"
-            href="/hooks"
-            active={location.pathname === '/hooks'}
+          <SidebarItem 
+            text="Find Your Style" 
+            href="/find-your-style" 
+            active={isActive('/find-your-style')}
+            onClick={handleItemClick}
           />
-        </SidebarMenuSection>
-        
-        <SidebarMenuSection title="Library">
-          <SidebarMenuItem
-            text="Video Ideas"
-            href="/ideas"
-            active={location.pathname === '/ideas'}
+        </SidebarMenu>
+
+        <SidebarMenu title="Social Accounts">
+          <SidebarItem 
+            icon={<Instagram size={18} />} 
+            text="Manage Accounts" 
+            href="/social-accounts" 
+            active={isActive('/social-accounts')}
+            onClick={handleItemClick}
           />
-          <SidebarMenuItem
-            text="Saved Hooks"
-            href="/saved-hooks"
-            active={location.pathname === '/saved-hooks'}
+        </SidebarMenu>
+
+        <SidebarMenu title="Profile">
+          <SidebarItem 
+            icon={<UserRound size={18} />} 
+            text="Account" 
+            href="/account" 
+            active={isActive('/account')}
+            onClick={handleItemClick}
           />
-          <SidebarMenuItem
-            text="Content Style"
-            href="/find-your-style"
-            active={location.pathname === '/find-your-style'}
+          <SidebarItem 
+            icon={<CreditCard size={18} />} 
+            text="Billing" 
+            href="/billing" 
+            active={isActive('/billing')}
+            onClick={handleItemClick}
           />
-        </SidebarMenuSection>
-        
-        {accounts.length > 0 && (
-          <SidebarMenuSection title="Accounts">
-            {loadingAccounts ? (
-              <div className="px-2 py-1 space-y-2">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-              </div>
-            ) : (
-              <>
-                <div className="px-2 py-1 mb-1">
-                  {activeAccount ? (
-                    <div className="flex items-center justify-between rounded-md px-3 py-2 bg-primary/10">
-                      <div className="flex items-center">
-                        <Avatar className="h-6 w-6 mr-2">
-                          <AvatarImage src={activeAccount.avatar_url || ""} />
-                          <AvatarFallback>{activeAccount.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium truncate max-w-[120px]">
-                          {activeAccount.name}
-                        </span>
-                      </div>
-                      <Badge variant="outline" className="ml-2 text-xs">Active</Badge>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground px-3 py-2">
-                      No active account
-                    </div>
-                  )}
-                </div>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-between text-sm h-9 px-3"
-                      disabled={accounts.length <= 1 || loadingAccounts}
-                    >
-                      <span>Switch Account</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>Select an account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {accounts.map(account => (
-                      <DropdownMenuItem
-                        key={account.id}
-                        className={cn(
-                          "flex items-center cursor-pointer",
-                          account.is_active && "bg-accent"
-                        )}
-                        disabled={account.is_active || !!switchingAccount}
-                        onClick={() => switchAccount(account.id)}
-                      >
-                        <div className="flex items-center flex-1">
-                          <Avatar className="h-6 w-6 mr-2">
-                            <AvatarImage src={account.avatar_url || ""} />
-                            <AvatarFallback>{account.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm">{account.name}</span>
-                        </div>
-                        {switchingAccount === account.id && (
-                          <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                        )}
-                      </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate("/social-accounts")}>
-                      <span className="text-sm">Manage Accounts</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            )}
-          </SidebarMenuSection>
-        )}
-        
-        <div className="mt-auto">
-          <SidebarMenuSection>
-            <SidebarMenuItem
-              icon={<User />}
-              text="Social Accounts"
-              href="/social-accounts"
-              active={location.pathname === '/social-accounts'}
-            />
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start text-sm h-9 px-3">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Account</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => navigate("/account")}>
-                  <UserCog className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/billing")}>
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  <span>Billing</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuSection>
+        </SidebarMenu>
+      </div>
+      
+      <div className="border-t p-4">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={user?.user_metadata?.avatar_url} />
+            <AvatarFallback>{user?.email?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
+          </Avatar>
+          <div className="space-y-0.5 text-sm">
+            <p className="font-medium leading-none">{user?.user_metadata?.full_name || user?.email}</p>
+            <p className="text-xs text-muted-foreground">
+              {user?.email}
+            </p>
+          </div>
         </div>
-      </SidebarMenu>
-    </div>
+      </div>
+    </aside>
   );
 };
 
