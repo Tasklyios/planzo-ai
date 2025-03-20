@@ -12,6 +12,16 @@ export function useSupabaseUser() {
   useEffect(() => {
     let mounted = true;
     
+    // First set up the auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (mounted) {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        setIsLoading(false);
+      }
+    });
+
+    // Then check for an existing session
     async function getSession() {
       try {
         setIsLoading(true);
@@ -30,6 +40,7 @@ export function useSupabaseUser() {
       } catch (err) {
         if (mounted) {
           setError(err instanceof Error ? err : new Error(String(err)));
+          console.error("Auth error:", err);
         }
       } finally {
         if (mounted) {
@@ -39,14 +50,6 @@ export function useSupabaseUser() {
     }
 
     getSession();
-
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      if (mounted) {
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-      }
-    });
 
     return () => {
       mounted = false;

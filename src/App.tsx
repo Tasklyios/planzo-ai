@@ -1,6 +1,6 @@
 
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -170,7 +170,6 @@ function App() {
           }
         />
       </Routes>
-      <Toaster />
     </BrowserRouter>
   );
 }

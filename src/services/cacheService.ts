@@ -13,13 +13,12 @@ export async function invalidateQueries(action: string = "global"): Promise<void
 
     if (error) {
       console.error("Error invalidating queries:", error);
-      throw error;
+      return; // Return early rather than throwing
     }
 
     console.log("Cache invalidated successfully:", data);
   } catch (error) {
     console.error("Error invalidating queries:", error);
     // Don't rethrow the error to prevent app crashes
-    // Just log it for debugging
   }
 }

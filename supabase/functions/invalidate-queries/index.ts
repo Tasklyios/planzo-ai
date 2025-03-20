@@ -9,10 +9,14 @@ serve(async (req) => {
   }
 
   try {
-    const { action } = await req.json()
+    // Get the request body
+    const bodyText = await req.text();
+    // Safely parse JSON, handling empty body case
+    const body = bodyText ? JSON.parse(bodyText) : {};
+    const action = body.action || 'global';
     
     // Simulating successful invalidation
-    console.log(`Invalidating queries for action: ${action}`)
+    console.log(`Invalidating queries for action: ${action}`);
     
     return new Response(
       JSON.stringify({ success: true, message: `Queries for ${action} invalidated` }),
@@ -25,7 +29,7 @@ serve(async (req) => {
       },
     )
   } catch (error) {
-    console.error('Error invalidating queries:', error.message)
+    console.error('Error invalidating queries:', error.message);
     
     return new Response(
       JSON.stringify({ error: error.message }),

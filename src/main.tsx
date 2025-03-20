@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App.tsx'
 import './index.css'
-import { ToastProvider } from "@/components/ui/toast"
+import { Toaster } from "@/components/ui/toaster"
 
 // Properly declare the global variable to avoid TypeScript errors
 declare global {
@@ -19,9 +19,8 @@ window.LOVABLE_BADGE_ENABLED = false;
 const queryClient = new QueryClient()
 
 createRoot(document.getElementById("root")!).render(
-  <ToastProvider>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </ToastProvider>
+  <QueryClientProvider client={queryClient}>
+    <App />
+    <Toaster />
+  </QueryClientProvider>
 );
