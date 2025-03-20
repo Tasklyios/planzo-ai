@@ -13,7 +13,7 @@ interface AppLayoutProps {
 }
 
 const AppLayout = ({ children, className }: AppLayoutProps) => {
-  const { isMobile } = useMobile();
+  const isMobile = useMobile();
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
 
@@ -33,7 +33,7 @@ const AppLayout = ({ children, className }: AppLayoutProps) => {
             </DrawerTrigger>
             <DrawerContent>
               <div className="w-full h-[calc(100vh-4rem)] overflow-auto">
-                <AppSidebarNew isMobile={isMobile} closeDrawer={closeDrawer} />
+                <AppSidebarNew isMobile={true} closeDrawer={closeDrawer} />
               </div>
             </DrawerContent>
           </Drawer>
