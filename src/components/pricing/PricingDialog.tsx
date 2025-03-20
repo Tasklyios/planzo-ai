@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -78,13 +77,27 @@ const PricingDialog = ({ open, onOpenChange, onContinueFree }: PricingDialogProp
               Unlock the full potential of AI-powered content creation with our flexible pricing plans
             </p>
             <div id="billing-toggle" className="mt-8 flex items-center justify-center gap-4">
-              <span className="text-gray-600">Monthly</span>
-              <div className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" value="" className="sr-only peer" checked={isYearly} onChange={() => setIsYearly(!isYearly)} />
-                <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[#4F92FF]"></div>
+              <div className="flex items-center bg-white rounded-full p-1 border border-gray-200 shadow-sm">
+                <button
+                  type="button"
+                  className={`px-6 py-2 rounded-full transition-colors ${
+                    !isYearly ? 'bg-[#4F92FF] text-white' : 'bg-transparent text-gray-600'
+                  }`}
+                  onClick={() => setIsYearly(false)}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  className={`px-6 py-2 rounded-full transition-colors ${
+                    isYearly ? 'bg-[#4F92FF] text-white' : 'bg-transparent text-gray-600'
+                  }`}
+                  onClick={() => setIsYearly(true)}
+                >
+                  Yearly
+                </button>
               </div>
-              <span className="text-gray-600">Yearly</span>
-              <span className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full">Save 30%</span>
+              {isYearly && <span className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full">Save 20%</span>}
             </div>
           </div>
 

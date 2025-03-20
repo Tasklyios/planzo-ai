@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PricingSection } from "@/components/ui/pricing-section";
 import { useNavigate } from "react-router-dom";
@@ -223,24 +222,27 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         </SheetHeader>
         <div className="mt-6">
           <div className="flex justify-center mb-8">
-            <div className="flex items-center space-x-2">
-              <span className={`text-sm ${!isYearly ? 'font-bold' : ''}`}>Monthly</span>
+            <div className="flex items-center bg-white rounded-full p-1 border border-gray-200 shadow-sm">
               <button
                 type="button"
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-                  isYearly ? 'bg-primary' : 'bg-input'
+                className={`px-6 py-2 rounded-full transition-colors ${
+                  !isYearly ? 'bg-primary text-white' : 'bg-transparent text-gray-600'
                 }`}
-                onClick={() => setIsYearly(!isYearly)}
+                onClick={() => setIsYearly(false)}
               >
-                <span
-                  className={`${
-                    isYearly ? 'translate-x-6' : 'translate-x-1'
-                  } inline-block h-4 w-4 rounded-full bg-background transition-transform`}
-                />
+                Monthly
               </button>
-              <span className={`text-sm ${isYearly ? 'font-bold' : ''}`}>Yearly</span>
-              {isYearly && <span className="text-xs bg-green-100 text-green-800 rounded-full px-2 py-0.5">Save 30%</span>}
+              <button
+                type="button"
+                className={`px-6 py-2 rounded-full transition-colors ${
+                  isYearly ? 'bg-primary text-white' : 'bg-transparent text-gray-600'
+                }`}
+                onClick={() => setIsYearly(true)}
+              >
+                Yearly
+              </button>
             </div>
+            {isYearly && <span className="ml-2 text-xs bg-green-100 text-green-800 rounded-full px-3 py-1.5">Save 20%</span>}
           </div>
           <PricingSection tiers={pricingTiers} />
         </div>
