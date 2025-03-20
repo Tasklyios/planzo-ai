@@ -9,7 +9,6 @@ import Generator from "@/pages/Generator";
 import Ideas from "@/pages/Ideas";
 import Calendar from "@/pages/Calendar";
 import Account from "@/pages/Account";
-import Settings from "@/pages/Settings";
 import Billing from "@/pages/Billing";
 import NotFound from "@/pages/NotFound";
 import Script from "@/pages/Script";
@@ -146,7 +145,6 @@ function App() {
                   <Route path="/ideas" element={<Ideas />} />
                   <Route path="/calendar" element={<Calendar />} />
                   <Route path="/account" element={<Account />} />
-                  <Route path="/settings" element={<Settings />} />
                   <Route path="/billing" element={<Billing />} />
                   <Route path="/email-templates" element={<EmailTemplates />} />
                   
