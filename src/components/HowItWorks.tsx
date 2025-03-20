@@ -1,5 +1,6 @@
 
 import { CheckCircle } from "lucide-react";
+import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 
 const HowItWorks = () => {
   const steps = [
@@ -35,15 +36,20 @@ const HowItWorks = () => {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-10 max-w-6xl mx-auto">
+        <BentoGrid className="max-w-6xl mx-auto md:grid-cols-3">
           {steps.map((step, index) => (
-            <div key={index} className="flex flex-col bg-white rounded-xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <div className="flex items-center mb-4">
-                <span className="font-bold text-4xl text-primary/20">{step.number}</span>
-                <h3 className="text-2xl font-bold text-gray-900 ml-3">{step.title}</h3>
-              </div>
-              <p className="text-gray-600 mb-6">{step.description}</p>
-              <div className="mt-auto space-y-2">
+            <BentoGridItem
+              key={index}
+              title={
+                <div className="flex items-center">
+                  <span className="font-bold text-4xl text-primary/20">{step.number}</span>
+                  <h3 className="text-2xl font-bold text-gray-900 ml-3">{step.title}</h3>
+                </div>
+              }
+              description={<p className="text-gray-600">{step.description}</p>}
+              className="hover:shadow-md transition-shadow bg-white rounded-xl p-6 border border-gray-100"
+            >
+              <div className="mt-6 space-y-2">
                 {step.highlights.map((highlight, idx) => (
                   <div key={idx} className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-primary mr-2 shrink-0 mt-0.5" />
@@ -51,9 +57,9 @@ const HowItWorks = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            </BentoGridItem>
           ))}
-        </div>
+        </BentoGrid>
       </div>
     </section>
   );
