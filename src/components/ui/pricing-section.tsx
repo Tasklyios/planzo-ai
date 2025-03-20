@@ -72,8 +72,8 @@ function PricingSection({ tiers, className, isYearly, onToggleBilling }: Pricing
       )}
     >
       <div className="w-full max-w-7xl mx-auto">
-        <div className="flex flex-col items-center gap-4 mb-12">
-          <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 md:text-4xl">
+        <div className="flex flex-col items-center gap-4 mb-12 text-center">
+          <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 md:text-4xl text-center">
             Simple, Transparent Pricing
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8 text-center">
@@ -132,8 +132,8 @@ function PricingSection({ tiers, className, isYearly, onToggleBilling }: Pricing
                 </div>
               )}
 
-              <div className="p-8 flex-1">
-                <div className="flex items-center justify-between mb-4">
+              <div className="p-8 flex-1 text-center">
+                <div className="flex items-center justify-center mb-4">
                   <div
                     className={cn(
                       "p-3 rounded-xl",
@@ -144,13 +144,13 @@ function PricingSection({ tiers, className, isYearly, onToggleBilling }: Pricing
                   >
                     {tier.icon}
                   </div>
-                  <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-                    {tier.name}
-                  </h3>
                 </div>
+                <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                  {tier.name}
+                </h3>
 
                 <div className="mb-6">
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline justify-center gap-2">
                     <span className="text-4xl font-bold text-zinc-900 dark:text-zinc-100">
                       {tier.price.monthly === 0 ? 'Free' : `£${isYearly ? tier.price.yearly : tier.price.monthly}`}
                     </span>
@@ -167,10 +167,10 @@ function PricingSection({ tiers, className, isYearly, onToggleBilling }: Pricing
 
                 <div className="space-y-4">
                   {tier.features.map((feature) => (
-                    <div key={feature.name} className="flex gap-4">
+                    <div key={feature.name} className="flex gap-4 items-center justify-center">
                       <div
                         className={cn(
-                          "mt-1 p-0.5 rounded-full transition-colors duration-200",
+                          "p-0.5 rounded-full transition-colors duration-200",
                           feature.included
                             ? "text-emerald-600 dark:text-emerald-400"
                             : "text-zinc-400 dark:text-zinc-600",
