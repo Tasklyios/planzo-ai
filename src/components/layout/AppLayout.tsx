@@ -1,6 +1,6 @@
 
 import { ReactNode, useState } from "react";
-import AppSidebar from "./AppSidebar";
+import AppSidebarNew from "./AppSidebarNew";
 import { SearchBar } from "@/components/SearchBar";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,11 @@ import {
   DrawerContent,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarTrigger
+} from "@/components/ui/sidebar-new";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -19,40 +24,43 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="md:hidden flex items-center justify-between p-3 border-b">
-        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-          <DrawerTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent className="h-[90vh]">
-            <div className="h-full overflow-auto">
-              <AppSidebar isMobile={true} closeDrawer={() => setDrawerOpen(false)} />
-            </div>
-          </DrawerContent>
-        </Drawer>
-        <div className="flex-1 flex justify-center">
-          <SearchBar />
-        </div>
-      </div>
-      <div className="flex-1 flex overflow-hidden">
-        <div className="hidden md:block w-56 flex-shrink-0 border-r border-border bg-card/40">
-          <AppSidebar />
-        </div>
-        <main className="flex-1 overflow-auto bg-background">
-          <div className="container mx-auto p-4 md:p-6">
-            <div className="mb-4 hidden md:block">
-              <div className="border border-border rounded-lg overflow-hidden">
-                <SearchBar />
+    <SidebarProvider>
+      <div className="h-screen flex flex-col">
+        <div className="md:hidden flex items-center justify-between p-3 border-b">
+          <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+            <DrawerTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent className="h-[90vh]">
+              <div className="h-full overflow-auto">
+                <AppSidebarNew isMobile={true} closeDrawer={() => setDrawerOpen(false)} />
               </div>
-            </div>
-            {children}
+            </DrawerContent>
+          </Drawer>
+          <div className="flex-1 flex justify-center">
+            <SearchBar />
           </div>
-        </main>
+        </div>
+        <div className="flex-1 flex overflow-hidden">
+          <Sidebar>
+            <AppSidebarNew />
+          </Sidebar>
+          <main className="flex-1 overflow-auto bg-background">
+            <div className="container mx-auto p-4 md:p-6">
+              <div className="mb-4 hidden md:flex items-center">
+                <SidebarTrigger className="mr-2" />
+                <div className="border border-border rounded-lg overflow-hidden flex-1">
+                  <SearchBar />
+                </div>
+              </div>
+              {children}
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
