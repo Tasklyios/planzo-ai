@@ -36,7 +36,7 @@ const HowItWorks = () => {
           </p>
         </div>
         
-        <BentoGrid className="max-w-6xl mx-auto md:grid-cols-3">
+        <BentoGrid className="max-w-6xl mx-auto">
           {steps.map((step, index) => (
             <BentoGridItem
               key={index}

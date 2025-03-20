@@ -16,36 +16,42 @@ const Features = () => {
       title: "AI Idea Generator",
       description: "Get endless viral-worthy video ideas specifically designed for your niche and audience.",
       image: "/lovable-uploads/6cccbc30-6b0d-48df-aefb-edcac316d83b.png",
+      span: "md:col-span-1 md:row-span-1"
     },
     {
       icon: <BookOpen className="text-primary h-8 w-8" />,
       title: "Script Generator",
       description: "Create engaging scripts optimized for short-form video performance with a few clicks.",
       image: "/lovable-uploads/ee976f87-1280-478e-8abb-0b4a424ab070.png",
+      span: "md:col-span-1 md:row-span-1"
     },
     {
       icon: <FileVideo className="text-primary h-8 w-8" />,
       title: "Content Planner",
       description: "Track your production progress with our in-built progress tracker.",
       image: "/lovable-uploads/f0d4f71c-2d30-4ea0-aa6e-e7c6a73a896f.png",
+      span: "md:col-span-1 md:row-span-1"
     },
     {
       icon: <Calendar className="text-primary h-8 w-8" />,
       title: "Content Calendar",
       description: "Plan and schedule your content with an intuitive drag-and-drop calendar interface.",
       image: "/lovable-uploads/7adf90d6-42f1-4b14-a7ad-f173e2e3d7a1.png",
+      span: "md:col-span-1 md:row-span-1"
     },
     {
       icon: <Layers className="text-primary h-8 w-8" />,
       title: "Multi-use Platform",
       description: "Tailored for personal branders, ecommerce, business owners and marketers - the go-to for all areas of social media.",
       image: "/lovable-uploads/198b073e-82cd-4021-ba1c-c7e7593c723c.png",
+      span: "md:col-span-1 md:row-span-1"
     },
     {
       icon: <Sparkles className="text-primary h-8 w-8" />,
       title: "Hook Generator",
       description: "Create attention-grabbing hooks that stop the scroll and increase engagement.",
       image: "/lovable-uploads/e9483604-946a-4c32-b18e-13a6fb81d464.png",
+      span: "md:col-span-1 md:row-span-1"
     }
   ];
 
@@ -73,7 +79,7 @@ const Features = () => {
                 </div>
               }
               description={<p className="text-gray-600">{feature.description}</p>}
-              className={`md:col-span-${index === 4 || index === 5 ? '2' : '1'} ${index % 3 === 0 ? 'md:row-span-2' : ''}`}
+              className={feature.span}
             >
               <div className="relative rounded-lg mt-6 flex-grow overflow-hidden shadow-sm border border-gray-100 h-48 md:h-64">
                 <img 
