@@ -1,196 +1,378 @@
 
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  Home, PenSquare, Calendar, Lightbulb, 
-  FileText, BookText, UserRound, CreditCard,
-  Settings, Instagram, Users, PlusCircle
-} from 'lucide-react';
-import { useSupabaseUser } from '@/hooks/useSupabaseUser';
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseUser } from '@/hooks/useSupabaseUser';
+import { Sidebar, SidebarHeader, SidebarBody, SidebarFooter } from "@/components/ui/sidebar-new";
+import { SidebarMenuSection, SidebarMenuItem } from "@/components/ui/sidebar-menu-section";
+import { SocialAccount } from '@/types/socialAccount';
 import { useToast } from '@/components/ui/use-toast';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Grid3X3,
+  LayoutGrid,
+  CalendarDays,
+  FileText,
+  MessageSquare,
+  Lightbulb,
+  Anchor,
+  Film,
+  BookmarkIcon,
+  Paintbrush,
+  CircleUser,
+  CreditCard,
+  LogOut,
+  Instagram,
+  Youtube,
+  Tiktok,
+  Settings,
+  Plus,
+  CheckCircle
+} from 'lucide-react';
+import { invalidateQueries } from '@/services/cacheService';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
+// Define props for the AppSidebarNew component
 interface AppSidebarNewProps {
   isMobile?: boolean;
   closeDrawer?: () => void;
+  className?: string;
 }
 
-interface SidebarItemProps {
-  icon?: React.ReactNode;
-  text: string;
-  href: string;
-  active: boolean;
-  onClick?: () => void;
-}
-
-const SidebarItem: React.FC<SidebarItemProps> = ({ icon, text, href, active, onClick }) => {
-  return (
-    <li>
-      <Link
-        to={href}
-        className={`flex items-center space-x-3 rounded-md px-3 py-2 text-sm ${
-          active ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'
-        }`}
-        onClick={onClick}
-      >
-        {icon && <span>{icon}</span>}
-        <span>{text}</span>
-      </Link>
-    </li>
-  );
-};
-
-interface SidebarMenuProps {
-  title: string;
-  children: React.ReactNode;
-}
-
-const SidebarMenu: React.FC<SidebarMenuProps> = ({ title, children }) => {
-  return (
-    <div className="px-2 py-2">
-      <h2 className="mb-2 px-3 text-xs font-semibold text-muted-foreground">{title}</h2>
-      <ul className="space-y-1">{children}</ul>
-    </div>
-  );
-};
-
-const AppSidebarNew: React.FC<AppSidebarNewProps> = ({ isMobile, closeDrawer }) => {
+const AppSidebarNew = ({ isMobile = false, closeDrawer, className }: AppSidebarNewProps) => {
+  const navigate = useNavigate();
   const location = useLocation();
   const { user } = useSupabaseUser();
   const { toast } = useToast();
-  
-  const handleItemClick = () => {
+  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeAccount, setActiveAccount] = useState<SocialAccount | null>(null);
+
+  // Fetch social accounts on component mount
+  React.useEffect(() => {
+    fetchSocialAccounts();
+  }, [user]);
+
+  const fetchSocialAccounts = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('social_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      setSocialAccounts(data || []);
+      
+      // Set active account (either from localStorage or the first account)
+      const savedActiveAccountId = localStorage.getItem('activeAccountId');
+      if (savedActiveAccountId && data) {
+        const savedAccount = data.find(acc => acc.id === savedActiveAccountId);
+        if (savedAccount) {
+          setActiveAccount(savedAccount);
+        } else if (data.length > 0) {
+          setActiveAccount(data[0]);
+          localStorage.setItem('activeAccountId', data[0].id);
+        }
+      } else if (data && data.length > 0) {
+        setActiveAccount(data[0]);
+        localStorage.setItem('activeAccountId', data[0].id);
+      }
+    } catch (error: any) {
+      console.error('Error fetching social accounts:', error.message);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load your social accounts. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setAccountActive = async (account: SocialAccount) => {
+    try {
+      setActiveAccount(account);
+      localStorage.setItem('activeAccountId', account.id);
+      
+      // Update other accounts to be inactive
+      const { error } = await supabase
+        .from('social_accounts')
+        .update({ is_active: false })
+        .eq('user_id', user?.id)
+        .neq('id', account.id);
+      
+      if (error) throw error;
+      
+      // Set this account to active
+      const { error: updateError } = await supabase
+        .from('social_accounts')
+        .update({ is_active: true })
+        .eq('id', account.id);
+      
+      if (updateError) throw updateError;
+      
+      // Invalidate queries to update UI
+      await invalidateQueries('social_accounts');
+      
+      toast({
+        title: "Account Switched",
+        description: `Now working with ${account.name}`,
+      });
+      
+      // Reload social accounts
+      fetchSocialAccounts();
+      
+      // Close drawer on mobile
+      if (isMobile && closeDrawer) {
+        closeDrawer();
+      }
+    } catch (error: any) {
+      console.error('Error setting account active:', error.message);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to switch accounts. Please try again.",
+      });
+    }
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
     if (isMobile && closeDrawer) {
       closeDrawer();
     }
   };
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  const getPlatformIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case 'instagram':
+        return <Instagram className="h-5 w-5" />;
+      case 'youtube':
+        return <Youtube className="h-5 w-5" />;
+      case 'tiktok':
+        return <Tiktok className="h-5 w-5" />;
+      default:
+        return <CircleUser className="h-5 w-5" />;
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate('/auth');
+    } catch (error: any) {
+      console.error('Error signing out:', error.message);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+      });
+    }
   };
 
   return (
-    <aside className="flex flex-col w-64 border-r bg-background h-screen">
-      <div className="p-4 flex-shrink-0">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <img src="/favicon.ico" alt="Logo" className="w-8 h-8" />
-          <span className="font-bold text-lg">Creator Studio</span>
-        </Link>
-      </div>
-      
-      <div className="flex-1 overflow-auto">
-        <SidebarMenu title="Create">
-          <SidebarItem 
-            icon={<Home size={18} />} 
-            text="Dashboard" 
-            href="/dashboard" 
-            active={isActive('/dashboard')}
-            onClick={handleItemClick}
-          />
-          <SidebarItem 
-            icon={<Lightbulb size={18} />} 
-            text="Idea Generator" 
-            href="/idea-generator" 
-            active={isActive('/idea-generator')}
-            onClick={handleItemClick}
-          />
-          <SidebarItem 
-            icon={<FileText size={18} />} 
-            text="Script Generator" 
-            href="/script" 
-            active={isActive('/script')}
-            onClick={handleItemClick}
-          />
-          
-          <SidebarItem 
-            icon={<BookText size={18} />} 
-            text="Hook Generator" 
-            href="/hooks" 
-            active={isActive('/hooks')}
-            onClick={handleItemClick}
-          />
-          <SidebarItem 
-            icon={<PenSquare size={18} />} 
-            text="Content Planner" 
-            href="/content-planner" 
-            active={isActive('/content-planner')}
-            onClick={handleItemClick}
-          />
-          <SidebarItem 
-            icon={<Calendar size={18} />} 
-            text="Calendar" 
-            href="/calendar" 
-            active={isActive('/calendar')}
-            onClick={handleItemClick}
-          />
-        </SidebarMenu>
-        
-        <SidebarMenu title="Saved">
-          <SidebarItem 
-            text="Ideas" 
-            href="/ideas" 
-            active={isActive('/ideas')}
-            onClick={handleItemClick}
-          />
-          <SidebarItem 
-            text="Hooks" 
-            href="/saved-hooks" 
-            active={isActive('/saved-hooks')}
-            onClick={handleItemClick}
-          />
-          <SidebarItem 
-            text="Find Your Style" 
-            href="/find-your-style" 
-            active={isActive('/find-your-style')}
-            onClick={handleItemClick}
-          />
-        </SidebarMenu>
-
-        <SidebarMenu title="Social Accounts">
-          <SidebarItem 
-            icon={<Instagram size={18} />} 
-            text="Manage Accounts" 
-            href="/social-accounts" 
-            active={isActive('/social-accounts')}
-            onClick={handleItemClick}
-          />
-        </SidebarMenu>
-
-        <SidebarMenu title="Profile">
-          <SidebarItem 
-            icon={<UserRound size={18} />} 
-            text="Account" 
-            href="/account" 
-            active={isActive('/account')}
-            onClick={handleItemClick}
-          />
-          <SidebarItem 
-            icon={<CreditCard size={18} />} 
-            text="Billing" 
-            href="/billing" 
-            active={isActive('/billing')}
-            onClick={handleItemClick}
-          />
-        </SidebarMenu>
-      </div>
-      
-      <div className="border-t p-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={user?.user_metadata?.avatar_url} />
-            <AvatarFallback>{user?.email?.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
-          </Avatar>
-          <div className="space-y-0.5 text-sm">
-            <p className="font-medium leading-none">{user?.user_metadata?.full_name || user?.email}</p>
-            <p className="text-xs text-muted-foreground">
-              {user?.email}
-            </p>
+    <Sidebar className={className}>
+      <SidebarHeader>
+        <div className="flex items-center gap-2 px-4 py-2">
+          <div className="relative">
+            {activeAccount ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={activeAccount.avatar_url || undefined} alt={activeAccount.name} />
+                      <AvatarFallback>
+                        {getPlatformIcon(activeAccount.platform)}
+                      </AvatarFallback>
+                    </Avatar>
+                    {activeAccount.is_active && (
+                      <CheckCircle className="absolute -bottom-1 -right-1 h-4 w-4 text-green-500" />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuLabel>Switch Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {socialAccounts.map((account) => (
+                    <DropdownMenuItem 
+                      key={account.id}
+                      onClick={() => setAccountActive(account)}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={account.avatar_url || undefined} alt={account.name} />
+                          <AvatarFallback>
+                            {getPlatformIcon(account.platform)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{account.name}</span>
+                        {account.id === activeAccount.id && (
+                          <CheckCircle className="ml-2 h-4 w-4 text-green-500" />
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleNavigation('/social-accounts/new')}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span>Add New Account</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/social-accounts')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Manage Accounts</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="ghost"
+                className="h-10 w-10 rounded-full p-0"
+                onClick={() => handleNavigation('/social-accounts/new')}
+              >
+                <Plus className="h-6 w-6" />
+              </Button>
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">
+              {activeAccount ? activeAccount.name : 'Add Account'}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {activeAccount ? activeAccount.platform : 'Get Started'}
+            </span>
           </div>
         </div>
-      </div>
-    </aside>
+      </SidebarHeader>
+      
+      <SidebarBody>
+        <ScrollArea className="h-[calc(100vh-10rem)]">
+          <SidebarMenuSection title="Overview">
+            <SidebarMenuItem 
+              icon={<Grid3X3 />}
+              text="Dashboard"
+              href="/dashboard"
+              active={location.pathname === '/dashboard'}
+            />
+            <SidebarMenuItem
+              icon={<LayoutGrid />}
+              text="Content Planner"
+              href="/content-planner" 
+              active={location.pathname === '/content-planner'}
+            />
+            <SidebarMenuItem
+              icon={<CalendarDays />}
+              text="Calendar"
+              href="/calendar"
+              active={location.pathname === '/calendar'}
+            />
+          </SidebarMenuSection>
+          
+          <SidebarMenuSection title="Create">
+            <SidebarMenuItem
+              icon={<Lightbulb />}
+              text="Generate Ideas"
+              href="/idea-generator"
+              active={location.pathname === '/idea-generator'}
+            />
+            <SidebarMenuItem
+              icon={<FileText />}
+              text="Generate Scripts"
+              href="/script"
+              active={location.pathname === '/script'}
+            />
+            <SidebarMenuItem
+              icon={<Anchor />}
+              text="Generate Hooks"
+              href="/hooks"
+              active={location.pathname === '/hooks'}
+            />
+          </SidebarMenuSection>
+          
+          <SidebarMenuSection title="Library">
+            <SidebarMenuItem
+              text="Saved Ideas"
+              href="/ideas"
+              active={location.pathname === '/ideas'}
+            />
+            <SidebarMenuItem
+              text="Saved Hooks"
+              href="/saved-hooks"
+              active={location.pathname === '/saved-hooks'}
+            />
+            <SidebarMenuItem
+              text="Content Style"
+              href="/find-your-style"
+              active={location.pathname === '/find-your-style'}
+            />
+          </SidebarMenuSection>
+        
+          <SidebarMenuSection title="Social Accounts">
+            {socialAccounts.length === 0 && !loading ? (
+              <div className="px-4 py-2 text-sm text-muted-foreground">
+                <p>No accounts added yet.</p>
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-sm" 
+                  onClick={() => handleNavigation('/social-accounts/new')}
+                >
+                  Add your first account
+                </Button>
+              </div>
+            ) : (
+              socialAccounts.map((account) => (
+                <SidebarMenuItem
+                  key={account.id}
+                  icon={getPlatformIcon(account.platform)}
+                  text={account.name}
+                  href="#"
+                  active={activeAccount?.id === account.id}
+                />
+              ))
+            )}
+            <SidebarMenuItem
+              icon={<Settings />}
+              text="Manage Accounts"
+              href="/social-accounts"
+              active={location.pathname === '/social-accounts'}
+            />
+          </SidebarMenuSection>
+        </ScrollArea>
+      </SidebarBody>
+      
+      <SidebarFooter>
+        <div className="flex flex-col gap-2 px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={() => handleNavigation('/account')}>
+                <CircleUser className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => handleNavigation('/billing')}>
+                <CreditCard className="h-5 w-5" />
+              </Button>
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 
