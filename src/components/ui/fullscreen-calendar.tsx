@@ -266,7 +266,7 @@ export function FullScreenCalendar({
                       !isToday(day) &&
                       !isSameMonth(day, firstDayCurrentMonth) &&
                       "bg-accent/50 text-muted-foreground",
-                    "relative flex h-auto flex-col border-b border-r hover:bg-muted focus:z-10 cursor-pointer",
+                    "relative flex h-auto min-h-[100px] flex-col border-b border-r hover:bg-muted focus:z-10 cursor-pointer",
                     !isEqual(day, selectedDay) && "hover:bg-accent/75",
                   )}
                 >
@@ -318,14 +318,14 @@ export function FullScreenCalendar({
                               }}
                               onClick={(e) => handleEventClick(event, e)}
                             >
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1 w-full">
                                 {getEventIcon(event)}
-                                <p className="font-medium leading-none">
+                                <p className="font-medium leading-none truncate max-w-[120px]">
                                   {event.title}
                                 </p>
                               </div>
                               {event.platform && (
-                                <p className="leading-none text-muted-foreground">
+                                <p className="leading-none text-muted-foreground truncate max-w-[120px]">
                                   {event.platform}
                                 </p>
                               )}
@@ -430,12 +430,13 @@ export function FullScreenCalendar({
                   {selectedDayEvents.map(event => (
                     <Card 
                       key={event.id} 
-                      className="hover:shadow-md transition-shadow border-l-4" 
+                      className="hover:shadow-md transition-shadow border-l-4 cursor-pointer" 
                       style={{ 
                         borderLeftColor: event.color ? 
                           (event.color.startsWith('#') ? event.color : colorMap[event.color] || '#3b82f6') : 
                           '#3b82f6' 
                       }}
+                      onClick={(e) => handleEventClick(event, e)}
                     >
                       <CardContent className="p-4">
                         <div className="flex flex-col gap-2">
