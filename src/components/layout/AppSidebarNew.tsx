@@ -16,7 +16,8 @@ import {
   CreditCard,
   PaintBucket,
   Sparkles,
-  ChevronsUpDown
+  ChevronsUpDown,
+  Settings
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -43,6 +44,13 @@ import {
   InfoCardDismiss,
   InfoCardAction,
 } from "@/components/ui/info-card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface AppSidebarProps {
   isMobile?: boolean;
@@ -53,6 +61,7 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -85,6 +94,7 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
     if (closeDrawer) {
       closeDrawer();
     }
+    setAccountMenuOpen(false);
   };
 
   // Define the menu categories and items
@@ -181,45 +191,37 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton 
-                className="w-full justify-between gap-3 h-12" 
-                onClick={() => handleNavigation('/account')}
-              >
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  <div className="flex flex-col items-start">
-                    <span className="text-sm font-medium">My Account</span>
-                    <span className="text-xs text-muted-foreground">
-                      Settings & Billing
-                    </span>
-                  </div>
-                </div>
-                <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                className="w-full justify-between gap-3" 
-                onClick={() => handleNavigation('/billing')}
-              >
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  <span>Billing</span>
-                </div>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                className="w-full justify-between gap-3 text-muted-foreground" 
-                onClick={handleSignOut}
-              >
-                <div className="flex items-center gap-2">
-                  <LogOut className="h-4 w-4" />
-                  <span>Log Out</span>
-                </div>
-              </SidebarMenuButton>
+              <DropdownMenu open={accountMenuOpen} onOpenChange={setAccountMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton className="w-full justify-between gap-3 h-12 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm font-medium">My Account</span>
+                        <span className="text-xs text-muted-foreground">
+                          Settings & Billing
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => handleNavigation('/account')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/billing')}>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    <span>Billing</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
