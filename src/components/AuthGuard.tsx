@@ -22,7 +22,11 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   };
 
   useEffect(() => {
+    let mounted = true;
+    
     const checkAuth = async () => {
+      if (!mounted) return;
+      
       setIsLoading(true);
       try {
         console.log("Checking authentication status...");
@@ -30,10 +34,10 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         
         if (error) {
           console.error("Authentication check error:", error);
-          setIsAuthenticated(false);
+          if (mounted) setIsAuthenticated(false);
           
           // Don't redirect if this is a password reset flow
-          if (!isPasswordResetFlow()) {
+          if (!isPasswordResetFlow() && mounted) {
             navigate("/auth", { state: { from: location.pathname } });
           }
           return;
@@ -41,27 +45,27 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         
         if (!session) {
           console.log("No session found, redirecting to auth");
-          setIsAuthenticated(false);
+          if (mounted) setIsAuthenticated(false);
           localStorage.clear(); // Clear all localStorage on session check failure
           
           // Don't redirect if this is a password reset flow
-          if (!isPasswordResetFlow()) {
+          if (!isPasswordResetFlow() && mounted) {
             navigate("/auth", { state: { from: location.pathname } });
           }
         } else {
           console.log("Session found, user is authenticated", session.user.id);
-          setIsAuthenticated(true);
+          if (mounted) setIsAuthenticated(true);
         }
       } catch (error) {
         console.error("Error checking authentication:", error);
-        setIsAuthenticated(false);
+        if (mounted) setIsAuthenticated(false);
         
         // Don't redirect if this is a password reset flow
-        if (!isPasswordResetFlow()) {
+        if (!isPasswordResetFlow() && mounted) {
           navigate("/auth", { state: { from: location.pathname } });
         }
       } finally {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       }
     };
 
@@ -69,17 +73,19 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
 
     // Set up subscription to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      
       console.log("Auth state changed:", event, session ? "session exists" : "no session");
       
       if (event === "SIGNED_OUT") {
         console.log("User signed out, redirecting to landing page");
         localStorage.clear(); // Clear all localStorage
-        setIsAuthenticated(false);
+        if (mounted) setIsAuthenticated(false);
         // Force navigate to landing page
         window.location.href = "/";
       } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         console.log("User signed in or token refreshed", session?.user.id);
-        setIsAuthenticated(true);
+        if (mounted) setIsAuthenticated(true);
         
         // Skip redirect for verification and password reset flows, otherwise redirect to dashboard
         const isEmailVerification = location.pathname === '/auth' && 
@@ -89,7 +95,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         
         const isPasswordReset = isPasswordResetFlow();
         
-        if (!isEmailVerification && !isPasswordReset) {
+        if (!isEmailVerification && !isPasswordReset && mounted) {
           const currentPath = location.pathname;
           if (currentPath === "/" || currentPath === "/auth") {
             navigate("/dashboard");
@@ -97,12 +103,12 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         }
       } else if (event === "PASSWORD_RECOVERY") {
         // Make sure we show the reset password form
-        navigate("/auth?type=recovery");
+        if (mounted) navigate("/auth?type=recovery");
       }
     });
 
     return () => {
-      console.log("Cleaning up auth subscription");
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [navigate, location]);

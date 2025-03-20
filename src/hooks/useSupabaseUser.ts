@@ -10,6 +10,8 @@ export function useSupabaseUser() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+    
     async function getSession() {
       try {
         setIsLoading(true);
@@ -21,26 +23,35 @@ export function useSupabaseUser() {
           throw sessionError;
         }
 
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        
-        // Set up auth state change listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-          setSession(newSession);
-          setUser(newSession?.user ?? null);
-        });
-
-        return () => {
-          subscription.unsubscribe();
-        };
+        if (mounted) {
+          setSession(currentSession);
+          setUser(currentSession?.user ?? null);
+        }
       } catch (err) {
-        setError(err instanceof Error ? err : new Error(String(err)));
+        if (mounted) {
+          setError(err instanceof Error ? err : new Error(String(err)));
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     }
 
     getSession();
+
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (mounted) {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return { session, user, isLoading, error };
