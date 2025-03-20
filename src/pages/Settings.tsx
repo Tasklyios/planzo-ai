@@ -1,8 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Toggle } from "@/components/ui/toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SettingsGeneral from "@/components/settings/SettingsGeneral";
 import SettingsProfile from "@/components/settings/SettingsProfile";
@@ -21,42 +19,24 @@ const Settings = () => {
             <CardTitle>Account Settings</CardTitle>
             <CardDescription>Manage your account settings and preferences</CardDescription>
           </div>
-          <TabsList className="grid grid-cols-3 h-9">
-            <TabsTrigger 
-              value="general"
-              onClick={() => setActiveTab("general")}
-              className={activeTab === "general" ? "data-[state=active]" : ""}
-            >
-              General
-            </TabsTrigger>
-            <TabsTrigger 
-              value="profile"
-              onClick={() => setActiveTab("profile")}
-              className={activeTab === "profile" ? "data-[state=active]" : ""}
-            >
-              Profile
-            </TabsTrigger>
-            <TabsTrigger 
-              value="appearance"
-              onClick={() => setActiveTab("appearance")}
-              className={activeTab === "appearance" ? "data-[state=active]" : ""}
-            >
-              Appearance
-            </TabsTrigger>
-          </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="general">
+            <TabsList className="grid grid-cols-3 h-9">
+              <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </CardHeader>
         <CardContent className="pt-6">
-          <Tabs value={activeTab} className="w-full">
-            <TabsContent value="general" className="m-0">
-              <SettingsGeneral />
-            </TabsContent>
-            <TabsContent value="profile" className="m-0">
-              <SettingsProfile />
-            </TabsContent>
-            <TabsContent value="appearance" className="m-0">
-              <SettingsAppearance />
-            </TabsContent>
-          </Tabs>
+          <TabsContent value="general" className="m-0">
+            <SettingsGeneral />
+          </TabsContent>
+          <TabsContent value="profile" className="m-0">
+            <SettingsProfile />
+          </TabsContent>
+          <TabsContent value="appearance" className="m-0">
+            <SettingsAppearance />
+          </TabsContent>
         </CardContent>
       </Card>
     </div>
