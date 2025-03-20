@@ -85,7 +85,7 @@ const Features = () => {
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-full object-cover rounded-lg transition-transform hover:scale-105"
+                  className="w-full h-full object-cover rounded-lg"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity rounded-lg"></div>
               </div>
