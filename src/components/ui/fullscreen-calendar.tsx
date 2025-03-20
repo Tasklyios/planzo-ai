@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -332,7 +333,7 @@ export function FullScreenCalendar({
                         !isToday(day) &&
                         !isSameMonth(day, firstDayCurrentMonth) &&
                         "bg-accent/50 text-muted-foreground",
-                      "relative flex flex-col border-b border-r hover:bg-muted focus:z-10 cursor-pointer",
+                      "relative flex flex-col border-b border-r hover:bg-muted focus:z-10 cursor-pointer min-h-[100px]",
                       !isEqual(day, selectedDay) && "hover:bg-accent/75",
                     )}
                   >

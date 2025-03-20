@@ -158,6 +158,7 @@ const CalendarPage = () => {
 
   useEffect(() => {
     fetchScheduledPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateSelectedDatePosts = (date: Date, posts: ScheduledPost[] = scheduledPosts) => {
@@ -180,6 +181,10 @@ const CalendarPage = () => {
   const handleAddEvent = (date: Date) => {
     setSelectedDate(date);
     setSearchDialogOpen(true);
+  };
+
+  const handleDateSelect = (date: Date) => {
+    updateSelectedDatePosts(date);
   };
 
   const handleDeleteIdea = async (ideaId: string) => {
@@ -225,7 +230,7 @@ const CalendarPage = () => {
           <FullScreenCalendar 
             events={calendarEvents}
             selectedDate={selectedDate}
-            onDateSelect={updateSelectedDatePosts}
+            onDateSelect={handleDateSelect}
             onEventClick={handleEventClick}
             onAddEvent={handleAddEvent}
             showSidePanel={true}
