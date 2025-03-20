@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PricingSection } from "@/components/ui/pricing-section";
@@ -21,17 +20,12 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
   const handleCheckout = async (tierName: string) => {
     try {
       setLoading(tierName);
-      
-      // Check if user is authenticated
       const { data: { session }, error: authError } = await supabase.auth.getSession();
-      
       if (authError || !session?.user) {
         setOpen(false);
         navigate('/auth');
         throw new Error('Please sign in to upgrade your plan');
       }
-
-      // Create checkout session with isYearly parameter
       const response = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           tier: tierName,
@@ -40,18 +34,13 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
           isYearly: isYearly
         }
       });
-
       if (response.error) {
         throw new Error(response.error.message || 'Failed to create checkout session');
       }
-
       if (!response.data?.url) {
         throw new Error('No checkout URL received');
       }
-
-      // Redirect to Stripe Checkout
       window.location.href = response.data.url;
-      
     } catch (error: any) {
       console.error('Checkout error:', error);
       toast({
@@ -221,30 +210,11 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
           <SheetTitle className="text-2xl">Choose your plan</SheetTitle>
         </SheetHeader>
         <div className="mt-6">
-          <div className="flex justify-center mb-8">
-            <div className="flex items-center bg-white rounded-full p-1 border border-gray-200 shadow-sm">
-              <button
-                type="button"
-                className={`px-6 py-2 rounded-full transition-colors ${
-                  !isYearly ? 'bg-primary text-white' : 'bg-transparent text-gray-600'
-                }`}
-                onClick={() => setIsYearly(false)}
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                className={`px-6 py-2 rounded-full transition-colors ${
-                  isYearly ? 'bg-primary text-white' : 'bg-transparent text-gray-600'
-                }`}
-                onClick={() => setIsYearly(true)}
-              >
-                Yearly
-              </button>
-            </div>
-            {isYearly && <span className="ml-2 text-xs bg-green-100 text-green-800 rounded-full px-3 py-1.5">Save 20%</span>}
-          </div>
-          <PricingSection tiers={pricingTiers} isYearly={isYearly} />
+          <PricingSection 
+            tiers={pricingTiers} 
+            isYearly={isYearly} 
+            onToggleBilling={(yearly) => setIsYearly(yearly)}
+          />
         </div>
       </SheetContent>
     </Sheet>

@@ -210,31 +210,11 @@ const Pricing = () => {
           Choose the plan that best fits your needs. All plans include access to our core features.
         </p>
         
-        <div className="flex justify-center mb-10">
-          <div className="flex items-center bg-white rounded-full p-1 border border-gray-200 shadow-sm">
-            <button
-              type="button"
-              className={`px-6 py-2 rounded-full transition-colors ${
-                !isYearly ? 'bg-primary text-white' : 'bg-transparent text-gray-600'
-              }`}
-              onClick={() => setIsYearly(false)}
-            >
-              Monthly
-            </button>
-            <button
-              type="button"
-              className={`px-6 py-2 rounded-full transition-colors ${
-                isYearly ? 'bg-primary text-white' : 'bg-transparent text-gray-600'
-              }`}
-              onClick={() => setIsYearly(true)}
-            >
-              Yearly
-            </button>
-          </div>
-          {isYearly && <span className="ml-2 text-xs bg-green-100 text-green-800 rounded-full px-3 py-1.5">Save 20%</span>}
-        </div>
-        
-        <PricingSection tiers={pricingTiers} isYearly={isYearly} />
+        <PricingSection 
+          tiers={pricingTiers} 
+          isYearly={isYearly} 
+          onToggleBilling={(yearly) => setIsYearly(yearly)}
+        />
       </div>
     </section>
   );

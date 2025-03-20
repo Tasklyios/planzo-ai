@@ -31,9 +31,10 @@ interface PricingSectionProps {
   tiers: PricingTier[]
   className?: string
   isYearly: boolean // Changed to accept isYearly as a prop instead of managing its own state
+  onToggleBilling?: (yearly: boolean) => void // Added to handle toggle from parent
 }
 
-function PricingSection({ tiers, className, isYearly }: PricingSectionProps) {
+function PricingSection({ tiers, className, isYearly, onToggleBilling }: PricingSectionProps) {
   const buttonStyles = {
     default: cn(
       "h-12 bg-white dark:bg-zinc-900",
@@ -78,7 +79,33 @@ function PricingSection({ tiers, className, isYearly }: PricingSectionProps) {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8 text-center">
             Plans that grow with your content strategy
           </p>
-          {/* Removed the toggle buttons here */}
+          
+          {/* Monthly/Yearly toggle positioned here */}
+          {onToggleBilling && (
+            <div className="flex items-center justify-center mb-6">
+              <div className="flex items-center bg-white rounded-full p-1 border border-gray-200 shadow-sm dark:bg-zinc-800 dark:border-zinc-700">
+                <button
+                  type="button"
+                  className={`px-6 py-2 rounded-full transition-colors ${
+                    !isYearly ? 'bg-primary text-white' : 'bg-transparent text-gray-600 dark:text-gray-400'
+                  }`}
+                  onClick={() => onToggleBilling?.(false)}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  className={`px-6 py-2 rounded-full transition-colors ${
+                    isYearly ? 'bg-primary text-white' : 'bg-transparent text-gray-600 dark:text-gray-400'
+                  }`}
+                  onClick={() => onToggleBilling?.(true)}
+                >
+                  Yearly
+                </button>
+              </div>
+              {isYearly && <span className="ml-2 text-xs bg-green-100 text-green-800 rounded-full px-3 py-1.5">Save 20%</span>}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
