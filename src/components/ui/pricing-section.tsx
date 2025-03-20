@@ -94,7 +94,7 @@ function PricingSection({ tiers, className }: PricingSectionProps) {
               </button>
             ))}
           </div>
-          <span className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full font-medium">Save 30%</span>
+          <span className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full font-medium">Save 20%</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -141,11 +141,13 @@ function PricingSection({ tiers, className }: PricingSectionProps) {
                 <div className="mb-6">
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold text-zinc-900 dark:text-zinc-100">
-                      ${isYearly ? tier.price.yearly : tier.price.monthly}
+                      {tier.price.monthly === 0 ? 'Free' : `£${isYearly ? tier.price.yearly : tier.price.monthly}`}
                     </span>
-                    <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                      /{isYearly ? "year" : "month"}
-                    </span>
+                    {tier.price.monthly > 0 && (
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                        /{isYearly ? "year" : "month"}
+                      </span>
+                    )}
                   </div>
                   <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                     {tier.description}

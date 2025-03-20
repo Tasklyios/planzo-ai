@@ -26,13 +26,13 @@ const Pricing = () => {
           included: true,
         },
         {
-          name: "3 script generations per day",
+          name: "1 script generation per day",
           description: "Create engaging scripts",
           included: true,
         },
         {
-          name: "Basic content calendar",
-          description: "Plan your content schedule",
+          name: "4 hooks per day",
+          description: "Create attention-grabbing hooks",
           included: true,
         },
         {
@@ -40,13 +40,18 @@ const Pricing = () => {
           description: "Access to our community forums",
           included: true,
         },
+        {
+          name: "Customization",
+          description: "Personalize your experience",
+          included: false,
+        },
       ],
     },
     {
       name: "Pro",
       price: {
-        monthly: 29,
-        yearly: 19,
+        monthly: 19.99,
+        yearly: 199,
       },
       description: "Perfect for growing creators",
       highlight: true,
@@ -63,23 +68,23 @@ const Pricing = () => {
           included: true,
         },
         {
-          name: "25 script generations per day",
+          name: "10 script generations per day",
           description: "Create more engaging scripts",
           included: true,
         },
         {
-          name: "Advanced content calendar",
-          description: "Full planning capabilities",
-          included: true,
-        },
-        {
-          name: "Hook generator",
+          name: "20 hooks per day",
           description: "Create attention-grabbing hooks",
           included: true,
         },
         {
-          name: "AI voiceovers (15/mo)",
-          description: "Professional audio for your content",
+          name: "Advanced script generation",
+          description: "More refined script outputs",
+          included: true,
+        },
+        {
+          name: "Colour customization",
+          description: "Personalize your experience",
           included: true,
         },
         {
@@ -92,8 +97,8 @@ const Pricing = () => {
     {
       name: "Business",
       price: {
-        monthly: 69,
-        yearly: 49,
+        monthly: 39.99,
+        yearly: 399,
       },
       description: "For teams and agencies",
       icon: (
@@ -103,33 +108,33 @@ const Pricing = () => {
       ),
       features: [
         {
-          name: "Unlimited AI video ideas",
-          description: "Unlimited creativity",
+          name: "100 AI video ideas per day",
+          description: "Maximum creativity",
           included: true,
         },
         {
-          name: "Unlimited script generations",
-          description: "No limits on script creation",
+          name: "20 script generations per day",
+          description: "High volume script creation",
           included: true,
         },
         {
-          name: "Team collaboration",
-          description: "Up to 5 team members",
+          name: "40 hooks per day",
+          description: "More hook variety",
           included: true,
         },
         {
-          name: "AI voiceovers",
-          description: "Unlimited voiceovers",
+          name: "Advanced script generation",
+          description: "Premium script outputs",
           included: true,
         },
         {
-          name: "Custom branding",
-          description: "Add your brand to all assets",
+          name: "Colour customization",
+          description: "Personalize your experience",
           included: true,
         },
         {
-          name: "API access",
-          description: "Integrate with your tools",
+          name: "Coming soon: Extra feature",
+          description: "Advanced capability (in development)",
           included: true,
         },
         {
