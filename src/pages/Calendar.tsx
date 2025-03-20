@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from "react";
-import { format, isSameDay } from "date-fns";
+import React, { useState, useEffect, useCallback } from "react";
+import { format, isSameDay, isEqual } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -125,18 +125,16 @@ const CalendarPage = () => {
       
       setScheduledPosts(formattedPosts);
       
-      const events: CalendarEvent[] = formattedPosts.map((post) => {
-        return {
-          id: post.id,
-          title: post.title,
-          description: post.description,
-          date: new Date(post.scheduled_for || new Date()),
-          color: post.color || getRandomColor(post.id),
-          platform: post.platform,
-          category: post.category,
-          allDay: true,
-        };
-      });
+      const events: CalendarEvent[] = formattedPosts.map((post) => ({
+        id: post.id,
+        title: post.title,
+        description: post.description,
+        date: new Date(post.scheduled_for || new Date()),
+        color: post.color || getRandomColor(post.id),
+        platform: post.platform,
+        category: post.category,
+        allDay: true,
+      }));
       
       console.log("Calendar events:", events);
       setCalendarEvents(events);
@@ -161,7 +159,8 @@ const CalendarPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const updateSelectedDatePosts = (date: Date, posts: ScheduledPost[] = scheduledPosts) => {
+  // Memoize the updateSelectedDatePosts function to avoid recreating it on every render
+  const updateSelectedDatePosts = useCallback((date: Date, posts: ScheduledPost[] = scheduledPosts) => {
     console.log("Updating selected date posts for:", format(date, "yyyy-MM-dd"));
     const postsForSelectedDate = posts.filter(post => {
       if (!post.scheduled_for) return false;
@@ -170,8 +169,11 @@ const CalendarPage = () => {
     });
     console.log("Found posts for date:", postsForSelectedDate.length);
     setSelectedDatePosts(postsForSelectedDate);
-    setSelectedDate(date);
-  };
+    setSelectedDate(prevDate => {
+      // Only update if the dates are different to avoid infinite loops
+      return isSameDay(prevDate, date) ? prevDate : date;
+    });
+  }, [scheduledPosts]);
 
   const handleEventClick = (event: CalendarEvent) => {
     console.log("Event clicked:", event);
@@ -183,9 +185,11 @@ const CalendarPage = () => {
     setSearchDialogOpen(true);
   };
 
-  const handleDateSelect = (date: Date) => {
-    updateSelectedDatePosts(date);
-  };
+  const handleDateSelect = useCallback((date: Date) => {
+    if (!isEqual(date, selectedDate)) {
+      updateSelectedDatePosts(date);
+    }
+  }, [selectedDate, updateSelectedDatePosts]);
 
   const handleDeleteIdea = async (ideaId: string) => {
     try {

@@ -72,38 +72,48 @@ export function FullScreenCalendar({
   onDateSelect,
   onEventClick,
   onAddEvent,
-  selectedDate: initialSelectedDate,
+  selectedDate: externalSelectedDate,
   showSidePanel = true
 }: FullScreenCalendarProps) {
   const today = startOfToday()
-  const [selectedDay, setSelectedDay] = React.useState(initialSelectedDate || today)
-  const [currentMonth, setCurrentMonth] = React.useState(format(initialSelectedDate || today, "MMM-yyyy"))
-  const firstDayCurrentMonth = parse(currentMonth, "MMM-yyyy", new Date())
+  const [selectedDay, setSelectedDay] = React.useState(externalSelectedDate || today)
+  const [currentMonth, setCurrentMonth] = React.useState(format(externalSelectedDate || today, "MMM-yyyy"))
+  
+  // Parse first day of current month once
+  const firstDayCurrentMonth = React.useMemo(() => {
+    return parse(currentMonth, "MMM-yyyy", new Date())
+  }, [currentMonth])
+  
   const isDesktop = useMediaQuery("(min-width: 768px)")
 
   // Calculate days in month with proper padding for first and last week
   const days = React.useMemo(() => {
     const monthStart = startOfMonth(firstDayCurrentMonth)
     const monthEnd = endOfMonth(firstDayCurrentMonth)
+    
+    // Get the start of the week containing the first day of the month
     const calendarStart = startOfWeek(monthStart)
+    
+    // Get the end of the week containing the last day of the month
     const calendarEnd = endOfWeek(monthEnd)
-
+    
+    // Get all days in this interval
     return eachDayOfInterval({ start: calendarStart, end: calendarEnd })
   }, [firstDayCurrentMonth])
 
-  // When selectedDay changes, notify parent
+  // Handle external selected date changes
   React.useEffect(() => {
-    if (onDateSelect) {
+    if (externalSelectedDate && !isEqual(externalSelectedDate, selectedDay)) {
+      setSelectedDay(externalSelectedDate)
+    }
+  }, [externalSelectedDate, selectedDay])
+
+  // Notify parent when selected day changes, but avoid infinite loops
+  React.useEffect(() => {
+    if (onDateSelect && (!externalSelectedDate || !isEqual(externalSelectedDate, selectedDay))) {
       onDateSelect(selectedDay)
     }
-  }, [selectedDay, onDateSelect])
-
-  // If initialSelectedDate changes from parent, update local state
-  React.useEffect(() => {
-    if (initialSelectedDate) {
-      setSelectedDay(initialSelectedDate)
-    }
-  }, [initialSelectedDate])
+  }, [selectedDay, onDateSelect, externalSelectedDate])
 
   function previousMonth() {
     const firstDayPrevMonth = add(firstDayCurrentMonth, { months: -1 })
@@ -144,14 +154,14 @@ export function FullScreenCalendar({
   }
 
   // Get events for the selected day
-  const selectedDayEvents = events.filter(event => 
-    isSameDay(event.date, selectedDay)
-  )
+  const selectedDayEvents = React.useMemo(() => {
+    return events.filter(event => isSameDay(event.date, selectedDay))
+  }, [events, selectedDay])
 
   // Get events for a specific day
-  const getEventsForDay = (day: Date) => {
+  const getEventsForDay = React.useCallback((day: Date) => {
     return events.filter(event => isSameDay(event.date, day))
-  }
+  }, [events])
 
   const getEventIcon = (event: CalendarEvent) => {
     if (event.category === 'hook') return <Bookmark className="h-3 w-3" />
@@ -230,38 +240,39 @@ export function FullScreenCalendar({
                 const dayEvents = getEventsForDay(day)
                 const isSelectedDay = isSameDay(day, selectedDay)
                 const isCurrentMonth = isSameMonth(day, firstDayCurrentMonth)
-                const dayKey = format(day, 'yyyy-MM-dd')
                 
                 return (
                   <div
-                    key={dayKey}
+                    key={format(day, 'yyyy-MM-dd')}
                     onClick={() => handleDayClick(day)}
                     className={cn(
                       "relative p-2 border-b border-r min-h-[100px] transition-colors",
-                      isSelectedDay && "bg-primary/10",
-                      !isCurrentMonth && "bg-muted/30 text-muted-foreground",
-                      "hover:bg-muted/50 cursor-pointer"
+                      isSelectedDay && "bg-blue-50 dark:bg-blue-900/20",
+                      !isCurrentMonth && "bg-gray-50 dark:bg-gray-800/30 text-gray-400 dark:text-gray-500",
+                      "hover:bg-gray-100 dark:hover:bg-gray-800/50 cursor-pointer"
                     )}
                   >
+                    {/* Day Number */}
                     <div className={cn(
                       "flex justify-end mb-2",
                       isToday(day) && "font-bold text-primary"
                     )}>
                       <span className={cn(
-                        "flex items-center justify-center w-6 h-6 text-xs",
-                        isToday(day) && "bg-primary text-primary-foreground rounded-full"
+                        "flex items-center justify-center w-6 h-6 text-xs rounded-full",
+                        isToday(day) && "bg-primary text-primary-foreground"
                       )}>
                         {format(day, "d")}
                       </span>
                     </div>
                     
+                    {/* Events */}
                     <div className="space-y-1">
                       {dayEvents.length > 0 && (
                         <div className="space-y-1">
-                          {dayEvents.slice(0, 2).map((event) => (
+                          {dayEvents.slice(0, 3).map((event) => (
                             <div
                               key={event.id}
-                              className="flex flex-col rounded-md border p-1 text-xs"
+                              className="flex flex-col rounded-md border p-1.5 text-xs shadow-sm"
                               style={{ 
                                 backgroundColor: event.color ? 
                                   `${event.color.startsWith('#') ? event.color : colorMap[event.color] || '#3b82f6'}15` : 
@@ -274,15 +285,15 @@ export function FullScreenCalendar({
                             >
                               <div className="flex items-center gap-1 w-full">
                                 {getEventIcon(event)}
-                                <p className="font-medium leading-none truncate max-w-[80px]">
+                                <p className="font-medium leading-none truncate max-w-[85px]">
                                   {event.title}
                                 </p>
                               </div>
                             </div>
                           ))}
-                          {dayEvents.length > 2 && (
-                            <div className="text-xs text-muted-foreground">
-                              + {dayEvents.length - 2} more
+                          {dayEvents.length > 3 && (
+                            <div className="text-xs text-center text-muted-foreground bg-muted/30 py-0.5 rounded">
+                              + {dayEvents.length - 3} more
                             </div>
                           )}
                         </div>
