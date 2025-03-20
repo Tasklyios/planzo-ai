@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -125,7 +124,6 @@ export function FullScreenCalendar({
   React.useEffect(() => {
     if (initialSelectedDate) {
       setSelectedDay(initialSelectedDate);
-      setCurrentMonth(format(initialSelectedDate, "MMM-yyyy"));
     }
   }, [initialSelectedDate]);
 
@@ -214,8 +212,6 @@ export function FullScreenCalendar({
           </div>
 
           <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
-            {/* Search button removed as requested */}
-
             <div className="inline-flex w-full -space-x-px rounded-lg shadow-sm shadow-black/5 md:w-auto rtl:space-x-reverse">
               <Button
                 onClick={previousMonth}
@@ -225,13 +221,6 @@ export function FullScreenCalendar({
                 aria-label="Navigate to previous month"
               >
                 <ChevronLeft size={16} strokeWidth={2} aria-hidden="true" />
-              </Button>
-              <Button
-                onClick={goToToday}
-                className="w-full rounded-none shadow-none first:rounded-s-lg last:rounded-e-lg focus-visible:z-10 md:w-auto"
-                variant="outline"
-              >
-                Today
               </Button>
               <Button
                 onClick={nextMonth}
@@ -272,7 +261,7 @@ export function FullScreenCalendar({
 
           {/* Calendar Days */}
           <div className="flex text-xs leading-6 lg:flex-auto">
-            <div className="hidden w-full border-x lg:grid lg:grid-cols-7 lg:grid-rows-5">
+            <div className="hidden w-full border-x lg:grid lg:grid-cols-7 lg:grid-rows-6">
               {days.map((day, dayIdx) =>
                 !isDesktop ? (
                   <button
@@ -421,7 +410,7 @@ export function FullScreenCalendar({
               )}
             </div>
 
-            <div className="isolate grid w-full grid-cols-7 grid-rows-5 border-x lg:hidden">
+            <div className="isolate grid w-full grid-cols-7 grid-rows-6 border-x lg:hidden">
               {days.map((day, dayIdx) => (
                 <button
                   onClick={() => handleDayClick(day)}
