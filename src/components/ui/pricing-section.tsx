@@ -1,7 +1,6 @@
 
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowRightIcon, CheckIcon } from "lucide-react"
@@ -31,11 +30,10 @@ interface PricingTier {
 interface PricingSectionProps {
   tiers: PricingTier[]
   className?: string
+  isYearly: boolean // Changed to accept isYearly as a prop instead of managing its own state
 }
 
-function PricingSection({ tiers, className }: PricingSectionProps) {
-  const [isYearly, setIsYearly] = useState(true)
-
+function PricingSection({ tiers, className, isYearly }: PricingSectionProps) {
   const buttonStyles = {
     default: cn(
       "h-12 bg-white dark:bg-zinc-900",
@@ -80,23 +78,7 @@ function PricingSection({ tiers, className }: PricingSectionProps) {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8 text-center">
             Plans that grow with your content strategy
           </p>
-          <div className="inline-flex items-center p-1.5 bg-white dark:bg-zinc-800/50 rounded-full border border-zinc-200 dark:border-zinc-700 shadow-sm">
-            {["Monthly", "Yearly"].map((period) => (
-              <button
-                key={period}
-                onClick={() => setIsYearly(period === "Yearly")}
-                className={cn(
-                  "px-8 py-2.5 text-sm font-medium rounded-full transition-all duration-300",
-                  (period === "Yearly") === isYearly
-                    ? "bg-primary text-white shadow-lg"
-                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100",
-                )}
-              >
-                {period}
-              </button>
-            ))}
-          </div>
-          <span className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full font-medium">Save 20%</span>
+          {/* Removed the toggle buttons here */}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

@@ -244,7 +244,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
             </div>
             {isYearly && <span className="ml-2 text-xs bg-green-100 text-green-800 rounded-full px-3 py-1.5">Save 20%</span>}
           </div>
-          <PricingSection tiers={pricingTiers} />
+          <PricingSection tiers={pricingTiers} isYearly={isYearly} />
         </div>
       </SheetContent>
     </Sheet>
