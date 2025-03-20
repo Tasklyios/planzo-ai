@@ -24,6 +24,8 @@ interface PricingTier {
   highlight?: boolean
   badge?: string
   icon: React.ReactNode
+  onSelect?: () => void
+  isLoading?: boolean
 }
 
 interface PricingSectionProps {
@@ -188,16 +190,20 @@ function PricingSection({ tiers, className }: PricingSectionProps) {
                       ? buttonStyles.highlight
                       : buttonStyles.default,
                   )}
+                  onClick={tier.onSelect}
+                  disabled={tier.isLoading}
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
-                    {tier.highlight ? (
+                    {tier.isLoading ? (
+                      "Processing..."
+                    ) : tier.highlight ? (
                       <>
                         Get {tier.name}
                         <ArrowRightIcon className="w-4 h-4" />
                       </>
                     ) : (
                       <>
-                        Get started
+                        {tier.name === "Free" ? "Sign up free" : "Get started"}
                         <ArrowRightIcon className="w-4 h-4" />
                       </>
                     )}

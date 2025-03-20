@@ -1,10 +1,59 @@
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Zap, ArrowDownToDot } from "lucide-react";
 import { PricingSection } from "@/components/ui/pricing-section";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleCheckout = async (tierName: string) => {
+    try {
+      setLoading(tierName);
+      
+      // Check if user is authenticated
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      
+      if (authError || !session?.user) {
+        navigate('/auth');
+        throw new Error('Please sign in to upgrade your plan');
+      }
+
+      // Create checkout session
+      const response = await supabase.functions.invoke('create-checkout-session', {
+        body: { 
+          tier: tierName,
+          userId: session.user.id,
+          returnUrl: `${window.location.origin}/account`
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to create checkout session');
+      }
+
+      if (!response.data?.url) {
+        throw new Error('No checkout URL received');
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = response.data.url;
+      
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to start checkout process",
+      });
+    } finally {
+      setLoading(null);
+    }
+  };
 
   const pricingTiers = [
     {
@@ -46,6 +95,8 @@ const Pricing = () => {
           included: false,
         },
       ],
+      onSelect: () => navigate('/auth'),
+      isLoading: false,
     },
     {
       name: "Pro",
@@ -93,6 +144,8 @@ const Pricing = () => {
           included: true,
         },
       ],
+      onSelect: () => handleCheckout('pro'),
+      isLoading: loading === 'pro',
     },
     {
       name: "Business",
@@ -143,6 +196,8 @@ const Pricing = () => {
           included: true,
         },
       ],
+      onSelect: () => handleCheckout('business'),
+      isLoading: loading === 'business',
     },
   ];
 
