@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,7 +9,8 @@ import AppLayout from "@/components/layout/AppLayout";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useSupabaseUser as useUser } from "./hooks/useSupabaseUser";
+import Account from "./pages/Account";
 
 // Import the new components
 import SocialAccounts from "./pages/SocialAccounts";
@@ -156,7 +158,7 @@ function App() {
           element={
             <AuthGuard>
               <AppLayout>
-                <div>Account Settings</div>
+                <Account />
               </AppLayout>
             </AuthGuard>
           }
