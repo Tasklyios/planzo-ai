@@ -15,7 +15,6 @@ import {
   Bookmark,
   CreditCard,
   PaintBucket,
-  Sparkles,
   ChevronsUpDown,
   Settings
 } from "lucide-react";
@@ -176,13 +175,13 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
             <InfoCardFooter>
               <InfoCardDismiss>Dismiss</InfoCardDismiss>
               <InfoCardAction>
-                <PricingSheet 
-                  trigger={
-                    <Button variant="link" className="p-0 h-auto text-xs underline">
-                      Upgrade now
-                    </Button>
-                  }
-                />
+                <Button variant="link" className="p-0 h-auto text-xs underline">
+                  <PricingSheet 
+                    trigger={
+                      <span>Upgrade now</span>
+                    }
+                  />
+                </Button>
               </InfoCardAction>
             </InfoCardFooter>
           </InfoCardContent>
@@ -225,17 +224,6 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
-        
-        <div className="mt-2 px-2">
-          <PricingSheet 
-            trigger={
-              <Button variant="default" className="w-full flex items-center justify-start gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
-                <Sparkles className="h-4 w-4" />
-                Upgrade Plan
-              </Button>
-            }
-          />
-        </div>
       </SidebarFooter>
     </div>
   );
