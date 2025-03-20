@@ -1,5 +1,13 @@
 
 import { Testimonial } from "@/components/ui/testimonial-card";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const testimonials = [
   {
@@ -27,6 +35,8 @@ const testimonials = [
 ];
 
 const Testimonials = () => {
+  const isMobile = useIsMobile();
+  
   return (
     <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
@@ -39,13 +49,23 @@ const Testimonials = () => {
           </p>
         </div>
         
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-          {testimonials.map((testimonial) => (
-            <Testimonial 
-              key={testimonial.name} 
-              {...testimonial} 
-            />
-          ))}
+        <div className="max-w-6xl mx-auto">
+          <Carousel className="w-full">
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {testimonials.map((testimonial) => (
+                <CarouselItem 
+                  key={testimonial.name} 
+                  className={`pl-2 md:pl-4 ${isMobile ? 'basis-full' : 'basis-1/2 lg:basis-1/3'}`}
+                >
+                  <Testimonial {...testimonial} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <div className="flex justify-center mt-6">
+              <CarouselPrevious className="relative static mr-2 h-8 w-8 rounded-full" />
+              <CarouselNext className="relative static ml-2 h-8 w-8 rounded-full" />
+            </div>
+          </Carousel>
         </div>
       </div>
     </section>
