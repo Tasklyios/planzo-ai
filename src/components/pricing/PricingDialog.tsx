@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -34,12 +35,13 @@ const PricingDialog = ({ open, onOpenChange, onContinueFree }: PricingDialogProp
         throw new Error('Please sign in to upgrade your plan');
       }
 
-      // Create checkout session
+      // Create checkout session with isYearly parameter
       const response = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           tier: tierName,
           userId: session.user.id,
-          returnUrl: `${window.location.origin}/account`
+          returnUrl: `${window.location.origin}/account`,
+          isYearly: isYearly
         }
       });
 

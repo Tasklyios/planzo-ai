@@ -14,6 +14,7 @@ interface PricingSheetProps {
 
 const PricingSheet = ({ trigger }: PricingSheetProps) => {
   const [open, setOpen] = useState(false);
+  const [isYearly, setIsYearly] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
@@ -31,12 +32,13 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         throw new Error('Please sign in to upgrade your plan');
       }
 
-      // Create checkout session
+      // Create checkout session with isYearly parameter
       const response = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           tier: tierName,
           userId: session.user.id,
-          returnUrl: `${window.location.origin}/account`
+          returnUrl: `${window.location.origin}/account`,
+          isYearly: isYearly
         }
       });
 
@@ -220,6 +222,26 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
           <SheetTitle className="text-2xl">Choose your plan</SheetTitle>
         </SheetHeader>
         <div className="mt-6">
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center space-x-2">
+              <span className={`text-sm ${!isYearly ? 'font-bold' : ''}`}>Monthly</span>
+              <button
+                type="button"
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                  isYearly ? 'bg-primary' : 'bg-input'
+                }`}
+                onClick={() => setIsYearly(!isYearly)}
+              >
+                <span
+                  className={`${
+                    isYearly ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 rounded-full bg-background transition-transform`}
+                />
+              </button>
+              <span className={`text-sm ${isYearly ? 'font-bold' : ''}`}>Yearly</span>
+              {isYearly && <span className="text-xs bg-green-100 text-green-800 rounded-full px-2 py-0.5">Save 30%</span>}
+            </div>
+          </div>
           <PricingSection tiers={pricingTiers} />
         </div>
       </SheetContent>
