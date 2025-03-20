@@ -19,6 +19,11 @@ const SettingsProfile = () => {
   const [contentNiche, setContentNiche] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
   const [contentStyle, setContentStyle] = useState("");
+  const [brandName, setBrandName] = useState("");
+  const [businessDescription, setBusinessDescription] = useState("");
+  const [contentType, setContentType] = useState("");
+  const [postingFrequency, setPostingFrequency] = useState("");
+  const [postingPlatforms, setPostingPlatforms] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [enableOptimization, setEnableOptimization] = useState(true);
 
@@ -30,7 +35,7 @@ const SettingsProfile = () => {
       if (user) {
         const { data: profileData, error } = await supabase
           .from("profiles")
-          .select("account_type, content_niche, target_audience, content_style, enable_optimization")
+          .select("*")
           .eq("id", user.id)
           .single();
 
@@ -44,6 +49,11 @@ const SettingsProfile = () => {
           setContentNiche(profileData.content_niche || "");
           setTargetAudience(profileData.target_audience || "");
           setContentStyle(profileData.content_style || "");
+          setBrandName(profileData.brand_name || "");
+          setBusinessDescription(profileData.business_description || "");
+          setContentType(profileData.content_type || "");
+          setPostingFrequency(profileData.posting_frequency || "");
+          setPostingPlatforms(profileData.posting_platforms || []);
           setEnableOptimization(profileData.enable_optimization !== false); // default to true
         }
       }
@@ -64,6 +74,11 @@ const SettingsProfile = () => {
           content_niche: contentNiche,
           target_audience: targetAudience,
           content_style: contentStyle,
+          brand_name: brandName,
+          business_description: businessDescription,
+          content_type: contentType,
+          posting_frequency: postingFrequency,
+          posting_platforms: postingPlatforms,
           enable_optimization: enableOptimization
         })
         .eq("id", user.id);
@@ -83,6 +98,18 @@ const SettingsProfile = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const platformOptions = [
+    "TikTok", "Instagram", "YouTube", "Facebook", "Twitter", "LinkedIn", "Pinterest"
+  ];
+
+  const handlePlatformToggle = (platform: string) => {
+    if (postingPlatforms.includes(platform)) {
+      setPostingPlatforms(postingPlatforms.filter(p => p !== platform));
+    } else {
+      setPostingPlatforms([...postingPlatforms, platform]);
     }
   };
 
@@ -106,6 +133,31 @@ const SettingsProfile = () => {
           </Select>
         </div>
         
+        {accountType === "business" && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="brand-name">Brand Name</Label>
+              <Input
+                id="brand-name"
+                value={brandName}
+                onChange={(e) => setBrandName(e.target.value)}
+                placeholder="Your brand name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="business-description">Business Description</Label>
+              <Textarea
+                id="business-description"
+                value={businessDescription}
+                onChange={(e) => setBusinessDescription(e.target.value)}
+                placeholder="Briefly describe your business"
+                rows={3}
+              />
+            </div>
+          </>
+        )}
+        
         <div className="space-y-2">
           <Label htmlFor="content-niche">Content Niche</Label>
           <Input
@@ -125,6 +177,51 @@ const SettingsProfile = () => {
             placeholder="Describe your target audience"
             rows={3}
           />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="content-type">Content Type</Label>
+          <Input
+            id="content-type"
+            value={contentType}
+            onChange={(e) => setContentType(e.target.value)}
+            placeholder="e.g. Educational, Entertainment, Tutorials"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Posting Platforms</Label>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+            {platformOptions.map(platform => (
+              <div key={platform} className="flex items-center space-x-2">
+                <Switch 
+                  id={`platform-${platform}`}
+                  checked={postingPlatforms.includes(platform)}
+                  onCheckedChange={() => handlePlatformToggle(platform)}
+                />
+                <Label htmlFor={`platform-${platform}`}>{platform}</Label>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="posting-frequency">Posting Frequency</Label>
+          <Select 
+            value={postingFrequency} 
+            onValueChange={setPostingFrequency}
+          >
+            <SelectTrigger id="posting-frequency">
+              <SelectValue placeholder="Select posting frequency" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="multiple-times-week">Multiple times per week</SelectItem>
+              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectItem value="occasionally">Occasionally</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         
         {(accountType === "creator" || accountType === "business") && (
@@ -149,7 +246,7 @@ const SettingsProfile = () => {
           <Label htmlFor="enable-optimization">Enable idea optimization based on my profile</Label>
         </div>
         
-        <Button onClick={handleSaveProfile} disabled={isLoading}>
+        <Button onClick={handleSaveProfile} disabled={isLoading} className="mt-4">
           {isLoading ? "Saving..." : "Save Profile Settings"}
         </Button>
       </div>
