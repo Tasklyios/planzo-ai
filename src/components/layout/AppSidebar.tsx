@@ -16,7 +16,8 @@ import {
   User, 
   Bookmark,
   CreditCard,
-  PaintBucket
+  PaintBucket,
+  Sparkles
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +30,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useState } from "react";
+import PricingSheet from "@/components/pricing/PricingSheet";
 
 interface AppSidebarProps {
   isMobile?: boolean;
@@ -257,6 +259,17 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+          
+          <div className="mt-4 px-2">
+            <PricingSheet 
+              trigger={
+                <Button variant="default" className="w-full flex items-center justify-start gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
+                  <Sparkles className="h-4 w-4" />
+                  Upgrade Plan
+                </Button>
+              }
+            />
+          </div>
         </div>
       </ScrollArea>
       

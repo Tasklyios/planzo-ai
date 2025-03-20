@@ -21,9 +21,9 @@ serve(async (req) => {
     console.log('Request received');
 
     // Get the request body
-    const { tier, userId, returnUrl } = await req.json();
+    const { tier, userId, returnUrl, isYearly } = await req.json();
     
-    console.log('Request body:', { tier, userId, returnUrl });
+    console.log('Request body:', { tier, userId, returnUrl, isYearly });
 
     // Initialize Stripe with your secret key
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
@@ -36,12 +36,20 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    // Get the price ID directly from function secrets
-    const priceId = Deno.env.get(`STRIPE_${tier.toUpperCase()}_PRICE_ID`);
+    // Get the appropriate price ID based on tier and billing frequency
+    let priceIdKey;
+    if (isYearly) {
+      priceIdKey = `STRIPE_${tier.toUpperCase()}_YEARLY_PRICE_ID`;
+    } else {
+      priceIdKey = `STRIPE_${tier.toUpperCase()}_PRICE_ID`;
+    }
+    
+    const priceId = Deno.env.get(priceIdKey);
+    console.log('Retrieved price ID key:', priceIdKey);
     console.log('Retrieved price ID:', priceId);
 
     if (!priceId) {
-      throw new Error(`Price ID not found for tier: ${tier}`);
+      throw new Error(`Price ID not found for tier: ${tier} (${isYearly ? 'yearly' : 'monthly'})`);
     }
 
     console.log('Creating checkout session with price ID:', priceId);

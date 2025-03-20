@@ -1,40 +1,32 @@
 
-import { Check } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { PricingSection } from "@/components/ui/pricing-section";
 import { useNavigate } from "react-router-dom";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { Sparkles, Zap, ArrowDownToDot } from "lucide-react";
 
 interface PricingSheetProps {
-  trigger?: React.ReactNode;
-  className?: string;
+  trigger: React.ReactNode;
 }
 
-const PricingSheet = ({ trigger, className }: PricingSheetProps) => {
-  const [loading, setLoading] = useState<string | null>(null);
-  const { toast } = useToast();
+const PricingSheet = ({ trigger }: PricingSheetProps) => {
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
+  const [loading, setLoading] = useState<string | null>(null);
 
-  const handleUpgradeClick = async (e: React.MouseEvent, tierName: string) => {
-    e.preventDefault();
-    
+  const handleCheckout = async (tierName: string) => {
     try {
       setLoading(tierName);
       
-      console.log('Starting upgrade process for tier:', tierName);
-
-      // Check authentication first
+      // Check if user is authenticated
       const { data: { session }, error: authError } = await supabase.auth.getSession();
       
       if (authError || !session?.user) {
+        setOpen(false);
         navigate('/auth');
         throw new Error('Please sign in to upgrade your plan');
       }
@@ -48,8 +40,6 @@ const PricingSheet = ({ trigger, className }: PricingSheetProps) => {
         }
       });
 
-      console.log('Checkout response:', response);
-
       if (response.error) {
         throw new Error(response.error.message || 'Failed to create checkout session');
       }
@@ -62,7 +52,7 @@ const PricingSheet = ({ trigger, className }: PricingSheetProps) => {
       window.location.href = response.data.url;
       
     } catch (error: any) {
-      console.error('Upgrade error:', error);
+      console.error('Checkout error:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -73,117 +63,164 @@ const PricingSheet = ({ trigger, className }: PricingSheetProps) => {
     }
   };
 
-  const tiers = [
+  const pricingTiers = [
     {
-      name: "pro",
-      displayName: "Pro",
-      description: "Perfect to get started",
-      price: "19.99",
+      name: "Free",
+      price: {
+        monthly: 0,
+        yearly: 0,
+      },
+      description: "Try out basic features",
+      icon: (
+        <div className="relative">
+          <Zap className="w-7 h-7 relative z-10 text-gray-500 dark:text-gray-400" />
+        </div>
+      ),
       features: [
-        "20 AI video ideas per day",
-        "10 script generations per day",
-        "Basic analytics",
-        "Simple calendar features"
+        {
+          name: "5 AI video ideas per day",
+          description: "Generate unique content ideas",
+          included: true,
+        },
+        {
+          name: "1 script generation per day",
+          description: "Create engaging scripts",
+          included: true,
+        },
+        {
+          name: "4 hooks per day",
+          description: "Create attention-grabbing hooks",
+          included: true,
+        },
+        {
+          name: "Community support",
+          description: "Access to our community forums",
+          included: true,
+        },
+        {
+          name: "Customization",
+          description: "Personalize your experience",
+          included: false,
+        },
       ],
-      cta: "Get Pro",
-      color: "white"
+      onSelect: () => {
+        setOpen(false);
+        navigate('/auth');
+      },
+      isLoading: false,
     },
     {
-      name: "plus",
-      displayName: "Plus",
-      description: "For serious creators",
-      price: "29.99",
+      name: "Pro",
+      price: {
+        monthly: 19.99,
+        yearly: 199,
+      },
+      description: "Perfect for growing creators",
+      highlight: true,
+      badge: "Most Popular",
+      icon: (
+        <div className="relative">
+          <Sparkles className="w-7 h-7 relative z-10 text-primary" />
+        </div>
+      ),
       features: [
-        "50 AI video ideas per day", 
-        "25 script generations per day",
-        "Advanced analytics",
-        "Full calendar features",
-        "Priority support"
+        {
+          name: "50 AI video ideas per day",
+          description: "Never run out of content ideas",
+          included: true,
+        },
+        {
+          name: "10 script generations per day",
+          description: "Create more engaging scripts",
+          included: true,
+        },
+        {
+          name: "20 hooks per day",
+          description: "Create attention-grabbing hooks",
+          included: true,
+        },
+        {
+          name: "Advanced script generation",
+          description: "More refined script outputs",
+          included: true,
+        },
+        {
+          name: "Colour customization",
+          description: "Personalize your experience",
+          included: true,
+        },
+        {
+          name: "Priority support",
+          description: "Get help when you need it",
+          included: true,
+        },
       ],
-      cta: "Upgrade to Plus",
-      color: "primary"
+      onSelect: () => handleCheckout('pro'),
+      isLoading: loading === 'pro',
     },
     {
-      name: "business",
-      displayName: "Business",
+      name: "Business",
+      price: {
+        monthly: 39.99,
+        yearly: 399,
+      },
       description: "For teams and agencies",
-      price: "69.99",
+      icon: (
+        <div className="relative">
+          <ArrowDownToDot className="w-7 h-7 relative z-10 text-gray-700" />
+        </div>
+      ),
       features: [
-        "Unlimited AI video ideas",
-        "Unlimited script generations",
-        "Advanced analytics",
-        "Team collaboration",
-        "Custom branding",
-        "Priority support",
-        "API access"
+        {
+          name: "100 AI video ideas per day",
+          description: "Maximum creativity",
+          included: true,
+        },
+        {
+          name: "20 script generations per day",
+          description: "High volume script creation",
+          included: true,
+        },
+        {
+          name: "40 hooks per day",
+          description: "More hook variety",
+          included: true,
+        },
+        {
+          name: "Advanced script generation",
+          description: "Premium script outputs",
+          included: true,
+        },
+        {
+          name: "Colour customization",
+          description: "Personalize your experience",
+          included: true,
+        },
+        {
+          name: "Coming soon: Extra feature",
+          description: "Advanced capability (in development)",
+          included: true,
+        },
+        {
+          name: "Dedicated account manager",
+          description: "Personalized support",
+          included: true,
+        },
       ],
-      cta: "Upgrade to Business",
-      color: "primary"
-    }
+      onSelect: () => handleCheckout('business'),
+      isLoading: loading === 'business',
+    },
   ];
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        {trigger}
-      </SheetTrigger>
-      <SheetContent 
-        side="right" 
-        className="w-full sm:max-w-xl overflow-y-auto"
-      >
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>{trigger}</SheetTrigger>
+      <SheetContent className="w-full sm:max-w-md md:max-w-xl lg:max-w-3xl xl:max-w-5xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="text-2xl font-bold">Upgrade Your Plan</SheetTitle>
+          <SheetTitle className="text-2xl">Choose your plan</SheetTitle>
         </SheetHeader>
-        <div className="mt-6 space-y-6 pb-6">
-          {tiers.map((tier) => (
-            <div
-              key={tier.name}
-              className={`p-6 rounded-lg border ${
-                tier.color === 'primary' ? 'bg-gradient-to-r from-[#002AFF] to-[#0084FF] text-white' : 'bg-background'
-              }`}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-semibold">{tier.displayName}</h3>
-                  <p className={`mt-1 text-sm ${
-                    tier.color === 'primary' ? 'text-white/70' : 'text-muted-foreground'
-                  }`}>
-                    {tier.description}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">£{tier.price}</div>
-                  <div className={`text-sm ${
-                    tier.color === 'primary' ? 'text-white/70' : 'text-muted-foreground'
-                  }`}>
-                    per month
-                  </div>
-                </div>
-              </div>
-              <ul className="mt-4 space-y-2">
-                {tier.features.map((feature) => (
-                  <li key={feature} className="flex items-center text-sm">
-                    <Check className={`mr-2 h-4 w-4 ${
-                      tier.color === 'primary' ? 'text-white' : 'text-[#002AFF]'
-                    }`} />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <button
-                type="button"
-                className={`mt-6 w-full px-4 py-2 rounded-md font-medium transition-colors ${
-                  tier.color === 'primary'
-                    ? 'bg-white text-[#002AFF] hover:bg-white/90 border border-white'
-                    : 'blue-gradient'
-                } ${loading === tier.name ? 'opacity-50 cursor-not-allowed' : ''}`}
-                onClick={(e) => handleUpgradeClick(e, tier.name)}
-                disabled={loading === tier.name}
-              >
-                {loading === tier.name ? "Loading..." : tier.cta}
-              </button>
-            </div>
-          ))}
+        <div className="mt-6">
+          <PricingSection tiers={pricingTiers} />
         </div>
       </SheetContent>
     </Sheet>

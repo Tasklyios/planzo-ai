@@ -11,6 +11,7 @@ import {
   SheetTrigger,
   SheetClose
 } from "@/components/ui/sheet";
+import PricingSheet from "@/components/pricing/PricingSheet";
 
 const LandingNavbar = () => {
   const navigate = useNavigate();
@@ -49,13 +50,17 @@ const LandingNavbar = () => {
           >
             How it works
           </Button>
-          <Button 
-            variant="ghost" 
-            className="text-[#333333]"
-            onClick={() => scrollToSection('pricing')}
-          >
-            Pricing
-          </Button>
+          
+          <PricingSheet 
+            trigger={
+              <Button 
+                variant="ghost" 
+                className="text-[#333333]"
+              >
+                Pricing
+              </Button>
+            }
+          />
           
           <Button 
             variant="default" 
@@ -98,13 +103,16 @@ const LandingNavbar = () => {
                     </Button>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Button 
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={() => scrollToSection('pricing')}
-                    >
-                      Pricing
-                    </Button>
+                    <PricingSheet 
+                      trigger={
+                        <Button 
+                          variant="ghost"
+                          className="w-full justify-start"
+                        >
+                          Pricing
+                        </Button>
+                      }
+                    />
                   </SheetClose>
                 </div>
                 <div className="py-6">
