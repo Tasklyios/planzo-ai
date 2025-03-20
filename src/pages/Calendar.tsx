@@ -1,19 +1,15 @@
+
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Calendar as CalendarIcon, Pencil, Trash2 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import EditIdea from "@/components/EditIdea";
-import { EventCalendar, CalendarEvent } from "@/components/ui/event-calendar";
 import { DeleteIcon } from "@/components/planner/DeleteIcon";
+import { FullScreenCalendar, CalendarEvent } from "@/components/ui/fullscreen-calendar";
+import { Card } from "@/components/ui/card";
 
 interface ScheduledPost {
   id: string;
@@ -131,12 +127,14 @@ const CalendarPage = () => {
       setScheduledPosts(formattedPosts);
       
       const events: CalendarEvent[] = formattedPosts.map((post) => {
-        console.log("Creating calendar event for post:", post.title, post.scheduled_for);
         return {
           id: post.id,
           title: post.title,
+          description: post.description,
           date: new Date(post.scheduled_for || new Date()),
           color: post.color || getRandomColor(post.id),
+          platform: post.platform,
+          category: post.category,
           allDay: true,
         };
       });
@@ -172,16 +170,16 @@ const CalendarPage = () => {
     });
     console.log("Found posts for date:", postsForSelectedDate.length);
     setSelectedDatePosts(postsForSelectedDate);
+    setSelectedDate(date);
   };
 
   const handleEventClick = (event: CalendarEvent) => {
-    setSelectedDate(event.date);
-    updateSelectedDatePosts(event.date);
+    console.log("Event clicked:", event);
+    setEditingIdeaId(event.id);
   };
 
-  const handleEditClick = (ideaId: string) => {
-    console.log("Opening edit dialog for idea:", ideaId);
-    setEditingIdeaId(ideaId);
+  const handleAddEvent = (date: Date) => {
+    navigate("/idea-generator", { state: { addToCalendar: true, scheduledDate: date.toISOString() } });
   };
 
   const handleDeleteIdea = async (ideaId: string) => {
@@ -207,144 +205,33 @@ const CalendarPage = () => {
     }
   };
 
-  const handleDateSelect = (newDate: Date | Date[] | { from?: Date; to?: Date } | undefined) => {
-    if (newDate instanceof Date) {
-      console.log("Date selected:", format(newDate, "yyyy-MM-dd"));
-      setSelectedDate(newDate);
-      updateSelectedDatePosts(newDate);
-    }
-  };
-
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex items-center justify-between p-6">
+    <div className="container h-[calc(100vh-10rem)] flex flex-col">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex flex-col space-y-1">
           <h3 className="text-lg font-semibold">Calendar</h3>
           <p className="text-sm text-muted-foreground">
             Track and manage your scheduled content
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => {
-              const prevMonth = new Date(selectedDate);
-              prevMonth.setMonth(prevMonth.getMonth() - 1);
-              setSelectedDate(prevMonth);
-            }}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => {
-              const nextMonth = new Date(selectedDate);
-              nextMonth.setMonth(nextMonth.getMonth() + 1);
-              setSelectedDate(nextMonth);
-            }}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <div className="font-medium">{format(selectedDate, "MMMM yyyy")}</div>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <Card className="shadow-sm h-full">
-            <CardContent className="p-4 h-full">
-              <EventCalendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateSelect}
-                className="rounded-md pointer-events-auto w-full h-full"
-                events={calendarEvents.map(event => ({
-                  ...event,
-                  color: event.color.startsWith('#') ? event.color : colorMap[event.color] || '#3b82f6'
-                }))}
-                onEventClick={handleEventClick}
-              />
-            </CardContent>
-          </Card>
+      {loading ? (
+        <div className="flex-1 flex justify-center items-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
-
-        <div className="md:col-span-1">
-          <Card className="shadow-sm h-full">
-            <CardHeader className="bg-slate-50 dark:bg-slate-800">
-              <CardTitle className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5 text-blue-500" />
-                <span>{format(selectedDate, "EEEE, MMMM d, yyyy")}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                </div>
-              ) : selectedDatePosts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No content scheduled for this day
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {selectedDatePosts.map(post => (
-                    <Card 
-                      key={post.id} 
-                      className="hover:shadow-md transition-shadow border-l-4" 
-                      style={{ 
-                        borderLeftColor: post.color ? 
-                          (post.color.startsWith('#') ? post.color : colorMap[post.color] || '#3b82f6') : 
-                          '#3b82f6' 
-                      }}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex flex-col gap-2">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-medium text-sm">{post.title}</h4>
-                            <div className="flex items-center space-x-1">
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="h-7 w-7 p-0" 
-                                onClick={() => handleEditClick(post.id)}
-                              >
-                                <Pencil className="h-4 w-4 text-gray-500" />
-                                <span className="sr-only">Edit</span>
-                              </Button>
-                              <DeleteIcon 
-                                onDelete={() => handleDeleteIdea(post.id)}
-                                title="Remove from Calendar"
-                                description="This will remove the idea from your calendar but keep it in your drafts."
-                              />
-                            </div>
-                          </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {post.description}
-                          </p>
-                          <div className="flex flex-wrap gap-2 mt-2 justify-center">
-                            <Badge variant="outline" className="text-xs">
-                              {post.category}
-                            </Badge>
-                            {post.platform && (
-                              <Badge variant="outline" className="text-xs">
-                                {post.platform}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      ) : (
+        <Card className="flex-1 overflow-hidden border shadow-sm">
+          <FullScreenCalendar 
+            events={calendarEvents}
+            selectedDate={selectedDate}
+            onDateSelect={updateSelectedDatePosts}
+            onEventClick={handleEventClick}
+            onAddEvent={handleAddEvent}
+            showSidePanel={true}
+          />
+        </Card>
+      )}
 
       {editingIdeaId && (
         <EditIdea
