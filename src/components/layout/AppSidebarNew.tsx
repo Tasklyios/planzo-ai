@@ -3,8 +3,17 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseUser } from '@/hooks/useSupabaseUser';
-import { Sidebar, SidebarHeader, SidebarBody, SidebarFooter } from "@/components/ui/sidebar-new";
-import { SidebarMenuSection, SidebarMenuItem } from "@/components/ui/sidebar-menu-section";
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarHeader, 
+  SidebarBody, 
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton
+} from "@/components/ui/sidebar-new";
+import { SidebarMenuSection, SidebarMenuItem as MenuSectionItem } from "@/components/ui/sidebar-menu-section";
 import { SocialAccount } from '@/types/socialAccount';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -23,10 +32,10 @@ import {
   LogOut,
   Instagram,
   Youtube,
-  Tiktok,
   Settings,
   Plus,
-  CheckCircle
+  CheckCircle,
+  Video
 } from 'lucide-react';
 import { invalidateQueries } from '@/services/cacheService';
 import { Button } from '@/components/ui/button';
@@ -47,6 +56,23 @@ interface AppSidebarNewProps {
   closeDrawer?: () => void;
   className?: string;
 }
+
+// Create a custom TikTok icon since lucide-react doesn't have one
+const TikTokIcon = () => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="24" 
+    height="24" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path>
+  </svg>
+);
 
 const AppSidebarNew = ({ isMobile = false, closeDrawer, className }: AppSidebarNewProps) => {
   const navigate = useNavigate();
@@ -164,7 +190,7 @@ const AppSidebarNew = ({ isMobile = false, closeDrawer, className }: AppSidebarN
       case 'youtube':
         return <Youtube className="h-5 w-5" />;
       case 'tiktok':
-        return <Tiktok className="h-5 w-5" />;
+        return <TikTokIcon />;
       default:
         return <CircleUser className="h-5 w-5" />;
     }
@@ -263,19 +289,19 @@ const AppSidebarNew = ({ isMobile = false, closeDrawer, className }: AppSidebarN
       <SidebarBody>
         <ScrollArea className="h-[calc(100vh-10rem)]">
           <SidebarMenuSection title="Overview">
-            <SidebarMenuItem 
+            <MenuSectionItem 
               icon={<Grid3X3 />}
               text="Dashboard"
               href="/dashboard"
               active={location.pathname === '/dashboard'}
             />
-            <SidebarMenuItem
+            <MenuSectionItem
               icon={<LayoutGrid />}
               text="Content Planner"
               href="/content-planner" 
               active={location.pathname === '/content-planner'}
             />
-            <SidebarMenuItem
+            <MenuSectionItem
               icon={<CalendarDays />}
               text="Calendar"
               href="/calendar"
@@ -284,19 +310,19 @@ const AppSidebarNew = ({ isMobile = false, closeDrawer, className }: AppSidebarN
           </SidebarMenuSection>
           
           <SidebarMenuSection title="Create">
-            <SidebarMenuItem
+            <MenuSectionItem
               icon={<Lightbulb />}
               text="Generate Ideas"
               href="/idea-generator"
               active={location.pathname === '/idea-generator'}
             />
-            <SidebarMenuItem
+            <MenuSectionItem
               icon={<FileText />}
               text="Generate Scripts"
               href="/script"
               active={location.pathname === '/script'}
             />
-            <SidebarMenuItem
+            <MenuSectionItem
               icon={<Anchor />}
               text="Generate Hooks"
               href="/hooks"
@@ -305,17 +331,17 @@ const AppSidebarNew = ({ isMobile = false, closeDrawer, className }: AppSidebarN
           </SidebarMenuSection>
           
           <SidebarMenuSection title="Library">
-            <SidebarMenuItem
+            <MenuSectionItem
               text="Saved Ideas"
               href="/ideas"
               active={location.pathname === '/ideas'}
             />
-            <SidebarMenuItem
+            <MenuSectionItem
               text="Saved Hooks"
               href="/saved-hooks"
               active={location.pathname === '/saved-hooks'}
             />
-            <SidebarMenuItem
+            <MenuSectionItem
               text="Content Style"
               href="/find-your-style"
               active={location.pathname === '/find-your-style'}
@@ -336,7 +362,7 @@ const AppSidebarNew = ({ isMobile = false, closeDrawer, className }: AppSidebarN
               </div>
             ) : (
               socialAccounts.map((account) => (
-                <SidebarMenuItem
+                <MenuSectionItem
                   key={account.id}
                   icon={getPlatformIcon(account.platform)}
                   text={account.name}
@@ -345,7 +371,7 @@ const AppSidebarNew = ({ isMobile = false, closeDrawer, className }: AppSidebarN
                 />
               ))
             )}
-            <SidebarMenuItem
+            <MenuSectionItem
               icon={<Settings />}
               text="Manage Accounts"
               href="/social-accounts"
