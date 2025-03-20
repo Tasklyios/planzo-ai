@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useLocation, NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -18,7 +19,8 @@ import {
 } from "lucide-react";
 
 const AppSidebarNew = ({ isMobile = false, closeDrawer = () => {} }) => {
-  const { isCollapsed } = useSidebar();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
   const location = useLocation();
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
 

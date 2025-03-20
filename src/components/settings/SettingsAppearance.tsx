@@ -18,7 +18,7 @@ const SettingsAppearance = () => {
     setSelectedTheme(theme);
   }, [theme]);
 
-  const handleThemeChange = (newTheme: string) => {
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setSelectedTheme(newTheme);
   };
 
