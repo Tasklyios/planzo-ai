@@ -126,23 +126,24 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
 
   return (
     <div className="flex flex-col h-full relative">
-      <div className="px-4 py-4 mb-2">
+      <div className="px-4 py-4 mb-1">
         <Link to="/" className="flex items-center" onClick={closeDrawer}>
           <Logo size="large" className="ml-[-4px]" />
         </Link>
       </div>
       
-      <SidebarContent>
+      <SidebarContent className="gap-0">
         {MENU_CATEGORIES.map((category) => (
-          <SidebarGroup key={category.title}>
-            <SidebarGroupLabel>{category.title}</SidebarGroupLabel>
+          <SidebarGroup key={category.title} className="p-0 py-0.5">
+            <SidebarGroupLabel className="h-6 px-4">{category.title}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0">
                 {category.items.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton 
                       isActive={isActive(item.path)}
                       onClick={() => handleNavigation(item.path)}
+                      className="py-1.5"
                     >
                       {item.icon}
                       <span>{item.label}</span>
