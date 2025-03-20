@@ -8,10 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Tables } from "@/integrations/supabase/types";
+
+type ProfileData = Tables<"profiles">;
 
 const SettingsProfile = () => {
   const { toast } = useToast();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const [accountType, setAccountType] = useState("personal");
   const [contentNiche, setContentNiche] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
@@ -71,7 +74,7 @@ const SettingsProfile = () => {
         title: "Profile updated",
         description: "Your profile settings have been saved successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({
         variant: "destructive",
