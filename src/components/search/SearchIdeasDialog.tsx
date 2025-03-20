@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Calendar, Tag } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { GeneratedIdea } from "@/types/idea";
@@ -17,17 +17,15 @@ import { GeneratedIdea } from "@/types/idea";
 interface SearchIdeasDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedDate?: Date;
-  columnId?: string;
-  columnTitle?: string;
-  onIdeaAdded?: () => void;
+  columnId: string;
+  columnTitle: string;
+  onIdeaAdded?: () => void; // Add callback for when an idea is added
 }
 
 export function SearchIdeasDialog({ 
   open, 
   onOpenChange, 
-  selectedDate,
-  columnId,
+  columnId, 
   columnTitle,
   onIdeaAdded
 }: SearchIdeasDialogProps) {
@@ -46,13 +44,14 @@ export function SearchIdeasDialog({
 
       setLoading(true);
       try {
-        // Get ideas that match the search query but aren't already in the calendar
+        // Get ideas that match the search query but aren't already in this column
+        // IMPORTANT: Only search for saved ideas (is_saved = true)
         const { data, error } = await supabase
           .from('video_ideas')
           .select('*')
           .ilike('title', `%${searchQuery}%`)
           .eq('is_saved', true) // Only search saved ideas
-          .not('status', 'eq', 'calendar')
+          .not('status', 'eq', columnId)
           .order('created_at', { ascending: false })
           .limit(10);
 
@@ -78,47 +77,25 @@ export function SearchIdeasDialog({
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, open, toast]);
+  }, [searchQuery, open, columnId, toast]);
 
-  // Add idea to calendar or planner
-  const addIdea = async (idea: GeneratedIdea) => {
+  // Add idea to column
+  const addIdeaToColumn = async (idea: GeneratedIdea) => {
     try {
-      // If selectedDate is provided, add to calendar
-      if (selectedDate) {
-        const { error } = await supabase
-          .from('video_ideas')
-          .update({ 
-            status: 'calendar',
-            is_saved: true, // Always mark as saved
-            scheduled_for: selectedDate.toISOString()
-          })
-          .eq('id', idea.id);
+      const { error } = await supabase
+        .from('video_ideas')
+        .update({ 
+          status: columnId,
+          is_saved: true // Always mark as saved
+        })
+        .eq('id', idea.id);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        toast({
-          title: "Added to calendar",
-          description: `"${idea.title}" added to your calendar for ${selectedDate.toLocaleDateString()}`,
-        });
-      }
-      // If columnId is provided, add to planner
-      else if (columnId) {
-        const { error } = await supabase
-          .from('video_ideas')
-          .update({ 
-            status: 'planner',
-            is_saved: true,
-            planner_column: columnId 
-          })
-          .eq('id', idea.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "Added to planner",
-          description: `"${idea.title}" added to ${columnTitle || 'your planner'}`,
-        });
-      }
+      toast({
+        title: "Idea added",
+        description: `"${idea.title}" added to ${columnTitle}`,
+      });
 
       // Remove the idea from the search results
       setIdeas(ideas.filter(i => i.id !== idea.id));
@@ -133,43 +110,22 @@ export function SearchIdeasDialog({
         onOpenChange(false);
       }
     } catch (error: any) {
-      console.error('Error adding idea:', error);
+      console.error('Error adding idea to column:', error);
       toast({
         variant: "destructive",
         title: "Failed to add idea",
-        description: "There was an error adding the idea. Please try again.",
+        description: "There was an error adding the idea to the column.",
       });
     }
-  };
-
-  const getRandomColorName = () => {
-    const colors = ["red", "orange", "yellow", "green", "blue", "indigo", "purple", "pink"];
-    return colors[Math.floor(Math.random() * colors.length)];
-  };
-
-  // Determine the title and description based on context
-  const getDialogTitle = () => {
-    if (selectedDate) return "Add post to calendar";
-    if (columnId) return `Add to ${columnTitle || "column"}`;
-    return "Add saved idea";
-  };
-
-  const getDialogDescription = () => {
-    if (selectedDate) return `Search for saved ideas to add to your calendar for ${selectedDate.toLocaleDateString()}`;
-    if (columnId) return `Search for saved ideas to add to ${columnTitle || "this column"}`;
-    return "Search for your saved ideas";
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            {getDialogTitle()}
-          </DialogTitle>
+          <DialogTitle>Add idea to {columnTitle}</DialogTitle>
           <DialogDescription>
-            {getDialogDescription()}
+            Search for saved ideas to add to this column.
           </DialogDescription>
         </DialogHeader>
         
@@ -214,21 +170,12 @@ export function SearchIdeasDialog({
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-sm truncate">{idea.title}</h4>
                   <p className="text-xs text-muted-foreground truncate mt-1">{idea.description}</p>
-                  {idea.tags && idea.tags.length > 0 && (
-                    <div className="flex items-center gap-1 mt-2">
-                      <Tag className="h-3 w-3 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">
-                        {idea.tags.slice(0, 3).join(", ")}
-                        {idea.tags.length > 3 && ` +${idea.tags.length - 3} more`}
-                      </p>
-                    </div>
-                  )}
                 </div>
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   className="h-7 w-7 ml-2 flex-shrink-0"
-                  onClick={() => addIdea(idea)}
+                  onClick={() => addIdeaToColumn(idea)}
                 >
                   <Plus className="h-4 w-4" />
                   <span className="sr-only">Add</span>

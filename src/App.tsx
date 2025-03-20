@@ -1,171 +1,184 @@
 
-import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import Index from "@/pages/Index";
-import Auth from "@/pages/Auth";
-import Dashboard from "@/pages/Dashboard";
-import Generator from "@/pages/Generator";
-import Ideas from "@/pages/Ideas";
-import Calendar from "@/pages/Calendar";
-import Account from "@/pages/Account";
-import Billing from "@/pages/Billing";
-import NotFound from "@/pages/NotFound";
-import Script from "@/pages/Script";
-import ContentPlanner from "@/pages/ContentPlanner";
-import FindYourStyle from "@/pages/FindYourStyle";
-import Hooks from "@/pages/Hooks";
-import SavedHooks from "@/pages/SavedHooks";
-import EmailTemplates from "@/pages/EmailTemplates";
-import PrivacyPolicy from "@/pages/PrivacyPolicy";
-import TermsOfService from "@/pages/TermsOfService";
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import AuthGuard from "@/components/AuthGuard";
+import { ToastProvider } from "@/components/ui/toast";
+import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
 import AppLayout from "@/components/layout/AppLayout";
-import { ThemeProvider } from "@/hooks/use-theme";
-import { ToastProvider } from "@/hooks/use-toast";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Onboarding from "@/components/auth/Onboarding";
-import IdeaGenerator from "@/pages/IdeaGenerator";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import NotFound from "./pages/NotFound";
+import { useSupabaseUser } from "./hooks/useSupabaseUser";
+import Account from "./pages/Account";
 
-const queryClient = new QueryClient();
+// Import the new components
+import SocialAccounts from "./pages/SocialAccounts";
+import NewSocialAccount from "./pages/NewSocialAccount";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  const { isLoading, session } = useSupabaseUser();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('onboarding_completed')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (!error && profile && !profile.onboarding_completed) {
-          setShowOnboarding(true);
-        }
-      }
-      
-      setLoadingProfile(false);
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      
-      if (event === 'SIGNED_IN' && session) {
-        const checkOnboarding = async () => {
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', session.user.id)
-            .single();
-            
-          if (!error && profile && !profile.onboarding_completed) {
-            setShowOnboarding(true);
-          }
-        };
-        
-        checkOnboarding();
-      }
-      
-      if (event === 'SIGNED_OUT') {
-        setShowOnboarding(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const currentDomain = window.location.hostname;
-    if (currentDomain === 'planzo.netlify.app') {
-      const currentPath = window.location.pathname;
-      const currentSearch = window.location.search;
-      window.location.href = `https://planzoai.com${currentPath}${currentSearch}`;
+  // AuthGuard component
+  const AuthGuard = ({ children }: { children: React.ReactNode }) => {
+    if (isLoading) {
+      return <div>Loading...</div>;
     }
-  }, []);
 
-  const handleOnboardingComplete = async () => {
-    setShowOnboarding(false);
-    
-    const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
-    if (!hasSeenPricing) {
+    if (!session) {
+      return <Navigate to="/auth" />;
     }
+
+    return <>{children}</>;
   };
-
-  if (loadingProfile) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
-  }
-
+  
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <ToastProvider>
-          <Router>
-            <Routes>
-              <Route 
-                path="/" 
-                element={isAuthenticated ? <Navigate to="/dashboard" /> : <Index />} 
-              />
-              <Route 
-                path="/auth" 
-                element={isAuthenticated ? <Navigate to="/dashboard" /> : <Auth />} 
-              />
-              <Route 
-                path="/privacy-policy" 
-                element={<PrivacyPolicy />} 
-              />
-              <Route 
-                path="/terms-of-service" 
-                element={<TermsOfService />} 
-              />
-              <Route element={<AuthGuard><Outlet /></AuthGuard>}>
-                <Route element={<AppLayout><Outlet /></AppLayout>}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/generator" element={<Generator />} />
-                  <Route path="/idea-generator" element={<IdeaGenerator />} />
-                  <Route path="/content-planner" element={<ContentPlanner />} />
-                  <Route path="/script" element={<Script />} />
-                  <Route path="/hooks" element={<Hooks />} />
-                  <Route path="/saved-hooks" element={<SavedHooks />} />
-                  <Route path="/planner" element={<ContentPlanner />} />
-                  <Route path="/find-your-style" element={<FindYourStyle />} />
-                  <Route path="/ideas" element={<Ideas />} />
-                  <Route path="/calendar" element={<Calendar />} />
-                  <Route path="/account" element={<Account />} />
-                  <Route path="/billing" element={<Billing />} />
-                  <Route path="/email-templates" element={<EmailTemplates />} />
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-            
-            {isAuthenticated && (
-              <Onboarding 
-                open={showOnboarding} 
-                onOpenChange={setShowOnboarding}
-                onComplete={handleOnboardingComplete}
-              />
-            )}
-          </Router>
-        </ToastProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ToastProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="*" element={<NotFound />} />
+
+          {/* Protected routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <Dashboard />
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+          {/* Add new social accounts routes */}
+          <Route
+            path="/social-accounts"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <SocialAccounts />
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/social-accounts/new"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <NewSocialAccount />
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/content-planner"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <div>Content Planner</div>
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <div>Calendar</div>
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/idea-generator"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <div>Idea Generator</div>
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/script"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <div>Script Generator</div>
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/hooks"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <div>Hook Generator</div>
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+           <Route
+            path="/ideas"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <div>Saved Ideas</div>
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/saved-hooks"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <div>Saved Hooks</div>
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/find-your-style"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <div>Content Style</div>
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <Account />
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/billing"
+            element={
+              <AuthGuard>
+                <AppLayout>
+                  <div>Billing</div>
+                </AppLayout>
+              </AuthGuard>
+            }
+          />
+        </Routes>
+        <Toaster />
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
 
