@@ -303,8 +303,8 @@ const InfoCardMedia = ({
               ...mediaProps
             } = item;
 
-            const style = {
-              position: 'absolute',
+            const style: React.CSSProperties = {
+              position: 'absolute' as const,
               zIndex: mediaCount - index,
               transform: isHovered
                 ? `translateY(${index * -5}px) rotate(${(index - (mediaCount === 2 ? 0.5 : 1)) * 5}deg) translateX(${(index - (mediaCount === 2 ? 0.5 : 1)) * 8}px) scale(${0.95 + index * 0.02})`
