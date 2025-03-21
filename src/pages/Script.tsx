@@ -14,7 +14,6 @@ import HookSelector from "@/components/script/HookSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ChatWidget from "@/components/ChatWidget";
 import {
   Collapsible,
   CollapsibleContent,
@@ -333,10 +332,6 @@ const Script = () => {
 
   const clearScript = () => {
     setScript("");
-  };
-
-  const handleScriptUpdate = (updatedScript: string) => {
-    setScript(updatedScript);
   };
 
   const calculateWordCount = () => {
@@ -665,109 +660,37 @@ const Script = () => {
       </Tabs>
 
       {script && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-          <Card className="mt-4 md:mt-8">
-            <CardContent className="pt-4 md:pt-6">
-              <div className="flex justify-between items-center mb-3 md:mb-4">
-                <h2 className="text-lg md:text-xl font-semibold">{activeTab === "improve" ? "Improved Script" : "Generated Script"}</h2>
-                {useSavedIdea && savedIdea && (
-                  <Button 
-                    onClick={saveScriptToIdea} 
-                    disabled={isSavingScript}
-                    variant="secondary"
-                    size={isMobile ? "sm" : "default"}
-                    className="h-8"
-                  >
-                    {isSavingScript ? (
-                      <>
-                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-3 w-3 mr-2" />
-                        Save to Idea
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-              <div className="whitespace-pre-wrap bg-muted p-3 md:p-4 rounded-md h-[250px] md:h-[400px] overflow-y-auto text-sm md:text-base">
-                {script}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="mt-4 md:mt-8">
-            <CardContent className="pt-4 md:pt-6">
-              <div className="flex items-center justify-between mb-3 md:mb-4">
-                <h2 className="text-lg md:text-xl font-semibold">Script Coach</h2>
-                
-                <div className="flex items-center">
-                  <Collapsible 
-                    open={userScriptOpen} 
-                    onOpenChange={setUserScriptOpen}
-                    className="w-full"
-                  >
-                    <CollapsibleTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size={isMobile ? "sm" : "default"} 
-                        className="h-8 flex items-center gap-1.5"
-                      >
-                        <Upload className="h-3.5 w-3.5" />
-                        <span className="text-xs md:text-sm whitespace-nowrap">Add Basic Script</span>
-                        {userScriptOpen ? (
-                          <ChevronUp className="h-3.5 w-3.5 ml-1" />
-                        ) : (
-                          <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                        )}
-                      </Button>
-                    </CollapsibleTrigger>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Diamond className="h-4 w-4 ml-2 text-blue-500" />
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                          <p className="max-w-xs">
-                            Premium feature - Available on paid plans
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    
-                    <CollapsibleContent className="absolute right-0 mt-2 p-4 bg-background border rounded-md shadow-md w-[calc(100%-2rem)] md:w-[400px] z-10">
-                      <div className="space-y-4">
-                        <Textarea
-                          id="base-script"
-                          placeholder="Paste your existing script..."
-                          value={baseScript}
-                          onChange={(e) => setBaseScript(e.target.value)}
-                          rows={5}
-                        />
-                        <div className="flex items-center space-x-2">
-                          <Switch 
-                            id="use-base-script" 
-                            checked={isUsingBaseScript}
-                            onCheckedChange={setIsUsingBaseScript}
-                          />
-                          <Label htmlFor="use-base-script" className="text-sm">
-                            Use this script as a starting point
-                          </Label>
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </div>
-              </div>
-              
-              <div className="h-[250px] md:h-[400px]">
-                <ChatWidget script={script} onScriptUpdate={handleScriptUpdate} />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="mt-4 md:mt-8">
+          <CardContent className="pt-4 md:pt-6">
+            <div className="flex justify-between items-center mb-3 md:mb-4">
+              <h2 className="text-lg md:text-xl font-semibold">{activeTab === "improve" ? "Improved Script" : "Generated Script"}</h2>
+              {useSavedIdea && savedIdea && (
+                <Button 
+                  onClick={saveScriptToIdea} 
+                  disabled={isSavingScript}
+                  variant="secondary"
+                  size={isMobile ? "sm" : "default"}
+                  className="h-8"
+                >
+                  {isSavingScript ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-3 w-3 mr-2" />
+                      Save to Idea
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            <div className="whitespace-pre-wrap bg-muted p-3 md:p-4 rounded-md h-[250px] md:h-[400px] overflow-y-auto text-sm md:text-base">
+              {script}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
