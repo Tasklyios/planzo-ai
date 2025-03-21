@@ -48,7 +48,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             <AppSidebarNew />
           </Sidebar>
           <main className="flex-1 overflow-auto bg-background">
-            <div className="container mx-auto p-4 md:p-6">
+            <div className="w-full px-4 md:px-6 py-4 md:py-6">
               <div className="mb-4 hidden md:flex items-center">
                 <SidebarTrigger className="mr-2" />
                 <div className="border border-border rounded-lg overflow-hidden flex-1">
