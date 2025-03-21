@@ -6,11 +6,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Wand2, Trash2, Check, Apple, Plus } from "lucide-react";
+import { Wand2, Trash2, Check, Apple, Plus, Smile } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EditIdeaProps {
   ideaId: string | null;
@@ -32,6 +35,7 @@ interface IdeaData {
   is_saved?: boolean;
   status?: string;
   user_id?: string;
+  emoji?: string;
 }
 
 const standardColors = [
@@ -50,12 +54,38 @@ const colorMap: Record<string, string> = {
   pink: "#ec4899",
 };
 
+// Common emoji categories for content ideas
+const commonEmojis = [
+  "🎬", "📱", "💡", "🔍", "📊", "🎯", "✅", "🎨", "📝", "🏆",
+  "🌟", "💫", "📈", "🚀", "💪", "🧠", "❤️", "💰", "🔥", "💯",
+  "👍", "👋", "😊", "😎", "🤔", "😮", "🙌", "👏", "📸", "🎤",
+  "🎵", "📚", "🍎", "⭐", "🌈", "🎁", "🎉", "💻", "📱", "📹"
+];
+
+// Food-related emojis
+const foodEmojis = [
+  "🍎", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒",
+  "🍑", "🥭", "🍍", "🥥", "🥝", "🍅", "🥑", "🥦", "🥬", "🥕",
+  "🥗", "🥪", "🍕", "🍔", "🌮", "🌯", "🍣", "🍜", "🍝", "🍩",
+  "🍪", "🎂", "🧁", "🍦", "🍧", "🍮", "🍰", "🥧", "🍫", "🍬"
+];
+
+// Activities and objects
+const activityEmojis = [
+  "🏃", "🚴", "🏋️", "🧘", "🎮", "🎯", "🎨", "🎭", "🎬", "🎤",
+  "🎸", "🥁", "📚", "✏️", "💻", "📱", "📷", "🎥", "🔬", "🧪",
+  "🧮", "💼", "💰", "📈", "🏠", "🚗", "✈️", "🚆", "🛳️", "🏝️",
+  "⚽", "🏀", "🎾", "🏐", "🎣", "🧩", "🎲", "🎯", "🎪", "🎠"
+];
+
 const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const [idea, setIdea] = useState<IdeaData | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customColor, setCustomColor] = useState("#3b82f6"); // Default blue
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [currentEmojiTab, setCurrentEmojiTab] = useState("common");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -108,6 +138,12 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       }
       
       console.log("Fetched idea data:", data);
+      
+      // Make sure there's an emoji property
+      if (!data.emoji) {
+        data.emoji = getEmojiForIdea(data.title, data.category);
+      }
+      
       setIdea(data);
     } catch (error: any) {
       console.error("Error fetching idea:", error);
@@ -230,7 +266,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           scheduled_for: idea.scheduled_for,
           is_saved: true,
           status: idea.status || "ideas",
-          user_id: userId // Explicitly set user_id
+          user_id: userId,
+          emoji: idea.emoji // Save the emoji
         })
         .eq("id", idea.id)
         .eq("user_id", userId);
@@ -296,210 +333,296 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     selectColor(newColor);
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    setIdea({ ...idea, emoji });
+    setShowEmojiPicker(false);
+  };
+
   // Get emoji based on title and category
-  const ideaEmoji = idea ? getEmojiForIdea(idea.title, idea.category) : "🍎";
+  const ideaEmoji = idea.emoji || getEmojiForIdea(idea.title, idea.category);
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-start gap-4 pb-2 border-b">
-          <div className="text-4xl" aria-hidden="true">
-            {ideaEmoji}
-          </div>
-          <div className="flex-1">
-            <Input
-              value={idea.title}
-              onChange={(e) => setIdea({ ...idea, title: e.target.value })}
-              className="text-xl font-semibold border-none px-0 h-auto focus-visible:ring-0"
-              placeholder="Enter idea title..."
-            />
-          </div>
-        </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <label>Color</label>
-              <div className="flex flex-wrap gap-2 items-center">
-                {standardColors.map((color) => (
-                  <Button
-                    key={color}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={`w-8 h-8 rounded-full p-0 border-2 ${idea.color === color ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'}`}
-                    style={{ backgroundColor: colorMap[color] }}
-                    onClick={() => selectColor(color)}
-                  >
-                    {idea.color === color && (
-                      <Check className="h-3 w-3 text-white" />
-                    )}
-                    <span className="sr-only">{color}</span>
-                  </Button>
-                ))}
-                
-                {/* Custom color picker */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className={`w-8 h-8 rounded-full p-0 border-2 ${!standardColors.includes(idea.color || '') ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'}`}
-                      style={{ 
-                        backgroundColor: !standardColors.includes(idea.color || '') 
-                          ? idea.color 
-                          : '#ffffff',
-                        backgroundImage: !standardColors.includes(idea.color || '') ? 'none' : 'linear-gradient(45deg, #f59e0b 0%, #3b82f6 50%, #ec4899 100%)'
-                      }}
-                    >
-                      {!standardColors.includes(idea.color || '') && (
-                        <Check className="h-3 w-3 text-white" />
-                      )}
-                      <span className="sr-only">Custom color</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-3">
-                    <div className="flex flex-col gap-2">
-                      <label htmlFor="custom-color" className="text-sm font-medium">
-                        Pick a custom color
-                      </label>
-                      <div className="flex gap-2 items-center">
-                        <Input
-                          id="custom-color"
-                          type="color"
-                          value={customColor}
-                          onChange={handleCustomColorChange}
-                          className="w-10 h-10 p-1 cursor-pointer"
-                        />
-                        <Input 
-                          type="text"
-                          value={customColor}
-                          onChange={handleCustomColorChange}
-                          className="w-24"
-                        />
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <label>Schedule</label>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Input
-                    type="date"
-                    value={dateValue}
-                    onChange={(e) => handleDateTimeChange('date', e.target.value)}
-                  />
-                </div>
-                <div className="flex-1">
-                  <Input
-                    type="time"
-                    value={timeValue}
-                    onChange={(e) => handleDateTimeChange('time', e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <label>Category</label>
-            <Input
-              value={idea.category}
-              onChange={(e) => setIdea({ ...idea, category: e.target.value })}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <label>Description</label>
-            <Textarea
-              value={idea.description}
-              onChange={(e) => setIdea({ ...idea, description: e.target.value })}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <label>Tags (comma-separated)</label>
-            <Input
-              value={idea.tags ? idea.tags.join(", ") : ""}
-              onChange={(e) => setIdea({ ...idea, tags: e.target.value.split(",").map(t => t.trim()) })}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <div className="flex justify-between items-center">
-              <label>Hook</label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNavigateToSavedHooks}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add from Saved Hooks
-              </Button>
-            </div>
-            <div className="relative">
-              <Textarea
-                value={idea.hook_text || ""}
-                onChange={(e) => setIdea({ ...idea, hook_text: e.target.value })}
-                placeholder="Add a hook for your video..."
-                className={idea.hook_category ? "pr-16" : ""}
-              />
-              {idea.hook_category && (
-                <Badge 
-                  className="absolute top-2 right-2"
-                  variant="outline"
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-background border-0 shadow-xl rounded-xl p-0">
+        <div className="flex flex-col h-full">
+          {/* Header with emoji and title */}
+          <div className="flex items-start gap-4 p-6 bg-card border-b">
+            <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+              <PopoverTrigger asChild>
+                <button 
+                  className="text-5xl bg-transparent border-0 cursor-pointer hover:opacity-80 transition-opacity p-2 rounded-full"
+                  aria-label="Change emoji"
                 >
-                  {idea.hook_category}
-                </Badge>
-              )}
+                  {idea.emoji || ideaEmoji}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="start">
+                <Card className="border-0 shadow-none">
+                  <Tabs defaultValue="common" value={currentEmojiTab} onValueChange={setCurrentEmojiTab}>
+                    <TabsList className="w-full grid grid-cols-3">
+                      <TabsTrigger value="common">Common</TabsTrigger>
+                      <TabsTrigger value="food">Food</TabsTrigger>
+                      <TabsTrigger value="activity">Activity</TabsTrigger>
+                    </TabsList>
+                    <ScrollArea className="h-[200px] p-4">
+                      <TabsContent value="common" className="m-0">
+                        <div className="grid grid-cols-8 gap-2">
+                          {commonEmojis.map((emoji) => (
+                            <button
+                              key={emoji}
+                              className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
+                              onClick={() => handleEmojiSelect(emoji)}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="food" className="m-0">
+                        <div className="grid grid-cols-8 gap-2">
+                          {foodEmojis.map((emoji) => (
+                            <button
+                              key={emoji}
+                              className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
+                              onClick={() => handleEmojiSelect(emoji)}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="activity" className="m-0">
+                        <div className="grid grid-cols-8 gap-2">
+                          {activityEmojis.map((emoji) => (
+                            <button
+                              key={emoji}
+                              className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
+                              onClick={() => handleEmojiSelect(emoji)}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </TabsContent>
+                    </ScrollArea>
+                  </Tabs>
+                </Card>
+              </PopoverContent>
+            </Popover>
+            <div className="flex-1">
+              <Input
+                value={idea.title}
+                onChange={(e) => setIdea({ ...idea, title: e.target.value })}
+                className="text-xl font-semibold border-none px-0 h-auto focus-visible:ring-0 bg-transparent"
+                placeholder="Enter idea title..."
+              />
             </div>
           </div>
+          
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="grid gap-6">
+              {/* Color and Schedule in a card */}
+              <Card className="p-4 bg-white dark:bg-card border-0 shadow-sm">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block text-muted-foreground">Color</label>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {standardColors.map((color) => (
+                        <Button
+                          key={color}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className={`w-8 h-8 rounded-full p-0 border-2 ${idea.color === color ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'}`}
+                          style={{ backgroundColor: colorMap[color] }}
+                          onClick={() => selectColor(color)}
+                        >
+                          {idea.color === color && (
+                            <Check className="h-3 w-3 text-white" />
+                          )}
+                          <span className="sr-only">{color}</span>
+                        </Button>
+                      ))}
+                      
+                      {/* Custom color picker */}
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className={`w-8 h-8 rounded-full p-0 border-2 ${!standardColors.includes(idea.color || '') ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'}`}
+                            style={{ 
+                              backgroundColor: !standardColors.includes(idea.color || '') 
+                                ? idea.color 
+                                : '#ffffff',
+                              backgroundImage: !standardColors.includes(idea.color || '') ? 'none' : 'linear-gradient(45deg, #f59e0b 0%, #3b82f6 50%, #ec4899 100%)'
+                            }}
+                          >
+                            {!standardColors.includes(idea.color || '') && (
+                              <Check className="h-3 w-3 text-white" />
+                            )}
+                            <span className="sr-only">Custom color</span>
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-3">
+                          <div className="flex flex-col gap-2">
+                            <label htmlFor="custom-color" className="text-sm font-medium">
+                              Pick a custom color
+                            </label>
+                            <div className="flex gap-2 items-center">
+                              <Input
+                                id="custom-color"
+                                type="color"
+                                value={customColor}
+                                onChange={handleCustomColorChange}
+                                className="w-10 h-10 p-1 cursor-pointer"
+                              />
+                              <Input 
+                                type="text"
+                                value={customColor}
+                                onChange={handleCustomColorChange}
+                                className="w-24"
+                              />
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
 
-          <div className="grid gap-2">
-            <div className="flex justify-between items-center">
-              <label>Script</label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNavigateToScript}
-              >
-                <Wand2 className="w-4 h-4 mr-2" />
-                Generate Script
-              </Button>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block text-muted-foreground">Schedule</label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="date"
+                        value={dateValue}
+                        onChange={(e) => handleDateTimeChange('date', e.target.value)}
+                        className="flex-1"
+                      />
+                      <Input
+                        type="time"
+                        value={timeValue}
+                        onChange={(e) => handleDateTimeChange('time', e.target.value)}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Main content fields */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block text-muted-foreground">Category</label>
+                  <Input
+                    value={idea.category}
+                    onChange={(e) => setIdea({ ...idea, category: e.target.value })}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block text-muted-foreground">Description</label>
+                  <Textarea
+                    value={idea.description}
+                    onChange={(e) => setIdea({ ...idea, description: e.target.value })}
+                    className="min-h-[100px] w-full resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block text-muted-foreground">Tags</label>
+                  <Input
+                    value={idea.tags ? idea.tags.join(", ") : ""}
+                    onChange={(e) => setIdea({ ...idea, tags: e.target.value.split(",").map(t => t.trim()) })}
+                    placeholder="Enter tags separated by commas"
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Hook section */}
+                <Card className="p-4 bg-white dark:bg-card border-0 shadow-sm">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm font-medium text-muted-foreground">Hook</label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNavigateToSavedHooks}
+                        className="h-8 text-xs gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Add from Saved Hooks
+                      </Button>
+                    </div>
+                    <div className="relative">
+                      <Textarea
+                        value={idea.hook_text || ""}
+                        onChange={(e) => setIdea({ ...idea, hook_text: e.target.value })}
+                        placeholder="Add a hook for your video..."
+                        className={`min-h-[80px] w-full resize-none ${idea.hook_category ? "pr-16" : ""}`}
+                      />
+                      {idea.hook_category && (
+                        <Badge 
+                          className="absolute top-2 right-2"
+                          variant="outline"
+                        >
+                          {idea.hook_category}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              
+                {/* Script section */}
+                <Card className="p-4 bg-white dark:bg-card border-0 shadow-sm">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm font-medium text-muted-foreground">Script</label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNavigateToScript}
+                        className="h-8 text-xs gap-1"
+                      >
+                        <Wand2 className="w-3 h-3" />
+                        Generate Script
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={idea.script || ""}
+                      onChange={(e) => setIdea({ ...idea, script: e.target.value })}
+                      className="min-h-[150px] w-full resize-none"
+                    />
+                  </div>
+                </Card>
+              </div>
             </div>
-            <Textarea
-              value={idea.script || ""}
-              onChange={(e) => setIdea({ ...idea, script: e.target.value })}
-              className="min-h-[200px]"
-            />
           </div>
-        </div>
-        <DialogFooter className="flex justify-between sm:justify-between">
-          <div className="flex gap-2">
+          
+          <DialogFooter className="flex justify-between p-4 bg-card border-t">
             <Button
               type="button"
               variant="destructive"
               onClick={handleDelete}
               disabled={deleting}
+              size="sm"
+              className="h-9"
             >
               <Trash2 className="w-4 h-4 mr-2" />
               {deleting ? "Deleting..." : (window.location.pathname === "/calendar" ? "Remove" : "Delete")}
             </Button>
-          </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </DialogFooter>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={onClose} size="sm" className="h-9">
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleSave} disabled={saving} size="sm" className="h-9">
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -507,5 +630,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
 
 // Import this function from the utils file
 import { getEmojiForIdea } from "@/utils/emojiUtils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default EditIdea;

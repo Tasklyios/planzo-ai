@@ -84,7 +84,8 @@ export const onRequestPost = async (context: any) => {
           "category": "string",
           "tags": ["string"],
           "hook_text": "string - a short attention-grabbing hook for the start of the video",
-          "hook_category": "string - a category label for the hook (e.g., 'question', 'statistic', 'story')"
+          "hook_category": "string - a category label for the hook (e.g., 'question', 'statistic', 'story')",
+          "emoji": "string - a single emoji that represents the idea content"
         }
       ]
     }`;
@@ -115,6 +116,12 @@ export const onRequestPost = async (context: any) => {
     
     ideas.ideas.forEach((idea: any) => {
       idea.expires_at = expirationDate.toISOString();
+      
+      // If emoji isn't provided, use the emoji utility to generate one
+      if (!idea.emoji) {
+        const { getEmojiForIdea } = await import('../utils/emojiUtils');
+        idea.emoji = getEmojiForIdea(idea.title, idea.category);
+      }
     });
 
     return new Response(JSON.stringify(ideas), {
