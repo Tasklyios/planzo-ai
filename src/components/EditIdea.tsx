@@ -19,6 +19,8 @@ import {
   emotionEmojis,
   natureEmojis
 } from "@/utils/emojiUtils";
+import { SavedHooksDialog } from "@/components/hooks/SavedHooksDialog";
+import { HookType } from "@/types/hooks";
 
 interface EditIdeaProps {
   ideaId: string | null;
@@ -64,6 +66,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customColor, setCustomColor] = useState("#3b82f6");
+  const [savedHooksDialogOpen, setSavedHooksDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -194,9 +197,22 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     navigate(`/script?idea=${idea?.id}`);
   };
 
-  const handleNavigateToSavedHooks = () => {
-    onClose();
-    navigate(`/hooks?selectForIdea=${idea?.id}`);
+  const handleOpenSavedHooks = () => {
+    setSavedHooksDialogOpen(true);
+  };
+
+  const handleSelectHook = (hook: HookType) => {
+    if (!idea) return;
+    setIdea({
+      ...idea,
+      hook_text: hook.hook_text,
+      hook_category: hook.category
+    });
+    setSavedHooksDialogOpen(false);
+    toast({
+      title: "Hook added",
+      description: "Hook has been added to your idea",
+    });
   };
 
   const handleSave = async () => {
@@ -461,7 +477,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleNavigateToSavedHooks}
+                        onClick={handleOpenSavedHooks}
                         className="h-8 text-xs gap-1"
                       >
                         <Plus className="w-3 h-3" />
@@ -535,6 +551,12 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           </DialogFooter>
         </div>
       </DialogContent>
+
+      <SavedHooksDialog 
+        open={savedHooksDialogOpen}
+        onOpenChange={setSavedHooksDialogOpen}
+        onSelectHook={handleSelectHook}
+      />
     </Dialog>
   );
 };
