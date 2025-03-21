@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -280,7 +279,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     }
   };
 
-  // Add back the missing functions
   const handleDateTimeChange = (type: 'date' | 'time', value: string) => {
     if (!idea) return;
     
@@ -310,21 +308,15 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
 
   const renderEmojiButton = (emoji: string, index: number, category: string) => {
     return (
-      <div
+      <button
         key={`${category}-${index}`}
-        className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
+        className="text-2xl p-2 hover:bg-accent rounded cursor-pointer"
         onClick={() => handleEmojiSelect(emoji)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            handleEmojiSelect(emoji);
-          }
-        }}
-        role="button"
-        tabIndex={0}
+        type="button"
         aria-label={`Select ${emoji} emoji`}
       >
         {emoji}
-      </div>
+      </button>
     );
   };
 
@@ -378,35 +370,35 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                     </TabsList>
                     <ScrollArea className="h-[200px] p-4">
                       <TabsContent value="common" className="m-0">
-                        <div className="grid grid-cols-8 gap-2">
+                        <div className="grid grid-cols-8 gap-1">
                           {commonEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "common")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="food" className="m-0">
-                        <div className="grid grid-cols-8 gap-2">
+                        <div className="grid grid-cols-8 gap-1">
                           {foodEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "food")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="activity" className="m-0">
-                        <div className="grid grid-cols-8 gap-2">
+                        <div className="grid grid-cols-8 gap-1">
                           {activityEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "activity")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="emotion" className="m-0">
-                        <div className="grid grid-cols-8 gap-2">
+                        <div className="grid grid-cols-8 gap-1">
                           {emotionEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "emotion")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="nature" className="m-0">
-                        <div className="grid grid-cols-8 gap-2">
+                        <div className="grid grid-cols-8 gap-1">
                           {natureEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "nature")
                           )}
