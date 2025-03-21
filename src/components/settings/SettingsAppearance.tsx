@@ -14,6 +14,7 @@ const SettingsAppearance = () => {
     theme as "light" | "dark" | "system"
   );
 
+  // Ensure selectedTheme stays in sync with theme from context
   useEffect(() => {
     setSelectedTheme(theme as "light" | "dark" | "system");
   }, [theme]);
@@ -23,6 +24,18 @@ const SettingsAppearance = () => {
     toast({
       title: "Appearance updated",
       description: "Your theme preferences have been saved.",
+    });
+  };
+
+  const handleThemeChange = (value: string) => {
+    // Immediately apply the theme to see the change
+    const themeValue = value as "light" | "dark" | "system";
+    setSelectedTheme(themeValue);
+    setTheme(themeValue);
+    
+    toast({
+      title: "Theme changed",
+      description: `Theme set to ${value} mode.`,
     });
   };
 
@@ -36,7 +49,7 @@ const SettingsAppearance = () => {
         
         <RadioGroup 
           value={selectedTheme} 
-          onValueChange={(value) => setSelectedTheme(value as "light" | "dark" | "system")}
+          onValueChange={handleThemeChange}
           className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2"
         >
           <div className={`flex flex-col rounded-lg border p-4 transition-all duration-200 ${selectedTheme === "light" ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/40"}`}>
@@ -76,7 +89,7 @@ const SettingsAppearance = () => {
           </div>
         </RadioGroup>
         
-        <Button onClick={handleSaveAppearance} className="mt-6 w-full sm:w-auto">
+        <Button onClick={handleSaveAppearance} className="mt-6 w-full sm:w-auto hidden">
           Save Theme Preference
         </Button>
       </div>
