@@ -37,7 +37,18 @@ export function SavedHooksDialog({ open, onOpenChange, onSelectHook }: SavedHook
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setSavedHooks(data || []);
+      
+      // Transform the data to match the HookType interface
+      const transformedData: HookType[] = (data || []).map(hook => ({
+        id: hook.id,
+        hook_text: hook.hook, // Map 'hook' field to 'hook_text'
+        category: hook.category,
+        explanation: hook.description,
+        created_at: hook.created_at,
+        is_saved: true
+      }));
+      
+      setSavedHooks(transformedData);
     } catch (error: any) {
       console.error("Error fetching hooks:", error);
       toast({
@@ -92,7 +103,11 @@ export function SavedHooksDialog({ open, onOpenChange, onSelectHook }: SavedHook
   };
 
   const getHookText = (hook: HookType | SavedHook) => {
-    return hook.hook_text || '';
+    // Check which type of hook it is
+    if ('hook_text' in hook) {
+      return hook.hook_text;
+    }
+    return (hook as SavedHook).hook || '';
   };
 
   return (
