@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import TrustBadge from "@/components/TrustBadge";
@@ -13,7 +12,7 @@ const Hero = () => {
   const useCases = [
     "Entrepreneurs",
     "Business Owners",
-    "Marketers",
+    "Marketers", 
     "Content Creators",
     "Social Media Managers",
     "Video Producers"
@@ -53,15 +52,13 @@ const Hero = () => {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-4 md:mb-6">
             {isMobile ? (
               <>
-                <div className="block">The #1 AI content creation tool for</div>
-                <div className="block mt-2">
-                  <AnimatedTextSwitcher titles={useCases} className="h-16" />
-                </div>
+                <div>The #1 AI content creation tool for</div>
+                <AnimatedTextSwitcher titles={useCases} className="mt-2" />
               </>
             ) : (
-              <div className="flex items-center justify-center flex-wrap">
-                <span>The #1 AI content creation tool for&nbsp;</span>
-                <AnimatedTextSwitcher titles={useCases} />
+              <div className="inline">
+                <span>The #1 AI content creation tool for </span>
+                <AnimatedTextSwitcher titles={useCases} className="inline-block" />
               </div>
             )}
           </h1>

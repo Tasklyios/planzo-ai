@@ -27,14 +27,14 @@ export function AnimatedTextSwitcher({
   }, [titleIndex, titles, interval]);
 
   return (
-    <div className={`inline-block ${className}`}>
-      <div className="relative inline-block min-w-[150px]">
+    <div className={`relative ${className}`}>
+      <div className="relative min-w-[150px] min-h-[40px]">
         {titles.map((title, index) => (
           <motion.span
             key={index}
             className="absolute left-0 font-bold whitespace-nowrap"
-            initial={{ opacity: 0, y: "100%" }}
-            transition={{ type: "spring", stiffness: 50 }}
+            initial={{ opacity: 0, y: 20 }}
+            transition={{ type: "spring", stiffness: 100 }}
             animate={
               titleIndex === index
                 ? {
@@ -42,7 +42,7 @@ export function AnimatedTextSwitcher({
                     opacity: 1,
                   }
                 : {
-                    y: titleIndex > index ? "-100%" : "100%",
+                    y: titleIndex > index ? -20 : 20,
                     opacity: 0,
                   }
             }
