@@ -205,11 +205,6 @@ const Pricing = () => {
   return (
     <section id="pricing" className="bg-gray-50">
       <div className="container mx-auto py-16 px-4">
-        <h2 className="text-3xl font-bold text-center mb-8">Simple, Transparent Pricing</h2>
-        <p className="text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto">
-          Choose the plan that best fits your needs. All plans include access to our core features.
-        </p>
-        
         <PricingSection 
           tiers={pricingTiers} 
           isYearly={isYearly} 
