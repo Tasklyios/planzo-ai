@@ -171,9 +171,27 @@ const SettingsProfile = () => {
   };
 
   const handleContentTypeChange = (value: string) => {
-    const isValidType = contentTypes.some(type => type.value === value);
-    if (isValidType) {
-      setContentType(value);
+    try {
+      const isValidType = contentTypes.some(type => type.value === value);
+      if (isValidType) {
+        setContentType(value);
+        
+        if (user) {
+          supabase
+            .from("profiles")
+            .update({ content_type: value })
+            .eq("id", user.id)
+            .then(({ error }) => {
+              if (error) {
+                console.error("Error updating content type:", error);
+              }
+            });
+        }
+      } else {
+        console.warn("Invalid content type selected:", value);
+      }
+    } catch (error) {
+      console.error("Error handling content type change:", error);
     }
   };
 
