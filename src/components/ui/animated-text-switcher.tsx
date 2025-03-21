@@ -31,7 +31,7 @@ export function AnimatedTextSwitcher({
       {titles.map((title, index) => (
         <motion.span
           key={index}
-          className="absolute font-semibold"
+          className="absolute font-bold" 
           initial={{ opacity: 0, y: "100px" }}
           transition={{ type: "spring", stiffness: 50 }}
           animate={

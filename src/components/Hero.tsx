@@ -49,8 +49,12 @@ const Hero = () => {
             <TrustBadge />
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-4 md:mb-6">
-            <span className="block mb-2">The #1 AI content creation tool for</span>
-            <AnimatedTextSwitcher titles={useCases} className="h-16 md:h-20" />
+            <div className="block mb-2 md:mb-0">
+              <span className="md:inline">The #1 AI content creation tool for</span>
+              <span className="block md:inline-flex md:ml-3">
+                <AnimatedTextSwitcher titles={useCases} className="h-16 md:h-20" />
+              </span>
+            </div>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
             Generate viral video ideas, create engaging scripts, and plan your content calendar with AI - all in one platform
