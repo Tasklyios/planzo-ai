@@ -11,7 +11,6 @@ import {
   Film,
   Calendar,
   BookCopy,
-  Palette,
   LightbulbIcon,
   BookOpen,
   Anchor,
@@ -71,7 +70,6 @@ const Navbar = () => {
       items: [
         { path: '/ideas', label: 'Saved Ideas', icon: <Film className="h-5 w-5 mr-2" /> },
         { path: '/saved-hooks', label: 'Saved Hooks', icon: <BookmarkIcon className="h-5 w-5 mr-2" /> },
-        { path: '/find-your-style', label: 'Content Style', icon: <Palette className="h-5 w-5 mr-2" /> },
       ]
     }
   ];

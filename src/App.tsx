@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +13,6 @@ import Billing from "@/pages/Billing";
 import NotFound from "@/pages/NotFound";
 import Script from "@/pages/Script";
 import ContentPlanner from "@/pages/ContentPlanner";
-import FindYourStyle from "@/pages/FindYourStyle";
 import Hooks from "@/pages/Hooks";
 import SavedHooks from "@/pages/SavedHooks";
 import EmailTemplates from "@/pages/EmailTemplates";
@@ -142,7 +140,6 @@ function App() {
                   <Route path="/hooks" element={<Hooks />} />
                   <Route path="/saved-hooks" element={<SavedHooks />} />
                   <Route path="/planner" element={<ContentPlanner />} />
-                  <Route path="/find-your-style" element={<FindYourStyle />} />
                   <Route path="/ideas" element={<Ideas />} />
                   <Route path="/calendar" element={<Calendar />} />
                   <Route path="/account" element={<Account />} />

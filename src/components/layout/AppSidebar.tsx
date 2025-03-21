@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,6 @@ import {
   User, 
   Bookmark,
   CreditCard,
-  PaintBucket,
   Sparkles
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -241,20 +239,6 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
                     <Bookmark className="mr-1.5 h-4 w-4" />
                     Saved Hooks
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start rounded-md h-8 px-2 py-1.5 text-sm",
-                      isActive("/find-your-style") 
-                        ? "bg-primary text-white font-medium" 
-                        : "text-foreground"
-                    )}
-                    onClick={() => handleNavigation("/find-your-style")}
-                  >
-                    <PaintBucket className="mr-1.5 h-4 w-4" />
-                    Content Style
-                  </Button>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -273,7 +257,6 @@ const AppSidebar = ({ isMobile, closeDrawer }: AppSidebarProps) => {
         </div>
       </ScrollArea>
       
-      {/* Sticky Account Section - Always Expanded */}
       <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card/40 p-2">
         <div className="space-y-0.5">
           <h3 className="px-2 text-xs font-medium text-muted-foreground">Account</h3>

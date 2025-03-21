@@ -1,4 +1,3 @@
-
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ import {
   User, 
   Bookmark,
   CreditCard,
-  PaintBucket,
   ChevronsUpDown,
   Settings
 } from "lucide-react";
@@ -118,7 +116,6 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
       items: [
         { path: '/ideas', label: 'Saved Ideas', icon: <LayoutGrid className="h-4 w-4" /> },
         { path: '/saved-hooks', label: 'Saved Hooks', icon: <Bookmark className="h-4 w-4" /> },
-        { path: '/find-your-style', label: 'Content Style', icon: <PaintBucket className="h-4 w-4" /> },
       ]
     }
   ];
