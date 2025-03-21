@@ -233,24 +233,21 @@ const InfoCardMedia = ({
 
   const handleMediaLoad = (mediaSrc: string) => {
     loadedMedia.current.add(mediaSrc);
-    if (loadedMedia.current.size === Math.min(3, media.slice(0, 3).length)) {
+    if (loadedMedia.current.size === Math.min(2, media.slice(0, 2).length)) {
       setAllImagesLoaded(true);
     }
   };
 
   const processedMedia = useMemo(
     () =>
-      media.map((item) => ({
+      media.slice(0, 2).map((item) => ({
         ...item,
         type: item.type || "image",
       })),
     [media]
   );
 
-  const displayMedia = useMemo(
-    () => processedMedia.slice(0, 3),
-    [processedMedia]
-  );
+  const displayMedia = processedMedia;
 
   useEffect(() => {
     if (media.length > 0) {

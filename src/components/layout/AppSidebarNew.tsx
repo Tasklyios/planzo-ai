@@ -1,4 +1,3 @@
-
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -172,11 +171,6 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
                 {
                   src: "/lovable-uploads/4bffa49c-cb7f-4577-b3d2-4bd18508a9b8.png",
                   alt: "Video idea generator interface",
-                  className: "object-cover h-full w-full"
-                },
-                {
-                  src: "/placeholder.svg",
-                  alt: "Premium features",
                   className: "object-cover h-full w-full"
                 }
               ]}
