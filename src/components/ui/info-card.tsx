@@ -315,6 +315,11 @@ const InfoCardMedia = ({
               maxHeight: '100%',
             };
 
+            // Only render the content if it's visible or the first item
+            if (!isHovered && index > 0 && src !== displayMedia[0].src) {
+              return null;
+            }
+
             return (
               <div
                 key={src}
