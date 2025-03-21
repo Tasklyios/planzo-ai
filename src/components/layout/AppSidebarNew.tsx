@@ -1,3 +1,4 @@
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -164,12 +165,23 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
             <InfoCardMedia
               media={[
                 {
+                  src: "/lovable-uploads/a0a4a65c-332e-4e31-9748-fc321b747b4c.png",
+                  alt: "Content planner with idea cards",
+                  className: "object-cover h-full"
+                },
+                {
+                  src: "/lovable-uploads/4bffa49c-cb7f-4577-b3d2-4bd18508a9b8.png",
+                  alt: "Video idea generator interface",
+                  className: "object-cover h-full"
+                },
+                {
                   src: "/placeholder.svg",
-                  alt: "Premium features"
+                  alt: "Premium features",
+                  className: "object-cover h-full"
                 }
               ]}
-              shrinkHeight={60}
-              expandHeight={120}
+              shrinkHeight={65}
+              expandHeight={130}
             />
             <InfoCardFooter>
               <InfoCardDismiss>Dismiss</InfoCardDismiss>
