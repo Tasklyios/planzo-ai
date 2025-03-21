@@ -215,9 +215,9 @@ export default function Ideas() {
   return (
     <main className="container mx-auto px-4 pt-8 pb-12">
       <section className="mb-12">
-        <div className="mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold text-[#0073FF] mb-2">Saved Ideas</h1>
-          <p className="text-muted-foreground text-lg mt-2">Browse and manage your bookmarked video ideas</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#0073FF]">Saved Ideas</h1>
+          <p className="text-muted-foreground mt-2">Browse and manage your bookmarked video ideas</p>
         </div>
 
         {isLoading ? (
