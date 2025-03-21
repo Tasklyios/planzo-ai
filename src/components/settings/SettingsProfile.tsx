@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -180,6 +181,10 @@ const SettingsProfile = () => {
   const handleContentNicheChange = (value: string) => {
     setContentNiche(value);
   };
+  
+  const handlePostingFrequencyChange = (value: string) => {
+    setPostingFrequency(value);
+  };
 
   return (
     <div className="space-y-8">
@@ -354,26 +359,24 @@ const SettingsProfile = () => {
                   
                   <div className="space-y-2">
                     <Label className="text-base">Posting Frequency</Label>
-                    <RadioGroup
-                      value={postingFrequency}
-                      onValueChange={setPostingFrequency}
-                      className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 lg:grid-cols-3"
-                    >
+                    <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 lg:grid-cols-3">
                       {postingFrequencies.map((frequency) => (
                         <div 
                           key={frequency}
-                          className={`flex items-center space-x-2 rounded-lg border p-3 ${postingFrequency === frequency ? "border-primary bg-primary/5" : "border-border"}`}
+                          className={`flex items-center space-x-2 rounded-lg border p-3 cursor-pointer ${postingFrequency === frequency ? "border-primary bg-primary/5" : "border-border"}`}
+                          onClick={() => handlePostingFrequencyChange(frequency)}
+                          role="button"
+                          tabIndex={0}
                         >
-                          <RadioGroupItem value={frequency} id={`freq-${frequency}`} className="sr-only" />
-                          <label htmlFor={`freq-${frequency}`} className="flex flex-1 cursor-pointer items-center justify-between">
+                          <div className="flex flex-1 items-center justify-between">
                             <span className="text-sm">{frequency}</span>
                             {postingFrequency === frequency && (
                               <CheckCircle2 className="h-4 w-4 text-primary" />
                             )}
-                          </label>
+                          </div>
                         </div>
                       ))}
-                    </RadioGroup>
+                    </div>
                   </div>
                 </div>
               </div>
