@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useEffect, useState } from "react"
@@ -60,6 +61,7 @@ export function NavBar({ items, className }: NavBarProps) {
         {items.map((item) => {
           const Icon = item.icon
           const isActive = activeTab === item.name
+          const isGetStarted = item.name === "Get Started"
 
           return (
             <a
@@ -68,15 +70,15 @@ export function NavBar({ items, className }: NavBarProps) {
               onClick={(e) => handleNavigation(item.url, item.name, e)}
               className={cn(
                 "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
-                "text-foreground/80 hover:text-primary",
-                isActive && "bg-muted text-primary",
+                isGetStarted ? "bg-primary text-white hover:bg-primary/90" : "text-foreground/80 hover:text-primary",
+                isActive && !isGetStarted && "bg-muted text-primary",
               )}
             >
               <span className="hidden md:inline">{item.name}</span>
               <span className="md:hidden">
                 <Icon size={18} strokeWidth={2.5} />
               </span>
-              {isActive && (
+              {isActive && !isGetStarted && (
                 <motion.div
                   layoutId="lamp"
                   className="absolute inset-0 w-full bg-primary/5 rounded-full -z-10"

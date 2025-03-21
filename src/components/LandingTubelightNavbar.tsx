@@ -4,7 +4,6 @@ import { NavBar } from "@/components/ui/tubelight-navbar";
 import { Logo } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import PricingSheet from "@/components/pricing/PricingSheet";
 import { cn } from "@/lib/utils";
 
 const LandingTubelightNavbar = () => {
@@ -13,7 +12,8 @@ const LandingTubelightNavbar = () => {
   const navItems = [
     { name: 'Features', url: '#features', icon: Home },
     { name: 'How it works', url: '#how-it-works', icon: FileText },
-    { name: 'Pricing', url: '#pricing', icon: Anchor }
+    { name: 'Pricing', url: '#pricing', icon: Anchor },
+    { name: 'Get Started', url: '/auth', icon: LightbulbIcon }
   ];
 
   return (
@@ -24,26 +24,7 @@ const LandingTubelightNavbar = () => {
         </a>
       </div>
 
-      <NavBar items={navItems} className="static translate-x-0 left-auto pt-0 ml-auto mr-4" />
-
-      <div className="flex items-center gap-2">
-        <PricingSheet 
-          trigger={
-            <Button variant="ghost" className="hidden md:flex text-[#333333]">
-              Pricing
-            </Button>
-          }
-        />
-        
-        <Button 
-          variant="default" 
-          size="sm" 
-          className="bg-primary hover:bg-primary/90 text-white"
-          onClick={() => navigate("/auth")}
-        >
-          Get Started
-        </Button>
-      </div>
+      <NavBar items={navItems} className="static translate-x-0 left-auto pt-0 ml-auto" />
     </div>
   );
 };
