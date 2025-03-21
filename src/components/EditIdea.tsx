@@ -13,6 +13,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  getEmojiForIdea, 
+  commonEmojis, 
+  foodEmojis, 
+  activityEmojis,
+  emotionEmojis,
+  natureEmojis
+} from "@/utils/emojiUtils";
 
 interface EditIdeaProps {
   ideaId: string | null;
@@ -51,27 +59,6 @@ const colorMap: Record<string, string> = {
   purple: "#a855f7",
   pink: "#ec4899",
 };
-
-const commonEmojis = [
-  "🎬", "📱", "💡", "🔍", "📊", "🎯", "✅", "🎨", "📝", "🏆",
-  "🌟", "💫", "📈", "🚀", "💪", "🧠", "❤️", "💰", "🔥", "💯",
-  "👍", "👋", "😊", "😎", "🤔", "😮", "🙌", "👏", "📸", "🎤",
-  "🎵", "📚", "🍎", "⭐", "🌈", "🎁", "🎉", "💻", "📱", "📹"
-];
-
-const foodEmojis = [
-  "🍎", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒",
-  "🍑", "🥭", "🍍", "🥥", "🥝", "🍅", "🥑", "🥦", "🥬", "🥕",
-  "🥗", "🥪", "🍕", "🍔", "🌮", "🌯", "🍣", "🍜", "🍝", "🍩",
-  "🍪", "🎂", "🧁", "🍦", "🍧", "🍮", "🍰", "🥧", "🍫", "🍬"
-];
-
-const activityEmojis = [
-  "🏃", "🚴", "🏋️", "🧘", "🎮", "🎯", "🎨", "🎭", "🎬", "🎤",
-  "🎸", "🥁", "📚", "✏️", "💻", "📱", "📷", "🎥", "🔬", "🧪",
-  "🧮", "💼", "💰", "📈", "🏠", "🚗", "✈️", "🚆", "🛳️", "🏝️",
-  "⚽", "🏀", "🎾", "🏐", "🎣", "🧩", "🎲", "🎯", "🎪", "🎠"
-];
 
 const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const [idea, setIdea] = useState<IdeaData | null>(null);
@@ -323,10 +310,12 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     selectColor(newColor);
   };
 
-  const handleEmojiSelect = (emoji: string) => {
+  const handleEmojiSelect = (emoji: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (idea) {
-      const updatedIdea = { ...idea, emoji };
-      setIdea(updatedIdea);
+      setIdea({ ...idea, emoji });
     }
   };
 
@@ -349,24 +338,22 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
               <PopoverContent className="w-80 p-0" align="start">
                 <Card className="border-0 shadow-none">
                   <Tabs defaultValue="common" value={currentEmojiTab} onValueChange={setCurrentEmojiTab}>
-                    <TabsList className="w-full grid grid-cols-3">
+                    <TabsList className="w-full grid grid-cols-5">
                       <TabsTrigger value="common">Common</TabsTrigger>
                       <TabsTrigger value="food">Food</TabsTrigger>
                       <TabsTrigger value="activity">Activity</TabsTrigger>
+                      <TabsTrigger value="emotion">Emotion</TabsTrigger>
+                      <TabsTrigger value="nature">Nature</TabsTrigger>
                     </TabsList>
-                    <ScrollArea className="h-[200px] p-4 overflow-y-auto">
+                    <ScrollArea className="h-[200px] p-4">
                       <TabsContent value="common" className="m-0">
                         <div className="grid grid-cols-8 gap-2">
-                          {commonEmojis.map((emoji) => (
+                          {commonEmojis.map((emoji, index) => (
                             <button
-                              key={emoji}
+                              key={`common-${emoji}-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleEmojiSelect(emoji);
-                              }}
+                              onClick={(e) => handleEmojiSelect(emoji, e)}
                             >
                               {emoji}
                             </button>
@@ -375,16 +362,12 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                       </TabsContent>
                       <TabsContent value="food" className="m-0">
                         <div className="grid grid-cols-8 gap-2">
-                          {foodEmojis.map((emoji) => (
+                          {foodEmojis.map((emoji, index) => (
                             <button
-                              key={emoji}
+                              key={`food-${emoji}-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleEmojiSelect(emoji);
-                              }}
+                              onClick={(e) => handleEmojiSelect(emoji, e)}
                             >
                               {emoji}
                             </button>
@@ -393,16 +376,40 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                       </TabsContent>
                       <TabsContent value="activity" className="m-0">
                         <div className="grid grid-cols-8 gap-2">
-                          {activityEmojis.map((emoji) => (
+                          {activityEmojis.map((emoji, index) => (
                             <button
-                              key={emoji}
+                              key={`activity-${emoji}-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleEmojiSelect(emoji);
-                              }}
+                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="emotion" className="m-0">
+                        <div className="grid grid-cols-8 gap-2">
+                          {emotionEmojis.map((emoji, index) => (
+                            <button
+                              key={`emotion-${emoji}-${index}`}
+                              type="button"
+                              className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
+                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="nature" className="m-0">
+                        <div className="grid grid-cols-8 gap-2">
+                          {natureEmojis.map((emoji, index) => (
+                            <button
+                              key={`nature-${emoji}-${index}`}
+                              type="button"
+                              className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
+                              onClick={(e) => handleEmojiSelect(emoji, e)}
                             >
                               {emoji}
                             </button>
@@ -627,7 +634,5 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     </Dialog>
   );
 };
-
-import { getEmojiForIdea } from "@/utils/emojiUtils";
 
 export default EditIdea;
