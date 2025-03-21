@@ -287,13 +287,13 @@ const InfoCardMedia = ({
       }}
     >
       <div
-        className={cn("relative mt-2 rounded-md overflow-hidden", className)}
+        className={cn("relative mt-2 rounded-md overflow-hidden flex justify-center", className)}
         style={{
           height: isHovered ? expandHeight : shrinkHeight,
           transition: "height 0.3s ease",
         }}
       >
-        <div className="relative h-full">
+        <div className="relative h-full w-full flex justify-center items-center">
           {displayMedia.map((item, index) => {
             const {
               type,
@@ -304,24 +304,28 @@ const InfoCardMedia = ({
             } = item;
 
             const style = {
+              position: 'absolute',
               zIndex: mediaCount - index,
               transform: isHovered
-                ? `translateY(${index * -5}px) rotate(${(index - (mediaCount === 2 ? 0.5 : 1)) * 5}deg) translateX(${(index - (mediaCount === 2 ? 0.5 : 1)) * 10}px) scale(${0.95 + index * 0.02})`
-                : "translateY(0) rotate(0) translateX(0) scale(1)",
-              transition: "transform 0.3s ease",
+                ? `translateY(${index * -5}px) rotate(${(index - (mediaCount === 2 ? 0.5 : 1)) * 5}deg) translateX(${(index - (mediaCount === 2 ? 0.5 : 1)) * 8}px) scale(${0.95 + index * 0.02})`
+                : index === 0 ? "translateY(0) rotate(0) translateX(0) scale(1)" : "translateY(5px) rotate(0) translateX(0) scale(0.95)",
+              transition: "transform 0.3s ease, opacity 0.3s ease",
+              opacity: isHovered ? 1 : index === 0 ? 1 : 0,
+              width: '90%',
+              maxHeight: '100%',
             };
 
             return (
               <div
                 key={src}
-                className="absolute w-full"
                 style={style}
+                className="flex justify-center"
               >
                 {type === "video" ? (
                   <video
                     src={src}
                     className={cn(
-                      "w-full rounded-md border border-border object-cover shadow-sm",
+                      "rounded-md border border-border object-cover shadow-sm",
                       itemClassName
                     )}
                     onLoadedData={() => handleMediaLoad(src)}
@@ -335,7 +339,7 @@ const InfoCardMedia = ({
                     src={src}
                     alt={alt || "Card media"}
                     className={cn(
-                      "w-full rounded-md border border-border object-cover shadow-sm",
+                      "rounded-md border border-border object-cover shadow-sm",
                       itemClassName
                     )}
                     onLoad={() => handleMediaLoad(src)}

@@ -167,17 +167,17 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
                 {
                   src: "/lovable-uploads/a0a4a65c-332e-4e31-9748-fc321b747b4c.png",
                   alt: "Content planner with idea cards",
-                  className: "object-cover h-full"
+                  className: "object-cover h-full w-full"
                 },
                 {
                   src: "/lovable-uploads/4bffa49c-cb7f-4577-b3d2-4bd18508a9b8.png",
                   alt: "Video idea generator interface",
-                  className: "object-cover h-full"
+                  className: "object-cover h-full w-full"
                 },
                 {
                   src: "/placeholder.svg",
                   alt: "Premium features",
-                  className: "object-cover h-full"
+                  className: "object-cover h-full w-full"
                 }
               ]}
               shrinkHeight={65}
