@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import TrustBadge from "@/components/TrustBadge";
@@ -48,9 +49,9 @@ const Hero = () => {
             <TrustBadge />
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-4 md:mb-6">
-            <span className="block md:inline">The #1 AI content creation tool for </span>
-            <span className="block md:inline-block">
-              <AnimatedTextSwitcher titles={useCases} className="h-16 md:h-20" />
+            <span className="block md:inline-block">The #1 AI content creation tool for </span>
+            <span className="block md:inline-block md:mt-0">
+              <AnimatedTextSwitcher titles={useCases} className="h-16 md:h-auto inline-block" />
             </span>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">

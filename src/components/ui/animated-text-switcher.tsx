@@ -27,28 +27,30 @@ export function AnimatedTextSwitcher({
   }, [titleIndex, titles, interval]);
 
   return (
-    <span className={`relative inline-flex w-full justify-center overflow-hidden text-center ${className}`}>
-      {titles.map((title, index) => (
-        <motion.span
-          key={index}
-          className="absolute font-bold" 
-          initial={{ opacity: 0, y: "100px" }}
-          transition={{ type: "spring", stiffness: 50 }}
-          animate={
-            titleIndex === index
-              ? {
-                  y: 0,
-                  opacity: 1,
-                }
-              : {
-                  y: titleIndex > index ? -150 : 150,
-                  opacity: 0,
-                }
-          }
-        >
-          {title}
-        </motion.span>
-      ))}
-    </span>
+    <div className={`inline-block relative ${className}`}>
+      <div className="inline-flex relative min-w-[180px] min-h-[40px]">
+        {titles.map((title, index) => (
+          <motion.span
+            key={index}
+            className="absolute font-bold whitespace-nowrap" 
+            initial={{ opacity: 0, y: "100px" }}
+            transition={{ type: "spring", stiffness: 50 }}
+            animate={
+              titleIndex === index
+                ? {
+                    y: 0,
+                    opacity: 1,
+                  }
+                : {
+                    y: titleIndex > index ? -150 : 150,
+                    opacity: 0,
+                  }
+            }
+          >
+            {title}
+          </motion.span>
+        ))}
+      </div>
+    </div>
   );
 }
