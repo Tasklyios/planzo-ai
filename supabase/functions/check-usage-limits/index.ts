@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
 
@@ -100,9 +101,8 @@ serve(async (req) => {
 
     console.log('User subscription tier:', subscriptionData?.tier);
 
-    // For business tier, always allow but still track usage
+    // Get the tier, default to free
     const tier = subscriptionData?.tier || 'free';
-    const isBusiness = tier === 'business';
 
     // Check current usage
     const { data: usageData, error: usageError } = await supabase
@@ -124,27 +124,27 @@ serve(async (req) => {
     let maxLimit = 5; // Default limit updated to 5 for ideas
     
     if (action === 'ideas') {
-      if (tier === 'free') maxLimit = 5; // Updated to match new limits
+      if (tier === 'free') maxLimit = 5;
       else if (tier === 'pro') maxLimit = 50;
       else if (tier === 'plus') maxLimit = 50;
-      else if (tier === 'business') maxLimit = 100;
+      else if (tier === 'business') maxLimit = 100; // Updated from unlimited
     } else if (action === 'scripts') {
       if (tier === 'free') maxLimit = 1;
       else if (tier === 'pro') maxLimit = 10;
       else if (tier === 'plus') maxLimit = 10;
-      else if (tier === 'business') maxLimit = 20;
+      else if (tier === 'business') maxLimit = 20; // Updated from unlimited
     } else if (action === 'hooks') {
       if (tier === 'free') maxLimit = 4;
       else if (tier === 'pro') maxLimit = 20;
       else if (tier === 'plus') maxLimit = 20;
-      else if (tier === 'business') maxLimit = 40;
+      else if (tier === 'business') maxLimit = 40; // Updated from unlimited
     }
 
     // For ideas specifically, use the number 5 instead of 1 for increment
     const incrementCount = (action === 'ideas') ? 5 : 1;
     
-    // Check if user would exceed their limit (but always let business tier proceed)
-    if (!isBusiness && currentUsage + incrementCount > maxLimit) {
+    // Check if user would exceed their limit
+    if (currentUsage + incrementCount > maxLimit) {
       return new Response(
         JSON.stringify({
           canProceed: false,
@@ -156,7 +156,7 @@ serve(async (req) => {
       );
     }
 
-    // Increment usage counter with the correct count (even for business tier)
+    // Increment usage counter with the correct count
     const usage = {
       user_id: user.id,
       date: new Date().toISOString().split('T')[0],

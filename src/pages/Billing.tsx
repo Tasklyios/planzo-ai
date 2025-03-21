@@ -58,7 +58,6 @@ const Billing = () => {
         return;
       }
 
-      // Get the subscription data with detailed logging
       const { data, error: subError } = await supabase
         .from('user_subscriptions')
         .select('*')
@@ -72,9 +71,7 @@ const Billing = () => {
       
       console.log("Raw subscription data from database:", data);
       
-      // If we have valid subscription data, use it
       if (data) {
-        // Make sure we're explicitly getting the tier as a string and logging it
         const subscriptionTier = data.tier ? String(data.tier).toLowerCase() : 'free';
         console.log("Subscription tier detected:", subscriptionTier);
         
@@ -85,11 +82,9 @@ const Billing = () => {
           stripe_subscription_id: data.stripe_subscription_id
         });
 
-        // Update usage limits based on tier
         updateUsageLimits(subscriptionTier as 'free' | 'pro' | 'plus' | 'business');
       } else {
         console.log("No subscription data found, defaulting to free tier");
-        // Default to free tier if no subscription is found
         setSubscription({
           tier: 'free',
           current_period_end: null,
@@ -97,7 +92,6 @@ const Billing = () => {
           stripe_subscription_id: null
         });
         
-        // Set free tier limits
         updateUsageLimits('free');
       }
       
@@ -105,7 +99,6 @@ const Billing = () => {
     } catch (err: any) {
       console.error("Error fetching subscription:", err);
       setError(err.message);
-      // In case of error, default to free plan to avoid UI issues
       setSubscription({
         tier: 'free',
         current_period_end: null,
@@ -127,7 +120,6 @@ const Billing = () => {
       
       if (!session) return;
 
-      // Explicitly get the current date in YYYY-MM-DD format for consistency
       const today = new Date().toISOString().split('T')[0];
       console.log("Fetching usage data for date:", today);
 
@@ -152,7 +144,6 @@ const Billing = () => {
           hooks: { ...prevData.hooks, current: data.hooks_generated || 0 }
         }));
       } else {
-        // No usage data today, set all to 0
         setUsageData(prevData => ({
           ideas: { ...prevData.ideas, current: 0 },
           scripts: { ...prevData.scripts, current: 0 },
@@ -168,24 +159,24 @@ const Billing = () => {
 
   const updateUsageLimits = (tier: 'free' | 'pro' | 'plus' | 'business') => {
     let ideasLimit = 5;
-    let scriptsLimit = 3;
-    let hooksLimit = 5;
+    let scriptsLimit = 1;
+    let hooksLimit = 4;
 
     switch (tier) {
       case 'pro':
-        ideasLimit = 20;
+        ideasLimit = 50;
         scriptsLimit = 10;
-        hooksLimit = 15;
+        hooksLimit = 20;
         break;
       case 'plus':
         ideasLimit = 50;
-        scriptsLimit = 25;
-        hooksLimit = 30;
+        scriptsLimit = 10;
+        hooksLimit = 20;
         break;
       case 'business':
-        ideasLimit = 999; // Effectively unlimited
-        scriptsLimit = 999;
-        hooksLimit = 999;
+        ideasLimit = 100;
+        scriptsLimit = 20;
+        hooksLimit = 40;
         break;
       default: // 'free'
         break;
@@ -202,13 +193,11 @@ const Billing = () => {
     fetchSubscription();
     fetchUsageData();
     
-    // Set up listener for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(() => {
       fetchSubscription();
       fetchUsageData();
     });
     
-    // Set up a subscription to subscription changes
     const channel = supabase
       .channel('public:user_subscriptions')
       .on('postgres_changes', {
@@ -221,7 +210,6 @@ const Billing = () => {
       })
       .subscribe();
 
-    // Set up a subscription to usage changes
     const usageChannel = supabase
       .channel('public:user_daily_usage')
       .on('postgres_changes', {
@@ -234,7 +222,6 @@ const Billing = () => {
       })
       .subscribe();
 
-    // Poll for changes every 10 seconds to ensure we have the latest data
     const interval = setInterval(() => {
       console.log('Polling for usage changes...');
       fetchUsageData();
@@ -273,27 +260,10 @@ const Billing = () => {
         throw new Error("No subscription found to manage");
       }
       
-      // This is a placeholder for future stripe portal functionality
       toast({
         title: "Coming Soon",
         description: "Subscription management portal will be available soon.",
       });
-      
-      // For future implementation:
-      // const { data: { session } } = await supabase.auth.getSession();
-      // const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-portal-session`, {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //     "Authorization": `Bearer ${session.access_token}`,
-      //   },
-      //   body: JSON.stringify({
-      //     customer_id: subscription.stripe_customer_id
-      //   }),
-      // });
-      // 
-      // const { url } = await response.json();
-      // window.location.href = url;
     } catch (err: any) {
       toast({
         title: "Error",

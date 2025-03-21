@@ -16,35 +16,6 @@ BEGIN
     FROM public.user_subscriptions
     WHERE user_id = p_user_id;
 
-    -- Business tier users always return true (unlimited usage)
-    IF v_tier = 'business' THEN
-        -- Still increment usage for tracking purposes
-        INSERT INTO public.user_daily_usage (user_id, date, ideas_generated, scripts_generated, hooks_generated)
-        VALUES (
-            p_user_id,
-            CURRENT_DATE,
-            CASE WHEN p_action = 'ideas' THEN 5 ELSE 0 END,
-            CASE WHEN p_action = 'scripts' THEN 1 ELSE 0 END,
-            CASE WHEN p_action = 'hooks' THEN 1 ELSE 0 END
-        )
-        ON CONFLICT (user_id, date) DO UPDATE
-        SET 
-            ideas_generated = CASE 
-                WHEN p_action = 'ideas' THEN user_daily_usage.ideas_generated + 5
-                ELSE user_daily_usage.ideas_generated
-            END,
-            scripts_generated = CASE 
-                WHEN p_action = 'scripts' THEN user_daily_usage.scripts_generated + 1
-                ELSE user_daily_usage.scripts_generated
-            END,
-            hooks_generated = CASE 
-                WHEN p_action = 'hooks' THEN user_daily_usage.hooks_generated + 1
-                ELSE user_daily_usage.hooks_generated
-            END;
-        
-        RETURN true;
-    END IF;
-
     -- Get current usage
     SELECT CASE 
         WHEN p_action = 'ideas' THEN ideas_generated
@@ -66,7 +37,7 @@ BEGIN
             WHEN v_tier = 'free' THEN 5  -- Updated to match new limits
             WHEN v_tier = 'pro' THEN 50
             WHEN v_tier = 'plus' THEN 50
-            WHEN v_tier = 'business' THEN 100 -- Should not reach here but added as fallback
+            WHEN v_tier = 'business' THEN 100 -- Updated from unlimited to 100
             ELSE 5  -- Updated default to match free tier
         END;
         -- For ideas, increment by 5
@@ -76,7 +47,7 @@ BEGIN
             WHEN v_tier = 'free' THEN 1
             WHEN v_tier = 'pro' THEN 10
             WHEN v_tier = 'plus' THEN 10
-            WHEN v_tier = 'business' THEN 20
+            WHEN v_tier = 'business' THEN 20 -- Updated from unlimited to 20
             ELSE 1
         END;
         v_increment_count := 1;
@@ -85,7 +56,7 @@ BEGIN
             WHEN v_tier = 'free' THEN 4
             WHEN v_tier = 'pro' THEN 20
             WHEN v_tier = 'plus' THEN 20
-            WHEN v_tier = 'business' THEN 40
+            WHEN v_tier = 'business' THEN 40 -- Updated from unlimited to 40
             ELSE 4
         END;
         v_increment_count := 1;

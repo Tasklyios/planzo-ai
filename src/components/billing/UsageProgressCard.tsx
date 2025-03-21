@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { RefreshCw, Infinity } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type UsageType = "ideas" | "scripts" | "hooks";
@@ -16,17 +16,11 @@ interface UsageItemProps {
 }
 
 const UsageItem = ({ title, current, max, type }: UsageItemProps) => {
-  // Check if this is effectively unlimited (business tier)
-  const isUnlimited = max >= 999;
-  
-  // Calculate percentage only if not unlimited
-  const percentage = isUnlimited ? 
-    Math.min(Math.round((current / 100) * 100), 100) : // For unlimited, show progress relative to 100
-    (max > 0 ? Math.min(Math.round((current / max) * 100), 100) : 0);
+  // Calculate percentage
+  const percentage = max > 0 ? Math.min(Math.round((current / max) * 100), 100) : 0;
   
   // Different colors based on usage percentage
   const getProgressColor = () => {
-    if (isUnlimited) return "bg-primary"; // Always show primary color for unlimited
     if (percentage >= 90) return "bg-destructive";
     if (percentage >= 75) return "bg-amber-500";
     return "bg-primary";
@@ -37,7 +31,7 @@ const UsageItem = ({ title, current, max, type }: UsageItemProps) => {
       <div className="flex justify-between items-center">
         <span className="text-sm font-medium">{title}</span>
         <span className="text-sm text-muted-foreground">
-          {current}/{isUnlimited ? <span className="inline-flex items-center">∞ <span className="text-xs ml-1">(Unlimited)</span></span> : max}
+          {current}/{max}
         </span>
       </div>
       <Progress
