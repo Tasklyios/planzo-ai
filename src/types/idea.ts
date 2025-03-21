@@ -1,3 +1,4 @@
+
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -34,6 +35,7 @@ export interface GeneratedIdea {
   symbol?: string;
   status?: string;
   expires_at?: string;
+  emoji?: string;
 }
 
 export interface PreviousIdeasContext {

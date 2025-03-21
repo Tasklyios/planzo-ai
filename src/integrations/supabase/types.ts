@@ -385,6 +385,7 @@ export type Database = {
           color: string | null
           created_at: string | null
           description: string
+          emoji: string | null
           hook_category: string | null
           hook_text: string | null
           id: string
@@ -404,6 +405,7 @@ export type Database = {
           color?: string | null
           created_at?: string | null
           description: string
+          emoji?: string | null
           hook_category?: string | null
           hook_text?: string | null
           id?: string
@@ -423,6 +425,7 @@ export type Database = {
           color?: string | null
           created_at?: string | null
           description?: string
+          emoji?: string | null
           hook_category?: string | null
           hook_text?: string | null
           id?: string

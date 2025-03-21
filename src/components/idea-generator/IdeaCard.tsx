@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import clsx from "clsx";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { getEmojiForIdea } from "@/utils/emojiUtils";
 
 interface IdeaCardProps {
   idea: GeneratedIdea;
@@ -31,6 +32,9 @@ export default function IdeaCard({
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(idea.is_saved || false);
   const navigate = useNavigate();
+  
+  // Get appropriate emoji for this idea
+  const ideaEmoji = idea.emoji || getEmojiForIdea(idea.title, idea.category || "");
 
   const handleAddToCalendar = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -83,7 +87,8 @@ export default function IdeaCard({
         .update({ 
           is_saved: newSavedState,
           status: newSavedState ? 'ideas' : idea.status || 'generated', // When saving, set to ideas column
-          user_id: userId // Explicitly set user_id
+          user_id: userId, // Explicitly set user_id
+          emoji: ideaEmoji // Ensure emoji is saved
         })
         .eq('id', idea.id);
 
@@ -143,7 +148,7 @@ export default function IdeaCard({
       <CardHeader className={clsx(isCompact ? "p-4" : "p-6")}>
         <div className="flex justify-between items-start">
           <CardTitle className={clsx("text-lg line-clamp-2", isCompact ? "text-base" : "text-lg")}>
-            {idea.title}
+            {ideaEmoji} {idea.title}
           </CardTitle>
         </div>
         <CardDescription className={clsx("line-clamp-1", isCompact ? "text-xs" : "text-sm")}>

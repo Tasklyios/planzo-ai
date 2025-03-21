@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Search, Loader2, CheckCircle, Star, Tag, Sparkles } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { getEmojiForIdea } from "@/utils/emojiUtils";
 
 interface VideoIdeaSelectorProps {
   onSelectIdea: (idea: GeneratedIdea) => void;
@@ -174,6 +175,9 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
             const qualityColor = getQualityColor(quality);
             const qualityLabel = getQualityLabel(quality);
             
+            // Use provided emoji or generate one based on title and category
+            const ideaEmoji = idea.emoji || getEmojiForIdea(idea.title, idea.category || "");
+            
             return (
               <Card
                 key={idea.id}
@@ -186,7 +190,7 @@ const VideoIdeaSelector: React.FC<VideoIdeaSelectorProps> = ({ onSelectIdea }) =
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium line-clamp-1">{idea.title}</h4>
+                        <h4 className="font-medium line-clamp-1">{ideaEmoji} {idea.title}</h4>
                         {quality === "high" && (
                           <Sparkles className={`h-4 w-4 ${qualityColor} fill-current`} />
                         )}

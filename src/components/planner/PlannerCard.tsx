@@ -16,6 +16,7 @@ interface PlannerCardProps {
   description: string;
   color?: string;
   category?: string;
+  emoji?: string;
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -32,7 +33,7 @@ const colorClasses: { [key: string]: string } = {
   pink: "border-pink-500"
 };
 
-export function PlannerCard({ id, index, title, description, color = "blue", category = "General", onEdit, onDelete }: PlannerCardProps) {
+export function PlannerCard({ id, index, title, description, color = "blue", category = "General", emoji, onEdit, onDelete }: PlannerCardProps) {
   const [showEdit, setShowEdit] = useState(false);
 
   const handleEditClose = () => {
@@ -64,8 +65,8 @@ export function PlannerCard({ id, index, title, description, color = "blue", cat
 
   const borderColorClass = colorClasses[color || 'blue'] || colorClasses.blue;
   
-  // Get emoji based on title and category
-  const ideaEmoji = getEmojiForIdea(title, category);
+  // Use provided emoji or generate one based on title and category
+  const ideaEmoji = emoji || getEmojiForIdea(title, category);
 
   return (
     <>

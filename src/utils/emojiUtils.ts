@@ -1,145 +1,45 @@
 
-export function getEmojiForIdea(title: string, category: string): string {
-  // These are Apple-compatible emoji suggestions for common content categories
-  const categoryEmojis: Record<string, string> = {
-    // Content formats
+/**
+ * Utility function to determine an appropriate emoji for a content idea
+ * based on its title and category.
+ */
+export const getEmojiForIdea = (title: string, category: string): string => {
+  // Simple emoji selection based on content keywords
+  const topicKeywords: Record<string, string> = {
     'tutorial': '📝',
     'how-to': '📝',
-    'guide': '📚',
-    'tips': '💡',
-    'hack': '🔧',
-    'hacks': '🔧',
     'review': '⭐️',
-    'story': '📖',
-    'stories': '📖',
-    'vlog': '📹',
-    'day in the life': '📅',
-    'morning routine': '🌅',
-    'night routine': '🌙',
-    'transformation': '✨',
-    'challenge': '🏆',
-    'trend': '📈',
-    'unboxing': '📦',
-    'comparison': '⚖️',
-    'debate': '🗣️',
-    'q&a': '❓',
-    'interview': '🎤',
-    'podcast': '🎙️',
-    'experiment': '🧪',
-    'compilation': '🔄',
-    'montage': '🎬',
-    'parody': '🤪',
-    'skit': '🎭',
-    'prank': '😜',
-    'data analysis': '📊',
-    'case study': '🔍',
-    'myth busting': '💥',
-    'behind the scenes': '🎬',
-    'timelapses': '⏱️',
-    'shorts': '📱',
-    'reels': '🎞️',
-    'tiktok': '📱',
-    
-    // Common topics/niches
-    'fitness': '💪',
-    'workout': '🏋️',
-    'cooking': '👨‍🍳',
-    'recipe': '🍳',
     'food': '🍔',
-    'beauty': '💄',
-    'makeup': '💋',
-    'skincare': '✨',
-    'fashion': '👗',
-    'style': '👚',
-    'travel': '✈️',
-    'journey': '🧳',
-    'finance': '💰',
-    'money': '💵',
-    'investment': '📈',
-    'stock': '📊',
-    'crypto': '💹',
-    'technology': '💻',
+    'fitness': '💪',
     'tech': '📱',
+    'beauty': '💄',
+    'fashion': '👗',
+    'travel': '✈️',
     'gaming': '🎮',
-    'game': '🕹️',
     'music': '🎵',
-    'dance': '💃',
-    'book': '📚',
+    'business': '💼',
     'education': '🎓',
-    'school': '🏫',
-    'health': '❤️',
-    'wellness': '🧘',
-    'mental health': '🧠',
-    'meditation': '🧘‍♀️',
-    'relationship': '❤️',
-    'dating': '💑',
-    'family': '👨‍👩‍👧',
-    'parenting': '👶',
-    'career': '💼',
-    'job': '👔',
-    'business': '📊',
-    'marketing': '📣',
-    'social media': '📱',
-    'personal development': '🌱',
+    'health': '🧠',
+    'finance': '💰',
     'productivity': '⏱️',
-    'diy': '🔨',
-    'crafts': '🧶',
-    'home decor': '🏠',
-    'gardening': '🌱',
-    'plants': '🌿',
-    'pet': '🐶',
-    'dog': '🐕',
-    'cat': '🐱',
-    'photography': '📷',
-    'film': '🎥',
-    'art': '🎨',
-    'design': '✏️',
-    'nature': '🌳',
-    'environment': '🌎',
-    'science': '🔬',
-    'history': '📜',
-    'news': '📰',
-    'politics': '🗳️',
+    'lifestyle': '🌿',
+    'entertainment': '🎬',
+    'cooking': '👨‍🍳',
     'sports': '⚽',
-    'football': '🏈',
-    'basketball': '🏀',
-    'soccer': '⚽',
-    'baseball': '⚾',
-    'tennis': '🎾',
-    'golf': '🏌️',
-    'shopping': '🛍️',
-    'haul': '🛒',
-    'sound design': '🎧', // Changed ASMR to sound design (first instance)
-    'comedy': '😂',
-    'funny': '🤣',
-    'humor': '😆',
-    'joke': '😹',
-    'motivational': '💪',
-    'inspiration': '✨',
-    'spiritual': '🙏',
-    'religious': '⛪',
-    'language': '🗣️',
-    'facts': '💯',
-    'trivia': '🎯',
-    'lifehack': '🔍',
-    'reaction video': '😮', // Changed to be more specific
-    'product review': '✅', // Changed to be more specific
-    'analysis': '🔎',
+    'creative': '🎨',
+    'motivation': '🔥'
   };
-
-  // Default emoji if no match is found
-  let emoji = '🍎';
   
-  // Search for matches in both title and category
+  // Convert inputs to lowercase for case-insensitive matching
   const searchText = (title + ' ' + category).toLowerCase();
   
-  // Try to find a matching keyword for a more specific emoji
-  for (const [keyword, matchEmoji] of Object.entries(categoryEmojis)) {
+  // Look for keyword matches
+  for (const [keyword, emoji] of Object.entries(topicKeywords)) {
     if (searchText.includes(keyword.toLowerCase())) {
-      emoji = matchEmoji;
-      break;
+      return emoji;
     }
   }
   
-  return emoji;
-}
+  // Fallback to default emoji if no matches
+  return '🍎';
+};

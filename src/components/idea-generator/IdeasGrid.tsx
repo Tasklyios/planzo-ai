@@ -104,7 +104,7 @@ const IdeasGrid = ({
         const cleanDescription = typeof idea.description === 'string' ? idea.description.replace(/^"|"$/g, '') : '';
         
         // Get appropriate emoji for this idea
-        const ideaEmoji = getEmojiForIdea(cleanTitle, cleanCategory);
+        const ideaEmoji = idea.emoji || getEmojiForIdea(cleanTitle, cleanCategory);
         
         return (
           <div
