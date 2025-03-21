@@ -308,15 +308,16 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
 
   const renderEmojiButton = (emoji: string, index: number, category: string) => {
     return (
-      <button
+      <Button
         key={`${category}-${index}`}
-        className="text-2xl p-2 hover:bg-accent rounded cursor-pointer"
-        onClick={() => handleEmojiSelect(emoji)}
         type="button"
-        aria-label={`Select ${emoji} emoji`}
+        variant="ghost"
+        size="sm"
+        className="h-auto w-auto text-2xl p-1.5 hover:bg-accent rounded cursor-pointer"
+        onClick={() => handleEmojiSelect(emoji)}
       >
         {emoji}
-      </button>
+      </Button>
     );
   };
 
@@ -351,6 +352,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                 <button 
                   className="text-5xl bg-transparent border-0 cursor-pointer hover:opacity-80 transition-opacity p-2 rounded-full"
                   aria-label="Change emoji"
+                  type="button"
                 >
                   {idea?.emoji || ideaEmoji}
                 </button>
@@ -368,37 +370,37 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                       <TabsTrigger value="emotion">Emotion</TabsTrigger>
                       <TabsTrigger value="nature">Nature</TabsTrigger>
                     </TabsList>
-                    <ScrollArea className="h-[200px] p-4">
+                    <ScrollArea className="h-[200px] p-2">
                       <TabsContent value="common" className="m-0">
-                        <div className="grid grid-cols-8 gap-1">
+                        <div className="grid grid-cols-7 gap-0">
                           {commonEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "common")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="food" className="m-0">
-                        <div className="grid grid-cols-8 gap-1">
+                        <div className="grid grid-cols-7 gap-0">
                           {foodEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "food")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="activity" className="m-0">
-                        <div className="grid grid-cols-8 gap-1">
+                        <div className="grid grid-cols-7 gap-0">
                           {activityEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "activity")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="emotion" className="m-0">
-                        <div className="grid grid-cols-8 gap-1">
+                        <div className="grid grid-cols-7 gap-0">
                           {emotionEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "emotion")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="nature" className="m-0">
-                        <div className="grid grid-cols-8 gap-1">
+                        <div className="grid grid-cols-7 gap-0">
                           {natureEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "nature")
                           )}
@@ -624,3 +626,4 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
 };
 
 export default EditIdea;
+
