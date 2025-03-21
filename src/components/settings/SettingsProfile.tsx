@@ -66,6 +66,7 @@ const SettingsProfile = () => {
   const [lastName, setLastName] = useState("");
   const [productNiche, setProductNiche] = useState("");
   const [businessNiche, setBusinessNiche] = useState("");
+  const [tabValue, setTabValue] = useState("predefined");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -100,9 +101,14 @@ const SettingsProfile = () => {
           setProductNiche(profileData.product_niche || "");
           setBusinessNiche(profileData.business_niche || "");
           
+          // Check if content niche is a custom value
           if (profileData.content_niche && !contentNiches.includes(profileData.content_niche)) {
             setIsCustomNiche(true);
             setCustomNiche(profileData.content_niche);
+            setTabValue("custom");
+          } else if (profileData.content_niche) {
+            setContentNiche(profileData.content_niche);
+            setTabValue("predefined");
           }
         }
       }
@@ -116,25 +122,23 @@ const SettingsProfile = () => {
 
     setIsLoading(true);
     try {
-      // Get the final content niche value based on which tab is active
-      const finalContentNiche = isCustomNiche ? customNiche : contentNiche;
-      
-      let nicheField = "";
-      if (accountType === "personal") {
-        nicheField = finalContentNiche || "";
-      } else if (accountType === "ecommerce") {
-        nicheField = productNiche || "";
+      // Get the final content niche based on which tab is active
+      let finalNiche = "";
+      if (isCustomNiche) {
+        finalNiche = customNiche;
       } else {
-        nicheField = businessNiche || "";
+        finalNiche = contentNiche;
       }
 
+      console.log("Saving profile with niche:", finalNiche, "isCustom:", isCustomNiche);
+      
       const { error } = await supabase
         .from("profiles")
         .update({
           account_type: accountType,
-          content_niche: accountType === "personal" ? finalContentNiche : contentNiche,
-          product_niche: accountType === "ecommerce" ? nicheField : productNiche,
-          business_niche: accountType === "business" ? nicheField : businessNiche,
+          content_niche: finalNiche, // Use the combined value here
+          product_niche: productNiche,
+          business_niche: businessNiche,
           target_audience: targetAudience,
           content_style: contentStyle,
           brand_name: brandName,
@@ -187,6 +191,11 @@ const SettingsProfile = () => {
   
   const handlePostingFrequencyChange = (value: string) => {
     setPostingFrequency(value);
+  };
+
+  const handleTabChange = (value: string) => {
+    setTabValue(value);
+    setIsCustomNiche(value === "custom");
   };
 
   return (
@@ -325,7 +334,7 @@ const SettingsProfile = () => {
                   <div className="space-y-4">
                     <Label className="text-base">Content Niche</Label>
                     
-                    <Tabs defaultValue={isCustomNiche ? "custom" : "predefined"} onValueChange={(value) => setIsCustomNiche(value === "custom")}>
+                    <Tabs value={tabValue} onValueChange={handleTabChange}>
                       <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="predefined">Common Niches</TabsTrigger>
                         <TabsTrigger value="custom">Custom Niche</TabsTrigger>
