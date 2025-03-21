@@ -34,7 +34,7 @@ export function AnimatedTextSwitcher({
         {titles.map((title, index) => (
           <motion.span
             key={index}
-            className={`absolute font-bold whitespace-nowrap ${isMobile ? 'text-5xl' : ''}`}
+            className={`absolute font-bold whitespace-nowrap ${isMobile ? 'text-4xl' : ''}`}
             initial={{ opacity: 0, y: 20 }}
             transition={{ type: "spring", stiffness: 100 }}
             animate={
