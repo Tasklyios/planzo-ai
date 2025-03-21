@@ -312,6 +312,10 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     selectColor(newColor);
   };
 
+  const capitalizeFirstLetter = (string: string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -496,7 +500,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                           className="absolute top-2 right-2"
                           variant="outline"
                         >
-                          {idea.hook_category}
+                          {capitalizeFirstLetter(idea.hook_category)}
                         </Badge>
                       )}
                     </div>
