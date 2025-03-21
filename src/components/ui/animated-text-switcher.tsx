@@ -28,11 +28,11 @@ export function AnimatedTextSwitcher({
 
   return (
     <div className={`relative ${className}`}>
-      <div className="relative min-w-[150px] min-h-[40px]">
+      <div className="relative min-w-[150px] min-h-[40px] flex justify-center">
         {titles.map((title, index) => (
           <motion.span
             key={index}
-            className="absolute left-0 font-bold whitespace-nowrap"
+            className="absolute font-bold whitespace-nowrap"
             initial={{ opacity: 0, y: 20 }}
             transition={{ type: "spring", stiffness: 100 }}
             animate={

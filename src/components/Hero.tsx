@@ -57,9 +57,10 @@ const Hero = () => {
                 <AnimatedTextSwitcher titles={useCases} className="mt-2" />
               </>
             ) : (
-              <div className="flex flex-wrap justify-center items-center">
-                <span className="mr-1">The #1 AI content creation tool for</span>
-                <AnimatedTextSwitcher titles={useCases} className="inline-block -mt-1" />
+              <div className="flex flex-col items-center justify-center">
+                <div>The #1 AI content creation</div>
+                <div className="mt-1 mb-1">tool for</div>
+                <AnimatedTextSwitcher titles={useCases} className="mt-1" />
               </div>
             )}
           </h1>
