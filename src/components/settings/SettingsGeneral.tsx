@@ -70,9 +70,9 @@ const SettingsGeneral = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-6 w-full">
+      <div className="space-y-4 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="first-name">First Name</Label>
             <Input
@@ -80,6 +80,7 @@ const SettingsGeneral = () => {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="Your first name"
+              className="w-full"
             />
           </div>
           <div className="space-y-2">
@@ -89,6 +90,7 @@ const SettingsGeneral = () => {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Your last name"
+              className="w-full"
             />
           </div>
         </div>
@@ -100,7 +102,7 @@ const SettingsGeneral = () => {
             type="email"
             value={email}
             disabled
-            className="bg-muted"
+            className="bg-muted w-full"
           />
           <p className="text-sm text-muted-foreground">
             To change your email, please contact support.
@@ -115,7 +117,7 @@ const SettingsGeneral = () => {
         </Button>
       </div>
       
-      <div className="space-y-4">
+      <div className="space-y-4 w-full">
         <h3 className="text-lg font-medium">Password</h3>
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">

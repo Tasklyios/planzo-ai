@@ -21,22 +21,24 @@ const Settings = () => {
           </div>
         </CardHeader>
         <CardContent className="pt-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="general">
+          <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-3 h-9 mb-6">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="appearance">Appearance</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="general" className="m-0">
-              <SettingsGeneral />
-            </TabsContent>
-            <TabsContent value="profile" className="m-0">
-              <SettingsProfile />
-            </TabsContent>
-            <TabsContent value="appearance" className="m-0">
-              <SettingsAppearance />
-            </TabsContent>
+            <div className="w-full">
+              <TabsContent value="general" className="m-0 w-full">
+                <SettingsGeneral />
+              </TabsContent>
+              <TabsContent value="profile" className="m-0 w-full">
+                <SettingsProfile />
+              </TabsContent>
+              <TabsContent value="appearance" className="m-0 w-full">
+                <SettingsAppearance />
+              </TabsContent>
+            </div>
           </Tabs>
         </CardContent>
       </Card>
