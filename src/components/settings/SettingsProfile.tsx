@@ -171,28 +171,14 @@ const SettingsProfile = () => {
   };
 
   const handleContentTypeChange = (value: string) => {
-    try {
-      const isValidType = contentTypes.some(type => type.value === value);
-      if (isValidType) {
-        setContentType(value);
-        
-        if (user) {
-          supabase
-            .from("profiles")
-            .update({ content_type: value })
-            .eq("id", user.id)
-            .then(({ error }) => {
-              if (error) {
-                console.error("Error updating content type:", error);
-              }
-            });
-        }
-      } else {
-        console.warn("Invalid content type selected:", value);
-      }
-    } catch (error) {
-      console.error("Error handling content type change:", error);
+    const isValidType = contentTypes.some(type => type.value === value);
+    if (isValidType) {
+      setContentType(value);
     }
+  };
+
+  const handleContentNicheChange = (value: string) => {
+    setContentNiche(value);
   };
 
   return (
@@ -301,18 +287,16 @@ const SettingsProfile = () => {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label className="text-base">Content Type</Label>
-                    <RadioGroup
-                      value={contentType}
-                      onValueChange={handleContentTypeChange}
-                      className="grid grid-cols-1 gap-4 pt-2"
-                    >
+                    <div className="grid grid-cols-1 gap-4 pt-2">
                       {contentTypes.map((type) => (
                         <div 
                           key={type.value}
                           className={`flex items-center space-x-2 rounded-lg border p-4 ${contentType === type.value ? "border-primary bg-primary/5" : "border-border"}`}
+                          onClick={() => handleContentTypeChange(type.value)}
+                          role="button"
+                          tabIndex={0}
                         >
-                          <RadioGroupItem value={type.value} id={type.value} className="sr-only" />
-                          <label htmlFor={type.value} className="flex flex-1 cursor-pointer items-center justify-between">
+                          <div className="flex flex-1 cursor-pointer items-center justify-between">
                             <div className="flex items-center space-x-4">
                               <div>
                                 <p className="text-sm font-medium">{type.label}</p>
@@ -324,10 +308,10 @@ const SettingsProfile = () => {
                             {contentType === type.value && (
                               <CheckCircle2 className="h-5 w-5 text-primary" />
                             )}
-                          </label>
+                          </div>
                         </div>
                       ))}
-                    </RadioGroup>
+                    </div>
                   </div>
                   
                   <div className="space-y-4">
@@ -339,23 +323,24 @@ const SettingsProfile = () => {
                         <TabsTrigger value="custom">Custom Niche</TabsTrigger>
                       </TabsList>
                       <TabsContent value="predefined" className="space-y-4 pt-4">
-                        <RadioGroup
-                          value={contentNiche}
-                          onValueChange={setContentNiche}
-                          className="grid grid-cols-2 gap-2"
-                        >
+                        <div className="grid grid-cols-2 gap-2">
                           {contentNiches.map((niche) => (
-                            <div key={niche} className={`flex items-center space-x-2 rounded-lg border p-3 ${contentNiche === niche ? "border-primary bg-primary/5" : "border-border"}`}>
-                              <RadioGroupItem value={niche} id={`niche-${niche}`} className="sr-only" />
-                              <label htmlFor={`niche-${niche}`} className="flex flex-1 cursor-pointer items-center justify-between">
+                            <div 
+                              key={niche} 
+                              className={`flex items-center space-x-2 rounded-lg border p-3 cursor-pointer ${contentNiche === niche ? "border-primary bg-primary/5" : "border-border"}`}
+                              onClick={() => handleContentNicheChange(niche)}
+                              role="button"
+                              tabIndex={0}
+                            >
+                              <div className="flex flex-1 items-center justify-between">
                                 <span className="text-sm">{niche}</span>
                                 {contentNiche === niche && (
                                   <CheckCircle2 className="h-4 w-4 text-primary" />
                                 )}
-                              </label>
+                              </div>
                             </div>
                           ))}
-                        </RadioGroup>
+                        </div>
                       </TabsContent>
                       <TabsContent value="custom" className="space-y-4 pt-4">
                         <Input 
@@ -536,4 +521,3 @@ const SettingsProfile = () => {
 };
 
 export default SettingsProfile;
-
