@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -272,10 +272,25 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   };
 
   const handleEmojiSelect = (emoji: string) => {
+    console.log("Emoji selected:", emoji);
     if (idea) {
       setIdea({ ...idea, emoji });
       setShowEmojiPicker(false);
     }
+  };
+
+  const renderEmojiButton = (emoji: string, index: number, category: string) => {
+    return (
+      <button
+        key={`${category}-${index}`}
+        type="button"
+        className="text-2xl p-1 hover:bg-accent rounded"
+        onClick={() => handleEmojiSelect(emoji)}
+        style={{ cursor: 'pointer' }} 
+      >
+        {emoji}
+      </button>
+    );
   };
 
   if (loading) {
@@ -324,6 +339,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-background border-0 shadow-xl rounded-xl p-0">
         <DialogHeader className="sr-only">
           <DialogTitle>Edit Idea</DialogTitle>
+          <DialogDescription>Edit your content idea</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col h-full">
           <div className="flex items-start gap-4 p-6 bg-card border-b">
@@ -355,77 +371,37 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                     <ScrollArea className="h-[200px] p-4">
                       <TabsContent value="common" className="m-0">
                         <div className="grid grid-cols-8 gap-2">
-                          {commonEmojis.map((emoji, index) => (
-                            <button
-                              key={`common-${index}`}
-                              type="button"
-                              className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => handleEmojiSelect(emoji)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
+                          {commonEmojis.map((emoji, index) => 
+                            renderEmojiButton(emoji, index, "common")
+                          )}
                         </div>
                       </TabsContent>
                       <TabsContent value="food" className="m-0">
                         <div className="grid grid-cols-8 gap-2">
-                          {foodEmojis.map((emoji, index) => (
-                            <button
-                              key={`food-${index}`}
-                              type="button"
-                              className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => handleEmojiSelect(emoji)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
+                          {foodEmojis.map((emoji, index) => 
+                            renderEmojiButton(emoji, index, "food")
+                          )}
                         </div>
                       </TabsContent>
                       <TabsContent value="activity" className="m-0">
                         <div className="grid grid-cols-8 gap-2">
-                          {activityEmojis.map((emoji, index) => (
-                            <button
-                              key={`activity-${index}`}
-                              type="button"
-                              className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => handleEmojiSelect(emoji)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
+                          {activityEmojis.map((emoji, index) => 
+                            renderEmojiButton(emoji, index, "activity")
+                          )}
                         </div>
                       </TabsContent>
                       <TabsContent value="emotion" className="m-0">
                         <div className="grid grid-cols-8 gap-2">
-                          {emotionEmojis.map((emoji, index) => (
-                            <button
-                              key={`emotion-${index}`}
-                              type="button"
-                              className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => handleEmojiSelect(emoji)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
+                          {emotionEmojis.map((emoji, index) => 
+                            renderEmojiButton(emoji, index, "emotion")
+                          )}
                         </div>
                       </TabsContent>
                       <TabsContent value="nature" className="m-0">
                         <div className="grid grid-cols-8 gap-2">
-                          {natureEmojis.map((emoji, index) => (
-                            <button
-                              key={`nature-${index}`}
-                              type="button"
-                              className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => handleEmojiSelect(emoji)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
+                          {natureEmojis.map((emoji, index) => 
+                            renderEmojiButton(emoji, index, "nature")
+                          )}
                         </div>
                       </TabsContent>
                     </ScrollArea>
