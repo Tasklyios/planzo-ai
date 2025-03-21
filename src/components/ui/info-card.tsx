@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -53,7 +54,8 @@ interface CommonCardProps extends React.HTMLAttributes<HTMLDivElement> {
 interface InfoCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   storageKey?: string;
-  dismissType?: "once" | "forever";
+  dismissType?: "once" | "forever" | "timed";
+  dismissDuration?: number; // Duration in milliseconds
 }
 
 type InfoCardContentProps = CommonCardProps;
@@ -111,28 +113,49 @@ function InfoCard({
   className,
   storageKey,
   dismissType = "once",
+  dismissDuration = 1000 * 60 * 60 * 24, // Default: 24 hours
 }: InfoCardProps) {
-  if (dismissType === "forever" && !storageKey) {
+  if ((dismissType === "forever" || dismissType === "timed") && !storageKey) {
     throw new Error(
-      'A storageKey must be provided when using dismissType="forever"'
+      'A storageKey must be provided when using dismissType="forever" or dismissType="timed"'
     );
   }
 
   const [isHovered, setIsHovered] = useState(false);
   const [allImagesLoaded, setAllImagesLoaded] = useState(true);
-  const [isDismissed, setIsDismissed] = useState(() => {
-    if (typeof window === "undefined" || dismissType === "once") return false;
-    return dismissType === "forever"
-      ? localStorage.getItem(storageKey!) === "dismissed"
-      : false;
+  const [isDismissed, setIsDismissed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    
+    if (dismissType === "forever") {
+      return localStorage.getItem(storageKey!) === "dismissed";
+    } else if (dismissType === "timed") {
+      const savedDismissal = localStorage.getItem(storageKey!);
+      if (savedDismissal) {
+        try {
+          const dismissalData = JSON.parse(savedDismissal);
+          const now = new Date().getTime();
+          return now < dismissalData.expiry;
+        } catch (e) {
+          return false;
+        }
+      }
+    }
+    return false;
   });
 
   const handleDismiss = useCallback(() => {
     setIsDismissed(true);
     if (dismissType === "forever") {
       localStorage.setItem(storageKey!, "dismissed");
+    } else if (dismissType === "timed") {
+      const now = new Date().getTime();
+      const dismissalData = {
+        dismissed: true,
+        expiry: now + dismissDuration,
+      };
+      localStorage.setItem(storageKey!, JSON.stringify(dismissalData));
     }
-  }, [storageKey, dismissType]);
+  }, [storageKey, dismissType, dismissDuration]);
 
   const imageContextValue = useMemo(
     () => ({

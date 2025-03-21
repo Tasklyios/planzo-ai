@@ -1,3 +1,4 @@
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -155,7 +156,11 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
       </SidebarContent>
       
       <SidebarFooter>
-        <InfoCard>
+        <InfoCard 
+          storageKey="upgrade-card-dismissed"
+          dismissType="timed"
+          dismissDuration={1000 * 60 * 60 * 24} // 24 hours
+        >
           <InfoCardContent>
             <InfoCardTitle>Upgrade Your Account</InfoCardTitle>
             <InfoCardDescription>
