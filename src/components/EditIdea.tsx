@@ -329,7 +329,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                     : value;
                   setIdea(prev => prev ? { ...prev, title: newTitle } : null);
                 }}
-                className="text-xl font-semibold border-none px-0 h-auto focus-visible:ring-0 bg-transparent"
+                className="text-2xl font-bold border-none px-0 h-auto py-2 focus-visible:ring-0 bg-transparent"
                 placeholder="Enter idea title..."
               />
             </div>
