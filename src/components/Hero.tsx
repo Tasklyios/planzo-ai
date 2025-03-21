@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import TrustBadge from "@/components/TrustBadge";
 import { AnimatedTextSwitcher } from "@/components/ui/animated-text-switcher";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Hero = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   // Define the use cases for animation
   const useCases = [
@@ -49,10 +51,19 @@ const Hero = () => {
             <TrustBadge />
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-4 md:mb-6">
-            <span className="block md:inline-block">The #1 AI content creation tool for </span>
-            <span className="block md:inline-block md:mt-0">
-              <AnimatedTextSwitcher titles={useCases} className="h-16 md:h-auto inline-block" />
-            </span>
+            {isMobile ? (
+              <>
+                <div className="block">The #1 AI content creation tool for</div>
+                <div className="block mt-2">
+                  <AnimatedTextSwitcher titles={useCases} className="h-16" />
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center flex-wrap">
+                <span>The #1 AI content creation tool for&nbsp;</span>
+                <AnimatedTextSwitcher titles={useCases} />
+              </div>
+            )}
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
             Generate viral video ideas, create engaging scripts, and plan your content calendar with AI - all in one platform

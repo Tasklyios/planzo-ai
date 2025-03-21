@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 interface AnimatedTextSwitcherProps {
@@ -27,13 +27,13 @@ export function AnimatedTextSwitcher({
   }, [titleIndex, titles, interval]);
 
   return (
-    <div className={`inline-block relative ${className}`}>
-      <div className="inline-flex relative min-w-[180px] min-h-[40px]">
+    <div className={`inline-block ${className}`}>
+      <div className="relative inline-block min-w-[150px]">
         {titles.map((title, index) => (
           <motion.span
             key={index}
-            className="absolute font-bold whitespace-nowrap" 
-            initial={{ opacity: 0, y: "100px" }}
+            className="absolute left-0 font-bold whitespace-nowrap"
+            initial={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", stiffness: 50 }}
             animate={
               titleIndex === index
@@ -42,7 +42,7 @@ export function AnimatedTextSwitcher({
                     opacity: 1,
                   }
                 : {
-                    y: titleIndex > index ? -150 : 150,
+                    y: titleIndex > index ? "-100%" : "100%",
                     opacity: 0,
                   }
             }
