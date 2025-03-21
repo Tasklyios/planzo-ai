@@ -1,4 +1,3 @@
-
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -209,10 +208,6 @@ const AppSidebarNew = ({ isMobile, closeDrawer }: AppSidebarProps) => {
                   align="end" 
                   className="w-56 bg-popover border-border"
                 >
-                  <DropdownMenuItem onClick={() => handleNavigation('/account')} className="text-popover-foreground hover:bg-primary/10">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Account</span>
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/settings')} className="text-popover-foreground hover:bg-primary/10">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
