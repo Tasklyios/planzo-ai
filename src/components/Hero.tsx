@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import TrustBadge from "@/components/TrustBadge";
@@ -56,9 +57,9 @@ const Hero = () => {
                 <AnimatedTextSwitcher titles={useCases} className="mt-2" />
               </>
             ) : (
-              <div className="inline">
-                <span>The #1 AI content creation tool for </span>
-                <AnimatedTextSwitcher titles={useCases} className="inline-block" />
+              <div className="flex flex-wrap justify-center items-center">
+                <span className="mr-1">The #1 AI content creation tool for</span>
+                <AnimatedTextSwitcher titles={useCases} className="inline-block -mt-1" />
               </div>
             )}
           </h1>
