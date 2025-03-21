@@ -50,11 +50,11 @@ const Hero = () => {
           <div className="mb-4 md:mb-6">
             <TrustBadge />
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-4 md:mb-6">
+          <h1 className="text-5xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-4 md:mb-6">
             {isMobile ? (
               <>
-                <div>The #1 AI <span className="bg-gradient-to-r from-[#0095FF] to-[#0059FF] bg-clip-text text-transparent">Content Creation</span> tool for</div>
-                <AnimatedTextSwitcher titles={useCases} className="mt-2" />
+                <div className="text-5xl">The #1 AI <span className="bg-gradient-to-r from-[#0095FF] to-[#0059FF] bg-clip-text text-transparent">Content Creation</span> tool for</div>
+                <AnimatedTextSwitcher titles={useCases} className="mt-2 text-5xl" />
               </>
             ) : (
               <div className="flex flex-col items-center justify-center">
@@ -67,7 +67,7 @@ const Hero = () => {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
             Generate viral video ideas, create engaging scripts, and plan your content calendar with AI - all in one platform
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto">
             <Button 
               className="bg-gradient-to-r from-blue-500 to-blue-400 hover:opacity-90 text-white px-8 py-6 text-lg rounded-full w-full sm:w-auto"
               onClick={() => navigate("/auth")}

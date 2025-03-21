@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AnimatedTextSwitcherProps {
   titles: string[];
@@ -14,6 +15,7 @@ export function AnimatedTextSwitcher({
   className = "" 
 }: AnimatedTextSwitcherProps) {
   const [titleIndex, setTitleIndex] = useState(0);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -32,7 +34,7 @@ export function AnimatedTextSwitcher({
         {titles.map((title, index) => (
           <motion.span
             key={index}
-            className="absolute font-bold whitespace-nowrap"
+            className={`absolute font-bold whitespace-nowrap ${isMobile ? 'text-5xl' : ''}`}
             initial={{ opacity: 0, y: 20 }}
             transition={{ type: "spring", stiffness: 100 }}
             animate={
