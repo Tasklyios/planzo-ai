@@ -281,15 +281,21 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
 
   const renderEmojiButton = (emoji: string, index: number, category: string) => {
     return (
-      <button
+      <div
         key={`${category}-${index}`}
-        type="button"
-        className="text-2xl p-1 hover:bg-accent rounded"
+        className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
         onClick={() => handleEmojiSelect(emoji)}
-        style={{ cursor: 'pointer' }} 
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            handleEmojiSelect(emoji);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label={`Select ${emoji} emoji`}
       >
         {emoji}
-      </button>
+      </div>
     );
   };
 
@@ -304,33 +310,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const scheduledDate = idea.scheduled_for ? new Date(idea.scheduled_for) : new Date();
   const dateValue = format(scheduledDate, "yyyy-MM-dd");
   const timeValue = format(scheduledDate, "HH:mm");
-
-  const handleDateTimeChange = (type: 'date' | 'time', value: string) => {
-    if (!idea) return;
-    
-    const currentDate = idea.scheduled_for ? new Date(idea.scheduled_for) : new Date();
-    let newDate = new Date(currentDate);
-
-    if (type === 'date') {
-      const [year, month, day] = value.split('-').map(Number);
-      newDate.setFullYear(year, month - 1, day);
-    } else {
-      const [hours, minutes] = value.split(':').map(Number);
-      newDate.setHours(hours, minutes);
-    }
-
-    setIdea({ ...idea, scheduled_for: newDate.toISOString() });
-  };
-
-  const selectColor = (color: string) => {
-    setIdea({ ...idea, color });
-  };
-
-  const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newColor = e.target.value;
-    setCustomColor(newColor);
-    selectColor(newColor);
-  };
 
   const ideaEmoji = idea?.emoji || getEmojiForIdea(idea?.title || '', idea?.category || '');
 
