@@ -17,8 +17,24 @@ export const onRequestPost = async (context: any) => {
       accountType,
       businessDescription,
       contentType,
-      postingFrequency
+      postingFrequency,
+      // For script coach
+      type,
+      message,
+      script,
+      conversation
     } = await context.request.json();
+
+    // Handle different types of requests
+    if (type === 'script_coach') {
+      // This functionality has been removed
+      return new Response(JSON.stringify({
+        error: "Script coach functionality is no longer available"
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Build a more detailed prompt based on user profile
     let promptDetails = '';
@@ -62,7 +78,7 @@ export const onRequestPost = async (context: any) => {
       "ideas": [
         {
           "title": "string",
-          "description": "string",
+          "description": "string - make this detailed enough to generate a good script from",
           "category": "string",
           "tags": ["string"]
         }

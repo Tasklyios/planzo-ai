@@ -112,14 +112,29 @@ serve(async (req) => {
     let timeRangeDescription = "";
     
     if (targetDuration) {
-      // Always use the standard speaking rate, ignore any passed wordsPerMinute
-      const [minDuration, maxDuration] = targetDuration.split('-').map(Number);
-      const avgDuration = (minDuration + maxDuration) / 2;
-      targetWordCount = Math.round(avgDuration * STANDARD_SPEAKING_RATE);
+      // Parse the duration range and calculate word count more explicitly
+      const durationParts = targetDuration.split('-').map(Number);
       
-      // Create a description of the target length for the prompt
-      timeRangeDescription = `${targetDuration} minutes (approximately ${targetWordCount} words at standard speaking rate)`;
-      console.log(`Calculated target word count: ${targetWordCount} words`);
+      if (durationParts.length !== 2 || isNaN(durationParts[0]) || isNaN(durationParts[1])) {
+        return new Response(
+          JSON.stringify({ error: `Invalid target duration format: ${targetDuration}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      const minDuration = durationParts[0];
+      const maxDuration = durationParts[1];
+      
+      // Calculate min and max word counts
+      const minWordCount = Math.round(minDuration * STANDARD_SPEAKING_RATE);
+      const maxWordCount = Math.round(maxDuration * STANDARD_SPEAKING_RATE);
+      
+      // Use the average for the target
+      targetWordCount = Math.round((minWordCount + maxWordCount) / 2);
+      
+      // Create a description for the prompt
+      timeRangeDescription = `${minDuration.toFixed(2)}-${maxDuration.toFixed(2)} minutes (approximately ${minWordCount}-${maxWordCount} words at standard speaking rate)`;
+      console.log(`Calculated target word count range: ${minWordCount}-${maxWordCount} words, target: ${targetWordCount}`);
     } else if (targetLength) {
       // Map target length to human-readable duration (for backward compatibility)
       const lengthMapping = {
@@ -197,7 +212,12 @@ Please rewrite this script to make it more engaging and viral-worthy while keepi
 - Starts with a hook${hook ? " (provided below)" : ""}
 - Uses natural speech
 - Includes [action notes] in brackets when needed
-- Is concise for social media${targetWordCount ? `\n- Aims for ~${targetWordCount} words` : ''}`;
+- Is concise for social media`;
+
+      // Add specific word count target instruction if we have calculated one
+      if (targetWordCount) {
+        systemPrompt += `\n- IMPORTANT: The script MUST be approximately ${targetWordCount} words (${timeRangeDescription})`;
+      }
 
       // Condense account-specific instructions
       if (accountType === 'ecommerce') {
@@ -275,13 +295,21 @@ Please rewrite this script to make it more professional and engaging while keepi
     console.log('Received response from OpenAI');
 
     const script = data.choices[0].message.content.trim();
+    const actualWordCount = script.split(/\s+/).length;
+    
+    // Calculate estimated duration from actual word count
+    const estimatedDuration = actualWordCount / STANDARD_SPEAKING_RATE;
+    
+    console.log(`Generated script with ${actualWordCount} words (target was ${targetWordCount || 'not specified'})`);
+    console.log(`Estimated duration: ${estimatedDuration.toFixed(2)} minutes`);
 
     // Return the generated script
     return new Response(
       JSON.stringify({ 
         script, 
-        wordCount: script.split(/\s+/).length,
-        estimatedDuration: Math.round(script.split(/\s+/).length / STANDARD_SPEAKING_RATE * 10) / 10
+        wordCount: actualWordCount,
+        estimatedDuration: Math.round(estimatedDuration * 10) / 10,
+        targetWordCount: targetWordCount
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

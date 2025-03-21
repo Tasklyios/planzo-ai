@@ -39,6 +39,7 @@ const Script = () => {
   const [activeTab, setActiveTab] = useState("generator");
   const [isImproving, setIsImproving] = useState(false);
   const [userScript, setUserScript] = useState("");
+  const [scriptStats, setScriptStats] = useState<{wordCount?: number, estimatedDuration?: number, targetWordCount?: number} | null>(null);
   const WORDS_PER_MINUTE = 150;
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -85,6 +86,7 @@ const Script = () => {
     }
 
     setIsGenerating(true);
+    setScriptStats(null);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -115,7 +117,8 @@ const Script = () => {
         userId,
         savedIdea: useSavedIdea ? savedIdea : null,
         userScript: isUsingBaseScript ? baseScript : null,
-        isImprovement: isUsingBaseScript
+        isImprovement: isUsingBaseScript,
+        roughScript: isUsingBaseScript ? baseScript : null
       });
 
       const { data, error } = await supabase.functions.invoke('generate-script', {
@@ -130,7 +133,8 @@ const Script = () => {
           userId,
           savedIdea: useSavedIdea ? savedIdea : null,
           userScript: isUsingBaseScript ? baseScript : null,
-          isImprovement: isUsingBaseScript
+          isImprovement: isUsingBaseScript,
+          roughScript: isUsingBaseScript ? baseScript : null
         },
       });
 
@@ -165,6 +169,11 @@ const Script = () => {
       }
 
       setScript(data.script);
+      setScriptStats({
+        wordCount: data.wordCount,
+        estimatedDuration: data.estimatedDuration,
+        targetWordCount: data.targetWordCount
+      });
       
       toast({
         title: "Success",
@@ -193,6 +202,7 @@ const Script = () => {
     }
 
     setIsImproving(true);
+    setScriptStats(null);
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -238,6 +248,10 @@ const Script = () => {
       }
 
       setScript(data.script);
+      setScriptStats({
+        wordCount: data.wordCount,
+        estimatedDuration: data.estimatedDuration
+      });
       
       toast({
         title: "Success",
@@ -534,7 +548,7 @@ const Script = () => {
                           </TooltipTrigger>
                           <TooltipContent>
                             <p className="max-w-xs">
-                              Enter the target duration for your video
+                              Enter the target duration for your video (approximately {calculateWordCount()} words at {WORDS_PER_MINUTE} words per minute)
                             </p>
                           </TooltipContent>
                         </Tooltip>
@@ -664,27 +678,37 @@ const Script = () => {
           <CardContent className="pt-4 md:pt-6">
             <div className="flex justify-between items-center mb-3 md:mb-4">
               <h2 className="text-lg md:text-xl font-semibold">{activeTab === "improve" ? "Improved Script" : "Generated Script"}</h2>
-              {useSavedIdea && savedIdea && (
-                <Button 
-                  onClick={saveScriptToIdea} 
-                  disabled={isSavingScript}
-                  variant="secondary"
-                  size={isMobile ? "sm" : "default"}
-                  className="h-8"
-                >
-                  {isSavingScript ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-3 w-3 mr-2" />
-                      Save to Idea
-                    </>
-                  )}
-                </Button>
-              )}
+              <div className="flex items-center gap-2 md:gap-4">
+                {/* Display script stats */}
+                {scriptStats && (
+                  <div className="text-sm text-muted-foreground flex flex-col items-end">
+                    <span>{scriptStats.wordCount} words</span>
+                    <span>~{scriptStats.estimatedDuration} min</span>
+                  </div>
+                )}
+                
+                {useSavedIdea && savedIdea && (
+                  <Button 
+                    onClick={saveScriptToIdea} 
+                    disabled={isSavingScript}
+                    variant="secondary"
+                    size={isMobile ? "sm" : "default"}
+                    className="h-8"
+                  >
+                    {isSavingScript ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-3 w-3 mr-2" />
+                        Save to Idea
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="whitespace-pre-wrap bg-muted p-3 md:p-4 rounded-md h-[250px] md:h-[400px] overflow-y-auto text-sm md:text-base">
               {script}
