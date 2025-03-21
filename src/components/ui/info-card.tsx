@@ -316,7 +316,7 @@ const InfoCardMedia = ({
             };
 
             // Only render the content if it's visible or the first item
-            if (!isHovered && index > 0 && src !== displayMedia[0].src) {
+            if (!isHovered && index > 0) {
               return null;
             }
 
@@ -357,13 +357,12 @@ const InfoCardMedia = ({
           })}
         </div>
 
-        <div
-          className="absolute right-0 bottom-0 left-0 h-10 bg-gradient-to-b from-transparent to-card"
-          style={{
-            opacity: isHovered ? 0 : 1,
-            transition: "opacity 0.3s ease",
-          }}
-        />
+        {/* Only show the gradient overlay when not hovered */}
+        {!isHovered && (
+          <div
+            className="absolute right-0 bottom-0 left-0 h-10 bg-gradient-to-b from-transparent to-card"
+          />
+        )}
       </div>
     </InfoCardImageContext.Provider>
   );
