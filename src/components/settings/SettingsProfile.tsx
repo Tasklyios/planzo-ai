@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -100,7 +99,6 @@ const SettingsProfile = () => {
           setProductNiche(profileData.product_niche || "");
           setBusinessNiche(profileData.business_niche || "");
           
-          // Check if the content niche is custom
           if (profileData.content_niche && !contentNiches.includes(profileData.content_niche)) {
             setIsCustomNiche(true);
             setCustomNiche(profileData.content_niche);
@@ -117,7 +115,6 @@ const SettingsProfile = () => {
 
     setIsLoading(true);
     try {
-      // Determine which niche field to use based on account type
       let nicheField = "";
       if (accountType === "personal") {
         nicheField = isCustomNiche ? customNiche || "" : contentNiche || "";
@@ -170,6 +167,13 @@ const SettingsProfile = () => {
       setPostingPlatforms(postingPlatforms.filter(p => p !== platform));
     } else {
       setPostingPlatforms([...postingPlatforms, platform]);
+    }
+  };
+
+  const handleContentTypeChange = (value: string) => {
+    const isValidType = contentTypes.some(type => type.value === value);
+    if (isValidType) {
+      setContentType(value);
     }
   };
 
@@ -281,7 +285,7 @@ const SettingsProfile = () => {
                     <Label className="text-base">Content Type</Label>
                     <RadioGroup
                       value={contentType}
-                      onValueChange={setContentType}
+                      onValueChange={handleContentTypeChange}
                       className="grid grid-cols-1 gap-4 pt-2"
                     >
                       {contentTypes.map((type) => (
@@ -514,3 +518,4 @@ const SettingsProfile = () => {
 };
 
 export default SettingsProfile;
+
