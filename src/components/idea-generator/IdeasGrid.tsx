@@ -106,6 +106,9 @@ const IdeasGrid = ({
         // Get appropriate emoji for this idea
         const ideaEmoji = idea.emoji || getEmojiForIdea(cleanTitle, cleanCategory);
         
+        // Create display title with emoji
+        const displayTitle = `${ideaEmoji} ${cleanTitle}`;
+        
         return (
           <div
             key={idea.id}
@@ -117,7 +120,7 @@ const IdeasGrid = ({
                   {cleanCategory}
                 </span>
                 <h3 className="text-sm md:text-lg font-medium text-foreground">
-                  {ideaEmoji} {cleanTitle}
+                  {displayTitle}
                 </h3>
               </div>
               <div className="flex gap-1 md:gap-2">

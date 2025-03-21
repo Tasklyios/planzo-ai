@@ -35,6 +35,9 @@ export default function IdeaCard({
   
   // Get appropriate emoji for this idea
   const ideaEmoji = idea.emoji || getEmojiForIdea(idea.title, idea.category || "");
+  
+  // Display title with emoji
+  const displayTitle = `${ideaEmoji} ${idea.title}`;
 
   const handleAddToCalendar = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -126,7 +129,7 @@ export default function IdeaCard({
   const handleCopyToClipboard = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     try {
-      const textToCopy = `${idea.title}\n\n${idea.description}\n\nCategory: ${idea.category}\nTags: ${idea.tags?.join(', ') || ''}`;
+      const textToCopy = `${displayTitle}\n\n${idea.description}\n\nCategory: ${idea.category}\nTags: ${idea.tags?.join(', ') || ''}`;
       navigator.clipboard.writeText(textToCopy);
       toast({
         title: "Copied to clipboard",
@@ -148,7 +151,7 @@ export default function IdeaCard({
       <CardHeader className={clsx(isCompact ? "p-4" : "p-6")}>
         <div className="flex justify-between items-start">
           <CardTitle className={clsx("text-lg line-clamp-2", isCompact ? "text-base" : "text-lg")}>
-            {ideaEmoji} {idea.title}
+            {displayTitle}
           </CardTitle>
         </div>
         <CardDescription className={clsx("line-clamp-1", isCompact ? "text-xs" : "text-sm")}>

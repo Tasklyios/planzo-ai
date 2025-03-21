@@ -5,14 +5,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Wand2, Trash2, Check, Plus, Smile } from "lucide-react";
+import { Wand2, Trash2, Check, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   getEmojiForIdea, 
   commonEmojis, 
@@ -66,8 +64,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customColor, setCustomColor] = useState("#3b82f6");
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [currentEmojiTab, setCurrentEmojiTab] = useState("common");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -271,14 +267,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     }
   };
 
-  const handleEmojiSelect = (emoji: string) => {
-    console.log("Emoji selected:", emoji);
-    if (idea) {
-      setIdea({ ...idea, emoji });
-      setShowEmojiPicker(false);
-    }
-  };
-
   const handleDateTimeChange = (type: 'date' | 'time', value: string) => {
     if (!idea) return;
     
@@ -308,25 +296,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     selectColor(newColor);
   };
 
-  const renderEmojiButton = (emoji: string, index: number, category: string) => {
-    return (
-      <Button
-        key={`${category}-${index}`}
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="h-auto w-auto text-2xl p-2 hover:bg-accent rounded cursor-pointer"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleEmojiSelect(emoji);
-        }}
-      >
-        {emoji}
-      </Button>
-    );
-  };
-
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -339,7 +308,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const dateValue = format(scheduledDate, "yyyy-MM-dd");
   const timeValue = format(scheduledDate, "HH:mm");
 
-  const ideaEmoji = idea?.emoji || getEmojiForIdea(idea?.title || '', idea?.category || '');
+  const ideaEmoji = idea.emoji || getEmojiForIdea(idea.title, idea.category);
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
@@ -350,88 +319,16 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         </DialogHeader>
         <div className="flex flex-col h-full">
           <div className="flex items-start gap-4 p-6 bg-card border-b">
-            <Popover 
-              open={showEmojiPicker} 
-              onOpenChange={setShowEmojiPicker}
-            >
-              <PopoverTrigger asChild>
-                <button 
-                  className="text-5xl bg-transparent border-0 cursor-pointer hover:opacity-80 transition-opacity p-2 rounded-full"
-                  aria-label="Change emoji"
-                  type="button"
-                >
-                  {idea?.emoji || ideaEmoji}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent 
-                className="w-80 p-0 z-50" 
-                align="start"
-                sideOffset={5}
-                onOpenAutoFocus={(e) => e.preventDefault()}
-                onPointerDownOutside={(e) => e.preventDefault()}
-                onInteractOutside={(e) => e.preventDefault()}
-                onEscapeKeyDown={() => setShowEmojiPicker(false)}
-                style={{
-                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-                  backgroundColor: "var(--bg-popover)",
-                  borderWidth: "1px",
-                  borderColor: "var(--border)"
-                }}
-              >
-                <Card className="border-0 shadow-none">
-                  <Tabs defaultValue="common" value={currentEmojiTab} onValueChange={setCurrentEmojiTab}>
-                    <TabsList className="w-full grid grid-cols-5">
-                      <TabsTrigger value="common">Common</TabsTrigger>
-                      <TabsTrigger value="food">Food</TabsTrigger>
-                      <TabsTrigger value="activity">Activity</TabsTrigger>
-                      <TabsTrigger value="emotion">Emotion</TabsTrigger>
-                      <TabsTrigger value="nature">Nature</TabsTrigger>
-                    </TabsList>
-                    <ScrollArea className="h-[200px] p-2" onClick={(e) => e.stopPropagation()}>
-                      <TabsContent value="common" className="m-0">
-                        <div className="grid grid-cols-6 gap-1" onClick={(e) => e.stopPropagation()}>
-                          {commonEmojis.map((emoji, index) => 
-                            renderEmojiButton(emoji, index, "common")
-                          )}
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="food" className="m-0">
-                        <div className="grid grid-cols-6 gap-1" onClick={(e) => e.stopPropagation()}>
-                          {foodEmojis.map((emoji, index) => 
-                            renderEmojiButton(emoji, index, "food")
-                          )}
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="activity" className="m-0">
-                        <div className="grid grid-cols-6 gap-1" onClick={(e) => e.stopPropagation()}>
-                          {activityEmojis.map((emoji, index) => 
-                            renderEmojiButton(emoji, index, "activity")
-                          )}
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="emotion" className="m-0">
-                        <div className="grid grid-cols-6 gap-1" onClick={(e) => e.stopPropagation()}>
-                          {emotionEmojis.map((emoji, index) => 
-                            renderEmojiButton(emoji, index, "emotion")
-                          )}
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="nature" className="m-0">
-                        <div className="grid grid-cols-6 gap-1" onClick={(e) => e.stopPropagation()}>
-                          {natureEmojis.map((emoji, index) => 
-                            renderEmojiButton(emoji, index, "nature")
-                          )}
-                        </div>
-                      </TabsContent>
-                    </ScrollArea>
-                  </Tabs>
-                </Card>
-              </PopoverContent>
-            </Popover>
             <div className="flex-1">
               <Input
-                value={idea?.title || ''}
-                onChange={(e) => setIdea(idea ? { ...idea, title: e.target.value } : null)}
+                value={`${ideaEmoji} ${idea.title}`}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const newTitle = value.startsWith(ideaEmoji) 
+                    ? value.substring(ideaEmoji.length).trim() 
+                    : value;
+                  setIdea(prev => prev ? { ...prev, title: newTitle } : null);
+                }}
                 className="text-xl font-semibold border-none px-0 h-auto focus-visible:ring-0 bg-transparent"
                 placeholder="Enter idea title..."
               />

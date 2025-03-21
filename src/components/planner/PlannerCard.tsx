@@ -67,6 +67,9 @@ export function PlannerCard({ id, index, title, description, color = "blue", cat
   
   // Use provided emoji or generate one based on title and category
   const ideaEmoji = emoji || getEmojiForIdea(title, category);
+  
+  // Combine emoji with title
+  const displayTitle = `${ideaEmoji} ${title}`;
 
   return (
     <>
@@ -98,7 +101,7 @@ export function PlannerCard({ id, index, title, description, color = "blue", cat
                 <Pencil className="h-4 w-4" />
               </Button>
             </div>
-            <h4 className="font-medium mb-1 pr-8">{ideaEmoji} {title}</h4>
+            <h4 className="font-medium mb-1 pr-8">{displayTitle}</h4>
             <p className="text-sm text-muted-foreground">{description}</p>
           </div>
         )}
