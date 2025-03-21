@@ -2,9 +2,20 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import TrustBadge from "@/components/TrustBadge";
+import { AnimatedTextSwitcher } from "@/components/ui/animated-text-switcher";
 
 const Hero = () => {
   const navigate = useNavigate();
+  
+  // Define the use cases for animation
+  const useCases = [
+    "Entrepreneurs",
+    "Business Owners",
+    "Marketers",
+    "Content Creators",
+    "Social Media Managers",
+    "Video Producers"
+  ];
 
   return (
     <section className="relative overflow-hidden bg-pure-white pt-12 md:pt-16 lg:pt-24">
@@ -38,8 +49,8 @@ const Hero = () => {
             <TrustBadge />
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-4 md:mb-6">
-            <span className="bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent">AI-Powered</span> Video Content Creation
-            <span className="block mt-2">Made Simple</span>
+            <span className="block mb-2">The #1 AI content creation tool for</span>
+            <AnimatedTextSwitcher titles={useCases} className="h-16 md:h-20" />
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
             Generate viral video ideas, create engaging scripts, and plan your content calendar with AI - all in one platform
