@@ -297,7 +297,9 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   };
 
   const selectColor = (color: string) => {
-    setIdea({ ...idea, color });
+    if (idea) {
+      setIdea({ ...idea, color });
+    }
   };
 
   const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -313,8 +315,12 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         type="button"
         variant="ghost"
         size="sm"
-        className="h-auto w-auto text-2xl p-1.5 hover:bg-accent rounded cursor-pointer"
-        onClick={() => handleEmojiSelect(emoji)}
+        className="h-auto w-auto text-2xl p-2 hover:bg-accent rounded cursor-pointer"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleEmojiSelect(emoji);
+        }}
       >
         {emoji}
       </Button>
@@ -358,8 +364,19 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                 </button>
               </PopoverTrigger>
               <PopoverContent 
-                className="w-80 p-0" 
+                className="w-80 p-0 z-50" 
                 align="start"
+                sideOffset={5}
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onInteractOutside={(e) => e.preventDefault()}
+                onEscapeKeyDown={() => setShowEmojiPicker(false)}
+                style={{
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                  backgroundColor: "var(--bg-popover)",
+                  borderWidth: "1px",
+                  borderColor: "var(--border)"
+                }}
               >
                 <Card className="border-0 shadow-none">
                   <Tabs defaultValue="common" value={currentEmojiTab} onValueChange={setCurrentEmojiTab}>
@@ -370,37 +387,37 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                       <TabsTrigger value="emotion">Emotion</TabsTrigger>
                       <TabsTrigger value="nature">Nature</TabsTrigger>
                     </TabsList>
-                    <ScrollArea className="h-[200px] p-2">
+                    <ScrollArea className="h-[200px] p-2" onClick={(e) => e.stopPropagation()}>
                       <TabsContent value="common" className="m-0">
-                        <div className="grid grid-cols-7 gap-0">
+                        <div className="grid grid-cols-6 gap-1" onClick={(e) => e.stopPropagation()}>
                           {commonEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "common")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="food" className="m-0">
-                        <div className="grid grid-cols-7 gap-0">
+                        <div className="grid grid-cols-6 gap-1" onClick={(e) => e.stopPropagation()}>
                           {foodEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "food")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="activity" className="m-0">
-                        <div className="grid grid-cols-7 gap-0">
+                        <div className="grid grid-cols-6 gap-1" onClick={(e) => e.stopPropagation()}>
                           {activityEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "activity")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="emotion" className="m-0">
-                        <div className="grid grid-cols-7 gap-0">
+                        <div className="grid grid-cols-6 gap-1" onClick={(e) => e.stopPropagation()}>
                           {emotionEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "emotion")
                           )}
                         </div>
                       </TabsContent>
                       <TabsContent value="nature" className="m-0">
-                        <div className="grid grid-cols-7 gap-0">
+                        <div className="grid grid-cols-6 gap-1" onClick={(e) => e.stopPropagation()}>
                           {natureEmojis.map((emoji, index) => 
                             renderEmojiButton(emoji, index, "nature")
                           )}
@@ -626,4 +643,3 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
 };
 
 export default EditIdea;
-
