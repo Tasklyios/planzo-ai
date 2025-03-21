@@ -27,7 +27,7 @@ export function AnimatedTextSwitcher({
   }, [titleIndex, titles, interval]);
 
   return (
-    <span className={`relative flex w-full justify-center overflow-hidden text-center ${className}`}>
+    <span className={`relative inline-flex w-full justify-center overflow-hidden text-center ${className}`}>
       {titles.map((title, index) => (
         <motion.span
           key={index}
