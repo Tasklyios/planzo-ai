@@ -53,12 +53,12 @@ const Hero = () => {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight max-w-4xl mx-auto mb-4 md:mb-6">
             {isMobile ? (
               <>
-                <div>The #1 AI <span className="bg-gradient-to-r from-[#2582ff] to-[#2582ff]/80 bg-clip-text text-transparent">CONTENT CREATION</span></div>
+                <div>The #1 AI <span className="bg-gradient-to-r from-[#2582ff] to-[#0FA0CE] bg-clip-text text-transparent">Content Creation</span></div>
                 <AnimatedTextSwitcher titles={useCases} className="mt-2" />
               </>
             ) : (
               <div className="flex flex-col items-center justify-center">
-                <div>The #1 AI <span className="bg-gradient-to-r from-[#2582ff] to-[#2582ff]/80 bg-clip-text text-transparent">CONTENT CREATION</span></div>
+                <div>The #1 AI <span className="bg-gradient-to-r from-[#2582ff] to-[#0FA0CE] bg-clip-text text-transparent">Content Creation</span></div>
                 <div className="mt-1 mb-1">tool for</div>
                 <AnimatedTextSwitcher titles={useCases} className="mt-1" />
               </div>
