@@ -310,20 +310,20 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     selectColor(newColor);
   };
 
-  const handleEmojiSelect = (emoji: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
+  const handleEmojiSelect = (emoji: string) => {
     if (idea) {
       setIdea({ ...idea, emoji });
     }
   };
 
-  const ideaEmoji = idea.emoji || getEmojiForIdea(idea.title, idea.category);
+  const ideaEmoji = idea?.emoji || getEmojiForIdea(idea?.title || '', idea?.category || '');
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-background border-0 shadow-xl rounded-xl p-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Edit Idea</DialogTitle>
+        </DialogHeader>
         <div className="flex flex-col h-full">
           <div className="flex items-start gap-4 p-6 bg-card border-b">
             <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
@@ -332,10 +332,10 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                   className="text-5xl bg-transparent border-0 cursor-pointer hover:opacity-80 transition-opacity p-2 rounded-full"
                   aria-label="Change emoji"
                 >
-                  {idea.emoji || ideaEmoji}
+                  {idea?.emoji || ideaEmoji}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-80 p-0" align="start">
+              <PopoverContent className="w-80 p-0" align="start" onClick={(e) => e.stopPropagation()}>
                 <Card className="border-0 shadow-none">
                   <Tabs defaultValue="common" value={currentEmojiTab} onValueChange={setCurrentEmojiTab}>
                     <TabsList className="w-full grid grid-cols-5">
@@ -350,10 +350,14 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                         <div className="grid grid-cols-8 gap-2">
                           {commonEmojis.map((emoji, index) => (
                             <button
-                              key={`common-${emoji}-${index}`}
+                              key={`common-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleEmojiSelect(emoji);
+                              }}
                             >
                               {emoji}
                             </button>
@@ -364,10 +368,14 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                         <div className="grid grid-cols-8 gap-2">
                           {foodEmojis.map((emoji, index) => (
                             <button
-                              key={`food-${emoji}-${index}`}
+                              key={`food-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleEmojiSelect(emoji);
+                              }}
                             >
                               {emoji}
                             </button>
@@ -378,10 +386,14 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                         <div className="grid grid-cols-8 gap-2">
                           {activityEmojis.map((emoji, index) => (
                             <button
-                              key={`activity-${emoji}-${index}`}
+                              key={`activity-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleEmojiSelect(emoji);
+                              }}
                             >
                               {emoji}
                             </button>
@@ -392,10 +404,14 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                         <div className="grid grid-cols-8 gap-2">
                           {emotionEmojis.map((emoji, index) => (
                             <button
-                              key={`emotion-${emoji}-${index}`}
+                              key={`emotion-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleEmojiSelect(emoji);
+                              }}
                             >
                               {emoji}
                             </button>
@@ -406,10 +422,14 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                         <div className="grid grid-cols-8 gap-2">
                           {natureEmojis.map((emoji, index) => (
                             <button
-                              key={`nature-${emoji}-${index}`}
+                              key={`nature-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleEmojiSelect(emoji);
+                              }}
                             >
                               {emoji}
                             </button>
@@ -423,8 +443,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             </Popover>
             <div className="flex-1">
               <Input
-                value={idea.title}
-                onChange={(e) => setIdea({ ...idea, title: e.target.value })}
+                value={idea?.title || ''}
+                onChange={(e) => setIdea(idea ? { ...idea, title: e.target.value } : null)}
                 className="text-xl font-semibold border-none px-0 h-auto focus-visible:ring-0 bg-transparent"
                 placeholder="Enter idea title..."
               />
