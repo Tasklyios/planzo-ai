@@ -73,6 +73,8 @@ export const onRequestPost = async (context: any) => {
     ${previousIdeas && previousIdeas.titles && previousIdeas.titles.length > 0 ? 
       `Avoid these previously generated ideas:\n${previousIdeas.titles.join(", ")}\n` : ''}
     
+    For each idea, include a hook that would grab viewers' attention in the first 3 seconds.
+    
     Format as JSON with this structure:
     {
       "ideas": [
@@ -80,7 +82,9 @@ export const onRequestPost = async (context: any) => {
           "title": "string",
           "description": "string - make this detailed enough to generate a good script from",
           "category": "string",
-          "tags": ["string"]
+          "tags": ["string"],
+          "hook_text": "string - a short attention-grabbing hook for the start of the video",
+          "hook_category": "string - a category label for the hook (e.g., 'question', 'statistic', 'story')"
         }
       ]
     }`;

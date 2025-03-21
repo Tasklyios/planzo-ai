@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -5,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Wand2, Trash2, Check } from "lucide-react";
+import { Wand2, Trash2, Check, Apple, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -183,6 +184,11 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     navigate(`/script?idea=${idea?.id}`);
   };
 
+  const handleNavigateToSavedHooks = () => {
+    onClose();
+    navigate(`/hooks?selectForIdea=${idea?.id}`);
+  };
+
   const handleSave = async () => {
     if (!idea) return;
 
@@ -290,106 +296,114 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     selectColor(newColor);
   };
 
+  // Get emoji based on title and category
+  const ideaEmoji = idea ? getEmojiForIdea(idea.title, idea.category) : "🍎";
+
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Idea</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <label>Color</label>
-            <div className="flex flex-wrap gap-2 items-center">
-              {standardColors.map((color) => (
-                <Button
-                  key={color}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className={`w-8 h-8 rounded-full p-0 border-2 ${idea.color === color ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'}`}
-                  style={{ backgroundColor: colorMap[color] }}
-                  onClick={() => selectColor(color)}
-                >
-                  {idea.color === color && (
-                    <Check className="h-3 w-3 text-white" />
-                  )}
-                  <span className="sr-only">{color}</span>
-                </Button>
-              ))}
-              
-              {/* Custom color picker */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className={`w-8 h-8 rounded-full p-0 border-2 ${!standardColors.includes(idea.color || '') ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'}`}
-                    style={{ 
-                      backgroundColor: !standardColors.includes(idea.color || '') 
-                        ? idea.color 
-                        : '#ffffff',
-                      backgroundImage: !standardColors.includes(idea.color || '') ? 'none' : 'linear-gradient(45deg, #f59e0b 0%, #3b82f6 50%, #ec4899 100%)'
-                    }}
-                  >
-                    {!standardColors.includes(idea.color || '') && (
-                      <Check className="h-3 w-3 text-white" />
-                    )}
-                    <span className="sr-only">Custom color</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-3">
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="custom-color" className="text-sm font-medium">
-                      Pick a custom color
-                    </label>
-                    <div className="flex gap-2 items-center">
-                      <Input
-                        id="custom-color"
-                        type="color"
-                        value={customColor}
-                        onChange={handleCustomColorChange}
-                        className="w-10 h-10 p-1 cursor-pointer"
-                      />
-                      <Input 
-                        type="text"
-                        value={customColor}
-                        onChange={handleCustomColorChange}
-                        className="w-24"
-                      />
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+        <DialogHeader className="flex flex-row items-start gap-4 pb-2 border-b">
+          <div className="text-4xl" aria-hidden="true">
+            {ideaEmoji}
           </div>
-
-          <div className="grid gap-2">
-            <label>Schedule</label>
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <Input
-                  type="date"
-                  value={dateValue}
-                  onChange={(e) => handleDateTimeChange('date', e.target.value)}
-                />
-              </div>
-              <div className="flex-1">
-                <Input
-                  type="time"
-                  value={timeValue}
-                  onChange={(e) => handleDateTimeChange('time', e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <label>Title</label>
+          <div className="flex-1">
             <Input
               value={idea.title}
               onChange={(e) => setIdea({ ...idea, title: e.target.value })}
+              className="text-xl font-semibold border-none px-0 h-auto focus-visible:ring-0"
+              placeholder="Enter idea title..."
             />
+          </div>
+        </DialogHeader>
+        
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <label>Color</label>
+              <div className="flex flex-wrap gap-2 items-center">
+                {standardColors.map((color) => (
+                  <Button
+                    key={color}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={`w-8 h-8 rounded-full p-0 border-2 ${idea.color === color ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'}`}
+                    style={{ backgroundColor: colorMap[color] }}
+                    onClick={() => selectColor(color)}
+                  >
+                    {idea.color === color && (
+                      <Check className="h-3 w-3 text-white" />
+                    )}
+                    <span className="sr-only">{color}</span>
+                  </Button>
+                ))}
+                
+                {/* Custom color picker */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className={`w-8 h-8 rounded-full p-0 border-2 ${!standardColors.includes(idea.color || '') ? 'border-gray-900 dark:border-gray-100' : 'border-transparent'}`}
+                      style={{ 
+                        backgroundColor: !standardColors.includes(idea.color || '') 
+                          ? idea.color 
+                          : '#ffffff',
+                        backgroundImage: !standardColors.includes(idea.color || '') ? 'none' : 'linear-gradient(45deg, #f59e0b 0%, #3b82f6 50%, #ec4899 100%)'
+                      }}
+                    >
+                      {!standardColors.includes(idea.color || '') && (
+                        <Check className="h-3 w-3 text-white" />
+                      )}
+                      <span className="sr-only">Custom color</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-3">
+                    <div className="flex flex-col gap-2">
+                      <label htmlFor="custom-color" className="text-sm font-medium">
+                        Pick a custom color
+                      </label>
+                      <div className="flex gap-2 items-center">
+                        <Input
+                          id="custom-color"
+                          type="color"
+                          value={customColor}
+                          onChange={handleCustomColorChange}
+                          className="w-10 h-10 p-1 cursor-pointer"
+                        />
+                        <Input 
+                          type="text"
+                          value={customColor}
+                          onChange={handleCustomColorChange}
+                          className="w-24"
+                        />
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <label>Schedule</label>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Input
+                    type="date"
+                    value={dateValue}
+                    onChange={(e) => handleDateTimeChange('date', e.target.value)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Input
+                    type="time"
+                    value={timeValue}
+                    onChange={(e) => handleDateTimeChange('time', e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid gap-2">
@@ -416,26 +430,35 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             />
           </div>
 
-          {idea.hook_text && (
-            <div className="grid gap-2">
+          <div className="grid gap-2">
+            <div className="flex justify-between items-center">
               <label>Hook</label>
-              <div className="relative">
-                <Textarea
-                  value={idea.hook_text}
-                  onChange={(e) => setIdea({ ...idea, hook_text: e.target.value })}
-                  className="pr-16"
-                />
-                {idea.hook_category && (
-                  <Badge 
-                    className="absolute top-2 right-2"
-                    variant="outline"
-                  >
-                    {idea.hook_category}
-                  </Badge>
-                )}
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNavigateToSavedHooks}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add from Saved Hooks
+              </Button>
             </div>
-          )}
+            <div className="relative">
+              <Textarea
+                value={idea.hook_text || ""}
+                onChange={(e) => setIdea({ ...idea, hook_text: e.target.value })}
+                placeholder="Add a hook for your video..."
+                className={idea.hook_category ? "pr-16" : ""}
+              />
+              {idea.hook_category && (
+                <Badge 
+                  className="absolute top-2 right-2"
+                  variant="outline"
+                >
+                  {idea.hook_category}
+                </Badge>
+              )}
+            </div>
+          </div>
 
           <div className="grid gap-2">
             <div className="flex justify-between items-center">
@@ -481,5 +504,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     </Dialog>
   );
 };
+
+// Import this function from the utils file
+import { getEmojiForIdea } from "@/utils/emojiUtils";
 
 export default EditIdea;
