@@ -114,12 +114,40 @@ export const onRequestPost = async (context: any) => {
     const expirationDate = new Date();
     expirationDate.setHours(expirationDate.getHours() + 24);
     
+    // Use a synchronous approach for assigning emojis
     ideas.ideas.forEach((idea: any) => {
       idea.expires_at = expirationDate.toISOString();
       
-      // If emoji isn't provided, use the emoji utility to generate one
+      // If emoji isn't provided, generate one synchronously
       if (!idea.emoji) {
-        const { getEmojiForIdea } = await import('../utils/emojiUtils');
+        const getEmojiForIdea = (title: string, category: string): string => {
+          // Simple synchronous emoji selection based on content
+          const topicKeywords: Record<string, string> = {
+            'tutorial': '📝',
+            'how-to': '📝',
+            'review': '⭐️',
+            'food': '🍔',
+            'fitness': '💪',
+            'tech': '📱',
+            'beauty': '💄',
+            'fashion': '👗',
+            'travel': '✈️',
+            'gaming': '🎮',
+            'music': '🎵',
+            'business': '💼'
+          };
+          
+          const searchText = (title + ' ' + category).toLowerCase();
+          
+          for (const [keyword, emoji] of Object.entries(topicKeywords)) {
+            if (searchText.includes(keyword.toLowerCase())) {
+              return emoji;
+            }
+          }
+          
+          return '🍎'; // Default emoji
+        };
+        
         idea.emoji = getEmojiForIdea(idea.title, idea.category);
       }
     });

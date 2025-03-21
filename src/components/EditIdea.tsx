@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -630,7 +629,5 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
 
 // Import this function from the utils file
 import { getEmojiForIdea } from "@/utils/emojiUtils";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default EditIdea;
