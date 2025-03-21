@@ -60,7 +60,7 @@ const Hero = () => {
               <div className="flex flex-col items-center justify-center">
                 <div>The #1 AI <span className="bg-gradient-to-r from-[#2582ff] to-[#0FA0CE] bg-clip-text text-transparent">Content Creation</span></div>
                 <div className="mt-1 mb-1">tool for</div>
-                <AnimatedTextSwitcher titles={useCases} className="mt-1" />
+                <AnimatedTextSwitcher titles={useCases} className="mt-1 mb-5" />
               </div>
             )}
           </h1>
