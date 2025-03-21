@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Wand2, Trash2, Check, Apple, Plus, Smile } from "lucide-react";
+import { Wand2, Trash2, Check, Plus, Smile } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -41,7 +41,6 @@ const standardColors = [
   'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple', 'pink'
 ];
 
-// Map color names to actual hex values for display
 const colorMap: Record<string, string> = {
   red: "#ef4444",
   orange: "#f97316",
@@ -53,7 +52,6 @@ const colorMap: Record<string, string> = {
   pink: "#ec4899",
 };
 
-// Common emoji categories for content ideas
 const commonEmojis = [
   "🎬", "📱", "💡", "🔍", "📊", "🎯", "✅", "🎨", "📝", "🏆",
   "🌟", "💫", "📈", "🚀", "💪", "🧠", "❤️", "💰", "🔥", "💯",
@@ -61,7 +59,6 @@ const commonEmojis = [
   "🎵", "📚", "🍎", "⭐", "🌈", "🎁", "🎉", "💻", "📱", "📹"
 ];
 
-// Food-related emojis
 const foodEmojis = [
   "🍎", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒",
   "🍑", "🥭", "🍍", "🥥", "🥝", "🍅", "🥑", "🥦", "🥬", "🥕",
@@ -69,7 +66,6 @@ const foodEmojis = [
   "🍪", "🎂", "🧁", "🍦", "🍧", "🍮", "🍰", "🥧", "🍫", "🍬"
 ];
 
-// Activities and objects
 const activityEmojis = [
   "🏃", "🚴", "🏋️", "🧘", "🎮", "🎯", "🎨", "🎭", "🎬", "🎤",
   "🎸", "🥁", "📚", "✏️", "💻", "📱", "📷", "🎥", "🔬", "🧪",
@@ -82,7 +78,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [customColor, setCustomColor] = useState("#3b82f6"); // Default blue
+  const [customColor, setCustomColor] = useState("#3b82f6");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [currentEmojiTab, setCurrentEmojiTab] = useState("common");
   const { toast } = useToast();
@@ -93,7 +89,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   }, [ideaId]);
 
   useEffect(() => {
-    // Set custom color when idea loads if it's not in standard colors
     if (idea?.color && !standardColors.includes(idea.color)) {
       setCustomColor(idea.color);
     }
@@ -103,7 +98,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     try {
       console.log("Fetching idea with ID:", ideaId);
       
-      // Get current session to ensure we have the user_id
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
         console.error("Session error:", sessionError);
@@ -138,7 +132,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       
       console.log("Fetched idea data:", data);
       
-      // Make sure there's an emoji property
       if (!data.emoji) {
         data.emoji = getEmojiForIdea(data.title, data.category);
       }
@@ -162,7 +155,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     try {
       setDeleting(true);
       
-      // Get current session to ensure we have the user_id
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
         console.error("Session error:", sessionError);
@@ -231,7 +223,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       setSaving(true);
       console.log("Saving idea with data:", idea);
       
-      // Get current session to ensure we have the user_id
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
         console.error("Session error:", sessionError);
@@ -266,7 +257,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           is_saved: true,
           status: idea.status || "ideas",
           user_id: userId,
-          emoji: idea.emoji // Save the emoji
+          emoji: idea.emoji
         })
         .eq("id", idea.id)
         .eq("user_id", userId);
@@ -333,18 +324,18 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   };
 
   const handleEmojiSelect = (emoji: string) => {
-    setIdea({ ...idea, emoji });
-    setShowEmojiPicker(false);
+    if (idea) {
+      const updatedIdea = { ...idea, emoji };
+      setIdea(updatedIdea);
+    }
   };
 
-  // Get emoji based on title and category
   const ideaEmoji = idea.emoji || getEmojiForIdea(idea.title, idea.category);
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-background border-0 shadow-xl rounded-xl p-0">
         <div className="flex flex-col h-full">
-          {/* Header with emoji and title */}
           <div className="flex items-start gap-4 p-6 bg-card border-b">
             <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
               <PopoverTrigger asChild>
@@ -363,14 +354,19 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                       <TabsTrigger value="food">Food</TabsTrigger>
                       <TabsTrigger value="activity">Activity</TabsTrigger>
                     </TabsList>
-                    <ScrollArea className="h-[200px] p-4">
+                    <ScrollArea className="h-[200px] p-4 overflow-y-auto">
                       <TabsContent value="common" className="m-0">
                         <div className="grid grid-cols-8 gap-2">
                           {commonEmojis.map((emoji) => (
                             <button
                               key={emoji}
+                              type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => handleEmojiSelect(emoji)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleEmojiSelect(emoji);
+                              }}
                             >
                               {emoji}
                             </button>
@@ -382,8 +378,13 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                           {foodEmojis.map((emoji) => (
                             <button
                               key={emoji}
+                              type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => handleEmojiSelect(emoji)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleEmojiSelect(emoji);
+                              }}
                             >
                               {emoji}
                             </button>
@@ -395,8 +396,13 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                           {activityEmojis.map((emoji) => (
                             <button
                               key={emoji}
+                              type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={() => handleEmojiSelect(emoji)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleEmojiSelect(emoji);
+                              }}
                             >
                               {emoji}
                             </button>
@@ -420,7 +426,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           
           <div className="flex-1 overflow-y-auto p-6">
             <div className="grid gap-6">
-              {/* Color and Schedule in a card */}
               <Card className="p-4 bg-white dark:bg-card border-0 shadow-sm">
                 <div className="grid grid-cols-2 gap-6">
                   <div>
@@ -443,7 +448,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                         </Button>
                       ))}
                       
-                      {/* Custom color picker */}
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -510,7 +514,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                 </div>
               </Card>
 
-              {/* Main content fields */}
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block text-muted-foreground">Category</label>
@@ -540,7 +543,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                   />
                 </div>
 
-                {/* Hook section */}
                 <Card className="p-4 bg-white dark:bg-card border-0 shadow-sm">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
@@ -574,7 +576,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                   </div>
                 </Card>
               
-                {/* Script section */}
                 <Card className="p-4 bg-white dark:bg-card border-0 shadow-sm">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
@@ -627,7 +628,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
   );
 };
 
-// Import this function from the utils file
 import { getEmojiForIdea } from "@/utils/emojiUtils";
 
 export default EditIdea;
