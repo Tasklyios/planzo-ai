@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -230,7 +229,6 @@ const InfoCardMedia = ({
 }: InfoCardMediaProps) => {
   const { isHovered } = useContext(InfoCardContext);
   const { setAllImagesLoaded } = useContext(InfoCardImageContext);
-  const [isOverflowVisible, setIsOverflowVisible] = useState(false);
   const loadedMedia = useRef(new Set());
 
   const handleMediaLoad = (mediaSrc: string) => {
@@ -261,19 +259,7 @@ const InfoCardMedia = ({
     } else {
       setAllImagesLoaded(true); // No media to load
     }
-  }, [media.length]);
-
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    if (isHovered) {
-      timeoutId = setTimeout(() => {
-        setIsOverflowVisible(true);
-      }, 100);
-    } else {
-      setIsOverflowVisible(false);
-    }
-    return () => clearTimeout(timeoutId);
-  }, [isHovered]);
+  }, [media.length, setAllImagesLoaded]);
 
   const mediaCount = displayMedia.length;
 
@@ -295,6 +281,10 @@ const InfoCardMedia = ({
       >
         <div className="relative h-full w-full flex justify-center items-center">
           {displayMedia.map((item, index) => {
+            if (!isHovered && index > 0) {
+              return null;
+            }
+
             const {
               type,
               src,
@@ -310,15 +300,10 @@ const InfoCardMedia = ({
                 ? `translateY(${index * -5}px) rotate(${(index - (mediaCount === 2 ? 0.5 : 1)) * 5}deg) translateX(${(index - (mediaCount === 2 ? 0.5 : 1)) * 8}px) scale(${0.95 + index * 0.02})`
                 : index === 0 ? "translateY(0) rotate(0) translateX(0) scale(1)" : "translateY(5px) rotate(0) translateX(0) scale(0.95)",
               transition: "transform 0.3s ease, opacity 0.3s ease",
-              opacity: isHovered ? 1 : index === 0 ? 1 : 0,
+              opacity: 1,
               width: '90%',
               maxHeight: '100%',
             };
-
-            // Only render the content if it's visible or the first item
-            if (!isHovered && index > 0) {
-              return null;
-            }
 
             return (
               <div
@@ -357,7 +342,6 @@ const InfoCardMedia = ({
           })}
         </div>
 
-        {/* Only show the gradient overlay when not hovered */}
         {!isHovered && (
           <div
             className="absolute right-0 bottom-0 left-0 h-10 bg-gradient-to-b from-transparent to-card"
