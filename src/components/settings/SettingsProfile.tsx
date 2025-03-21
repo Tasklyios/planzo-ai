@@ -116,9 +116,12 @@ const SettingsProfile = () => {
 
     setIsLoading(true);
     try {
+      // Get the final content niche value based on which tab is active
+      const finalContentNiche = isCustomNiche ? customNiche : contentNiche;
+      
       let nicheField = "";
       if (accountType === "personal") {
-        nicheField = isCustomNiche ? customNiche || "" : contentNiche || "";
+        nicheField = finalContentNiche || "";
       } else if (accountType === "ecommerce") {
         nicheField = productNiche || "";
       } else {
@@ -129,7 +132,7 @@ const SettingsProfile = () => {
         .from("profiles")
         .update({
           account_type: accountType,
-          content_niche: accountType === "personal" ? nicheField : contentNiche,
+          content_niche: accountType === "personal" ? finalContentNiche : contentNiche,
           product_niche: accountType === "ecommerce" ? nicheField : productNiche,
           business_niche: accountType === "business" ? nicheField : businessNiche,
           target_audience: targetAudience,
