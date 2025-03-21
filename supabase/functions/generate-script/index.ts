@@ -229,9 +229,9 @@ ${scriptDescription ? `Context: ${scriptDescription}` : ''}`;
       }
 
       // If roughScript (from the main generator) is provided, add it to the prompt
-      if (baseScript) {
+      if (roughScript) {
         userPrompt += `\n\nHere's a rough script I've drafted that you should use as a starting point:
-${baseScript}
+${roughScript}
 
 Please build upon this script to make it more professional and engaging while keeping the core ideas.`;
       }
