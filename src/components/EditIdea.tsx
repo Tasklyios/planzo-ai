@@ -271,13 +271,10 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
     }
   };
 
-  const handleEmojiSelect = (emoji: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
+  const handleEmojiSelect = (emoji: string) => {
     if (idea) {
       setIdea({ ...idea, emoji });
-      setShowEmojiPicker(true);
+      setShowEmojiPicker(false);
     }
   };
 
@@ -344,10 +341,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
               </PopoverTrigger>
               <PopoverContent 
                 className="w-80 p-0" 
-                align="start" 
-                onInteractOutside={(e) => {
-                  e.preventDefault();
-                }}
+                align="start"
               >
                 <Card className="border-0 shadow-none">
                   <Tabs defaultValue="common" value={currentEmojiTab} onValueChange={setCurrentEmojiTab}>
@@ -366,7 +360,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                               key={`common-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                              onClick={() => handleEmojiSelect(emoji)}
+                              style={{ cursor: 'pointer' }}
                             >
                               {emoji}
                             </button>
@@ -380,7 +375,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                               key={`food-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                              onClick={() => handleEmojiSelect(emoji)}
+                              style={{ cursor: 'pointer' }}
                             >
                               {emoji}
                             </button>
@@ -394,7 +390,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                               key={`activity-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                              onClick={() => handleEmojiSelect(emoji)}
+                              style={{ cursor: 'pointer' }}
                             >
                               {emoji}
                             </button>
@@ -408,7 +405,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                               key={`emotion-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                              onClick={() => handleEmojiSelect(emoji)}
+                              style={{ cursor: 'pointer' }}
                             >
                               {emoji}
                             </button>
@@ -422,7 +420,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
                               key={`nature-${index}`}
                               type="button"
                               className="text-2xl p-1 hover:bg-accent rounded cursor-pointer"
-                              onClick={(e) => handleEmojiSelect(emoji, e)}
+                              onClick={() => handleEmojiSelect(emoji)}
+                              style={{ cursor: 'pointer' }}
                             >
                               {emoji}
                             </button>
