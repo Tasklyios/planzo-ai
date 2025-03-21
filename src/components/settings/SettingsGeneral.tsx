@@ -6,7 +6,36 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { User, Mail, Key, Save, Lock } from "lucide-react";
+import { 
+  User, 
+  Mail, 
+  Key, 
+  Save, 
+  Lock,
+  Edit,
+  AlertTriangle
+} from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const emailChangeSchema = z.object({
+  newEmail: z.string().email("Please enter a valid email address"),
+});
 
 const SettingsGeneral = () => {
   const { toast } = useToast();
@@ -15,6 +44,16 @@ const SettingsGeneral = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
+  const [emailPopoverOpen, setEmailPopoverOpen] = useState(false);
+
+  // Email change form
+  const emailChangeForm = useForm({
+    resolver: zodResolver(emailChangeSchema),
+    defaultValues: {
+      newEmail: "",
+    },
+  });
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -71,6 +110,36 @@ const SettingsGeneral = () => {
     }
   };
 
+  const handleChangeEmail = async (data) => {
+    if (!user) return;
+    
+    setIsUpdatingEmail(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: data.newEmail,
+      });
+
+      if (error) throw error;
+
+      setEmailPopoverOpen(false);
+      emailChangeForm.reset();
+      
+      toast({
+        title: "Email change requested",
+        description: "Please check your new email inbox for a confirmation link.",
+      });
+    } catch (error) {
+      console.error("Error updating email:", error);
+      toast({
+        variant: "destructive",
+        title: "Error updating email",
+        description: error.message,
+      });
+    } finally {
+      setIsUpdatingEmail(false);
+    }
+  };
+
   return (
     <div className="space-y-8 w-full">
       <Card className="p-6 border border-border/40 shadow-sm w-full">
@@ -105,19 +174,82 @@ const SettingsGeneral = () => {
           
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-muted-foreground" />
+              <Mail className="h-5 w-5 text-primary" />
               <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
             </div>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              disabled
-              className="bg-muted w-full"
-            />
-            <p className="text-sm text-muted-foreground mt-1 ml-7">
-              To change your email, please contact support.
-            </p>
+            <div className="flex items-center gap-2">
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                disabled
+                className="bg-muted w-full"
+              />
+              <Popover open={emailPopoverOpen} onOpenChange={setEmailPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="flex-shrink-0">
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="end">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-primary" />
+                      <h4 className="font-medium">Change Email Address</h4>
+                    </div>
+                    
+                    <Form {...emailChangeForm}>
+                      <form onSubmit={emailChangeForm.handleSubmit(handleChangeEmail)} className="space-y-4">
+                        <FormField
+                          control={emailChangeForm.control}
+                          name="newEmail"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>New Email Address</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Enter your new email"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <div className="bg-amber-100 dark:bg-amber-950/40 p-3 rounded-md flex items-start gap-2 text-sm">
+                          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                          <p className="text-amber-800 dark:text-amber-300">
+                            You'll need to verify this email change by clicking on a confirmation link sent to your new email address.
+                          </p>
+                        </div>
+                        
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEmailPopoverOpen(false);
+                              emailChangeForm.reset();
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            type="submit" 
+                            size="sm"
+                            disabled={isUpdatingEmail}
+                          >
+                            {isUpdatingEmail ? "Saving..." : "Save Changes"}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
           
           <Button
