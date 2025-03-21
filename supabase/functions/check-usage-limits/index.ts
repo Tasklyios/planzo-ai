@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.21.0';
 
@@ -122,23 +121,23 @@ serve(async (req) => {
     }
 
     // Determine max limit based on tier and action
-    let maxLimit = 10; // Default limit updated to 10 for ideas
+    let maxLimit = 5; // Default limit updated to 5 for ideas
     
     if (action === 'ideas') {
-      if (tier === 'free') maxLimit = 10; // Updated from 5 to 10
-      else if (tier === 'pro') maxLimit = 20;
+      if (tier === 'free') maxLimit = 5; // Updated to match new limits
+      else if (tier === 'pro') maxLimit = 50;
       else if (tier === 'plus') maxLimit = 50;
-      else if (tier === 'business') maxLimit = 999; // Using 999 for business tier
+      else if (tier === 'business') maxLimit = 100;
     } else if (action === 'scripts') {
-      if (tier === 'free') maxLimit = 3;
+      if (tier === 'free') maxLimit = 1;
       else if (tier === 'pro') maxLimit = 10;
-      else if (tier === 'plus') maxLimit = 25;
-      else if (tier === 'business') maxLimit = 999;
+      else if (tier === 'plus') maxLimit = 10;
+      else if (tier === 'business') maxLimit = 20;
     } else if (action === 'hooks') {
-      if (tier === 'free') maxLimit = 5;
-      else if (tier === 'pro') maxLimit = 15;
-      else if (tier === 'plus') maxLimit = 30;
-      else if (tier === 'business') maxLimit = 999;
+      if (tier === 'free') maxLimit = 4;
+      else if (tier === 'pro') maxLimit = 20;
+      else if (tier === 'plus') maxLimit = 20;
+      else if (tier === 'business') maxLimit = 40;
     }
 
     // For ideas specifically, use the number 5 instead of 1 for increment

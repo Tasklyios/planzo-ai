@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -113,15 +114,15 @@ const PricingDialog = ({ open, onOpenChange, onContinueFree }: PricingDialogProp
               <div className="space-y-4">
                 <div className="flex items-center">
                   <i className="fa-solid fa-check text-[#4F92FF] mr-3"></i>
-                  <span>10 video idea generations/day</span>
+                  <span>50 video idea generations/day</span>
                 </div>
                 <div className="flex items-center">
                   <i className="fa-solid fa-check text-[#4F92FF] mr-3"></i>
-                  <span>20 script generations/day</span>
+                  <span>10 script generations/day</span>
                 </div>
                 <div className="flex items-center">
                   <i className="fa-solid fa-check text-[#4F92FF] mr-3"></i>
-                  <span>Basic analytics</span>
+                  <span>20 hooks/day</span>
                 </div>
               </div>
               <button 
@@ -147,15 +148,15 @@ const PricingDialog = ({ open, onOpenChange, onContinueFree }: PricingDialogProp
               <div className="space-y-4 text-white">
                 <div className="flex items-center">
                   <i className="fa-solid fa-check text-white mr-3"></i>
-                  <span>20 video idea generations/day</span>
+                  <span>50 video idea generations/day</span>
                 </div>
                 <div className="flex items-center">
                   <i className="fa-solid fa-check text-white mr-3"></i>
-                  <span>30 script generations/day</span>
+                  <span>10 script generations/day</span>
                 </div>
                 <div className="flex items-center">
                   <i className="fa-solid fa-check text-white mr-3"></i>
-                  <span>Advanced analytics</span>
+                  <span>20 hooks/day</span>
                 </div>
               </div>
               <button 
@@ -171,22 +172,22 @@ const PricingDialog = ({ open, onOpenChange, onContinueFree }: PricingDialogProp
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-[#222831]">Business</h3>
                 <div className="mt-4">
-                  <span className="text-4xl font-bold text-[#222831]">£99.99</span>
+                  <span className="text-4xl font-bold text-[#222831]">£39.99</span>
                   <span className="text-gray-500">/month</span>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center">
                   <i className="fa-solid fa-check text-[#4F92FF] mr-3"></i>
-                  <span>Unlimited video generations</span>
+                  <span>100 video idea generations/day</span>
                 </div>
                 <div className="flex items-center">
                   <i className="fa-solid fa-check text-[#4F92FF] mr-3"></i>
-                  <span>Unlimited script generations</span>
+                  <span>20 script generations/day</span>
                 </div>
                 <div className="flex items-center">
                   <i className="fa-solid fa-check text-[#4F92FF] mr-3"></i>
-                  <span>Priority support</span>
+                  <span>40 hooks/day</span>
                 </div>
               </div>
               <button 
