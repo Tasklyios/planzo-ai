@@ -1,14 +1,12 @@
+
 import React, { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { generateHooks, saveHook, getSavedHooks, deleteSavedHook } from '@/services/hookService';
-import { HookType, SavedHook } from '@/types/hooks';
+import { generateHooks, saveHook } from '@/services/hookService';
+import { HookType } from '@/types/hooks';
 import { GeneratedIdea } from '@/types/idea';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import HookGeneratorForm from '@/components/hooks/HookGeneratorForm';
 import GeneratedHooksGrid from '@/components/hooks/GeneratedHooksGrid';
-import SavedHooksView from '@/components/hooks/SavedHooksView';
-import ApplyHookToIdea from '@/components/hooks/ApplyHookToIdea';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,29 +14,20 @@ import { useNavigate } from 'react-router-dom';
 
 const Hooks = () => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [topic, setTopic] = useState('');
   const [audience, setAudience] = useState('');
   const [details, setDetails] = useState('');
   const [generatedHooks, setGeneratedHooks] = useState<HookType[]>([]);
-  const [activeTab, setActiveTab] = useState('generate');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedIdea, setSelectedIdea] = useState<GeneratedIdea | null>(null);
-  const [selectedHook, setSelectedHook] = useState<HookType | null>(null);
   const [useSavedIdea, setUseSavedIdea] = useState(false);
   const [selectedHookTypes, setSelectedHookTypes] = useState<string[]>(["question", "statistic", "story", "challenge"]);
-
-  const { data: savedHooks, isLoading: isFetchingHooks } = useQuery({
-    queryKey: ['savedHooks'],
-    queryFn: getSavedHooks,
-  });
 
   const saveHookMutation = useMutation({
     mutationFn: saveHook,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['savedHooks'] });
       toast({
         title: "Hook saved",
         description: "Your hook has been saved successfully.",
@@ -55,24 +44,6 @@ const Hooks = () => {
           h.is_saved ? { ...h, is_saved: false } : h
         )
       );
-    },
-  });
-
-  const deleteHookMutation = useMutation({
-    mutationFn: deleteSavedHook,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['savedHooks'] });
-      toast({
-        title: "Hook deleted",
-        description: "Your hook has been deleted successfully.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Failed to delete hook",
-        description: error.message,
-      });
     },
   });
 
@@ -144,23 +115,17 @@ const Hooks = () => {
     saveHookMutation.mutate(hook);
   };
 
-  const handleDeleteHook = (id: string) => {
-    deleteHookMutation.mutate(id);
-  };
-
-  const filterHooksByCategory = (hooks: (HookType | SavedHook)[], category: string): (HookType | SavedHook)[] => {
+  const filterHooksByCategory = (hooks: HookType[], category: string): HookType[] => {
     if (!hooks) return [];
     
     return hooks.filter(hook => {
-      const hookCategory = 'category' in hook ? hook.category : '';
+      const hookCategory = hook.category || '';
       return hookCategory.toLowerCase() === category.toLowerCase();
     });
   };
 
-  const getHookText = (hook: HookType | SavedHook): string => {
-    if ('hook_text' in hook) return hook.hook_text;
-    if ('hook' in hook) return hook.hook;
-    return '';
+  const getHookText = (hook: HookType): string => {
+    return hook.hook_text || '';
   };
 
   const handleSelectIdea = (idea: GeneratedIdea) => {
@@ -182,11 +147,6 @@ const Hooks = () => {
     setDetails(idea.description);
   };
 
-  const handleSelectHook = (hook: HookType) => {
-    setSelectedHook(hook);
-    console.log("Selected hook to apply to idea:", hook);
-  };
-
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex flex-col gap-2">
@@ -194,89 +154,70 @@ const Hooks = () => {
         <p className="text-muted-foreground">Create attention-grabbing hooks for your content</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="generate">Generate Hooks</TabsTrigger>
-          <TabsTrigger value="saved">Saved Hooks</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="generate" className="space-y-4">
-          <HookGeneratorForm 
-            topic={topic}
-            setTopic={setTopic}
-            audience={audience}
-            setAudience={setAudience}
-            details={details}
-            setDetails={setDetails}
-            handleGenerateHooks={handleGenerateHooks}
-            isGenerating={isGenerating}
-            useSavedIdea={useSavedIdea}
-            setUseSavedIdea={setUseSavedIdea}
-            onIdeaSelect={handleSelectIdea}
-            selectedIdea={selectedIdea}
-            selectedHookTypes={selectedHookTypes}
-            setSelectedHookTypes={setSelectedHookTypes}
-          />
+      <div className="space-y-4">
+        <HookGeneratorForm 
+          topic={topic}
+          setTopic={setTopic}
+          audience={audience}
+          setAudience={setAudience}
+          details={details}
+          setDetails={setDetails}
+          handleGenerateHooks={handleGenerateHooks}
+          isGenerating={isGenerating}
+          useSavedIdea={useSavedIdea}
+          setUseSavedIdea={setUseSavedIdea}
+          onIdeaSelect={handleSelectIdea}
+          selectedIdea={selectedIdea}
+          selectedHookTypes={selectedHookTypes}
+          setSelectedHookTypes={setSelectedHookTypes}
+        />
 
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4 mr-2" />
-              <AlertTitle>Error generating hooks</AlertTitle>
-              <AlertDescription className="space-y-2">
-                <p>{error}</p>
-                {error.includes("daily limit") && (
-                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                    <Button 
-                      variant="outline" 
-                      onClick={navigateToBilling}
-                      className="bg-destructive/10 hover:bg-destructive/20 text-destructive border-destructive/20"
-                    >
-                      Upgrade Plan
-                    </Button>
-                    <Button 
-                      onClick={handleRetryGeneration}
-                      className="bg-destructive/20 hover:bg-destructive/30 text-destructive"
-                    >
-                      Try Again
-                    </Button>
-                  </div>
-                )}
-                {!error.includes("daily limit") && (
-                  <div className="mt-2">
-                    <Button 
-                      onClick={handleRetryGeneration}
-                      className="bg-destructive/20 hover:bg-destructive/30 text-destructive"
-                    >
-                      Try Again
-                    </Button>
-                  </div>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4 mr-2" />
+            <AlertTitle>Error generating hooks</AlertTitle>
+            <AlertDescription className="space-y-2">
+              <p>{error}</p>
+              {error.includes("daily limit") && (
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <Button 
+                    variant="outline" 
+                    onClick={navigateToBilling}
+                    className="bg-destructive/10 hover:bg-destructive/20 text-destructive border-destructive/20"
+                  >
+                    Upgrade Plan
+                  </Button>
+                  <Button 
+                    onClick={handleRetryGeneration}
+                    className="bg-destructive/20 hover:bg-destructive/30 text-destructive"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              )}
+              {!error.includes("daily limit") && (
+                <div className="mt-2">
+                  <Button 
+                    onClick={handleRetryGeneration}
+                    className="bg-destructive/20 hover:bg-destructive/30 text-destructive"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
 
-          <GeneratedHooksGrid 
-            hooks={generatedHooks}
-            onSaveHook={handleSaveHook}
-            isSaving={false}
-            filterHooksByCategory={filterHooksByCategory}
-            getHookText={getHookText}
-            selectedHookTypes={selectedHookTypes}
-          />
-        </TabsContent>
-
-        <TabsContent value="saved">
-          <SavedHooksView 
-            savedHooks={savedHooks}
-            isFetchingHooks={isFetchingHooks}
-            handleDeleteHook={handleDeleteHook}
-            filterHooksByCategory={filterHooksByCategory}
-            getHookText={getHookText}
-            onSelectHook={handleSelectHook}
-            selectedIdea={selectedIdea}
-          />
-        </TabsContent>
-      </Tabs>
+        <GeneratedHooksGrid 
+          hooks={generatedHooks}
+          onSaveHook={handleSaveHook}
+          isSaving={false}
+          filterHooksByCategory={filterHooksByCategory}
+          getHookText={getHookText}
+          selectedHookTypes={selectedHookTypes}
+        />
+      </div>
     </div>
   );
 };
