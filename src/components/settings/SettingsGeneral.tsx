@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,7 +21,7 @@ const SettingsGeneral = () => {
   const [currentEmail, setCurrentEmail] = useState("");
 
   // Get current user and email
-  useState(() => {
+  useEffect(() => {
     const getCurrentUser = async () => {
       const { data } = await supabase.auth.getUser();
       if (data?.user?.email) {
@@ -129,7 +130,7 @@ const SettingsGeneral = () => {
           <CardTitle className="text-xl">Account Preferences</CardTitle>
           <CardDescription>Manage your account preferences</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <p className="text-muted-foreground text-sm">
             Additional account settings will be available here in a future update.
           </p>

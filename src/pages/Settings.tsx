@@ -21,7 +21,7 @@ const Settings = () => {
             <CardDescription className="text-base mt-1">Manage your account settings and preferences</CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-3 h-12 mb-8 bg-muted/70 p-1 rounded-lg">
               <TabsTrigger value="general" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:shadow-md transition-all duration-200">
