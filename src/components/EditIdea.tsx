@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -277,6 +278,34 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       setIdea({ ...idea, emoji });
       setShowEmojiPicker(false);
     }
+  };
+
+  // Add back the missing functions
+  const handleDateTimeChange = (type: 'date' | 'time', value: string) => {
+    if (!idea) return;
+    
+    const currentDate = idea.scheduled_for ? new Date(idea.scheduled_for) : new Date();
+    let newDate = new Date(currentDate);
+
+    if (type === 'date') {
+      const [year, month, day] = value.split('-').map(Number);
+      newDate.setFullYear(year, month - 1, day);
+    } else {
+      const [hours, minutes] = value.split(':').map(Number);
+      newDate.setHours(hours, minutes);
+    }
+
+    setIdea({ ...idea, scheduled_for: newDate.toISOString() });
+  };
+
+  const selectColor = (color: string) => {
+    setIdea({ ...idea, color });
+  };
+
+  const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newColor = e.target.value;
+    setCustomColor(newColor);
+    selectColor(newColor);
   };
 
   const renderEmojiButton = (emoji: string, index: number, category: string) => {
