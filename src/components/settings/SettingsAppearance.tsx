@@ -76,7 +76,7 @@ const SettingsAppearance = () => {
           </div>
         </RadioGroup>
         
-        <Button onClick={handleSaveAppearance} className="mt-4 w-full md:w-auto">
+        <Button onClick={handleSaveAppearance} className="mt-6 w-full sm:w-auto">
           Save Theme Preference
         </Button>
       </div>

@@ -11,7 +11,7 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState("general");
   
   return (
-    <div className="w-full mx-auto px-4 py-8 animate-fade-in">
+    <div className="w-full mx-auto px-4 sm:px-6 py-8 animate-fade-in max-w-[1400px]">
       <h1 className="text-3xl font-bold mb-6">Settings</h1>
       
       <Card className="w-full border-border/40 shadow-md">

@@ -73,7 +73,7 @@ const SettingsGeneral = () => {
 
   return (
     <div className="space-y-8 w-full">
-      <Card className="p-6 border border-border/40 shadow-sm">
+      <Card className="p-6 border border-border/40 shadow-sm w-full">
         <div className="space-y-6 w-full">
           <div className="flex items-center gap-2 mb-2">
             <User className="h-5 w-5 text-primary" />
@@ -131,7 +131,7 @@ const SettingsGeneral = () => {
         </div>
       </Card>
       
-      <Card className="p-6 border border-border/40 shadow-sm">
+      <Card className="p-6 border border-border/40 shadow-sm w-full">
         <div className="space-y-4 w-full">
           <div className="flex items-center gap-2 mb-2">
             <Lock className="h-5 w-5 text-primary" />
