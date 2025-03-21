@@ -1,5 +1,5 @@
 
-import LandingNavbar from "@/components/LandingNavbar";
+import LandingTubelightNavbar from "@/components/LandingTubelightNavbar";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
 import Pricing from "@/components/Pricing";
@@ -45,7 +45,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <LandingNavbar />
+      <LandingTubelightNavbar />
       <Hero />
       <section id="how-it-works">
         <HowItWorks />
