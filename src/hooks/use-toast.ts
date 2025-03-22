@@ -175,5 +175,10 @@ function useToast() {
   };
 }
 
-export { useToast, toast };
+// Create a ToastProvider component that can be re-exported
+const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return <>{children}</>;
+};
+
+export { useToast, toast, ToastProvider };
 export type { ToasterToast };

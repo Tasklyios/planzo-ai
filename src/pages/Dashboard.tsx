@@ -34,6 +34,12 @@ interface ScheduledContentType {
   scheduled_for: string;
 }
 
+interface ProfileData {
+  first_name?: string;
+  last_name?: string;
+  id?: string;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -96,8 +102,11 @@ const Dashboard = () => {
         (payload) => {
           console.log('Profile change detected:', payload);
           // Update the firstName if the profile is updated
-          if (payload.new && payload.new.first_name) {
-            setFirstName(payload.new.first_name);
+          if (payload.new && typeof payload.new === 'object' && 'first_name' in payload.new) {
+            const newProfile = payload.new as ProfileData;
+            if (newProfile.first_name) {
+              setFirstName(newProfile.first_name);
+            }
           }
         }
       )

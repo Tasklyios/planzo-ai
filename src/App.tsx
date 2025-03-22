@@ -22,7 +22,6 @@ import { Toaster } from "@/components/ui/toaster";
 import AuthGuard from "@/components/AuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
 import { ThemeProvider } from "@/hooks/use-theme";
-import { ToastProvider } from "@/hooks/use-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Onboarding from "@/components/auth/Onboarding";
 import IdeaGenerator from "@/pages/IdeaGenerator";
