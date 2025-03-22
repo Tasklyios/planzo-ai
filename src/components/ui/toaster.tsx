@@ -13,7 +13,7 @@ export function Toaster() {
   const { toasts } = useToast()
 
   return (
-    <ToastProvider duration={3000}>
+    <>
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>
@@ -29,6 +29,6 @@ export function Toaster() {
         )
       })}
       <ToastViewport className="gap-2" />
-    </ToastProvider>
+    </>
   )
 }

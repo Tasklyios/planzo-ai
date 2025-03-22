@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./hooks/use-theme"; // Using our custom theme provider instead
 import { Toaster } from "@/components/ui/toaster";
+import { ToastProvider } from "@/hooks/use-toast";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -26,19 +27,21 @@ function App() {
       storageKey="vite-ui-theme"
     >
       {isMounted ? (
-        <Router>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/ideas" element={<Ideas />} />
-            <Route path="/calendar" element={<Calendar />} />
-          </Routes>
-          <Toaster />
-        </Router>
+        <ToastProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/ideas" element={<Ideas />} />
+              <Route path="/calendar" element={<Calendar />} />
+            </Routes>
+            <Toaster />
+          </Router>
+        </ToastProvider>
       ) : null}
     </ThemeProvider>
   );
