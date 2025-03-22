@@ -83,17 +83,18 @@ const Dashboard = () => {
     if (!userId) return;
 
     // Set up a subscription to listen for changes on the profiles table
-    const channel = supabase
-      .channel('public:profiles')
+    const profilesChannel = supabase
+      .channel('profiles-channel')
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'profiles',
           filter: `id=eq.${userId}`,
         },
         (payload) => {
+          console.log('Profile change detected:', payload);
           // Update the firstName if the profile is updated
           if (payload.new && payload.new.first_name) {
             setFirstName(payload.new.first_name);
@@ -104,7 +105,7 @@ const Dashboard = () => {
 
     // Clean up the subscription when the component unmounts
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(profilesChannel);
     };
   }, [userId]);
 
