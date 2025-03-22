@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { GeneratedIdea, PreviousIdeasContext, AccountType } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
@@ -402,7 +401,9 @@ export const useIdeaGenerator = () => {
         status: 'generated',
         is_saved: false,
         user_id: session.user.id, // Explicitly set user_id for database compatibility
-        emoji: idea.emoji || '🍎' // Ensure emoji is included
+        emoji: idea.emoji || '🍎',
+        hook_text: idea.hook_text || '',
+        hook_category: idea.hook_category || ''
       }));
 
       const newTitles = formattedIdeas.map((idea: any) => idea.title);

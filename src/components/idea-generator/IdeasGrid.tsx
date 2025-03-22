@@ -188,7 +188,7 @@ const IdeasGrid = ({
             </p>
             <div className="flex items-center justify-between mt-3">
               <div className="flex flex-wrap gap-2">
-                {idea.tags && Array.isArray(idea.tags) && idea.tags.map((tag, tagIndex) => {
+                {idea.tags && Array.isArray(idea.tags) && idea.tags.slice(0, 3).map((tag, tagIndex) => {
                   // Clean up tag data
                   const cleanTag = typeof tag === 'string' ? tag.replace(/^"|"$/g, '') : String(tag);
                   return (
@@ -200,6 +200,11 @@ const IdeasGrid = ({
                     </span>
                   );
                 })}
+                {idea.tags && Array.isArray(idea.tags) && idea.tags.length > 3 && (
+                  <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full">
+                    +{idea.tags.length - 3} more
+                  </span>
+                )}
               </div>
               {onBookmarkToggle && (
                 <TooltipProvider>

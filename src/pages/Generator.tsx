@@ -177,9 +177,10 @@ const Generator = () => {
       const {
         error
       } = await supabase.from("video_ideas").update({
-        is_saved: newSavedState
-      }).eq("id", ideaId)
-        .eq("user_id", session.user.id);
+        is_saved: newSavedState,
+        user_id: session.user.id, // Ensure user_id is set
+        emoji: ideaToUpdate.emoji // Ensure emoji is preserved
+      }).eq("id", ideaId);
       
       if (error) {
         console.error("Bookmark update error:", error);
