@@ -11,10 +11,10 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState("general");
   
   return (
-    <div className="w-full animate-fade-in">
+    <div className="w-full max-w-full animate-fade-in">
       <h1 className="text-3xl font-bold mb-6">Settings</h1>
       
-      <Card className="w-full border-border/40 shadow-md">
+      <Card className="w-full max-w-full border-border/40 shadow-md">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b border-border/30">
           <div>
             <CardTitle className="text-2xl font-semibold">Account Settings</CardTitle>
