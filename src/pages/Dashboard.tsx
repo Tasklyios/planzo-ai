@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,12 +57,8 @@ const Dashboard = () => {
         
         if (profileData && profileData.first_name) {
           setFirstName(profileData.first_name);
-        } else {
-          // Fall back to email if no first name
-          const email = session.user?.email || "";
-          const nameFromEmail = email.split('@')[0];
-          setFirstName(nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1));
         }
+        // No longer falling back to email if first_name is missing
       }
     };
 
@@ -123,7 +118,9 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 pt-8">
         <section className="mb-12">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-2">{greeting}, {firstName} 😄</h1>
+            <h1 className="text-4xl font-bold text-foreground mb-2">
+              {firstName ? `${greeting}, ${firstName} 😄` : `${greeting} 😄`}
+            </h1>
             <p className="text-xl text-muted-foreground">
               You have <span className="font-bold text-primary">{scheduledContent.length}</span> upcoming video ideas to create
             </p>
