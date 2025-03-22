@@ -1,8 +1,8 @@
 
 import { useEffect, useState } from "react";
-import { BrowserRouter as Router, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { ThemeProvider } from "./hooks/use-theme"; // Using our custom theme provider instead
+import { Toaster } from "@/components/ui/toaster";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -14,18 +14,16 @@ import Calendar from "./pages/Calendar";
 import Signup from "./pages/Signup";
 
 function App() {
-  const [isMounted, setIsMounted] = useState(false)
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
   return (
     <ThemeProvider
-      attribute="class"
       defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
+      storageKey="vite-ui-theme"
     >
       {isMounted ? (
         <Router>
