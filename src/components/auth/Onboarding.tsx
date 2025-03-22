@@ -599,7 +599,7 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     const accountType = form.getValues("accountType");
     
     if (step === 1) return renderStep1();
-    if (step === 2) return renderNameStep(); // This ensures name fields are shown for ALL account types
+    if (step === 2) return renderNameStep(); // Name fields for all account types
     
     if (accountType === "personal") {
       if (step === 3) return renderPersonalStep3();

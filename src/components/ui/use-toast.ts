@@ -1,11 +1,6 @@
 
 // This is a re-export from our main toast hook
-import { 
-  useToast as useToastHook, 
-  toast as toastFunction, 
-  type ToastProps, 
-  type ToastActionElement 
-} from "@/hooks/use-toast";
+import { useToast as useToastHook, toast as toastFunction, ToastProps, ToastActionElement } from "@/hooks/use-toast";
 
 // Export types
 export type { ToastProps, ToastActionElement };
