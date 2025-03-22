@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/components/ui/use-toast";
 import { Moon, Sun, Monitor, CheckCircle2 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 
 const SettingsAppearance = () => {
   const { theme, setTheme } = useTheme();
@@ -13,7 +12,6 @@ const SettingsAppearance = () => {
   const [selectedTheme, setSelectedTheme] = useState<"light" | "dark" | "system">(
     theme as "light" | "dark" | "system"
   );
-  const [autoSave, setAutoSave] = useState(true);
 
   // Ensure selectedTheme stays in sync with theme from context
   useEffect(() => {
@@ -32,24 +30,12 @@ const SettingsAppearance = () => {
     });
   };
 
-  const handleAutoSaveToggle = (checked: boolean) => {
-    setAutoSave(checked);
-  };
-
   return (
     <div className="space-y-8 w-full">
       <div className="space-y-6 w-full bg-card rounded-lg p-6 border border-border/40 shadow-sm">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-medium">Theme Preferences</h3>
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id="auto-save" 
-                checked={autoSave} 
-                onCheckedChange={handleAutoSaveToggle} 
-              />
-              <Label htmlFor="auto-save" className="text-sm text-muted-foreground">Auto-save changes</Label>
-            </div>
           </div>
           <p className="text-muted-foreground">Choose how Planzo looks for you</p>
         </div>
