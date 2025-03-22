@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import EditIdea from "@/components/EditIdea";
 import { EventCalendar, CalendarEvent } from "@/components/ui/event-calendar";
 import { DeleteIcon } from "@/components/planner/DeleteIcon";
+import { AddCalendarPostDialog } from "@/components/calendar/AddCalendarPostDialog";
 
 interface ScheduledPost {
   id: string;
@@ -224,33 +225,7 @@ const CalendarPage = () => {
             Track and manage your scheduled content
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => {
-              const prevMonth = new Date(selectedDate);
-              prevMonth.setMonth(prevMonth.getMonth() - 1);
-              setSelectedDate(prevMonth);
-            }}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => {
-              const nextMonth = new Date(selectedDate);
-              nextMonth.setMonth(nextMonth.getMonth() + 1);
-              setSelectedDate(nextMonth);
-            }}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <div className="font-medium">{format(selectedDate, "MMMM yyyy")}</div>
-        </div>
+        <AddCalendarPostDialog />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
