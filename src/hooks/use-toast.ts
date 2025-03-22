@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import {
   ToastActionElement,
@@ -177,8 +176,9 @@ function useToast() {
 }
 
 // Create a ToastProvider component that can be re-exported
-const ToastProvider = ({ children }: { children: React.ReactNode }) => {
-  return <>{children}</>;
+// Since we're in a .ts file, we need to avoid JSX syntax
+const ToastProvider = (props: { children: React.ReactNode }) => {
+  return props.children;
 };
 
 export { useToast, toast, ToastProvider };
