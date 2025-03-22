@@ -62,8 +62,6 @@ const SettingsProfile = () => {
   const [postingPlatforms, setPostingPlatforms] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [enableOptimization, setEnableOptimization] = useState(true);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [productNiche, setProductNiche] = useState("");
   const [businessNiche, setBusinessNiche] = useState("");
   const [tabValue, setTabValue] = useState("predefined");
@@ -96,8 +94,6 @@ const SettingsProfile = () => {
           setPostingFrequency(profileData.posting_frequency || "");
           setPostingPlatforms(profileData.posting_platforms || []);
           setEnableOptimization(profileData.enable_optimization !== false); // default to true
-          setFirstName(profileData.first_name || "");
-          setLastName(profileData.last_name || "");
           setProductNiche(profileData.product_niche || "");
           setBusinessNiche(profileData.business_niche || "");
           
@@ -147,8 +143,7 @@ const SettingsProfile = () => {
           posting_frequency: postingFrequency,
           posting_platforms: postingPlatforms,
           enable_optimization: enableOptimization,
-          first_name: firstName,
-          last_name: lastName,
+          // Removed first_name and last_name from here as they're managed in General tab
         })
         .eq("id", user.id);
 
@@ -260,36 +255,6 @@ const SettingsProfile = () => {
                 </label>
               </div>
             </RadioGroup>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium">Personal Information</h3>
-            
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input 
-                  id="firstName"
-                  placeholder="First Name" 
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input 
-                  id="lastName"
-                  placeholder="Last Name" 
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>
