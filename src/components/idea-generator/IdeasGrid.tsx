@@ -1,4 +1,3 @@
-
 import { CalendarPlus, PenSquare, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,16 +23,40 @@ interface IdeasGridProps {
   showForm?: boolean;
 }
 
-// Available colors with their corresponding Tailwind classes
-const colorClasses: { [key: string]: string } = {
-  red: "bg-red-100 border-red-500",
-  orange: "bg-orange-100 border-orange-500",
-  yellow: "bg-yellow-100 border-yellow-500",
-  green: "bg-green-100 border-green-500",
-  blue: "bg-blue-100 border-blue-500",
-  indigo: "bg-indigo-100 border-indigo-500",
-  purple: "bg-purple-100 border-purple-500",
-  pink: "bg-pink-100 border-pink-500"
+// Available colors with their corresponding Tailwind classes for light and dark mode
+const colorClasses: { [key: string]: { light: string; dark: string } } = {
+  red: {
+    light: "bg-red-100 border-red-500",
+    dark: "dark:bg-red-950/30 dark:border-red-700"
+  },
+  orange: {
+    light: "bg-orange-100 border-orange-500",
+    dark: "dark:bg-orange-950/30 dark:border-orange-700"
+  },
+  yellow: {
+    light: "bg-yellow-100 border-yellow-500", 
+    dark: "dark:bg-yellow-950/30 dark:border-yellow-700"
+  },
+  green: {
+    light: "bg-green-100 border-green-500",
+    dark: "dark:bg-green-950/30 dark:border-green-700"
+  },
+  blue: {
+    light: "bg-blue-100 border-blue-500",
+    dark: "dark:bg-blue-950/30 dark:border-blue-700"
+  },
+  indigo: {
+    light: "bg-indigo-100 border-indigo-500",
+    dark: "dark:bg-indigo-950/30 dark:border-indigo-700"
+  },
+  purple: {
+    light: "bg-purple-100 border-purple-500",
+    dark: "dark:bg-purple-950/30 dark:border-purple-700"
+  },
+  pink: {
+    light: "bg-pink-100 border-pink-500",
+    dark: "dark:bg-pink-950/30 dark:border-pink-700"
+  }
 };
 
 const IdeasGrid = ({
@@ -129,9 +152,10 @@ const IdeasGrid = ({
           <div
             key={idea.id}
             className={cn(
-              "group rounded-xl p-4 md:p-6 hover:bg-accent transition-all border",
-              "border-l-4",
-              colorClass
+              "group rounded-xl p-4 md:p-6 transition-all border border-l-4",
+              "hover:bg-accent dark:hover:bg-accent/10",
+              colorClass.light,
+              colorClass.dark
             )}
           >
             <div className="flex items-start justify-between mb-3 md:mb-4">
