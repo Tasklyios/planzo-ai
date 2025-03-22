@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,6 +42,7 @@ const Script = () => {
   const WORDS_PER_MINUTE = 150;
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [roughScriptOpen, setRoughScriptOpen] = useState(false);
 
   useEffect(() => {
     if (durationUnit === "seconds" && duration.includes('.')) {
@@ -467,45 +467,57 @@ const Script = () => {
                 </CardContent>
               </Card>
 
-              {/* Add rough script input box */}
               <Card>
-                <CardContent className="pt-4 md:pt-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Label htmlFor="rough-script">Already have a rough script? Add it here</Label>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
-                              <HelpCircle className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">
-                              The AI will use your rough script as a starting point and enhance it based on your other inputs
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
-
-                  <Textarea
-                    id="rough-script"
-                    placeholder="Paste your rough script here..."
-                    value={baseScript}
-                    onChange={(e) => setBaseScript(e.target.value)}
-                    rows={isMobile ? 3 : 4}
-                  />
-
-                  <div className="flex items-center space-x-2">
-                    <Switch 
-                      id="use-base-script" 
-                      checked={isUsingBaseScript}
-                      onCheckedChange={setIsUsingBaseScript}
-                    />
-                    <Label htmlFor="use-base-script">Use this as a starting point for the AI</Label>
-                  </div>
+                <CardContent className="pt-4 md:pt-6">
+                  <Collapsible
+                    open={roughScriptOpen}
+                    onOpenChange={setRoughScriptOpen}
+                    className="space-y-4"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between cursor-pointer">
+                        <div className="flex items-center space-x-2">
+                          <Label htmlFor="rough-script" className="cursor-pointer">Already have a rough script? Add it here</Label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7">
+                                  <HelpCircle className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">
+                                  The AI will use your rough script as a starting point and enhance it based on your other inputs
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        {roughScriptOpen ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-4">
+                      <Textarea
+                        id="rough-script"
+                        placeholder="Paste your rough script here..."
+                        value={baseScript}
+                        onChange={(e) => setBaseScript(e.target.value)}
+                        rows={isMobile ? 3 : 4}
+                      />
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          id="use-base-script" 
+                          checked={isUsingBaseScript}
+                          onCheckedChange={setIsUsingBaseScript}
+                        />
+                        <Label htmlFor="use-base-script">Use this as a starting point for the AI</Label>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </CardContent>
               </Card>
             </div>
@@ -679,7 +691,6 @@ const Script = () => {
             <div className="flex justify-between items-center mb-3 md:mb-4">
               <h2 className="text-lg md:text-xl font-semibold">{activeTab === "improve" ? "Improved Script" : "Generated Script"}</h2>
               <div className="flex items-center gap-2 md:gap-4">
-                {/* Display script stats */}
                 {scriptStats && (
                   <div className="text-sm text-muted-foreground flex flex-col items-end">
                     <span>{scriptStats.wordCount} words</span>
