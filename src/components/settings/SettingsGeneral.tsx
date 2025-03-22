@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -9,7 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Mail, Save, User, Lock } from "lucide-react";
+import { Mail, Save, User, Lock, AlertTriangle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const emailSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -31,12 +42,15 @@ const passwordSchema = z.object({
 
 const SettingsGeneral = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isLoadingEmail, setIsLoadingEmail] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isLoadingPassword, setIsLoadingPassword] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [currentEmail, setCurrentEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
 
   // Get current user and email
   useEffect(() => {
@@ -188,6 +202,34 @@ const SettingsGeneral = () => {
       });
     } finally {
       setIsLoadingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      const { error } = await supabase.auth.admin.deleteUser(
+        (await supabase.auth.getUser()).data.user?.id || ''
+      );
+      
+      if (error) throw error;
+      
+      // Sign out and redirect to auth page
+      await supabase.auth.signOut();
+      navigate('/auth');
+      
+      toast({
+        title: "Account deleted",
+        description: "Your account and all associated data have been permanently deleted.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Failed to delete account",
+        description: error.message || "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -424,6 +466,86 @@ const SettingsGeneral = () => {
             Additional account settings will be available here in a future update.
           </p>
         </CardContent>
+      </Card>
+
+      {/* Delete Account Card */}
+      <Card className="w-full border-border/40 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center">
+            <AlertTriangle className="h-5 w-5 mr-2 text-destructive" />
+            Delete Account
+          </CardTitle>
+          <CardDescription>Permanently delete your account and all of your data</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-6">
+            This action cannot be undone. Once you delete your account, all of your data including ideas, scripts, and profile information will be permanently removed.
+          </p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="destructive" 
+                className="w-full md:w-auto"
+              >
+                <AlertTriangle className="h-4 w-4 mr-2" /> Delete Account
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your account and remove all of your data from our servers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="py-4">
+                <p className="text-sm text-muted-foreground mb-2">
+                  To confirm, type <span className="font-semibold">delete my account</span> below:
+                </p>
+                <Input 
+                  value={deleteConfirmationText}
+                  onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                  placeholder="delete my account"
+                  className="mb-2"
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (deleteConfirmationText.toLowerCase() === "delete my account") {
+                      handleDeleteAccount();
+                    } else {
+                      toast({
+                        variant: "destructive",
+                        title: "Confirmation failed",
+                        description: "Please type 'delete my account' to confirm deletion."
+                      });
+                    }
+                  }}
+                  disabled={isDeletingAccount || deleteConfirmationText.toLowerCase() !== "delete my account"}
+                >
+                  {isDeletingAccount ? (
+                    <>
+                      <span className="animate-spin mr-2">⟳</span> Deleting...
+                    </>
+                  ) : (
+                    "Delete Account"
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+        <CardFooter className="text-sm text-muted-foreground border-t pt-4 flex flex-col items-start">
+          <p className="mb-1">Before deleting your account, please consider:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Downloading any data you want to keep</li>
+            <li>Cancelling any active subscriptions</li>
+            <li>Contacting support if you're having issues with our service</li>
+          </ul>
+        </CardFooter>
       </Card>
     </div>
   );
