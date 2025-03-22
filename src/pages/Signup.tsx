@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Onboarding from "@/components/auth/Onboarding";
+import { ToastProvider } from "@/hooks/use-toast";
 
 export default function Signup() {
   const [showOnboarding, setShowOnboarding] = useState(true);
@@ -40,12 +41,14 @@ export default function Signup() {
   };
 
   return (
-    <div>
-      <Onboarding 
-        open={showOnboarding} 
-        onOpenChange={setShowOnboarding} 
-        onComplete={handleOnboardingComplete} 
-      />
-    </div>
+    <ToastProvider>
+      <div>
+        <Onboarding 
+          open={showOnboarding} 
+          onOpenChange={setShowOnboarding} 
+          onComplete={handleOnboardingComplete} 
+        />
+      </div>
+    </ToastProvider>
   );
 }
