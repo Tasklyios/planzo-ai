@@ -301,24 +301,24 @@ const InputForm = ({
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
                   <Video className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
+                  <label className="text-xs md:text-sm font-medium text-foreground">Video Type</label>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <HelpCircle className="text-primary w-4 h-4 cursor-pointer hover:text-primary/80 transition-colors" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-[260px] p-3 bg-card border shadow-md text-foreground">
-                        <p className="text-xs">Specify the type of video you want to create, e.g., "product showcase", "how-to", "customer testimonial", etc. This helps generate more targeted content ideas for your e-commerce brand.</p>
+                        <p className="text-xs">Specify the type of video for your e-commerce business, e.g., "product showcase", "customer testimonial", "how-to use", "unboxing", etc. This helps generate more targeted content ideas.</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
                 <input
                   type="text"
-                  value={contentNiche}
-                  onChange={handleContentNicheChange}
+                  value={videoType}
+                  onChange={(e) => setVideoType(e.target.value)}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Your content niche"
+                  placeholder="Video type (e.g., product demo, tutorial)"
                 />
               </div>
             </div>

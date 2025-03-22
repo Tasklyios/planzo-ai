@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import { HoverButton } from "@/components/ui/hover-button";
 import EditIdea from "@/components/EditIdea";
 import { useIdeaGenerator } from "@/hooks/use-idea-generator";
 import GeneratorHeader from "@/components/idea-generator/GeneratorHeader";
@@ -257,6 +259,7 @@ const Generator = () => {
             setVideoType={setVideoType} 
             setPlatform={setPlatform}
             setCustomIdeas={setCustomIdeas}
+            accountType={accountType}
           />
 
           {error && (
@@ -297,23 +300,23 @@ const Generator = () => {
           )}
 
           <div className="flex justify-center mb-8">
-            <button 
+            <HoverButton 
               onClick={handleGenerateIdeas} 
               disabled={loading} 
-              className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white dark:text-white px-8 py-6 rounded-full font-medium flex items-center gap-2 h-12 transition-all duration-200 shadow-sm hover:shadow-md"
+              className="from-primary to-primary/90 text-white dark:text-white px-8 py-6 h-12"
             >
               {loading ? (
                 <>
-                  <span className="animate-spin">⚡️</span>
+                  <span className="animate-spin mr-2">⚡️</span>
                   <span>Generating...</span>
                 </>
               ) : (
                 <>
-                  <span>⚡️</span>
+                  <span className="mr-2">⚡️</span>
                   Generate Video Ideas
                 </>
               )}
-            </button>
+            </HoverButton>
           </div>
 
           {loading ? (
