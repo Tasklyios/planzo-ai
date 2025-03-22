@@ -54,11 +54,15 @@ export const onRequestPost = async (context: any) => {
       }
     } else if (accountType === 'ecommerce') {
       promptDetails += `You're generating ideas for an e-commerce business selling products.\n`;
+      promptDetails += `- Focus on product showcases, customer testimonials, unboxing experiences, and product tutorials.\n`;
+      promptDetails += `- Product Niche: ${niche}\n`;
     } else if (accountType === 'business') {
       promptDetails += `You're generating ideas for a business.\n`;
       if (businessDescription) {
         promptDetails += `- Business Description: ${businessDescription}\n`;
       }
+      promptDetails += `- Business Niche: ${niche}\n`;
+      promptDetails += `- Focus on thought leadership, customer success stories, service explanations, and industry insights.\n`;
     }
 
     // Create a more concise prompt to reduce token usage
@@ -66,7 +70,7 @@ export const onRequestPost = async (context: any) => {
     ${promptDetails}
     - Niche: ${niche}
     - Target Audience: ${audience}
-    - Video Type: ${videoType}
+    ${videoType ? `- Video Type: ${videoType}` : ''}
     
     ${customIdeas ? `Consider these custom ideas as inspiration:\n${customIdeas}\n` : ''}
     
@@ -90,6 +94,8 @@ export const onRequestPost = async (context: any) => {
       ]
     }`;
 
+    console.log("Sending prompt to OpenAI:", prompt);
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -107,57 +113,87 @@ export const onRequestPost = async (context: any) => {
       }),
     });
 
-    const data = await response.json();
-    const ideas = JSON.parse(data.choices[0].message.content);
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("OpenAI API error:", errorData);
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+    }
 
-    // Add expiration date to each idea (24 hours from now)
-    const expirationDate = new Date();
-    expirationDate.setHours(expirationDate.getHours() + 24);
+    const data = await response.json();
+    console.log("Received response from OpenAI");
     
-    // Use a synchronous approach for assigning emojis
-    ideas.ideas.forEach((idea: any) => {
-      idea.expires_at = expirationDate.toISOString();
+    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+      console.error("Invalid response format from OpenAI:", data);
+      throw new Error("Invalid response format from OpenAI");
+    }
+    
+    try {
+      const ideas = JSON.parse(data.choices[0].message.content);
       
-      // If emoji isn't provided, generate one synchronously
-      if (!idea.emoji) {
-        const getEmojiForIdea = (title: string, category: string): string => {
-          // Simple synchronous emoji selection based on content
-          const topicKeywords: Record<string, string> = {
-            'tutorial': '📝',
-            'how-to': '📝',
-            'review': '⭐️',
-            'food': '🍔',
-            'fitness': '💪',
-            'tech': '📱',
-            'beauty': '💄',
-            'fashion': '👗',
-            'travel': '✈️',
-            'gaming': '🎮',
-            'music': '🎵',
-            'business': '💼'
+      if (!ideas.ideas || !Array.isArray(ideas.ideas)) {
+        console.error("Invalid ideas format:", ideas);
+        throw new Error("Invalid ideas format in OpenAI response");
+      }
+
+      // Add expiration date to each idea (24 hours from now)
+      const expirationDate = new Date();
+      expirationDate.setHours(expirationDate.getHours() + 24);
+      
+      // Use a synchronous approach for assigning emojis
+      ideas.ideas.forEach((idea: any) => {
+        idea.expires_at = expirationDate.toISOString();
+        
+        // If emoji isn't provided, generate one synchronously
+        if (!idea.emoji) {
+          const getEmojiForIdea = (title: string, category: string): string => {
+            // Simple synchronous emoji selection based on content
+            const topicKeywords: Record<string, string> = {
+              'tutorial': '📝',
+              'how-to': '📝',
+              'review': '⭐️',
+              'food': '🍔',
+              'fitness': '💪',
+              'tech': '📱',
+              'beauty': '💄',
+              'fashion': '👗',
+              'travel': '✈️',
+              'gaming': '🎮',
+              'music': '🎵',
+              'business': '💼',
+              'product': '📦',
+              'showcase': '🎁',
+              'testimonial': '👍',
+              'unboxing': '📦',
+              'service': '🛠️',
+              'leadership': '👑'
+            };
+            
+            const searchText = (title + ' ' + category).toLowerCase();
+            
+            for (const [keyword, emoji] of Object.entries(topicKeywords)) {
+              if (searchText.includes(keyword.toLowerCase())) {
+                return emoji;
+              }
+            }
+            
+            return '🍎'; // Default emoji
           };
           
-          const searchText = (title + ' ' + category).toLowerCase();
-          
-          for (const [keyword, emoji] of Object.entries(topicKeywords)) {
-            if (searchText.includes(keyword.toLowerCase())) {
-              return emoji;
-            }
-          }
-          
-          return '🍎'; // Default emoji
-        };
-        
-        idea.emoji = getEmojiForIdea(idea.title, idea.category);
-      }
-    });
+          idea.emoji = getEmojiForIdea(idea.title, idea.category);
+        }
+      });
 
-    return new Response(JSON.stringify(ideas), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      console.log("Processed ideas successfully, returning response");
+      return new Response(JSON.stringify(ideas), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (parseError) {
+      console.error("Error parsing OpenAI response:", parseError, "Raw content:", data.choices[0].message.content);
+      throw new Error(`Error parsing OpenAI response: ${parseError.message}`);
+    }
   } catch (error) {
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Error in generate-ideas function:', error);
+    return new Response(JSON.stringify({ error: error.message || "An unknown error occurred" }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

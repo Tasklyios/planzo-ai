@@ -108,7 +108,6 @@ export const useIdeaGenerator = () => {
             .eq('user_id', session.user.id)
             .is('is_saved', false)
             .is('scheduled_for', null)
-            .gte('expires_at', new Date().toISOString()) // Only get ideas that haven't expired
             .order('created_at', { ascending: false })
             .limit(5);
           
