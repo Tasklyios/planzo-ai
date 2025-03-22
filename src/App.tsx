@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,6 +94,10 @@ function App() {
 
   const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
+    
+    const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
+    if (!hasSeenPricing) {
+    }
   };
 
   if (loadingProfile) {
@@ -118,10 +121,6 @@ function App() {
               <Route 
                 path="/auth" 
                 element={isAuthenticated ? <Navigate to="/dashboard" /> : <Auth />} 
-              />
-              <Route 
-                path="/signup" 
-                element={isAuthenticated ? <Navigate to="/dashboard" /> : <Auth initialView="signup" />} 
               />
               <Route 
                 path="/privacy-policy" 

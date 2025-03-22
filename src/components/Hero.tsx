@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import TrustBadge from "@/components/TrustBadge";
@@ -11,7 +12,7 @@ const Hero = () => {
   // Define the use cases for animation
   const useCases = [
     "Entrepreneurs",
-    "Business Owners", 
+    "Business Owners",
     "Marketers", 
     "Content Creators",
     "Social Media Managers",
@@ -69,7 +70,7 @@ const Hero = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto">
             <Button 
               className="bg-gradient-to-r from-blue-500 to-blue-400 hover:opacity-90 text-white px-8 py-6 text-lg rounded-full w-[90%] mx-auto sm:w-auto"
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/auth")}
             >
               Start Creating for Free
             </Button>
