@@ -24,6 +24,18 @@ interface IdeasGridProps {
   showForm?: boolean;
 }
 
+// Available colors with their corresponding Tailwind classes
+const colorClasses: { [key: string]: string } = {
+  red: "bg-red-100 border-red-500",
+  orange: "bg-orange-100 border-orange-500",
+  yellow: "bg-yellow-100 border-yellow-500",
+  green: "bg-green-100 border-green-500",
+  blue: "bg-blue-100 border-blue-500",
+  indigo: "bg-indigo-100 border-indigo-500",
+  purple: "bg-purple-100 border-purple-500",
+  pink: "bg-pink-100 border-pink-500"
+};
+
 const IdeasGrid = ({
   ideas,
   onAddToCalendar,
@@ -109,10 +121,18 @@ const IdeasGrid = ({
         // Create display title with emoji
         const displayTitle = `${ideaEmoji} ${cleanTitle}`;
         
+        // Get the color class for this idea
+        const ideaColor = idea.color || 'blue';
+        const colorClass = colorClasses[ideaColor] || colorClasses.blue;
+        
         return (
           <div
             key={idea.id}
-            className="group bg-card rounded-xl p-4 md:p-6 hover:bg-accent transition-all border border-border"
+            className={cn(
+              "group rounded-xl p-4 md:p-6 hover:bg-accent transition-all border",
+              "border-l-4",
+              colorClass
+            )}
           >
             <div className="flex items-start justify-between mb-3 md:mb-4">
               <div>
