@@ -255,7 +255,6 @@ const Dashboard = () => {
                   <TableRow>
                     <TableHead className="font-semibold">Date</TableHead>
                     <TableHead className="font-semibold">Title</TableHead>
-                    <TableHead className="font-semibold">Platform</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -282,19 +281,6 @@ const Dashboard = () => {
                           <span className="mr-2">{content.emoji || '📝'}</span>
                           {content.title}
                         </div>
-                      </TableCell>
-                      <TableCell className="py-3">
-                        <span className={`px-3 py-1 rounded-full text-sm ${
-                          content.platform === "TikTok" 
-                            ? "bg-pink-500/10 text-pink-500" 
-                            : content.platform === "Instagram Reels"
-                            ? "bg-purple-500/10 text-purple-500"
-                            : content.platform === "YouTube Shorts"
-                            ? "bg-red-500/10 text-red-500"
-                            : "bg-primary/10 text-primary"
-                        }`}>
-                          {content.platform}
-                        </span>
                       </TableCell>
                     </TableRow>
                   ))}
