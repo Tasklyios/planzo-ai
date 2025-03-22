@@ -56,6 +56,10 @@ export const onRequestPost = async (context: any) => {
       promptDetails += `You're generating ideas for an e-commerce business selling products.\n`;
       promptDetails += `- Focus on product showcases, customer testimonials, unboxing experiences, and product tutorials.\n`;
       promptDetails += `- Product Niche: ${niche}\n`;
+      
+      if (videoType) {
+        promptDetails += `- Video Type: ${videoType}\n`;
+      }
     } else if (accountType === 'business') {
       promptDetails += `You're generating ideas for a business.\n`;
       if (businessDescription) {
@@ -63,6 +67,10 @@ export const onRequestPost = async (context: any) => {
       }
       promptDetails += `- Business Niche: ${niche}\n`;
       promptDetails += `- Focus on thought leadership, customer success stories, service explanations, and industry insights.\n`;
+      
+      if (videoType) {
+        promptDetails += `- Video Type: ${videoType}\n`;
+      }
     }
 
     // Create a more concise prompt to reduce token usage
@@ -135,14 +143,8 @@ export const onRequestPost = async (context: any) => {
         throw new Error("Invalid ideas format in OpenAI response");
       }
 
-      // Add expiration date to each idea (24 hours from now)
-      const expirationDate = new Date();
-      expirationDate.setHours(expirationDate.getHours() + 24);
-      
       // Use a synchronous approach for assigning emojis
       ideas.ideas.forEach((idea: any) => {
-        idea.expires_at = expirationDate.toISOString();
-        
         // If emoji isn't provided, generate one synchronously
         if (!idea.emoji) {
           const getEmojiForIdea = (title: string, category: string): string => {

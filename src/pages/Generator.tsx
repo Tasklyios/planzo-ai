@@ -233,7 +233,7 @@ const Generator = () => {
     
     setIdeas([]);
     
-    // Pass videoType for all account types, regardless of whether it's personal, ecommerce, or business
+    // Always pass videoType for all account types
     generateIdeas({
       currentNiche: niche,
       currentAudience: audience,

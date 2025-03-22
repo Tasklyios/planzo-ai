@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { GeneratedIdea, PreviousIdeasContext, AccountType } from "@/types/idea";
 import { supabase } from "@/integrations/supabase/client";
@@ -400,7 +401,8 @@ export const useIdeaGenerator = () => {
         ) : [],
         status: 'generated',
         is_saved: false,
-        user_id: session.user.id // Explicitly set user_id for database compatibility
+        user_id: session.user.id, // Explicitly set user_id for database compatibility
+        emoji: idea.emoji || '🍎' // Ensure emoji is included
       }));
 
       const newTitles = formattedIdeas.map((idea: any) => idea.title);
@@ -455,11 +457,12 @@ export const useIdeaGenerator = () => {
       } else {
         setIdeas(formattedIdeas);
       }
+      
+      setLoading(false);
     } catch (error: any) {
       console.error("Error generating ideas:", error);
       setError(`Error generating ideas: ${error.message || "Unknown error"}`);
       setIdeas([]);
-    } finally {
       setLoading(false);
     }
   }, [niche, audience, videoType, platform, customIdeas, previousIdeasContext, toast, accountType, contentType, postingFrequency]);
