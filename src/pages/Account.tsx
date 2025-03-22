@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,16 +12,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 const Account = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const [email, setEmail] = useState("");
   const [subscriptionTier, setSubscriptionTier] = useState("free");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
 
@@ -49,6 +52,7 @@ const Account = () => {
           setSubscriptionStatus(subscriptionData.stripe_subscription_id ? "active" : "inactive");
         }
       }
+      setLoading(false);
     };
 
     fetchUserData();
@@ -90,6 +94,22 @@ const Account = () => {
     navigate("/auth");
   };
 
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText(email);
+    toast({
+      title: "Email copied",
+      description: "Email address copied to clipboard.",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
@@ -101,7 +121,7 @@ const Account = () => {
             <CardDescription>Update your name and personal details</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="first-name">First Name</Label>
                 <Input
@@ -142,7 +162,7 @@ const Account = () => {
               <div className="text-sm font-medium">Email</div>
               <div className="flex items-center">
                 <Input type="email" value={email} readOnly className="cursor-not-allowed" />
-                <Button variant="ghost" size="sm" className="ml-2">
+                <Button variant="ghost" size="sm" className="ml-2" onClick={handleCopyEmail}>
                   <Copy className="h-4 w-4 mr-2" />
                   Copy Email
                 </Button>
@@ -150,11 +170,11 @@ const Account = () => {
             </div>
             <div className="space-y-2">
               <div className="text-sm font-medium">Subscription Tier</div>
-              <div className="text-muted-foreground">{subscriptionTier}</div>
+              <div className="text-muted-foreground capitalize">{subscriptionTier}</div>
             </div>
             <div className="space-y-2">
               <div className="text-sm font-medium">Subscription Status</div>
-              <div className="text-muted-foreground">{subscriptionStatus}</div>
+              <div className="text-muted-foreground capitalize">{subscriptionStatus}</div>
             </div>
           </CardContent>
         </Card>
@@ -162,14 +182,14 @@ const Account = () => {
         <section className="space-y-6">
           <h2 className="text-2xl font-semibold text-foreground">Account Settings</h2>
           <Card>
-            <CardContent className="grid gap-4">
+            <CardContent className="grid gap-4 py-6">
               <div className="grid grid-cols-3 gap-4 items-center">
                 <Settings className="h-5 w-5 text-muted-foreground" />
                 <div className="col-span-2">
                   <h3 className="text-lg font-semibold">Update Password</h3>
                   <p className="text-sm text-muted-foreground">Change your password for enhanced security.</p>
                 </div>
-                <Button onClick={() => navigate('/auth/update-password')} variant="secondary" size="sm">
+                <Button onClick={() => navigate('/auth?type=recovery')} variant="secondary" size="sm">
                   Update Password <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
@@ -180,7 +200,14 @@ const Account = () => {
                   <h3 className="text-lg font-semibold">Two-Factor Authentication</h3>
                   <p className="text-sm text-muted-foreground">Add an extra layer of security to your account.</p>
                 </div>
-                <Button variant="secondary" size="sm" disabled>
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  onClick={() => toast({
+                    title: "Feature coming soon",
+                    description: "Two-factor authentication will be available in a future update."
+                  })}
+                >
                   Enable 2FA <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
@@ -191,7 +218,14 @@ const Account = () => {
                   <h3 className="text-lg font-semibold">Connected Accounts</h3>
                   <p className="text-sm text-muted-foreground">Manage third-party apps with access to your account.</p>
                 </div>
-                <Button variant="secondary" size="sm" disabled>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => toast({
+                    title: "Feature coming soon",
+                    description: "Connected accounts will be available in a future update."
+                  })}
+                >
                   Manage Accounts <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>

@@ -59,10 +59,30 @@ const Dashboard = () => {
         if (profileData && profileData.first_name) {
           setFirstName(profileData.first_name);
         } else {
-          // Fall back to email if no first name
+          // Get user name from email but don't use the full email
           const email = session.user?.email || "";
+          // Just use the part before @ and capitalize first letter
           const nameFromEmail = email.split('@')[0];
-          setFirstName(nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1));
+          // Clean the username (remove numbers, dots, etc.)
+          const cleanName = nameFromEmail
+            .replace(/[0-9]/g, '') // Remove numbers
+            .replace(/\./g, ' ')   // Replace dots with spaces
+            .trim();
+          // Capitalize the first letter of each word
+          const formattedName = cleanName
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          
+          setFirstName(formattedName || 'User');
+          
+          // If we had to extract the name, update the profile
+          if (formattedName) {
+            await supabase
+              .from("profiles")
+              .update({ first_name: formattedName })
+              .eq("id", session.user.id);
+          }
         }
       }
     };
