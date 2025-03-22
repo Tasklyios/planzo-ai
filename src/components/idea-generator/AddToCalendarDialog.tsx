@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AddToCalendarIdea } from "@/types/idea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface AddToCalendarDialogProps {
   idea: AddToCalendarIdea | null;
@@ -29,6 +30,18 @@ const AddToCalendarDialog = ({
   };
 
   const currentDate = new Date().toISOString().split('T')[0];
+
+  // Available colors to choose from
+  const colorOptions = [
+    { name: "Red", value: "red" },
+    { name: "Orange", value: "orange" },
+    { name: "Yellow", value: "yellow" },
+    { name: "Green", value: "green" },
+    { name: "Blue", value: "blue" },
+    { name: "Indigo", value: "indigo" },
+    { name: "Purple", value: "purple" },
+    { name: "Pink", value: "pink" },
+  ];
 
   return (
     <Dialog open={!!idea} onOpenChange={onOpenChange}>
@@ -63,6 +76,33 @@ const AddToCalendarDialog = ({
               required
             />
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="color" className="text-sm font-medium">Color</Label>
+            <div className="flex flex-wrap gap-2">
+              {colorOptions.map((color) => (
+                <div 
+                  key={color.value}
+                  className={cn(
+                    "w-8 h-8 rounded-full cursor-pointer border-2",
+                    idea.color === color.value ? "border-primary" : "border-transparent"
+                  )}
+                  style={{ 
+                    backgroundColor: color.value === "red" ? "#ef4444" : 
+                      color.value === "orange" ? "#f97316" : 
+                      color.value === "yellow" ? "#eab308" :
+                      color.value === "green" ? "#22c55e" :
+                      color.value === "blue" ? "#3b82f6" :
+                      color.value === "indigo" ? "#6366f1" :
+                      color.value === "purple" ? "#a855f7" : "#ec4899"
+                  }}
+                  onClick={() => onUpdate('color', color.value)}
+                  title={color.name}
+                />
+              ))}
+            </div>
+          </div>
+          
           <p className="text-sm text-muted-foreground mt-2">
             Note: Adding to calendar will automatically save this idea and move it to your calendar.
           </p>

@@ -22,6 +22,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { getEmojiForIdea } from "@/utils/emojiUtils";
 
 const newIdeaSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
@@ -30,6 +32,7 @@ const newIdeaSchema = z.object({
   platform: z.string().optional(),
   scheduled_for: z.string().optional(),
   tags: z.string().optional(),
+  color: z.string().optional(),
 });
 
 type NewIdeaFormValues = z.infer<typeof newIdeaSchema>;
@@ -37,6 +40,7 @@ type NewIdeaFormValues = z.infer<typeof newIdeaSchema>;
 export function AddCalendarPostDialog() {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const form = useForm<NewIdeaFormValues>({
     resolver: zodResolver(newIdeaSchema),
@@ -47,15 +51,33 @@ export function AddCalendarPostDialog() {
       platform: "TikTok",
       scheduled_for: format(new Date(), "yyyy-MM-dd"),
       tags: "",
+      color: "blue",
     },
   });
 
   const handleIdeaSelect = async (idea: GeneratedIdea) => {
     try {
+      console.log("Selected idea for calendar:", idea);
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please log in to add ideas to calendar",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from("video_ideas")
-        .update({ status: "calendar" })
-        .eq("id", idea.id);
+        .update({ 
+          status: "calendar", 
+          is_saved: true,
+          scheduled_for: format(new Date(), "yyyy-MM-dd")
+        })
+        .eq("id", idea.id)
+        .eq("user_id", sessionData.session.user.id);
 
       if (error) throw error;
 
@@ -64,6 +86,9 @@ export function AddCalendarPostDialog() {
         description: "The idea has been added to your calendar",
       });
       setOpen(false);
+      
+      // Force a refresh of the calendar page
+      navigate(0);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -75,6 +100,7 @@ export function AddCalendarPostDialog() {
 
   const onSubmit = async (values: NewIdeaFormValues) => {
     try {
+      console.log("Submitting new idea form with values:", values);
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
         toast({
@@ -88,7 +114,10 @@ export function AddCalendarPostDialog() {
       const tagsArray = values.tags 
         ? values.tags.split(',').map(tag => tag.trim()) 
         : [];
-        
+      
+      // Generate emoji based on title and category
+      const emoji = getEmojiForIdea(values.title, values.category);
+      
       const { data, error } = await supabase
         .from("video_ideas")
         .insert([
@@ -102,12 +131,16 @@ export function AddCalendarPostDialog() {
             is_saved: true,
             status: "calendar",
             scheduled_for: values.scheduled_for,
+            color: values.color || "blue",
+            emoji: emoji,
           },
         ])
         .select();
 
       if (error) throw error;
 
+      console.log("Idea successfully created and added to calendar:", data);
+      
       toast({
         title: "Idea created",
         description: "Your idea has been added to the calendar",
@@ -115,7 +148,11 @@ export function AddCalendarPostDialog() {
       
       form.reset();
       setOpen(false);
+      
+      // Force a refresh of the calendar page
+      navigate(0);
     } catch (error: any) {
+      console.error("Error creating new idea:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -123,6 +160,18 @@ export function AddCalendarPostDialog() {
       });
     }
   };
+
+  // Get available colors for selection
+  const availableColors = [
+    { name: "Red", value: "red" },
+    { name: "Orange", value: "orange" },
+    { name: "Yellow", value: "yellow" },
+    { name: "Green", value: "green" },
+    { name: "Blue", value: "blue" },
+    { name: "Indigo", value: "indigo" },
+    { name: "Purple", value: "purple" },
+    { name: "Pink", value: "pink" },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -239,6 +288,40 @@ export function AddCalendarPostDialog() {
                     )}
                   />
                 </div>
+                
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Color</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-wrap gap-2">
+                          {availableColors.map((color) => (
+                            <div 
+                              key={color.value}
+                              className={cn(
+                                "w-8 h-8 rounded-full cursor-pointer border-2",
+                                field.value === color.value ? "border-primary" : "border-transparent"
+                              )}
+                              style={{ 
+                                backgroundColor: color.value === "red" ? "#ef4444" : 
+                                  color.value === "orange" ? "#f97316" : 
+                                  color.value === "yellow" ? "#eab308" :
+                                  color.value === "green" ? "#22c55e" :
+                                  color.value === "blue" ? "#3b82f6" :
+                                  color.value === "indigo" ? "#6366f1" :
+                                  color.value === "purple" ? "#a855f7" : "#ec4899"
+                              }}
+                              onClick={() => field.onChange(color.value)}
+                              title={color.name}
+                            />
+                          ))}
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
                 
                 <div className="flex justify-end pt-4">
                   <Button type="submit">Add to Calendar</Button>
