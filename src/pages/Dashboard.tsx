@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,7 +50,7 @@ const Dashboard = () => {
         navigate("/auth");
       } else {
         // Get user profile data including first name
-        const { data: profileData } = await supabase
+        const { data: profileData, error } = await supabase
           .from("profiles")
           .select("first_name, last_name")
           .eq("id", session.user.id)
