@@ -102,25 +102,21 @@ export const useIdeaGenerator = () => {
           const thresholdDate = new Date();
           thresholdDate.setDate(thresholdDate.getDate() - 1); // 24 hours ago
           
-          try {
-            const { data: existingIdeas, error: ideasError } = await supabase
-              .from('video_ideas')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .is('is_saved', false)
-              .is('scheduled_for', null)
-              .order('created_at', { ascending: false })
-              .limit(5);
-            
-            if (ideasError) {
-              console.error("Error fetching existing ideas:", ideasError);
-            } else if (existingIdeas && existingIdeas.length > 0) {
-              console.log("Found existing generated ideas:", existingIdeas);
-              setIdeas(existingIdeas);
-            }
-          } catch (error) {
-            console.error("Error in video_ideas query:", error);
-            // Continue execution even if this query fails
+          const { data: existingIdeas, error: ideasError } = await supabase
+            .from('video_ideas')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .is('is_saved', false)
+            .is('scheduled_for', null)
+            .gte('expires_at', new Date().toISOString()) // Only get ideas that haven't expired
+            .order('created_at', { ascending: false })
+            .limit(5);
+          
+          if (ideasError) {
+            console.error("Error fetching existing ideas:", ideasError);
+          } else if (existingIdeas && existingIdeas.length > 0) {
+            console.log("Found existing generated ideas:", existingIdeas);
+            setIdeas(existingIdeas);
           }
         }
 
@@ -359,7 +355,6 @@ export const useIdeaGenerator = () => {
         .eq("id", session.user.id)
         .single();
 
-      console.log("Invoking generate-ideas with account type:", currentAccountType);
       const { data, error: generationError } = await supabase.functions.invoke('generate-ideas', {
         body: {
           niche: currentNiche,
@@ -406,9 +401,6 @@ export const useIdeaGenerator = () => {
         ) : [],
         status: 'generated',
         is_saved: false,
-        hook_text: idea.hook_text || '',
-        hook_category: idea.hook_category || '',
-        emoji: idea.emoji || '🍎',
         user_id: session.user.id // Explicitly set user_id for database compatibility
       }));
 

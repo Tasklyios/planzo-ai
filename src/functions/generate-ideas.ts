@@ -53,18 +53,7 @@ export const onRequestPost = async (context: any) => {
         promptDetails += `- Posting Frequency: ${postingFrequency}\n`;
       }
     } else if (accountType === 'ecommerce') {
-      promptDetails += `You're generating ideas for an e-commerce business selling products in the ${niche} niche.\n`;
-      promptDetails += `Focus on content that builds trust, educates the audience, and subtly showcases products.\n`;
-      
-      if (contentType) {
-        promptDetails += `- Content Type: ${contentType === 'talking_head' ? 'Talking head videos where the creator speaks directly to camera' : 
-                          contentType === 'text_based' ? 'Text-overlay style videos with visuals or product shots' : 
-                          'Mixed format videos combining talking head segments with product demonstrations'}\n`;
-      }
-      
-      if (postingFrequency) {
-        promptDetails += `- Posting Frequency: ${postingFrequency}\n`;
-      }
+      promptDetails += `You're generating ideas for an e-commerce business selling products.\n`;
     } else if (accountType === 'business') {
       promptDetails += `You're generating ideas for a business.\n`;
       if (businessDescription) {
@@ -119,32 +108,7 @@ export const onRequestPost = async (context: any) => {
     });
 
     const data = await response.json();
-    
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      console.error("Invalid response from OpenAI:", data);
-      return new Response(JSON.stringify({ 
-        error: "Invalid response from OpenAI", 
-        details: data.error?.message || "Unknown error" 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    
-    let ideas;
-    try {
-      ideas = JSON.parse(data.choices[0].message.content);
-    } catch (error) {
-      console.error("Error parsing OpenAI response:", error);
-      console.error("Raw response:", data.choices[0].message.content);
-      return new Response(JSON.stringify({ 
-        error: "Failed to parse response from OpenAI", 
-        details: error.message 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const ideas = JSON.parse(data.choices[0].message.content);
 
     // Add expiration date to each idea (24 hours from now)
     const expirationDate = new Date();
@@ -170,15 +134,7 @@ export const onRequestPost = async (context: any) => {
             'travel': '✈️',
             'gaming': '🎮',
             'music': '🎵',
-            'business': '💼',
-            'product': '🛍️',
-            'ecommerce': '🛒',
-            'shopping': '🛍️',
-            'unboxing': '📦',
-            'demo': '🔍',
-            'comparison': '⚖️',
-            'testimonial': '👍',
-            'behind-the-scenes': '🎬'
+            'business': '💼'
           };
           
           const searchText = (title + ' ' + category).toLowerCase();
