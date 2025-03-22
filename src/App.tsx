@@ -110,58 +110,56 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <ToastProvider>
-          <Router>
-            <Routes>
-              <Route 
-                path="/" 
-                element={isAuthenticated ? <Navigate to="/dashboard" /> : <Index />} 
-              />
-              <Route 
-                path="/auth" 
-                element={isAuthenticated ? <Navigate to="/dashboard" /> : <Auth />} 
-              />
-              <Route 
-                path="/privacy-policy" 
-                element={<PrivacyPolicy />} 
-              />
-              <Route 
-                path="/terms-of-service" 
-                element={<TermsOfService />} 
-              />
-              <Route element={<AuthGuard><Outlet /></AuthGuard>}>
-                <Route element={<AppLayout><Outlet /></AppLayout>}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/generator" element={<Generator />} />
-                  <Route path="/idea-generator" element={<IdeaGenerator />} />
-                  <Route path="/content-planner" element={<ContentPlanner />} />
-                  <Route path="/script" element={<Script />} />
-                  <Route path="/hooks" element={<Hooks />} />
-                  <Route path="/saved-hooks" element={<SavedHooks />} />
-                  <Route path="/planner" element={<ContentPlanner />} />
-                  <Route path="/ideas" element={<Ideas />} />
-                  <Route path="/calendar" element={<Calendar />} />
-                  <Route path="/account" element={<Account />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/billing" element={<Billing />} />
-                  <Route path="/email-templates" element={<EmailTemplates />} />
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Route>
+        <Router>
+          <Routes>
+            <Route 
+              path="/" 
+              element={isAuthenticated ? <Navigate to="/dashboard" /> : <Index />} 
+            />
+            <Route 
+              path="/auth" 
+              element={isAuthenticated ? <Navigate to="/dashboard" /> : <Auth />} 
+            />
+            <Route 
+              path="/privacy-policy" 
+              element={<PrivacyPolicy />} 
+            />
+            <Route 
+              path="/terms-of-service" 
+              element={<TermsOfService />} 
+            />
+            <Route element={<AuthGuard><Outlet /></AuthGuard>}>
+              <Route element={<AppLayout><Outlet /></AppLayout>}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/generator" element={<Generator />} />
+                <Route path="/idea-generator" element={<IdeaGenerator />} />
+                <Route path="/content-planner" element={<ContentPlanner />} />
+                <Route path="/script" element={<Script />} />
+                <Route path="/hooks" element={<Hooks />} />
+                <Route path="/saved-hooks" element={<SavedHooks />} />
+                <Route path="/planner" element={<ContentPlanner />} />
+                <Route path="/ideas" element={<Ideas />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/billing" element={<Billing />} />
+                <Route path="/email-templates" element={<EmailTemplates />} />
+                
+                <Route path="*" element={<NotFound />} />
               </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-            
-            {isAuthenticated && (
-              <Onboarding 
-                open={showOnboarding} 
-                onOpenChange={setShowOnboarding}
-                onComplete={handleOnboardingComplete}
-              />
-            )}
-          </Router>
-        </ToastProvider>
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+          
+          {isAuthenticated && (
+            <Onboarding 
+              open={showOnboarding} 
+              onOpenChange={setShowOnboarding}
+              onComplete={handleOnboardingComplete}
+            />
+          )}
+        </Router>
       </ThemeProvider>
     </QueryClientProvider>
   );

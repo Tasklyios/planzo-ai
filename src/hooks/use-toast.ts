@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import {
   ToastActionElement,
@@ -176,7 +177,7 @@ function useToast() {
 }
 
 // Create a ToastProvider component that can be re-exported
-const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
