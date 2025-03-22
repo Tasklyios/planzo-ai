@@ -66,7 +66,7 @@ export const onRequestPost = async (context: any) => {
     }
 
     // Create a more concise prompt to reduce token usage
-    const prompt = `Generate ${numIdeas || 5} viral video ideas for ${platform} with:
+    const prompt = `Generate ${numIdeas || 5} viral video ideas for ${platform || 'social media'} with:
     ${promptDetails}
     - Niche: ${niche}
     - Target Audience: ${audience}

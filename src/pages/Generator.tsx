@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -232,6 +233,7 @@ const Generator = () => {
     
     setIdeas([]);
     
+    // Pass videoType for all account types, regardless of whether it's personal, ecommerce, or business
     generateIdeas({
       currentNiche: niche,
       currentAudience: audience,

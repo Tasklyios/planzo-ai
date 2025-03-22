@@ -301,7 +301,7 @@ const InputForm = ({
               <div className="flex flex-col items-center w-full">
                 <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
                   <Video className="text-[#4F92FF] w-4 h-4" />
-                  <label className="text-xs md:text-sm font-medium text-foreground">Content Niche</label>
+                  <label className="text-xs md:text-sm font-medium text-foreground">Video Type</label>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -315,10 +315,10 @@ const InputForm = ({
                 </div>
                 <input
                   type="text"
-                  value={contentNiche}
-                  onChange={handleContentNicheChange}
+                  value={videoType}
+                  onChange={(e) => setVideoType(e.target.value)}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Your content niche"
+                  placeholder="Video type (e.g., educational, promotional)"
                 />
               </div>
             </div>
@@ -381,7 +381,7 @@ const InputForm = ({
                   value={videoType}
                   onChange={(e) => setVideoType(e.target.value)}
                   className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground text-sm text-center md:text-left"
-                  placeholder="Video type (e.g., explainer, case study)"
+                  placeholder="Video type (e.g., educational, motivational)"
                 />
               </div>
             </div>
@@ -394,23 +394,25 @@ const InputForm = ({
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4">
         {renderFields()}
-        <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
-          <div className="flex flex-col items-center w-full">
-            <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
-              <Smartphone className="text-[#4F92FF] w-4 h-4" />
-              <label className="text-xs md:text-sm font-medium text-foreground">Platform</label>
+        {accountType === 'personal' && (
+          <div className="bg-card rounded-xl shadow-sm p-4 md:p-6 hover:shadow-md transition-shadow border border-border flex items-center justify-center min-h-[120px]">
+            <div className="flex flex-col items-center w-full">
+              <div className="flex items-center gap-2 mb-2 w-full justify-center md:justify-start">
+                <Smartphone className="text-[#4F92FF] w-4 h-4" />
+                <label className="text-xs md:text-sm font-medium text-foreground">Platform</label>
+              </div>
+              <select
+                value={platform}
+                onChange={(e) => setPlatform(e.target.value)}
+                className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground text-sm text-center md:text-left"
+              >
+                <option>TikTok</option>
+                <option>Instagram Reels</option>
+                <option>YouTube Shorts</option>
+              </select>
             </div>
-            <select
-              value={platform}
-              onChange={(e) => setPlatform(e.target.value)}
-              className="w-full p-2 md:p-3 border border-border rounded-lg bg-background text-foreground text-sm text-center md:text-left"
-            >
-              <option>TikTok</option>
-              <option>Instagram Reels</option>
-              <option>YouTube Shorts</option>
-            </select>
           </div>
-        </div>
+        )}
       </div>
       
       <div className="mb-8">
