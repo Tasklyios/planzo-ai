@@ -19,6 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { format } from "date-fns";
+import EditIdea from "@/components/EditIdea";
 
 interface IdeaType {
   title: string;
@@ -31,6 +33,8 @@ interface ScheduledVideoIdea {
   title: string;
   platform: string;
   scheduled_for: string;
+  color?: string;
+  emoji?: string;
 }
 
 interface ProfileData {
@@ -48,6 +52,7 @@ const Dashboard = () => {
   const [firstName, setFirstName] = useState("");
   const [greeting, setGreeting] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [selectedIdeaId, setSelectedIdeaId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -57,7 +62,6 @@ const Dashboard = () => {
       } else {
         setUserId(session.user.id);
         
-        // Get user profile data including first name
         const { data: profileData, error } = await supabase
           .from("profiles")
           .select("first_name, last_name")
@@ -70,7 +74,6 @@ const Dashboard = () => {
       }
     };
 
-    // Set greeting based on time of day
     const setTimeBasedGreeting = () => {
       const hour = new Date().getHours();
       if (hour < 12) setGreeting("Good morning");
@@ -83,11 +86,9 @@ const Dashboard = () => {
     fetchData();
   }, [navigate]);
 
-  // Set up real-time listener for profile changes
   useEffect(() => {
     if (!userId) return;
 
-    // Set up a subscription to listen for changes on the profiles table
     const profilesChannel = supabase
       .channel('profiles-channel')
       .on(
@@ -100,7 +101,6 @@ const Dashboard = () => {
         },
         (payload) => {
           console.log('Profile change detected:', payload);
-          // Update the firstName if the profile is updated
           if (payload.new && typeof payload.new === 'object' && 'first_name' in payload.new) {
             const newProfile = payload.new as ProfileData;
             if (newProfile.first_name) {
@@ -111,7 +111,6 @@ const Dashboard = () => {
       )
       .subscribe();
 
-    // Clean up the subscription when the component unmounts
     return () => {
       supabase.removeChannel(profilesChannel);
     };
@@ -119,10 +118,9 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch scheduled content from video_ideas table with status "calendar"
       const { data: scheduled, error: scheduledError } = await supabase
         .from("video_ideas")
-        .select("id, title, platform, scheduled_for")
+        .select("id, title, platform, scheduled_for, color, emoji")
         .eq("status", "calendar")
         .not("scheduled_for", "is", null)
         .order("scheduled_for", { ascending: true });
@@ -130,7 +128,6 @@ const Dashboard = () => {
       if (scheduledError) throw scheduledError;
       setScheduledContent(scheduled || []);
 
-      // Get total ideas count
       const { count } = await supabase
         .from("video_ideas")
         .select("*", { count: "exact" });
@@ -147,14 +144,16 @@ const Dashboard = () => {
 
   const formatDate = (date: string) => {
     const d = new Date(date);
-    return d.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    });
+    return format(d, 'MMM d');
+  };
+
+  const handleIdeaClick = (ideaId: string) => {
+    setSelectedIdeaId(ideaId);
+  };
+
+  const handleCloseEditDialog = () => {
+    setSelectedIdeaId(null);
+    fetchData();
   };
 
   return (
@@ -250,34 +249,58 @@ const Dashboard = () => {
           </div>
           
           {scheduledContent.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date & Time</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Platform</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {scheduledContent.map((content) => (
-                  <TableRow key={content.id} className="hover:bg-accent/50 cursor-pointer">
-                    <TableCell className="font-medium">{formatDate(content.scheduled_for)}</TableCell>
-                    <TableCell>{content.title}</TableCell>
-                    <TableCell>
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                        content.platform === "TikTok" 
-                          ? "bg-pink-500/10 text-pink-500" 
-                          : content.platform === "Instagram Reels"
-                          ? "bg-purple-500/10 text-purple-500"
-                          : "bg-primary/10 text-primary"
-                      }`}>
-                        {content.platform}
-                      </span>
-                    </TableCell>
+            <div className="overflow-hidden rounded-lg">
+              <Table>
+                <TableHeader className="bg-muted/30">
+                  <TableRow>
+                    <TableHead className="font-semibold">Date</TableHead>
+                    <TableHead className="font-semibold">Title</TableHead>
+                    <TableHead className="font-semibold">Platform</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {scheduledContent.map((content) => (
+                    <TableRow 
+                      key={content.id} 
+                      className="hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => handleIdeaClick(content.id)}
+                    >
+                      <TableCell className="font-medium py-3">
+                        <div className="flex items-center">
+                          <div 
+                            className="w-3 h-3 rounded-full mr-2 flex-shrink-0" 
+                            style={{ 
+                              backgroundColor: content.color || '#3b82f6',
+                              boxShadow: '0 0 0 2px rgba(255,255,255,0.4)'
+                            }}
+                          />
+                          {formatDate(content.scheduled_for)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <div className="flex items-center">
+                          <span className="mr-2">{content.emoji || '📝'}</span>
+                          {content.title}
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <span className={`px-3 py-1 rounded-full text-sm ${
+                          content.platform === "TikTok" 
+                            ? "bg-pink-500/10 text-pink-500" 
+                            : content.platform === "Instagram Reels"
+                            ? "bg-purple-500/10 text-purple-500"
+                            : content.platform === "YouTube Shorts"
+                            ? "bg-red-500/10 text-red-500"
+                            : "bg-primary/10 text-primary"
+                        }`}>
+                          {content.platform}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <p>No scheduled content yet.</p>
@@ -292,6 +315,13 @@ const Dashboard = () => {
           )}
         </section>
       </main>
+
+      {selectedIdeaId && (
+        <EditIdea 
+          ideaId={selectedIdeaId} 
+          onClose={handleCloseEditDialog} 
+        />
+      )}
     </div>
   );
 };
