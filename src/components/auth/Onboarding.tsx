@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -23,7 +22,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 
-// Define the form schema with appropriate types
 const accountFormSchema = z.object({
   accountType: z.enum(["personal", "ecommerce", "business"]),
   firstName: z.string().min(1, "First name is required"),
@@ -41,7 +39,6 @@ const accountFormSchema = z.object({
 
 type AccountFormValues = z.infer<typeof accountFormSchema>;
 
-// Predefined content niches
 const contentNiches = [
   "Education",
   "Entertainment",
@@ -53,7 +50,6 @@ const contentNiches = [
   "Fitness"
 ];
 
-// Posting frequency options
 const postingFrequencies = [
   "Daily",
   "3-5 times per week",
@@ -62,7 +58,6 @@ const postingFrequencies = [
   "Monthly"
 ];
 
-// Content type options
 const contentTypes = [
   { value: "talking_head", label: "Talking Head Videos", description: "Face-to-camera content where you speak directly to your audience" },
   { value: "text_based", label: "Text-Overlay Videos", description: "Videos that primarily use text overlays with visuals or b-roll footage" },
@@ -82,7 +77,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
   const [isCustomNiche, setIsCustomNiche] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Initialize the form
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountFormSchema),
     defaultValues: {
@@ -101,7 +95,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     },
   });
 
-  // Check for existing user data
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -117,12 +110,11 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
             .single();
             
           if (profile) {
-            // Ensure accountType is properly validated as one of the allowed enum values
             const accountType = profile.account_type || "personal";
             if (accountType === "personal" || accountType === "ecommerce" || accountType === "business") {
               form.setValue("accountType", accountType as "personal" | "ecommerce" | "business");
             } else {
-              form.setValue("accountType", "personal"); // Default to personal if invalid
+              form.setValue("accountType", "personal");
             }
             
             form.setValue("firstName", profile.first_name || "");
@@ -136,7 +128,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
             form.setValue("contentType", profile.content_type || "");
             form.setValue("postingFrequency", profile.posting_frequency || "");
             
-            // Check if the content niche is custom
             if (profile.content_niche && !contentNiches.includes(profile.content_niche)) {
               setIsCustomNiche(true);
               form.setValue("customNiche", profile.content_niche);
@@ -151,12 +142,31 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     fetchUserData();
   }, [form]);
 
+  const updateProfileField = async (field: string, value: string) => {
+    if (!userId || !value) return;
+    
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ [field]: value })
+        .eq("id", userId);
+        
+      if (error) throw error;
+    } catch (error) {
+      console.error(`Error updating ${field}:`, error);
+    }
+  };
+
+  const handleNameChange = async (field: "firstName" | "lastName", value: string) => {
+    const supabaseField = field === "firstName" ? "first_name" : "last_name";
+    await updateProfileField(supabaseField, value);
+  };
+
   const onSubmit = async (data: AccountFormValues) => {
     if (!userId) return;
     
     setIsSubmitting(true);
     try {
-      // Determine which niche field to use based on account type
       let nicheField = "";
       if (data.accountType === "personal") {
         nicheField = isCustomNiche ? data.customNiche || "" : data.contentNiche || "";
@@ -166,7 +176,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
         nicheField = data.businessNiche || "";
       }
       
-      // Update profile in Supabase
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -205,7 +214,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     }
   };
 
-  // Navigate to next step
   const nextStep = () => {
     if (step < getMaxSteps()) {
       setStep(step + 1);
@@ -214,27 +222,23 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     }
   };
 
-  // Navigate to previous step
   const prevStep = () => {
     if (step > 1) {
       setStep(step - 1);
     }
   };
 
-  // Get max steps based on account type
   const getMaxSteps = () => {
     const accountType = form.getValues("accountType");
     if (accountType === "personal") return 5;
     if (accountType === "ecommerce") return 4;
-    return 4; // business
+    return 4;
   };
 
-  // Calculate progress percentage
   const getProgressPercentage = () => {
     return (step / getMaxSteps()) * 100;
   };
 
-  // Render account type selection step
   const renderStep1 = () => (
     <div className="space-y-4">
       <FormField
@@ -317,7 +321,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     </div>
   );
 
-  // Render name fields for all account types
   const renderNameStep = () => (
     <div className="space-y-4">
       <div>
@@ -334,7 +337,14 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
             <FormItem>
               <FormLabel>First Name</FormLabel>
               <FormControl>
-                <Input placeholder="First Name" {...field} />
+                <Input 
+                  placeholder="First Name" 
+                  {...field} 
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleNameChange("firstName", e.target.value);
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -347,7 +357,14 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
             <FormItem>
               <FormLabel>Last Name</FormLabel>
               <FormControl>
-                <Input placeholder="Last Name" {...field} />
+                <Input 
+                  placeholder="Last Name" 
+                  {...field}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleNameChange("lastName", e.target.value);
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -357,7 +374,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     </div>
   );
 
-  // Render personal brand step
   const renderPersonalStep3 = () => (
     <div className="space-y-4">
       <FormField
@@ -402,7 +418,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     </div>
   );
 
-  // Render niche selection step
   const renderPersonalStep4 = () => (
     <div className="space-y-4">
       <div className="space-y-4">
@@ -462,7 +477,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     </div>
   );
 
-  // Render posting frequency step
   const renderPersonalStep5 = () => (
     <div className="space-y-4">
       <FormField
@@ -500,7 +514,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     </div>
   );
 
-  // Render e-commerce step
   const renderEcommerceStep3 = () => (
     <div className="space-y-4">
       <FormField
@@ -545,7 +558,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     </div>
   );
 
-  // Render business step
   const renderBusinessStep3 = () => (
     <div className="space-y-4">
       <FormField
@@ -594,12 +606,11 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
     </div>
   );
 
-  // Render current step
   const renderStep = () => {
     const accountType = form.getValues("accountType");
     
     if (step === 1) return renderStep1();
-    if (step === 2) return renderNameStep(); // Name fields for all account types
+    if (step === 2) return renderNameStep();
     
     if (accountType === "personal") {
       if (step === 3) return renderPersonalStep3();
@@ -607,10 +618,8 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
       if (step === 5) return renderPersonalStep5();
     } else if (accountType === "ecommerce") {
       if (step === 3) return renderEcommerceStep3();
-      // step 4 will be handled by the existing flow
     } else if (accountType === "business") {
       if (step === 3) return renderBusinessStep3();
-      // step 4 will be handled by the existing flow
     }
     
     return null;
@@ -627,7 +636,6 @@ const Onboarding = ({ open, onOpenChange, onComplete }: OnboardingProps) => {
             </DialogDescription>
           </DialogHeader>
           
-          {/* Progress navigation */}
           <div className="mb-4 space-y-2 mt-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">

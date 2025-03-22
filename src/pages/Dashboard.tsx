@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +42,7 @@ const Dashboard = () => {
   const [totalIdeas, setTotalIdeas] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [greeting, setGreeting] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -48,6 +50,8 @@ const Dashboard = () => {
       if (!session) {
         navigate("/auth");
       } else {
+        setUserId(session.user.id);
+        
         // Get user profile data including first name
         const { data: profileData, error } = await supabase
           .from("profiles")
@@ -58,7 +62,6 @@ const Dashboard = () => {
         if (profileData && profileData.first_name) {
           setFirstName(profileData.first_name);
         }
-        // No longer falling back to email if first_name is missing
       }
     };
 
@@ -74,6 +77,36 @@ const Dashboard = () => {
     checkUser();
     fetchData();
   }, [navigate]);
+
+  // Set up real-time listener for profile changes
+  useEffect(() => {
+    if (!userId) return;
+
+    // Set up a subscription to listen for changes on the profiles table
+    const channel = supabase
+      .channel('public:profiles')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`,
+        },
+        (payload) => {
+          // Update the firstName if the profile is updated
+          if (payload.new && payload.new.first_name) {
+            setFirstName(payload.new.first_name);
+          }
+        }
+      )
+      .subscribe();
+
+    // Clean up the subscription when the component unmounts
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
 
   const fetchData = async () => {
     try {
