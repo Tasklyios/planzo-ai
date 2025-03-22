@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -24,6 +23,7 @@ import * as z from "zod";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { getEmojiForIdea } from "@/utils/emojiUtils";
+import { cn } from "@/lib/utils";
 
 const newIdeaSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
@@ -87,7 +87,6 @@ export function AddCalendarPostDialog() {
       });
       setOpen(false);
       
-      // Force a refresh of the calendar page
       navigate(0);
     } catch (error: any) {
       toast({
@@ -115,7 +114,6 @@ export function AddCalendarPostDialog() {
         ? values.tags.split(',').map(tag => tag.trim()) 
         : [];
       
-      // Generate emoji based on title and category
       const emoji = getEmojiForIdea(values.title, values.category);
       
       const { data, error } = await supabase
@@ -149,7 +147,6 @@ export function AddCalendarPostDialog() {
       form.reset();
       setOpen(false);
       
-      // Force a refresh of the calendar page
       navigate(0);
     } catch (error: any) {
       console.error("Error creating new idea:", error);
@@ -161,7 +158,6 @@ export function AddCalendarPostDialog() {
     }
   };
 
-  // Get available colors for selection
   const availableColors = [
     { name: "Red", value: "red" },
     { name: "Orange", value: "orange" },

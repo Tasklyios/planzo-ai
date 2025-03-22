@@ -49,6 +49,7 @@ export interface AddToCalendarIdea {
   idea: GeneratedIdea;
   title: string;
   scheduledFor: string;
+  color?: string;  // Added color property
 }
 
 export interface ScriptHook {
