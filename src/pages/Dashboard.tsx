@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +26,7 @@ interface IdeaType {
   is_saved: boolean;
 }
 
-interface ScheduledContentType {
+interface ScheduledVideoIdea {
   id: string;
   title: string;
   platform: string;
@@ -44,7 +43,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [recentIdeas, setRecentIdeas] = useState<IdeaType[]>([]);
-  const [scheduledContent, setScheduledContent] = useState<ScheduledContentType[]>([]);
+  const [scheduledContent, setScheduledContent] = useState<ScheduledVideoIdea[]>([]);
   const [totalIdeas, setTotalIdeas] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [greeting, setGreeting] = useState("");
@@ -120,10 +119,12 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch scheduled content
+      // Fetch scheduled content from video_ideas table with status "calendar"
       const { data: scheduled, error: scheduledError } = await supabase
-        .from("scheduled_content")
-        .select("*")
+        .from("video_ideas")
+        .select("id, title, platform, scheduled_for")
+        .eq("status", "calendar")
+        .not("scheduled_for", "is", null)
         .order("scheduled_for", { ascending: true });
 
       if (scheduledError) throw scheduledError;
@@ -266,7 +267,7 @@ const Dashboard = () => {
                       <span className={`px-3 py-1 rounded-full text-sm ${
                         content.platform === "TikTok" 
                           ? "bg-pink-500/10 text-pink-500" 
-                          : content.platform === "Instagram"
+                          : content.platform === "Instagram Reels"
                           ? "bg-purple-500/10 text-purple-500"
                           : "bg-primary/10 text-primary"
                       }`}>
