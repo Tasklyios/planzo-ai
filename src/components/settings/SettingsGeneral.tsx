@@ -52,7 +52,6 @@ const SettingsGeneral = () => {
   const [lastName, setLastName] = useState("");
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
 
-  // Get current user and email
   useEffect(() => {
     const getCurrentUser = async () => {
       const { data } = await supabase.auth.getUser();
@@ -60,7 +59,6 @@ const SettingsGeneral = () => {
         setCurrentEmail(data.user.email);
         emailForm.setValue("email", data.user.email);
         
-        // Get profile data
         const { data: profileData } = await supabase
           .from('profiles')
           .select('first_name, last_name')
@@ -214,7 +212,6 @@ const SettingsGeneral = () => {
       
       if (error) throw error;
       
-      // Sign out and redirect to auth page
       await supabase.auth.signOut();
       navigate('/auth');
       
@@ -235,7 +232,6 @@ const SettingsGeneral = () => {
 
   return (
     <div className="space-y-6 w-full">
-      {/* Email Settings */}
       <Card className="w-full border-border/40">
         <CardHeader>
           <CardTitle className="text-xl">Email Settings</CardTitle>
@@ -289,7 +285,6 @@ const SettingsGeneral = () => {
         </CardFooter>
       </Card>
 
-      {/* Profile Settings */}
       <Card className="w-full border-border/40">
         <CardHeader>
           <CardTitle className="text-xl">Profile Information</CardTitle>
@@ -360,7 +355,6 @@ const SettingsGeneral = () => {
         </CardContent>
       </Card>
 
-      {/* Password Settings */}
       <Card className="w-full border-border/40">
         <CardHeader>
           <CardTitle className="text-xl">Password Settings</CardTitle>
@@ -455,20 +449,6 @@ const SettingsGeneral = () => {
         </CardFooter>
       </Card>
 
-      {/* Account Preferences Card */}
-      <Card className="w-full border-border/40">
-        <CardHeader>
-          <CardTitle className="text-xl">Account Preferences</CardTitle>
-          <CardDescription>Manage your account preferences</CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
-          <p className="text-muted-foreground text-sm">
-            Additional account settings will be available here in a future update.
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Delete Account Card */}
       <Card className="w-full border-border/40 bg-destructive/5">
         <CardHeader>
           <CardTitle className="text-xl flex items-center">
