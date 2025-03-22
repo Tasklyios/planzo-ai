@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,7 +30,6 @@ interface ScheduledPost {
   status?: string;
 }
 
-// Map color names to actual hex values for display
 const colorMap: Record<string, string> = {
   red: "#ef4444",
   orange: "#f97316",
@@ -43,7 +41,6 @@ const colorMap: Record<string, string> = {
   pink: "#ec4899",
 };
 
-// Helper function to get random color if none is specified
 const getRandomColor = (id: string): string => {
   const colors = ["red", "green", "blue", "yellow", "purple", "orange"];
   const index = Math.abs(id.charCodeAt(0) % colors.length);
@@ -65,12 +62,9 @@ const CalendarPage = () => {
   const navigate = useNavigate();
   const [calendarHeight, setCalendarHeight] = useState<number | undefined>(undefined);
 
-  // Calculate and set a fixed height for the calendar container
   useEffect(() => {
-    // Set a fixed height for the calendar to prevent layout shifts
     setCalendarHeight(window.innerHeight * 0.6);
     
-    // Optional: Update height on window resize
     const handleResize = () => {
       setCalendarHeight(window.innerHeight * 0.6);
     };
@@ -156,18 +150,16 @@ const CalendarPage = () => {
       
       setCalendarEvents(events);
       
-      // Update selected date posts
       updateSelectedDatePosts(selectedDate, formattedPosts);
       
-      // Fetch all ideas for 'add to calendar' functionality
       const { data: ideasData } = await supabase
         .from("video_ideas")
-        .select("id, title, description")
+        .select("id, title, description, category, tags, platform")
         .eq("user_id", sessionData.session.user.id)
         .eq("status", "ideas")
         .order("created_at", { ascending: false });
         
-      setIdeas(ideasData || []);
+      setIdeas(ideasData as ScheduledPost[] || []);
       
       setLoading(false);
     } catch (error: any) {

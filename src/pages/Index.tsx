@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -19,9 +20,9 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useEffect, useState } from "react"
 
-import { Hero } from "@/components/Hero"
+import Hero from "@/components/Hero"
 import { LandingNavbar } from "@/components/LandingNavbar"
-import { AccountFooter } from "@/components/AccountFooter"
+import AccountFooter from "@/components/AccountFooter"
 
 export default function Index() {
   return (
