@@ -21,7 +21,7 @@ const LandingTubelightNavbar = () => {
     { name: 'Features', url: '#features', icon: Home },
     { name: 'How it works', url: '#how-it-works', icon: FileText },
     { name: 'Pricing', url: '#pricing', icon: Anchor },
-    { name: 'Get Started', url: '/auth', icon: LightbulbIcon }
+    { name: 'Get Started', url: '/auth?signup=true', icon: LightbulbIcon }
   ];
 
   const handleScrollToSection = (sectionId: string) => {
@@ -91,7 +91,7 @@ const LandingTubelightNavbar = () => {
                   <Button 
                     variant="default" 
                     className="w-full bg-primary hover:bg-primary/90 text-white mt-4"
-                    onClick={() => navigate("/auth")}
+                    onClick={() => navigate("/auth?signup=true")}
                   >
                     <LightbulbIcon className="mr-2 h-4 w-4" />
                     Get Started
@@ -106,7 +106,7 @@ const LandingTubelightNavbar = () => {
           variant="default" 
           size="sm" 
           className="bg-primary hover:bg-primary/90 text-white"
-          onClick={() => navigate("/auth")}
+          onClick={() => navigate("/auth?signup=true")}
         >
           Get Started
         </Button>

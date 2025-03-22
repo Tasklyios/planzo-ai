@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,14 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import Onboarding from "@/components/auth/Onboarding";
 
 const Auth = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // Check URL parameters for signup
+  const searchParams = new URLSearchParams(location.search);
+  const shouldSignUp = searchParams.get('signup') === 'true';
+  
   // Domain redirect check
   useEffect(() => {
     const currentDomain = window.location.hostname;
@@ -44,7 +53,7 @@ const Auth = () => {
     };
   }, []);
 
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(shouldSignUp);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -56,9 +65,6 @@ const Auth = () => {
   const [showVerifyEmail, setShowVerifyEmail] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { toast } = useToast();
 
   // Check for password recovery token in the URL
   useEffect(() => {
@@ -676,4 +682,3 @@ const Auth = () => {
 };
 
 export default Auth;
-

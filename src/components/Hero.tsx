@@ -70,7 +70,7 @@ const Hero = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto">
             <Button 
               className="bg-gradient-to-r from-blue-500 to-blue-400 hover:opacity-90 text-white px-8 py-6 text-lg rounded-full w-[90%] mx-auto sm:w-auto"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/auth?signup=true")}
             >
               Start Creating for Free
             </Button>
