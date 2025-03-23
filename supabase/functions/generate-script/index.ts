@@ -182,12 +182,16 @@ serve(async (req) => {
     // Detect if this is an ecommerce product-focused content or not
     const isProductFocused = !isImprovement && detectProductFocus(scriptTitle, scriptDescription, scriptCategory);
     
+    // Expert prompt for viral content creation
+    const expertPrompt = `You are an expert in viral social media content creation, specializing in YouTube, TikTok, and Instagram Reels. Your goal is to generate highly engaging video scripts that maximize views, shares, and watch time. You understand trends, audience psychology, and platform algorithms to craft compelling content. Always provide structured video scripts with strong hooks, engaging storytelling, and clear calls to action. Adapt scripts for different niches when needed.`;
+    
     let systemPrompt = "";
     let userPrompt = "";
 
     if (isImprovement) {
       // System prompt for improving an existing script
-      systemPrompt = `You are an expert script writer who specializes in improving social media video scripts. 
+      systemPrompt = `${expertPrompt}
+
 Your task is to transform the user's script into a more viral and engaging version while preserving the core message.
 
 Guidelines:
@@ -208,11 +212,14 @@ Please rewrite this script to make it more engaging and viral-worthy while keepi
 
     } else {
       // Simplified system prompt to reduce token usage
-      systemPrompt = `Create a ${timeRangeDescription} script for "${scriptTitle}" that:
+      systemPrompt = `${expertPrompt}
+
+Create a ${timeRangeDescription} script for "${scriptTitle}" that:
 - Starts with a hook${hook ? " (provided below)" : ""}
 - Uses natural speech
 - Includes [action notes] in brackets when needed
-- Is concise for social media`;
+- Is concise for social media
+- Uses psychology triggers like curiosity, emotion, or authority`;
 
       // Add specific word count target instruction if we have calculated one
       if (targetWordCount) {

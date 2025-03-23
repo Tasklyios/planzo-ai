@@ -73,8 +73,13 @@ export const onRequestPost = async (context: any) => {
       }
     }
 
+    // Expert prompt for viral content creation
+    const expertPrompt = `You are an expert in viral social media content creation, specializing in YouTube, TikTok, and Instagram Reels. Your goal is to generate highly engaging video ideas, scripts, and hooks that maximize views, shares, and watch time. You understand trends, audience psychology, and platform algorithms to craft compelling content. Always provide structured video ideas with strong hooks, engaging storytelling elements, and clear calls to action. Adapt ideas for different niches when needed.`;
+
     // Create a more concise prompt to reduce token usage
-    const prompt = `Generate ${numIdeas || 5} viral video ideas for ${platform || 'social media'} with:
+    const prompt = `${expertPrompt}
+
+Generate ${numIdeas || 5} viral video ideas for ${platform || 'social media'} with:
     ${promptDetails}
     - Niche: ${niche}
     - Target Audience: ${audience}
@@ -85,7 +90,7 @@ export const onRequestPost = async (context: any) => {
     ${previousIdeas && previousIdeas.titles && previousIdeas.titles.length > 0 ? 
       `Avoid these previously generated ideas:\n${previousIdeas.titles.join(", ")}\n` : ''}
     
-    For each idea, include a hook that would grab viewers' attention in the first 3 seconds.
+    Make sure each idea has a powerful hook that would grab viewers' attention in the first 3 seconds. Focus on ideas that could go viral through psychological triggers like curiosity, emotion, controversy, or utility.
     
     Format as JSON with this structure:
     {
