@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSavedHooks, deleteSavedHook } from "@/services/hookService";
+import { getSavedHooks, deleteHook } from "@/services/hookService";
 import { SavedHook, HookType } from "@/types/hooks";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ const SavedHooks = () => {
 
   // Delete hook mutation
   const deleteHookMutation = useMutation({
-    mutationFn: deleteSavedHook,
+    mutationFn: deleteHook,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savedHooks'] });
       toast({
@@ -142,7 +142,7 @@ const SavedHooks = () => {
 
                 <TabsContent value={activeCategory} className="mt-0">
                   <div className="grid gap-3">
-                    {filteredHooks.map((hook: SavedHook) => (
+                    {filteredHooks.map((hook) => (
                       <div 
                         key={hook.id} 
                         className="p-3 sm:p-4 border rounded-md flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4"

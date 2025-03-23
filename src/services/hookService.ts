@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { HookType } from "@/types/hooks";
+import { HookType, SavedHook } from "@/types/hooks";
 import { VIRAL_CONTENT_PROMPT } from "@/types/idea";
 
 export const generateHooks = async (
@@ -65,9 +65,9 @@ export const saveHook = async (hook: HookType): Promise<void> => {
     }
     
     const { data, error } = await supabase
-      .from('hooks')
+      .from('saved_hooks')
       .insert({
-        hook: hook.hook_text,
+        hook_text: hook.hook_text,
         category: hook.category,
         user_id: session.session.user.id
       })
@@ -85,7 +85,7 @@ export const saveHook = async (hook: HookType): Promise<void> => {
   }
 };
 
-export const getSavedHooks = async (): Promise<HookType[]> => {
+export const getSavedHooks = async (): Promise<SavedHook[]> => {
   try {
     const { data: session } = await supabase.auth.getSession();
     if (!session?.session?.user) {
@@ -93,7 +93,7 @@ export const getSavedHooks = async (): Promise<HookType[]> => {
     }
 
     const { data, error } = await supabase
-      .from('hooks')
+      .from('saved_hooks')
       .select('*')
       .eq('user_id', session.session.user.id)
       .order('created_at', { ascending: false });
@@ -105,8 +105,10 @@ export const getSavedHooks = async (): Promise<HookType[]> => {
     
     return data.map((hook) => ({
       id: hook.id,
-      hook_text: hook.hook,
+      hook: hook.hook_text,
       category: hook.category,
+      user_id: hook.user_id,
+      created_at: hook.created_at,
       is_saved: true,
     }));
   } catch (error: any) {
@@ -123,7 +125,7 @@ export const deleteHook = async (hookId: string): Promise<void> => {
     }
     
     const { error } = await supabase
-      .from('hooks')
+      .from('saved_hooks')
       .delete()
       .match({ id: hookId, user_id: session.session.user.id });
     
@@ -138,3 +140,6 @@ export const deleteHook = async (hookId: string): Promise<void> => {
     throw new Error(error.message || "Failed to delete hook");
   }
 };
+
+// Add the missing deleteSavedHook function that's being imported in SavedHooks.tsx
+export const deleteSavedHook = deleteHook;
