@@ -108,7 +108,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         .from("video_ideas")
         .select("*")
         .eq("id", ideaId)
-        .eq("user_id", userId)
         .single();
 
       if (error) {
@@ -120,6 +119,10 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       
       if (!data.emoji) {
         data.emoji = getEmojiForIdea(data.title, data.category);
+      }
+      
+      if (!data.user_id) {
+        data.user_id = userId;
       }
       
       setIdea(data);
@@ -165,8 +168,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           is_saved: window.location.pathname !== "/calendar",
           user_id: userId
         })
-        .eq("id", idea.id)
-        .eq("user_id", userId);
+        .eq("id", idea.id);
 
       if (error) {
         console.error("Delete error:", error);
@@ -240,6 +242,12 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
 
       const userId = sessionData.session.user.id;
       
+      const isGeneratorPage = window.location.pathname === "/generator" || window.location.pathname === "/idea-generator";
+      
+      const newSavedStatus = idea.is_saved || isGeneratorPage;
+      
+      console.log(`Current path: ${window.location.pathname}, Setting is_saved to: ${newSavedStatus}`);
+      
       const { error } = await supabase
         .from("video_ideas")
         .update({
@@ -253,13 +261,12 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           hook_text: idea.hook_text,
           hook_category: idea.hook_category,
           scheduled_for: idea.scheduled_for,
-          is_saved: true,
-          status: idea.status || "ideas",
+          is_saved: newSavedStatus,
+          status: idea.status || (newSavedStatus ? "ideas" : "generated"),
           user_id: userId,
           emoji: idea.emoji
         })
-        .eq("id", idea.id)
-        .eq("user_id", userId);
+        .eq("id", idea.id);
 
       if (error) {
         console.error("Error saving idea:", error);
@@ -566,3 +573,4 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
 };
 
 export default EditIdea;
+

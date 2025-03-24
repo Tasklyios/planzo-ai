@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -247,6 +246,36 @@ const Generator = () => {
     });
   };
 
+  const handleEditClose = async () => {
+    setEditingIdeaId(null);
+    
+    // Refresh the current ideas list to show updated content
+    if (ideas.length > 0) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        
+        const { data: updatedIdeas, error } = await supabase
+          .from("video_ideas")
+          .select("*")
+          .in("id", ideas.map(idea => idea.id))
+          .order("created_at", { ascending: false });
+          
+        if (error) {
+          console.error("Error refreshing ideas after edit:", error);
+          return;
+        }
+        
+        if (updatedIdeas && updatedIdeas.length > 0) {
+          console.log("Updated ideas after edit:", updatedIdeas);
+          setIdeas(updatedIdeas);
+        }
+      } catch (error) {
+        console.error("Error refreshing ideas:", error);
+      }
+    }
+  };
+
   return <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 pt-8 pb-12 py-0">
         <section className="mb-8">
@@ -362,7 +391,7 @@ const Generator = () => {
           )}
         </section>
 
-        {editingIdeaId && <EditIdea ideaId={editingIdeaId} onClose={() => setEditingIdeaId(null)} />}
+        {editingIdeaId && <EditIdea ideaId={editingIdeaId} onClose={handleEditClose} />}
 
         <AddToCalendarDialog 
           idea={addingToCalendar} 
