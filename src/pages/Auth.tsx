@@ -141,7 +141,13 @@ const Auth = () => {
           }
         });
         
-        if (error) throw error;
+        if (error) {
+          // Check for email already in use error
+          if (error.message.includes("already registered")) {
+            throw new Error("An account with this email already exists, please sign in instead.");
+          }
+          throw error;
+        }
         
         console.log("Sign up successful, user created:", data?.user?.id);
         

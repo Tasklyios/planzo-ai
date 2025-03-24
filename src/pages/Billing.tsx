@@ -364,8 +364,6 @@ const Billing = () => {
               
               {subscription && (
                 <div className="mt-4 pt-4 border-t text-xs text-muted-foreground">
-                  <p>Subscription ID: {subscription.stripe_subscription_id || 'N/A'}</p>
-                  <p>Customer ID: {subscription.stripe_customer_id || 'N/A'}</p>
                   <p>Last updated: {lastUpdated.toLocaleTimeString()}</p>
                 </div>
               )}

@@ -137,6 +137,27 @@ serve(async (req) => {
           console.error("Customer email not found");
           break;
         }
+
+        // Check if payment has failed and subscription status has changed
+        if (subscription.status === 'past_due' || subscription.status === 'unpaid') {
+          console.log(`Subscription payment failed: ${subscription.id}, status: ${subscription.status}`);
+          
+          // Reset the user back to free tier
+          const { error } = await supabase.rpc("link_stripe_customer", {
+            p_email: customerEmail,
+            p_stripe_customer_id: customerId,
+            p_stripe_subscription_id: subscription.id,
+            p_tier: "free",
+            p_current_period_end: null,
+          });
+          
+          if (error) {
+            console.error("Error resetting subscription to free tier:", error);
+          } else {
+            console.log(`Reset ${customerEmail} to free tier due to payment failure`);
+          }
+          break;
+        }
         
         // Determine subscription tier from product
         const productId = subscription.items.data[0]?.price.product;
@@ -182,6 +203,52 @@ serve(async (req) => {
           console.error("Error updating subscription:", error);
         } else {
           console.log(`Successfully updated ${customerEmail} to ${tier} tier`);
+        }
+        break;
+      }
+      
+      case "invoice.payment_failed": {
+        // Handle payment failure
+        const invoice = event.data.object;
+        console.log(`Payment failed for invoice: ${invoice.id}`);
+        
+        // Get the customer information
+        const customerId = invoice.customer;
+        const subscriptionId = invoice.subscription;
+        
+        if (!customerId || !subscriptionId) {
+          console.error("Missing customer or subscription ID in failed invoice");
+          break;
+        }
+        
+        const customer = await stripe.customers.retrieve(customerId);
+        
+        if (!customer || customer.deleted) {
+          console.error("Customer not found or deleted");
+          break;
+        }
+        
+        const customerEmail = typeof customer === 'object' ? customer.email : null;
+        if (!customerEmail) {
+          console.error("Customer email not found");
+          break;
+        }
+        
+        console.log(`Payment failed for customer: ${customerEmail}, subscription: ${subscriptionId}`);
+        
+        // Reset the user back to free tier
+        const { error } = await supabase.rpc("link_stripe_customer", {
+          p_email: customerEmail,
+          p_stripe_customer_id: customerId,
+          p_stripe_subscription_id: subscriptionId,
+          p_tier: "free",
+          p_current_period_end: null,
+        });
+        
+        if (error) {
+          console.error("Error resetting subscription to free tier:", error);
+        } else {
+          console.log(`Reset ${customerEmail} to free tier due to payment failure`);
         }
         break;
       }
