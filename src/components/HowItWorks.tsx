@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Timeline } from "@/components/ui/timeline";
-import { ArrowRight, Sparkles, Calendar, PenSquare, Star, Zap, Lightning } from "lucide-react";
 
 const HowItWorks = () => {
   const timelineData = [
@@ -15,15 +14,15 @@ const HowItWorks = () => {
           </p>
           <div className="mb-8">
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <Star className="h-5 w-5 text-primary shrink-0" />
+              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
               <span>Niche-specific suggestions based on trending topics</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <Star className="h-5 w-5 text-primary shrink-0" />
+              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
               <span>Viral hook ideas that capture attention in seconds</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base">
-              <Star className="h-5 w-5 text-primary shrink-0" />
+              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
               <span>Customizable formats for different platforms</span>
             </div>
           </div>
@@ -40,15 +39,15 @@ const HowItWorks = () => {
           </p>
           <div className="mb-8">
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <Zap className="h-5 w-5 text-primary shrink-0" />
+              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
               <span>Natural, conversational tone that connects with viewers</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <Zap className="h-5 w-5 text-primary shrink-0" />
+              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
               <span>Optimized structure for maximum engagement</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base">
-              <Zap className="h-5 w-5 text-primary shrink-0" />
+              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
               <span>Customizable length and style to match your content</span>
             </div>
           </div>
@@ -65,15 +64,15 @@ const HowItWorks = () => {
           </p>
           <div className="mb-8">
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
               <span>Visual content calendar for easy scheduling</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
               <span>Publish reminders to keep you on track</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base">
-              <ArrowRight className="h-5 w-5 text-primary shrink-0" />
+              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
               <span>Performance tracking to optimize your content strategy</span>
             </div>
           </div>
