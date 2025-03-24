@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import IdeasGrid from "@/components/idea-generator/IdeasGrid";
@@ -156,9 +155,7 @@ export default function Ideas() {
         throw sessionError;
       }
       
-      const userId = sessionData.session?.user.id;
-
-      if (!userId) {
+      if (!sessionData.session?.user.id) {
         toast({
           title: "Authentication required",
           description: "Please log in to add ideas to calendar",
@@ -168,7 +165,7 @@ export default function Ideas() {
         return;
       }
 
-      console.log("Adding to calendar:", addingToCalendar);
+      console.log("Adding to calendar:", addingToCalendar, "with color:", addingToCalendar.color);
 
       // Always ensure both scheduled_for and is_saved are set
       const { error } = await supabase
@@ -176,12 +173,13 @@ export default function Ideas() {
         .update({
           scheduled_for: new Date(addingToCalendar.scheduledFor).toISOString(),
           is_saved: true, // Always ensure it's saved when adding to calendar
-          user_id: userId, // Explicitly set user_id
+          user_id: sessionData.session.user.id, // Explicitly set user_id
           title: addingToCalendar.title, // Update the title if it was edited
-          status: 'calendar' // Make sure status is set to calendar
+          status: 'calendar', // Make sure status is set to calendar
+          color: addingToCalendar.color || 'blue' // Add color property with default fallback
         })
         .eq("id", addingToCalendar.idea.id)
-        .eq("user_id", userId);
+        .eq("user_id", sessionData.session.user.id);
 
       if (error) {
         console.error("Error adding to calendar:", error);

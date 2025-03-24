@@ -86,9 +86,10 @@ const Generator = () => {
         return;
       }
 
-      console.log("Adding idea to calendar:", addingToCalendar.idea.id, "with date:", addingToCalendar.scheduledFor);
+      console.log("Adding idea to calendar:", addingToCalendar.idea.id, "with date:", addingToCalendar.scheduledFor, "and color:", addingToCalendar.color);
       
       const updatedTitle = addingToCalendar.title || addingToCalendar.idea.title;
+      const selectedColor = addingToCalendar.color || 'blue'; // Default to blue if no color selected
       
       const {
         error: updateError
@@ -98,7 +99,8 @@ const Generator = () => {
           is_saved: true,
           title: updatedTitle,
           user_id: userId,
-          status: 'calendar'
+          status: 'calendar',
+          color: selectedColor // Make sure color is included in the update
         })
         .eq("id", addingToCalendar.idea.id);
       
@@ -115,6 +117,7 @@ const Generator = () => {
               is_saved: true,
               title: updatedTitle,
               status: 'calendar',
+              color: selectedColor, // Update the color in the local state
               user_id: userId
             } 
           : idea

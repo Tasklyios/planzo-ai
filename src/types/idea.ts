@@ -1,4 +1,3 @@
-
 export interface IdeaResearch {
   statistics: string;
   trends: string;
@@ -49,7 +48,7 @@ export interface AddToCalendarIdea {
   idea: GeneratedIdea;
   title: string;
   scheduledFor: string;
-  color?: string;  // Added color property
+  color?: string;  // Keep the color property
 }
 
 export interface ScriptHook {
