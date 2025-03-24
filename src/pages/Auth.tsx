@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,32 +18,25 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Check URL parameters for signup
   const searchParams = new URLSearchParams(location.search);
   const shouldSignUp = searchParams.get('signup') === 'true';
   
-  // Domain redirect check
   useEffect(() => {
     const currentDomain = window.location.hostname;
     if (currentDomain === 'planzo.netlify.app') {
-      // Preserve the current path and query parameters when redirecting
       const currentPath = window.location.pathname;
       const currentSearch = window.location.search;
       window.location.href = `https://planzoai.com${currentPath}${currentSearch}`;
     }
   }, []);
 
-  // Force light mode on auth page
   useEffect(() => {
-    // Save current theme preference
     const root = window.document.documentElement;
     const originalTheme = root.classList.contains('dark') ? 'dark' : 'light';
     
-    // Force light mode
     root.classList.remove('dark');
     root.classList.add('light');
     
-    // Restore original theme when component unmounts
     return () => {
       if (originalTheme === 'dark') {
         root.classList.remove('light');
@@ -65,8 +57,8 @@ const Auth = () => {
   const [showVerifyEmail, setShowVerifyEmail] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [emailExistsError, setEmailExistsError] = useState<string | null>(null);
 
-  // Check for password recovery token in the URL
   useEffect(() => {
     const query = new URLSearchParams(location.search);
     const type = query.get("type");
@@ -76,22 +68,18 @@ const Auth = () => {
     }
   }, [location]);
 
-  // Check if this is a redirect after email verification
   const isEmailVerificationRedirect = () => {
-    // When Supabase redirects after email verification, it includes specific parameters
     const searchParams = new URLSearchParams(location.search);
-    return searchParams.has('error_description') || // Error case
-           (searchParams.has('access_token') && searchParams.has('refresh_token')) || // Success case
-           searchParams.has('token_hash'); // Another potential parameter
+    return searchParams.has('error_description') || 
+           (searchParams.has('access_token') && searchParams.has('refresh_token')) || 
+           searchParams.has('token_hash');
   };
 
-  // Check if this is a successful email verification
   useEffect(() => {
     const checkEmailVerification = async () => {
       if (isEmailVerificationRedirect()) {
         const searchParams = new URLSearchParams(location.search);
         
-        // Check for error first
         if (searchParams.has('error_description')) {
           toast({
             variant: "destructive",
@@ -101,16 +89,12 @@ const Auth = () => {
           return;
         }
         
-        // If we have access_token and refresh_token, it's a successful verification
         if (searchParams.has('access_token') && searchParams.has('refresh_token')) {
           setIsEmailVerified(true);
           
-          // Sign out the user if they're automatically signed in after verification
-          // so they can explicitly sign in and trigger the onboarding flow
           const { error } = await supabase.auth.signOut();
           if (error) console.error("Error signing out after verification:", error);
           
-          // Show toast message
           toast({
             title: "Email Verified",
             description: "Your email has been verified. Please sign in with your credentials.",
@@ -125,33 +109,32 @@ const Auth = () => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setEmailExistsError(null);
+    setShowVerifyEmail(false);
 
     try {
       if (isSignUp) {
         console.log("Signing up with email:", email);
-        // Sign up - just create the account, don't sign in yet
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              // Set default user metadata to ensure profile creation works
               account_type: 'personal'
             }
           }
         });
         
         if (error) {
-          // Check for email already in use error
           if (error.message.includes("already registered")) {
-            throw new Error("An account with this email already exists, please sign in instead.");
+            setEmailExistsError("An account with this email already exists, please sign in instead.");
+            return;
           }
           throw error;
         }
         
         console.log("Sign up successful, user created:", data?.user?.id);
         
-        // Show email verification message
         setShowVerifyEmail(true);
         
         toast({
@@ -159,7 +142,6 @@ const Auth = () => {
           description: "Please check your email to verify your account.",
         });
       } else {
-        // Sign in with verified credentials
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -168,8 +150,6 @@ const Auth = () => {
         
         console.log("Sign in successful, checking onboarding status...");
         
-        // We need to check if this is the first time the user is signing in
-        // First, get the user profile to see if they have completed onboarding
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('onboarding_completed')
@@ -178,23 +158,19 @@ const Auth = () => {
           
         if (profileError) {
           console.error("Error fetching profile:", profileError);
-          // If profile error, force show onboarding
           setShowOnboarding(true);
           return;
         }
         
         console.log("Profile data:", profileData);
         
-        // Check if onboarding is completed
         const hasCompletedOnboarding = profileData && profileData.onboarding_completed;
         
         if (!hasCompletedOnboarding) {
           console.log("User needs to complete onboarding");
-          // Show onboarding
           setShowOnboarding(true);
         } else {
           console.log("User has completed onboarding, checking pricing");
-          // Check if they've seen pricing
           const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
           
           if (!hasSeenPricing) {
@@ -218,58 +194,45 @@ const Auth = () => {
     }
   };
 
-  // Check if user is already authenticated on load and after verification
-  useEffect(() => {
-    const checkAuthAndNavigate = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        
-        if (session) {
-          // If this is a verification redirect, don't automatically redirect
-          if (isEmailVerificationRedirect()) {
-            console.log("Auth check: Email verification redirect detected");
-            return;
-          }
-          
-          // Check if they have completed onboarding
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', session.user.id)
-            .single();
-            
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            // Force show onboarding if we can't determine status
-            setShowOnboarding(true);
-            return;
-          }
-          
-          // If they've already completed onboarding, check pricing
-          if (profileData?.onboarding_completed) {
-            const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
-            
-            if (!hasSeenPricing) {
-              setShowPricing(true);
-            } else {
-              navigate("/dashboard");
-            }
-          } else {
-            // Ensure onboarding is shown if not completed
-            setShowOnboarding(true);
-          }
+  const checkAuthAndNavigate = async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      
+      if (session) {
+        if (isEmailVerificationRedirect()) {
+          console.log("Auth check: Email verification redirect detected");
+          return;
         }
-      } catch (error) {
-        console.error("Auth check error:", error);
+        
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          setShowOnboarding(true);
+          return;
+        }
+        
+        if (profileData?.onboarding_completed) {
+          const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
+          
+          if (!hasSeenPricing) {
+            setShowPricing(true);
+          } else {
+            navigate("/dashboard");
+          }
+        } else {
+          setShowOnboarding(true);
+        }
       }
-    };
-    
-    // Only check auth if not on email verification page
-    if (!isEmailVerified) {
-      checkAuthAndNavigate();
+    } catch (error) {
+      console.error("Auth check error:", error);
     }
-  }, [navigate, location, isEmailVerified]);
+  };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -324,7 +287,6 @@ const Auth = () => {
         description: "Your password has been updated successfully.",
       });
       
-      // Small delay before redirecting to let the user see the success message
       setTimeout(() => {
         navigate("/dashboard");
       }, 2000);
@@ -374,7 +336,6 @@ const Auth = () => {
   const handleOnboardingComplete = () => {
     console.log("Onboarding completed, now showing pricing");
     setShowOnboarding(false);
-    // Show pricing after onboarding
     setShowPricing(true);
   };
 
@@ -445,7 +406,6 @@ const Auth = () => {
     );
   }
 
-  // Email verification success message
   if (isEmailVerified) {
     return (
       <div className="min-h-screen bg-[#f3f3f3] flex items-center justify-center p-4">
@@ -464,8 +424,7 @@ const Auth = () => {
             className="w-full"
             onClick={() => {
               setIsEmailVerified(false);
-              setIsSignUp(false); // Ensure we're on sign in mode
-              // Clear any URL parameters
+              setIsSignUp(false);
               window.history.replaceState({}, document.title, "/auth");
             }}
           >
@@ -497,7 +456,16 @@ const Auth = () => {
             </p>
           </div>
 
-          {showVerifyEmail && (
+          {emailExistsError && (
+            <Alert className="mb-6 bg-amber-50 border-amber-200">
+              <AlertTitle className="text-amber-800">Email already exists</AlertTitle>
+              <AlertDescription className="text-amber-700">
+                {emailExistsError}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {showVerifyEmail && !emailExistsError && (
             <Alert className="mb-6 bg-blue-50 border-blue-200">
               <AlertTitle className="text-blue-800">Check your email!</AlertTitle>
               <AlertDescription className="text-blue-700">
@@ -659,7 +627,8 @@ const Auth = () => {
               <button
                 onClick={() => {
                   setIsSignUp(!isSignUp);
-                  setShowVerifyEmail(false); // Reset email verification alert when switching modes
+                  setShowVerifyEmail(false);
+                  setEmailExistsError(null);
                 }}
                 className="ml-1 text-[#0073FF] hover:underline"
               >
@@ -670,14 +639,12 @@ const Auth = () => {
         </div>
       </div>
 
-      {/* Onboarding Dialog - Now with enhanced fields */}
       <Onboarding 
         open={showOnboarding} 
         onOpenChange={setShowOnboarding}
         onComplete={handleOnboardingComplete}
       />
 
-      {/* Pricing Dialog */}
       <PricingDialog 
         open={showPricing}
         onOpenChange={setShowPricing}
