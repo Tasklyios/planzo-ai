@@ -31,7 +31,6 @@ interface ScheduledPost {
   status?: string;
 }
 
-// Map color names to actual hex values for display
 const colorMap: Record<string, string> = {
   red: "#ef4444",
   orange: "#f97316",
@@ -57,6 +56,10 @@ const CalendarPage = () => {
     const colors = ["red", "green", "blue", "yellow", "purple", "orange"];
     const index = Math.abs(id.charCodeAt(0) % colors.length);
     return colors[index];
+  };
+
+  const getColorValue = (color: string): string => {
+    return color.startsWith('#') ? color : colorMap[color] || '#3b82f6';
   };
 
   const fetchScheduledPosts = async () => {
@@ -237,10 +240,7 @@ const CalendarPage = () => {
                 selected={selectedDate}
                 onSelect={handleDateSelect}
                 className="rounded-md pointer-events-auto w-full h-full"
-                events={calendarEvents.map(event => ({
-                  ...event,
-                  color: event.color.startsWith('#') ? event.color : colorMap[event.color] || '#3b82f6'
-                }))}
+                events={calendarEvents}
                 onEventClick={handleEventClick}
               />
             </CardContent>
@@ -271,9 +271,7 @@ const CalendarPage = () => {
                       key={post.id} 
                       className="hover:shadow-md transition-shadow border-l-4" 
                       style={{ 
-                        borderLeftColor: post.color ? 
-                          (post.color.startsWith('#') ? post.color : colorMap[post.color] || '#3b82f6') : 
-                          '#3b82f6' 
+                        borderLeftColor: getColorValue(post.color || 'blue')
                       }}
                     >
                       <CardContent className="p-4">

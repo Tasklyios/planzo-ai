@@ -81,8 +81,9 @@ const AddToCalendarDialog = ({
             <Label htmlFor="color" className="text-sm font-medium">Color</Label>
             <div className="flex flex-wrap gap-2">
               {colorOptions.map((color) => (
-                <div 
+                <button 
                   key={color.value}
+                  type="button"
                   className={cn(
                     "w-8 h-8 rounded-full cursor-pointer border-2",
                     idea.color === color.value ? "border-primary" : "border-transparent"

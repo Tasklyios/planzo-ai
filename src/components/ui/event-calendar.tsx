@@ -24,6 +24,18 @@ export interface EventCalendarProps {
   [key: string]: any; // Allow any other props to be passed through
 }
 
+// Map color names to actual hex values for display
+const colorMap: Record<string, string> = {
+  red: "#ef4444",
+  orange: "#f97316",
+  yellow: "#eab308",
+  green: "#22c55e",
+  blue: "#3b82f6",
+  indigo: "#6366f1",
+  purple: "#a855f7",
+  pink: "#ec4899",
+};
+
 export function EventCalendar({
   className,
   events = [],
@@ -47,6 +59,12 @@ export function EventCalendar({
     
     return map;
   }, [events]);
+
+  // Get color value from either hex code or named color
+  const getColorValue = (color: string): string => {
+    if (color.startsWith('#')) return color;
+    return colorMap[color] || colorMap.blue;
+  };
 
   // Create a custom Day component to show events
   const CustomDay = React.useCallback(
@@ -79,7 +97,7 @@ export function EventCalendar({
               <div
                 key={event.id}
                 className="h-1.5 w-1.5 rounded-full cursor-pointer"
-                style={{ backgroundColor: event.color }}
+                style={{ backgroundColor: getColorValue(event.color) }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
