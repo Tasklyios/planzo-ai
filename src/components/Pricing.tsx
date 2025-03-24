@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Zap, ArrowDownToDot } from "lucide-react";
@@ -28,7 +29,7 @@ const Pricing = () => {
         body: { 
           tier: tierName,
           userId: session.user.id,
-          returnUrl: `${window.location.origin}/account`,
+          returnUrl: `${window.location.origin}/settings`,
           isYearly: isYearly
         }
       });

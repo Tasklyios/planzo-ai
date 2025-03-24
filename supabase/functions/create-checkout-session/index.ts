@@ -1,6 +1,6 @@
 
 // Follow this setup guide to integrate the Deno runtime into your application:
-// https://deno.com/manual/getting_started/installation
+// https://deno.land/manual/getting_started/installation
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';

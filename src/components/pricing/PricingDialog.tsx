@@ -40,7 +40,7 @@ const PricingDialog = ({ open, onOpenChange, onContinueFree }: PricingDialogProp
         body: { 
           tier: tierName,
           userId: session.user.id,
-          returnUrl: `${window.location.origin}/account`,
+          returnUrl: `${window.location.origin}/settings`,
           isYearly: isYearly
         }
       });

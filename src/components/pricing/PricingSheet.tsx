@@ -31,7 +31,7 @@ const PricingSheet = ({ trigger }: PricingSheetProps) => {
         body: { 
           tier: tierName,
           userId: session.user.id,
-          returnUrl: `${window.location.origin}/account`,
+          returnUrl: `${window.location.origin}/settings`,
           isYearly: isYearly
         }
       });
