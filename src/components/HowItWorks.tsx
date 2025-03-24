@@ -2,11 +2,8 @@
 import React from "react";
 import { Timeline } from "@/components/ui/timeline";
 import { CheckCircle, Sparkles, Calendar, PenSquare } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const HowItWorks = () => {
-  const isMobile = useIsMobile();
-  
   const timelineData = [
     {
       title: "Generate Ideas",
@@ -145,39 +142,7 @@ const HowItWorks = () => {
     },
   ];
 
-  // For mobile devices, we'll use a simplified version
-  if (isMobile) {
-    return (
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              How <span className="bg-gradient-to-r from-[#2582ff] to-[#2582ff]/80 bg-clip-text text-transparent">Planzo AI</span> Works
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Three simple steps to transform your content creation process
-            </p>
-          </div>
-          
-          <div className="space-y-12">
-            {timelineData.map((step, index) => (
-              <div key={index} className="border border-gray-100 rounded-xl p-6 shadow-sm">
-                <div className="flex items-center mb-4">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                    <div className="h-4 w-4 rounded-full bg-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">{step.title}</h3>
-                </div>
-                {step.content}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // For desktop, we use the Timeline component
+  // Use the Timeline component for both mobile and desktop
   return <Timeline data={timelineData} />;
 };
 
