@@ -14,15 +14,15 @@ const HowItWorks = () => {
           </p>
           <div className="mb-8">
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"></div>
               <span>Niche-specific suggestions based on trending topics</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"></div>
               <span>Viral hook ideas that capture attention in seconds</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base">
-              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"></div>
               <span>Customizable formats for different platforms</span>
             </div>
           </div>
@@ -39,15 +39,15 @@ const HowItWorks = () => {
           </p>
           <div className="mb-8">
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"></div>
               <span>Natural, conversational tone that connects with viewers</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"></div>
               <span>Optimized structure for maximum engagement</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base">
-              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"></div>
               <span>Customizable length and style to match your content</span>
             </div>
           </div>
@@ -64,15 +64,15 @@ const HowItWorks = () => {
           </p>
           <div className="mb-8">
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"></div>
               <span>Visual content calendar for easy scheduling</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base mb-2">
-              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"></div>
               <span>Publish reminders to keep you on track</span>
             </div>
             <div className="flex gap-2 items-center text-gray-700 dark:text-gray-300 text-sm md:text-base">
-              <div className="h-3 w-3 rounded-full bg-primary shrink-0"></div>
+              <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"></div>
               <span>Performance tracking to optimize your content strategy</span>
             </div>
           </div>
