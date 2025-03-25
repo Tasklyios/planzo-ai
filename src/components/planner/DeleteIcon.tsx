@@ -1,94 +1,66 @@
 
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
-interface DeleteIconProps {
+export interface DeleteIconProps {
   onDelete: () => void;
   title: string;
   description: string;
+  size?: "sm" | "md" | "lg"; // Make size optional with default value in component
 }
 
-export function DeleteIcon({ onDelete, title, description }: DeleteIconProps) {
+export function DeleteIcon({ 
+  onDelete, 
+  title, 
+  description, 
+  size = "md" // Default size if not provided
+}: DeleteIconProps) {
   const [open, setOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { toast } = useToast();
 
-  const handleDeleteClick = () => {
-    setOpen(true);
+  const handleDelete = () => {
+    onDelete();
+    setOpen(false);
   };
 
-  const handleConfirmDelete = async () => {
-    try {
-      setIsDeleting(true);
-      await onDelete();
-      setOpen(false);
-      toast({
-        title: "Deleted",
-        description: "The item has been deleted successfully.",
-      });
-    } catch (error: any) {
-      console.error("Error deleting:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete. Please try again.",
-      });
-    } finally {
-      setIsDeleting(false);
+  // Size-based styling
+  const getIconSize = () => {
+    switch(size) {
+      case "sm": return { buttonSize: "h-6 w-6", iconSize: "h-3 w-3" };
+      case "lg": return { buttonSize: "h-10 w-10", iconSize: "h-5 w-5" };
+      default: return { buttonSize: "h-8 w-8", iconSize: "h-4 w-4" };
     }
   };
 
-  return (
-    <>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleDeleteClick}
-        className="text-muted-foreground hover:text-destructive"
-      >
-        <Trash2 className="h-4 w-4" />
-        <span className="sr-only">Delete</span>
-      </Button>
+  const { buttonSize, iconSize } = getIconSize();
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex gap-2 sm:justify-end">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={isDeleting}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={isDeleting}
-              className={isDeleting ? "opacity-70 cursor-not-allowed" : ""}
-            >
-              {isDeleting ? (
-                <>
-                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" className={buttonSize}>
+          <Trash2 className={`${iconSize} text-red-500`} />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
