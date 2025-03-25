@@ -1,3 +1,4 @@
+
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
 import { Plus, ZoomIn, ZoomOut } from "lucide-react";
@@ -32,6 +33,7 @@ import * as z from "zod";
 
 interface PlannerItem extends GeneratedIdea {
   status: string;
+  is_on_calendar?: boolean;
 }
 
 interface PlannerColumnWithItems extends PlannerColumnType {
@@ -166,7 +168,8 @@ export default function ContentPlanner() {
           if (!acc[targetStatus]) acc[targetStatus] = [];
           acc[targetStatus].push({
             ...idea,
-            status: targetStatus
+            status: targetStatus,
+            is_on_calendar: idea.scheduled_for !== null
           } as PlannerItem);
           
           return acc;
@@ -306,7 +309,15 @@ export default function ContentPlanner() {
     if (type === 'task') {
       try {
         const ideaId = result.draggableId;
+        const sourceColumn = columns.find(col => col.id === source.droppableId);
+        const sourceItem = sourceColumn?.items.find(item => item.id === ideaId);
         
+        if (!sourceItem) return;
+        
+        // Check if the item is on the calendar
+        const isOnCalendar = sourceItem.scheduled_for !== null;
+        
+        // When moving to a new column, update the status while preserving calendar status
         const { error } = await supabase
           .from('video_ideas')
           .update({ 
@@ -327,6 +338,9 @@ export default function ContentPlanner() {
           const destItems = [...destColumn.items];
           const [removed] = sourceItems.splice(source.index, 1);
           removed.is_saved = true;
+          removed.status = destination.droppableId;
+          // Preserve calendar state
+          removed.is_on_calendar = isOnCalendar;
           destItems.splice(destination.index, 0, removed);
 
           setColumns(columns.map(col => {
@@ -638,6 +652,7 @@ export default function ContentPlanner() {
                       color={item.color}
                       onEdit={fetchColumnsAndIdeas}
                       onDelete={handleIdeaDeleted}
+                      isOnCalendar={item.is_on_calendar}
                     />
                   ))}
                 </PlannerColumn>

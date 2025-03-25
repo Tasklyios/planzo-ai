@@ -1,75 +1,78 @@
 
 import { Draggable } from "react-beautiful-dnd";
-import { Pencil } from "lucide-react";
+import { Pencil, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import EditIdea from "@/components/EditIdea";
-import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { getEmojiForIdea } from "@/utils/emojiUtils";
 import { DeleteIcon } from "./DeleteIcon";
+import EditIdea from "@/components/EditIdea";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PlannerCardProps {
   id: string;
   index: number;
   title: string;
-  description: string;
+  description?: string;
   color?: string;
-  category?: string;
-  emoji?: string;
   onEdit?: () => void;
   onDelete?: () => void;
+  isOnCalendar?: boolean;
 }
 
-// Available colors with their corresponding Tailwind classes
-const colorClasses: { [key: string]: string } = {
-  red: "border-red-500",
-  orange: "border-orange-500",
-  yellow: "border-yellow-500",
-  green: "border-green-500",
-  blue: "border-blue-500",
-  indigo: "border-indigo-500",
-  purple: "border-purple-500",
-  pink: "border-pink-500"
-};
+export function PlannerCard({ 
+  id, 
+  index, 
+  title,
+  description,
+  color = "blue",
+  onEdit,
+  onDelete,
+  isOnCalendar = false
+}: PlannerCardProps) {
+  const { toast } = useToast();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-export function PlannerCard({ id, index, title, description, color = "blue", category = "General", emoji, onEdit, onDelete }: PlannerCardProps) {
-  const [showEdit, setShowEdit] = useState(false);
-
-  const handleEditClose = () => {
-    setShowEdit(false);
-    if (onEdit) {
-      onEdit();
-    }
+  const getColorValue = (color: string): string => {
+    const colorMap: Record<string, string> = {
+      red: "#ef4444",
+      orange: "#f97316",
+      yellow: "#eab308",
+      green: "#22c55e",
+      blue: "#3b82f6",
+      indigo: "#6366f1",
+      purple: "#a855f7",
+      pink: "#ec4899",
+    };
+    
+    return color.startsWith('#') ? color : colorMap[color] || colorMap.blue;
   };
 
   const handleDeleteIdea = async () => {
     try {
-      // Mark the idea as not saved
       const { error } = await supabase
-        .from('video_ideas')
+        .from("video_ideas")
         .update({ is_saved: false })
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
       
-      // Notify parent component if callback provided
       if (onDelete) {
         onDelete();
       }
-    } catch (error) {
+      
+      toast({
+        title: "Success",
+        description: "Idea removed from planner",
+      });
+    } catch (error: any) {
       console.error('Error deleting idea:', error);
-      throw error;
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete idea: " + error.message,
+      });
     }
   };
-
-  const borderColorClass = colorClasses[color || 'blue'] || colorClasses.blue;
-  
-  // Use provided emoji or generate one based on title and category
-  const ideaEmoji = emoji || getEmojiForIdea(title, category);
-  
-  // Combine emoji with title
-  const displayTitle = `${ideaEmoji} ${title}`;
 
   return (
     <>
@@ -79,37 +82,55 @@ export function PlannerCard({ id, index, title, description, color = "blue", cat
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
-            className={cn(
-              "bg-background rounded-md p-3 shadow-sm border relative group",
-              "border-l-4",
-              borderColorClass,
-              snapshot.isDragging ? "shadow-md opacity-90" : ""
-            )}
+            className={`bg-card border rounded-md p-3 mb-2 hover:shadow-md transition-shadow ${
+              snapshot.isDragging ? "shadow-lg opacity-90" : ""
+            }`}
             style={{
               ...provided.draggableProps.style,
-              width: "100%",
-              cursor: snapshot.isDragging ? "grabbing" : "grab"
+              borderLeftWidth: '4px',
+              borderLeftColor: getColorValue(color),
             }}
           >
-            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-              <DeleteIcon
-                onDelete={handleDeleteIdea}
-                title="Delete Idea"
-                description={`Are you sure you want to delete "${title}"? This will remove it from your content planner.`}
-              />
-              <Button variant="ghost" size="sm" onClick={() => setShowEdit(true)}>
-                <Pencil className="h-4 w-4" />
-              </Button>
+            <div className="flex justify-between">
+              <h3 className="text-sm font-medium line-clamp-2">{title}</h3>
+              <div className="flex items-center space-x-1">
+                {isOnCalendar && (
+                  <span className="text-blue-500" title="Also on calendar">
+                    <Calendar className="h-3.5 w-3.5" />
+                  </span>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setEditDialogOpen(true)}
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+                <DeleteIcon 
+                  size="sm"
+                  onDelete={handleDeleteIdea}
+                  title="Remove from Planner"
+                  description="This will remove the idea from your planner. You can always add it again later."
+                />
+              </div>
             </div>
-            <h4 className="font-medium mb-1 pr-8">{displayTitle}</h4>
-            <p className="text-sm text-muted-foreground">{description}</p>
+            {description && (
+              <p className="text-xs text-muted-foreground line-clamp-3 mt-1">
+                {description}
+              </p>
+            )}
           </div>
         )}
       </Draggable>
-      {showEdit && (
-        <EditIdea 
-          ideaId={id} 
-          onClose={handleEditClose}
+
+      {editDialogOpen && (
+        <EditIdea
+          ideaId={id}
+          onClose={() => {
+            setEditDialogOpen(false);
+            if (onEdit) onEdit();
+          }}
         />
       )}
     </>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -103,8 +104,7 @@ const CalendarPage = () => {
           status
         `)
         .eq("user_id", sessionData.session.user.id)
-        .not("scheduled_for", "is", null)
-        .eq("status", "calendar");
+        .not("scheduled_for", "is", null);
 
       if (scheduledError) {
         console.error("Error fetching scheduled posts:", scheduledError);
@@ -192,7 +192,9 @@ const CalendarPage = () => {
     try {
       const { error } = await supabase
         .from("video_ideas")
-        .update({ status: "draft" })
+        .update({ 
+          scheduled_for: null
+        })
         .eq("id", ideaId);
       
       if (error) throw error;
