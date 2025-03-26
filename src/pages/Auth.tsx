@@ -190,16 +190,9 @@ const Auth = () => {
           console.log("User needs to complete onboarding");
           setShowOnboarding(true);
         } else {
-          console.log("User has completed onboarding, checking pricing");
-          const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
-          
-          if (!hasSeenPricing) {
-            console.log("User needs to see pricing");
-            setShowPricing(true);
-          } else {
-            console.log("User has seen pricing, redirecting to dashboard");
-            navigate("/dashboard");
-          }
+          localStorage.setItem('has_seen_pricing', 'true');
+          console.log("User has completed onboarding, redirecting to dashboard");
+          navigate("/dashboard");
         }
       }
     } catch (error: any) {
@@ -238,13 +231,8 @@ const Auth = () => {
         }
         
         if (profileData?.onboarding_completed) {
-          const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
-          
-          if (!hasSeenPricing) {
-            setShowPricing(true);
-          } else {
-            navigate("/dashboard");
-          }
+          localStorage.setItem('has_seen_pricing', 'true');
+          navigate("/dashboard");
         } else {
           setShowOnboarding(true);
         }
@@ -354,9 +342,10 @@ const Auth = () => {
   };
 
   const handleOnboardingComplete = () => {
-    console.log("Onboarding completed, now showing pricing");
+    console.log("Onboarding completed, redirecting to dashboard");
     setShowOnboarding(false);
-    setShowPricing(true);
+    localStorage.setItem('has_seen_pricing', 'true');
+    navigate("/dashboard");
   };
 
   if (isResetPassword) {
@@ -665,11 +654,13 @@ const Auth = () => {
         onComplete={handleOnboardingComplete}
       />
 
-      <PricingDialog 
-        open={showPricing}
-        onOpenChange={setShowPricing}
-        onContinueFree={handleContinueFree}
-      />
+      {showPricing && (
+        <PricingDialog 
+          open={showPricing}
+          onOpenChange={setShowPricing}
+          onContinueFree={handleContinueFree}
+        />
+      )}
     </>
   );
 };

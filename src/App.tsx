@@ -49,6 +49,9 @@ function App() {
         if (!error && profile && !profile.onboarding_completed) {
           setShowOnboarding(true);
         }
+        
+        // Set this to true to prevent pricing dialog from showing unexpectedly
+        localStorage.setItem('has_seen_pricing', 'true');
       }
       
       setLoadingProfile(false);
@@ -69,6 +72,9 @@ function App() {
             
           if (!error && profile && !profile.onboarding_completed) {
             setShowOnboarding(true);
+          } else {
+            // Set this to true to prevent pricing dialog from showing unexpectedly
+            localStorage.setItem('has_seen_pricing', 'true');
           }
         };
         
@@ -95,9 +101,8 @@ function App() {
   const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
     
-    const hasSeenPricing = localStorage.getItem('has_seen_pricing') === 'true';
-    if (!hasSeenPricing) {
-    }
+    // Set this to true to prevent pricing dialog from showing unexpectedly
+    localStorage.setItem('has_seen_pricing', 'true');
   };
 
   if (loadingProfile) {
