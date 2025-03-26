@@ -4,7 +4,7 @@ import { Calendar as DayPickerCalendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { DayProps } from "react-day-picker";
 import { DateRange } from "react-day-picker";
-import { format, isToday } from "date-fns";
+import { format, isToday, isSameDay } from "date-fns";
 
 export interface CalendarEvent {
   id: string;
@@ -50,7 +50,8 @@ export function EventCalendar({
     const map = new Map<string, CalendarEvent[]>();
     
     events.forEach((event) => {
-      const dateKey = event.date.toISOString().split('T')[0];
+      // Use 'yyyy-MM-dd' format for the date keys to ensure accurate matching
+      const dateKey = format(event.date, 'yyyy-MM-dd');
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
       }
@@ -70,13 +71,14 @@ export function EventCalendar({
   const CustomDay = React.useCallback(
     (dayProps: DayProps) => {
       const { date, displayMonth, ...rest } = dayProps;
-      const dateKey = date.toISOString().split('T')[0];
+      // Use a consistent date format for lookup
+      const dateKey = format(date, 'yyyy-MM-dd');
       const dayEvents = eventsByDate.get(dateKey) || [];
       const isCurrentDay = isToday(date);
       
       // Determine if this day is selected (for single mode)
       const isSingleSelected = mode === "single" && selected instanceof Date && 
-        format(date, "yyyy-MM-dd") === format(selected, "yyyy-MM-dd");
+        isSameDay(date, selected);
 
       // Handle click on the entire day cell
       const handleDayClick = (e: React.MouseEvent) => {
@@ -91,8 +93,20 @@ export function EventCalendar({
           className="relative flex flex-col items-center w-full h-full cursor-pointer" 
           onClick={handleDayClick}
         >
-          {/* Fixed height container for event indicators - positioned ABOVE the date */}
-          <div className="flex justify-center gap-1 h-2 mb-1 mt-1">
+          {/* Display the date with appropriate highlighting */}
+          <div 
+            {...rest} 
+            className={cn(
+              "flex items-center justify-center w-7 h-7 rounded-full transition-colors", // Apple-like rounded circle
+              isCurrentDay && !isSingleSelected && "border border-blue-500 font-semibold text-blue-600",
+              isSingleSelected && "bg-blue-500 text-white hover:bg-blue-600"
+            )}
+          >
+            {date.getDate()}
+          </div>
+          
+          {/* Fixed height container for event indicators - positioned BELOW the date */}
+          <div className="flex justify-center gap-1 h-2 mt-1 mb-1">
             {dayEvents.length > 0 && dayEvents.slice(0, 3).map((event) => (
               <div
                 key={event.id}
@@ -113,18 +127,6 @@ export function EventCalendar({
                 +{dayEvents.length - 3}
               </div>
             )}
-          </div>
-          
-          {/* Display the date with appropriate highlighting */}
-          <div 
-            {...rest} 
-            className={cn(
-              "flex items-center justify-center w-7 h-7 rounded-full transition-colors", // Apple-like rounded circle
-              isCurrentDay && !isSingleSelected && "border border-blue-500 font-semibold text-blue-600",
-              isSingleSelected && "bg-blue-500 text-white hover:bg-blue-600"
-            )}
-          >
-            {date.getDate()}
           </div>
         </div>
       );

@@ -38,7 +38,7 @@ function Calendar({
         cell: "h-9 w-full text-center text-sm p-0 relative focus-within:relative focus-within:z-20 flex-1 cursor-pointer",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-full p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground"
+          "h-auto w-full p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground"
         ),
         day_range_end: "day-range-end",
         day_selected:
