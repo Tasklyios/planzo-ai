@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
+import { format, isToday, isFuture } from "date-fns";
 import EditIdea from "@/components/EditIdea";
 
 interface IdeaType {
@@ -118,11 +119,19 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
+      // Get today's date at the start of the day
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Format the date for the Supabase query
+      const todayISOString = today.toISOString();
+      
       const { data: scheduled, error: scheduledError } = await supabase
         .from("video_ideas")
         .select("id, title, platform, scheduled_for, color, emoji")
         .eq("status", "calendar")
         .not("scheduled_for", "is", null)
+        .gte("scheduled_for", todayISOString) // Only get ideas scheduled for today or in the future
         .order("scheduled_for", { ascending: true });
 
       if (scheduledError) throw scheduledError;
