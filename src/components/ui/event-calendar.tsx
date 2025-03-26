@@ -93,20 +93,8 @@ export function EventCalendar({
           className="relative flex flex-col items-center w-full h-full cursor-pointer" 
           onClick={handleDayClick}
         >
-          {/* Display the date with appropriate highlighting */}
-          <div 
-            {...rest} 
-            className={cn(
-              "flex items-center justify-center w-7 h-7 rounded-full transition-colors", // Apple-like rounded circle
-              isCurrentDay && !isSingleSelected && "border border-blue-500 font-semibold text-blue-600",
-              isSingleSelected && "bg-blue-500 text-white hover:bg-blue-600"
-            )}
-          >
-            {date.getDate()}
-          </div>
-          
-          {/* Fixed height container for event indicators - positioned BELOW the date */}
-          <div className="flex justify-center gap-1 h-2 mt-1 mb-1">
+          {/* Event indicators - positioned ABOVE the date */}
+          <div className="flex justify-center gap-1 h-2 mb-1">
             {dayEvents.length > 0 && dayEvents.slice(0, 3).map((event) => (
               <div
                 key={event.id}
@@ -127,6 +115,18 @@ export function EventCalendar({
                 +{dayEvents.length - 3}
               </div>
             )}
+          </div>
+          
+          {/* Display the date with appropriate highlighting */}
+          <div 
+            {...rest} 
+            className={cn(
+              "flex items-center justify-center w-7 h-7 rounded-full transition-colors", // Apple-like rounded circle
+              isCurrentDay && !isSingleSelected && "border border-blue-500 font-semibold text-blue-600",
+              isSingleSelected && "bg-blue-500 text-white hover:bg-blue-600"
+            )}
+          >
+            {date.getDate()}
           </div>
         </div>
       );
