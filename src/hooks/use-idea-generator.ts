@@ -301,8 +301,7 @@ export const useIdeaGenerator = () => {
         body: { action: 'ideas' },
         headers: {
           Authorization: authHeader
-        },
-        signal: abortController.signal
+        }
       });
 
       console.log("Usage check response:", checkResponse);
@@ -378,8 +377,7 @@ export const useIdeaGenerator = () => {
         },
         headers: {
           Authorization: authHeader
-        },
-        signal: abortController.signal
+        }
       });
 
       clearTimeout(timeoutId);

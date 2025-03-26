@@ -8,6 +8,7 @@ import './index.css'
 declare global {
   interface Window {
     LOVABLE_BADGE_ENABLED: boolean;
+    toast?: any; // Add toast to the Window interface
   }
 }
 
