@@ -66,6 +66,11 @@ const Auth = () => {
     if (type === "recovery") {
       setIsResetPassword(true);
     }
+    
+    if (query.has('access_token') && type === "recovery") {
+      console.log("Password reset flow detected with token");
+      setIsResetPassword(true);
+    }
   }, [location]);
 
   const isEmailVerificationRedirect = () => {
@@ -105,6 +110,21 @@ const Auth = () => {
     
     checkEmailVerification();
   }, [location, toast]);
+
+  useEffect(() => {
+    const handlePasswordReset = async () => {
+      if (isResetPassword) {
+        console.log("Checking for session in password reset flow");
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          console.log("User is authenticated in reset password flow");
+        }
+      }
+    };
+    
+    handlePasswordReset();
+  }, [isResetPassword]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
