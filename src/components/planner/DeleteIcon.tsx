@@ -18,13 +18,15 @@ interface DeleteIconProps {
   title: string;
   description: string;
   isRemoveFromCalendar?: boolean;
+  size?: string; // Add the size prop
 }
 
 export function DeleteIcon({ 
   onDelete, 
   title, 
   description, 
-  isRemoveFromCalendar = false 
+  isRemoveFromCalendar = false,
+  size = "icon" // Default value for the size prop
 }: DeleteIconProps) {
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -61,7 +63,7 @@ export function DeleteIcon({
     <>
       <Button
         variant="ghost"
-        size="icon"
+        size={size as any} // Use the size prop
         onClick={handleDeleteClick}
         className="text-muted-foreground hover:text-destructive"
       >

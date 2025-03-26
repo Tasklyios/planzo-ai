@@ -35,13 +35,43 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error, resetError
   );
 }
 
-// Add global error handler
+// Enhanced global error handler with more details
 window.addEventListener('unhandledrejection', event => {
   console.error('Unhandled promise rejection:', event.reason);
+  
+  // Try to log more details if available
+  if (event.reason && event.reason.stack) {
+    console.error('Stack trace:', event.reason.stack);
+  }
+  
+  // Notify the user about the error if it's critical
+  if (event.reason && event.reason.message && event.reason.message.includes("network") || 
+      event.reason && event.reason.message && event.reason.message.includes("fetch")) {
+    // Only show a toast for network-related errors
+    try {
+      // Try to use the toast if available
+      const toast = window.toast;
+      if (typeof toast === 'function') {
+        toast({
+          title: "Network Error",
+          description: "Please check your internet connection and try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (e) {
+      // If toast is not available, do nothing
+    }
+  }
 });
 
 createRoot(document.getElementById("root")!).render(
-  <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.href = '/'}>
+  <ErrorBoundary 
+    FallbackComponent={ErrorFallback} 
+    onReset={() => window.location.href = '/'}
+    onError={(error) => {
+      console.error("React Error Boundary caught an error:", error);
+    }}
+  >
     <App />
   </ErrorBoundary>
 );
