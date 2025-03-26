@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import TrustBadge from "@/components/TrustBadge";
 import { AnimatedTextSwitcher } from "@/components/ui/animated-text-switcher";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
+import VideoDialog from "@/components/VideoDialog";
 
 const Hero = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [showVideo, setShowVideo] = useState(false);
   
   // Define the use cases for animation
   const useCases = [
@@ -77,6 +80,7 @@ const Hero = () => {
             <Button 
               variant="outline" 
               className="border-gray-300 hover:bg-gray-50 text-gray-700 px-8 py-6 text-lg rounded-full w-[90%] mx-auto sm:w-auto"
+              onClick={() => setShowVideo(true)}
             >
               Watch Demo
             </Button>
@@ -96,6 +100,13 @@ const Hero = () => {
           </div>
         </div>
       </div>
+      
+      {/* Video Dialog */}
+      <VideoDialog 
+        videoId="UhQVgyIMh2Q" 
+        isOpen={showVideo} 
+        onOpenChange={setShowVideo} 
+      />
     </section>
   );
 };
