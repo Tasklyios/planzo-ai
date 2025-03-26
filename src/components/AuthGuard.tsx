@@ -15,10 +15,26 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Function to check if the current URL has password reset parameters
-  const isPasswordResetFlow = () => {
+  // Function to check if the current URL has authentication flow parameters
+  const isAuthFlow = () => {
     const searchParams = new URLSearchParams(location.search);
-    return searchParams.has('type') && searchParams.get('type') === 'recovery';
+    
+    // Check for password recovery flow
+    if (searchParams.has('type') && searchParams.get('type') === 'recovery') {
+      return true;
+    }
+    
+    // Check for email verification flow (has token_hash or error_description)
+    if (searchParams.has('token_hash') || searchParams.has('error_description')) {
+      return true;
+    }
+    
+    // Check for other auth flows that might have access_token
+    if (searchParams.has('access_token')) {
+      return true;
+    }
+    
+    return false;
   };
 
   useEffect(() => {
@@ -32,8 +48,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           console.error("Authentication check error:", error);
           setIsAuthenticated(false);
           
-          // Don't redirect if this is a password reset flow
-          if (!isPasswordResetFlow()) {
+          // Don't redirect if this is an auth flow (password reset, verification, etc.)
+          if (!isAuthFlow()) {
             navigate("/auth", { state: { from: location.pathname } });
           }
           return;
@@ -44,8 +60,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           setIsAuthenticated(false);
           localStorage.clear(); // Clear all localStorage on session check failure
           
-          // Don't redirect if this is a password reset flow
-          if (!isPasswordResetFlow()) {
+          // Don't redirect if this is an auth flow
+          if (!isAuthFlow()) {
             navigate("/auth", { state: { from: location.pathname } });
           }
         } else {
@@ -56,8 +72,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         console.error("Error checking authentication:", error);
         setIsAuthenticated(false);
         
-        // Don't redirect if this is a password reset flow
-        if (!isPasswordResetFlow()) {
+        // Don't redirect if this is an auth flow
+        if (!isAuthFlow()) {
           navigate("/auth", { state: { from: location.pathname } });
         }
       } finally {
@@ -82,20 +98,14 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         setIsAuthenticated(true);
         
         // Skip redirect for verification and password reset flows, otherwise redirect to dashboard
-        const isEmailVerification = location.pathname === '/auth' && 
-                                  (location.search.includes('access_token') || 
-                                    location.search.includes('error_description') ||
-                                    location.search.includes('token_hash'));
-        
-        const isPasswordReset = isPasswordResetFlow();
-        
-        if (!isEmailVerification && !isPasswordReset) {
+        if (!isAuthFlow()) {
           const currentPath = location.pathname;
           if (currentPath === "/" || currentPath === "/auth") {
             navigate("/dashboard");
           }
         }
       } else if (event === "PASSWORD_RECOVERY") {
+        console.log("Password recovery event detected");
         // Make sure we show the reset password form
         navigate("/auth?type=recovery");
       }
@@ -107,8 +117,9 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     };
   }, [navigate, location]);
 
-  // For password reset flow, we need to return children without authentication
-  if (isPasswordResetFlow() && location.pathname === "/auth") {
+  // For auth flows (password reset, verification), we need to return children without authentication
+  if (isAuthFlow() && location.pathname === "/auth") {
+    console.log("Auth flow detected, bypassing authentication check");
     return <>{children}</>;
   }
 

@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,9 +117,10 @@ function App() {
               path="/" 
               element={isAuthenticated ? <Navigate to="/dashboard" /> : <Index />} 
             />
+            {/* Auth route doesn't need AuthGuard to prevent circular dependencies */}
             <Route 
               path="/auth" 
-              element={isAuthenticated ? <Navigate to="/dashboard" /> : <Auth />} 
+              element={<Auth />} 
             />
             <Route 
               path="/privacy-policy" 
