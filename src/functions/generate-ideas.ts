@@ -109,99 +109,174 @@ Generate ${numIdeas || 5} viral video ideas for ${platform || 'social media'} wi
 
     console.log("Sending prompt to OpenAI:", prompt);
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', // Using the most cost-effective model
-        messages: [
-          { role: 'system', content: 'You are a social media content strategist who helps creators make viral content.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000, // Capping the output token length
-      }),
-    });
+    // Add a timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("OpenAI API error:", errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
-    }
-
-    const data = await response.json();
-    console.log("Received response from OpenAI");
-    
-    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
-      console.error("Invalid response format from OpenAI:", data);
-      throw new Error("Invalid response format from OpenAI");
-    }
-    
     try {
-      const ideas = JSON.parse(data.choices[0].message.content);
-      
-      if (!ideas.ideas || !Array.isArray(ideas.ideas)) {
-        console.error("Invalid ideas format:", ideas);
-        throw new Error("Invalid ideas format in OpenAI response");
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini', // Using the most cost-effective model
+          messages: [
+            { role: 'system', content: 'You are a social media content strategist who helps creators make viral content.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 1000, // Capping the output token length
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("OpenAI API error:", errorData);
+        throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
       }
 
-      // Use a synchronous approach for assigning emojis
-      ideas.ideas.forEach((idea: any) => {
-        // If emoji isn't provided, generate one synchronously
-        if (!idea.emoji) {
-          const getEmojiForIdea = (title: string, category: string): string => {
-            // Simple synchronous emoji selection based on content
-            const topicKeywords: Record<string, string> = {
-              'tutorial': '📝',
-              'how-to': '📝',
-              'review': '⭐️',
-              'food': '🍔',
-              'fitness': '💪',
-              'tech': '📱',
-              'beauty': '💄',
-              'fashion': '👗',
-              'travel': '✈️',
-              'gaming': '🎮',
-              'music': '🎵',
-              'business': '💼',
-              'product': '📦',
-              'showcase': '🎁',
-              'testimonial': '👍',
-              'unboxing': '📦',
-              'service': '🛠️',
-              'leadership': '👑'
+      const data = await response.json();
+      console.log("Received response from OpenAI");
+      
+      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        console.error("Invalid response format from OpenAI:", data);
+        throw new Error("Invalid response format from OpenAI");
+      }
+      
+      try {
+        const ideas = JSON.parse(data.choices[0].message.content);
+        
+        if (!ideas.ideas || !Array.isArray(ideas.ideas)) {
+          console.error("Invalid ideas format:", ideas);
+          throw new Error("Invalid ideas format in OpenAI response");
+        }
+
+        // Generate fallback ideas if we don't have enough
+        if (ideas.ideas.length < (numIdeas || 5)) {
+          const missingCount = (numIdeas || 5) - ideas.ideas.length;
+          console.log(`Not enough ideas generated. Got ${ideas.ideas.length}, needed ${numIdeas || 5}. Generating ${missingCount} fallback ideas.`);
+          
+          // Generate some basic fallback ideas
+          for (let i = 0; i < missingCount; i++) {
+            ideas.ideas.push({
+              title: `${niche} Tips for ${audience} - Part ${i + 1}`,
+              description: `A helpful guide about ${niche} specifically tailored for ${audience}.`,
+              category: "Tips & Guides",
+              tags: [niche.toLowerCase().replace(/\s+/g, ''), "tips", "guide"],
+              hook_text: `Do you want to improve your ${niche.toLowerCase()} results? Here's a quick tip.`,
+              hook_category: "question",
+              emoji: "💡"
+            });
+          }
+        }
+
+        // Use a synchronous approach for assigning emojis
+        ideas.ideas.forEach((idea: any) => {
+          // If emoji isn't provided, generate one synchronously
+          if (!idea.emoji) {
+            const getEmojiForIdea = (title: string, category: string): string => {
+              // Simple synchronous emoji selection based on content
+              const topicKeywords: Record<string, string> = {
+                'tutorial': '📝',
+                'how-to': '📝',
+                'review': '⭐️',
+                'food': '🍔',
+                'fitness': '💪',
+                'tech': '📱',
+                'beauty': '💄',
+                'fashion': '👗',
+                'travel': '✈️',
+                'gaming': '🎮',
+                'music': '🎵',
+                'business': '💼',
+                'product': '📦',
+                'showcase': '🎁',
+                'testimonial': '👍',
+                'unboxing': '📦',
+                'service': '🛠️',
+                'leadership': '👑'
+              };
+              
+              const searchText = (title + ' ' + category).toLowerCase();
+              
+              for (const [keyword, emoji] of Object.entries(topicKeywords)) {
+                if (searchText.includes(keyword.toLowerCase())) {
+                  return emoji;
+                }
+              }
+              
+              return '🍎'; // Default emoji
             };
             
-            const searchText = (title + ' ' + category).toLowerCase();
-            
-            for (const [keyword, emoji] of Object.entries(topicKeywords)) {
-              if (searchText.includes(keyword.toLowerCase())) {
-                return emoji;
-              }
-            }
-            
-            return '🍎'; // Default emoji
-          };
-          
-          idea.emoji = getEmojiForIdea(idea.title, idea.category);
-        }
-      });
+            idea.emoji = getEmojiForIdea(idea.title, idea.category);
+          }
+        });
 
-      console.log("Processed ideas successfully, returning response");
-      return new Response(JSON.stringify(ideas), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } catch (parseError) {
-      console.error("Error parsing OpenAI response:", parseError, "Raw content:", data.choices[0].message.content);
-      throw new Error(`Error parsing OpenAI response: ${parseError.message}`);
+        console.log("Processed ideas successfully, returning response");
+        return new Response(JSON.stringify(ideas), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (parseError) {
+        console.error("Error parsing OpenAI response:", parseError, "Raw content:", data.choices[0].message.content);
+        
+        // Return a fallback response with generic ideas
+        const fallbackIdeas = {
+          ideas: Array(numIdeas || 5).fill(0).map((_, i) => ({
+            title: `${niche} Tips for ${audience} - Part ${i + 1}`,
+            description: `A helpful guide about ${niche} specifically tailored for ${audience}.`,
+            category: "Tips & Guides",
+            tags: [niche.toLowerCase().replace(/\s+/g, ''), "tips", "guide"],
+            hook_text: `Do you want to improve your ${niche.toLowerCase()} results? Here's a quick tip.`,
+            hook_category: "question",
+            emoji: "💡"
+          }))
+        };
+        
+        console.log("Returning fallback ideas due to parse error");
+        return new Response(JSON.stringify(fallbackIdeas), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.error("Request timed out after 30 seconds");
+        throw new Error("Request timed out. Please try again.");
+      }
+      throw fetchError;
     }
   } catch (error) {
     console.error('Error in generate-ideas function:', error);
-    return new Response(JSON.stringify({ error: error.message || "An unknown error occurred" }), {
-      status: 500,
+    
+    // Create fallback ideas for comprehensive error handling
+    const fallbackIdeas = {
+      ideas: Array(5).fill(0).map((_, i) => ({
+        title: `Idea ${i + 1}`,
+        description: "Sorry, we couldn't generate custom ideas right now. Please try again later.",
+        category: "General",
+        tags: ["content"],
+        hook_text: "",
+        hook_category: "",
+        emoji: "⚠️"
+      }))
+    };
+    
+    // If it's a critical error, return the error
+    if (error.message.includes("API key") || error.message.includes("authorization")) {
+      return new Response(JSON.stringify({ error: error.message || "An authorization error occurred" }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // For non-critical errors, return fallback ideas
+    console.log("Returning fallback ideas due to error");
+    return new Response(JSON.stringify(fallbackIdeas), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

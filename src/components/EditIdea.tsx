@@ -160,26 +160,62 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       }
 
       const userId = sessionData.session.user.id;
+      const currentPath = window.location.pathname;
+      const isCalendarPage = currentPath === "/calendar";
+      const isPlannerPage = currentPath === "/content-planner" || currentPath === "/planner";
       
-      const { error } = await supabase
-        .from("video_ideas")
-        .update({ 
-          scheduled_for: null,
-          is_saved: window.location.pathname !== "/calendar",
-          user_id: userId
-        })
-        .eq("id", idea.id);
+      if (isCalendarPage) {
+        const { error } = await supabase
+          .from("video_ideas")
+          .update({ 
+            scheduled_for: null,
+            is_saved: true,
+            user_id: userId
+          })
+          .eq("id", idea.id);
 
-      if (error) {
-        console.error("Delete error:", error);
-        throw error;
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
+      } 
+      else if (isPlannerPage) {
+        const { error } = await supabase
+          .from("video_ideas")
+          .update({ 
+            status: 'ideas',
+            is_saved: true,
+            user_id: userId
+          })
+          .eq("id", idea.id);
+
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
+      }
+      else {
+        const { error } = await supabase
+          .from("video_ideas")
+          .update({ 
+            is_saved: false,
+            user_id: userId
+          })
+          .eq("id", idea.id);
+
+        if (error) {
+          console.error("Delete error:", error);
+          throw error;
+        }
       }
 
       toast({
         title: "Success",
-        description: window.location.pathname === "/calendar" 
+        description: isCalendarPage 
           ? "Idea removed from calendar" 
-          : "Idea deleted successfully",
+          : isPlannerPage
+            ? "Idea removed from planner"
+            : "Idea deleted successfully",
       });
       onClose();
     } catch (error: any) {
@@ -241,12 +277,31 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       }
 
       const userId = sessionData.session.user.id;
+      const currentPath = window.location.pathname;
+      const isGeneratorPage = currentPath === "/generator" || currentPath === "/idea-generator";
+      const isPlannerPage = currentPath === "/content-planner" || currentPath === "/planner";
+      const isCalendarPage = currentPath === "/calendar";
       
-      const isGeneratorPage = window.location.pathname === "/generator" || window.location.pathname === "/idea-generator";
+      let newStatus = idea.status || 'generated';
+      let newSavedStatus = idea.is_saved || isGeneratorPage;
       
-      const newSavedStatus = idea.is_saved || isGeneratorPage;
+      if (isPlannerPage && idea.scheduled_for) {
+        newStatus = idea.status || 'planning';
+        newSavedStatus = true;
+      } else if (isCalendarPage && ['planning', 'creation', 'review', 'approved'].includes(idea.status || '')) {
+        newStatus = idea.status;
+        newSavedStatus = true;
+      } else if (isCalendarPage) {
+        newStatus = 'calendar';
+        newSavedStatus = true;
+      } else if (isPlannerPage) {
+        newSavedStatus = true;
+      } else if (isGeneratorPage) {
+        newSavedStatus = true;
+        newStatus = 'ideas';
+      }
       
-      console.log(`Current path: ${window.location.pathname}, Setting is_saved to: ${newSavedStatus}`);
+      console.log(`Current path: ${currentPath}, Setting status to: ${newStatus}, is_saved to: ${newSavedStatus}`);
       
       const { error } = await supabase
         .from("video_ideas")
@@ -262,7 +317,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           hook_category: idea.hook_category,
           scheduled_for: idea.scheduled_for,
           is_saved: newSavedStatus,
-          status: idea.status || (newSavedStatus ? "ideas" : "generated"),
+          status: newStatus,
           user_id: userId,
           emoji: idea.emoji
         })
@@ -573,4 +628,3 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
 };
 
 export default EditIdea;
-

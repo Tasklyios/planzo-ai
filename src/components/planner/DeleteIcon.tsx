@@ -17,9 +17,15 @@ interface DeleteIconProps {
   onDelete: () => void;
   title: string;
   description: string;
+  isRemoveFromCalendar?: boolean;
 }
 
-export function DeleteIcon({ onDelete, title, description }: DeleteIconProps) {
+export function DeleteIcon({ 
+  onDelete, 
+  title, 
+  description, 
+  isRemoveFromCalendar = false 
+}: DeleteIconProps) {
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
@@ -34,15 +40,17 @@ export function DeleteIcon({ onDelete, title, description }: DeleteIconProps) {
       await onDelete();
       setOpen(false);
       toast({
-        title: "Deleted",
-        description: "The item has been deleted successfully.",
+        title: isRemoveFromCalendar ? "Removed" : "Deleted",
+        description: isRemoveFromCalendar 
+          ? "The item has been removed from the calendar." 
+          : "The item has been deleted successfully.",
       });
     } catch (error: any) {
       console.error("Error deleting:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete. Please try again.",
+        description: `Failed to ${isRemoveFromCalendar ? "remove" : "delete"}. Please try again.`,
       });
     } finally {
       setIsDeleting(false);
@@ -58,7 +66,7 @@ export function DeleteIcon({ onDelete, title, description }: DeleteIconProps) {
         className="text-muted-foreground hover:text-destructive"
       >
         <Trash2 className="h-4 w-4" />
-        <span className="sr-only">Delete</span>
+        <span className="sr-only">{isRemoveFromCalendar ? "Remove" : "Delete"}</span>
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -80,10 +88,10 @@ export function DeleteIcon({ onDelete, title, description }: DeleteIconProps) {
               {isDeleting ? (
                 <>
                   <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Deleting...
+                  {isRemoveFromCalendar ? "Removing..." : "Deleting..."}
                 </>
               ) : (
-                "Delete"
+                isRemoveFromCalendar ? "Remove" : "Delete"
               )}
             </Button>
           </DialogFooter>

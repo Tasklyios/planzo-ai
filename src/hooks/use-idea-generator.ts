@@ -264,6 +264,9 @@ export const useIdeaGenerator = () => {
     setLoading(true);
     setError(null);
     
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30000); // 30 second timeout
+    
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
@@ -276,7 +279,8 @@ export const useIdeaGenerator = () => {
         setError(errorMsg);
         setLoading(false);
         
-        await supabase.auth.refreshSession();
+        supabase.auth.refreshSession();
+        clearTimeout(timeoutId);
         return;
       }
 
@@ -284,6 +288,7 @@ export const useIdeaGenerator = () => {
         console.error("No access token in session");
         setError("Authentication error: No access token");
         setLoading(false);
+        clearTimeout(timeoutId);
         return;
       }
 
@@ -296,7 +301,8 @@ export const useIdeaGenerator = () => {
         body: { action: 'ideas' },
         headers: {
           Authorization: authHeader
-        }
+        },
+        signal: abortController.signal
       });
 
       console.log("Usage check response:", checkResponse);
@@ -305,6 +311,7 @@ export const useIdeaGenerator = () => {
         console.error("Usage check error:", checkResponse.error);
         setError(`Usage check error: ${checkResponse.error.message || "Unable to check usage limits"}`);
         setLoading(false);
+        clearTimeout(timeoutId);
         return;
       }
       
@@ -312,6 +319,7 @@ export const useIdeaGenerator = () => {
         const errorMessage = checkResponse.data?.message || "You've reached your daily limit for idea generation";
         setError(errorMessage);
         setLoading(false);
+        clearTimeout(timeoutId);
         return;
       }
 
@@ -370,8 +378,11 @@ export const useIdeaGenerator = () => {
         },
         headers: {
           Authorization: authHeader
-        }
+        },
+        signal: abortController.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (generationError) {
         console.error("Generation error:", generationError);
@@ -436,6 +447,8 @@ export const useIdeaGenerator = () => {
           } else {
             console.log("Ideas saved to database successfully");
             
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
             const { data: savedIdeas, error: fetchError } = await supabase
               .from('video_ideas')
               .select('*')
@@ -461,8 +474,15 @@ export const useIdeaGenerator = () => {
       
       setLoading(false);
     } catch (error: any) {
+      clearTimeout(timeoutId);
       console.error("Error generating ideas:", error);
-      setError(`Error generating ideas: ${error.message || "Unknown error"}`);
+      
+      if (error.name === 'AbortError') {
+        setError('The request took too long. Please try again.');
+      } else {
+        setError(`Error generating ideas: ${error.message || "Unknown error"}`);
+      }
+      
       setIdeas([]);
       setLoading(false);
     }
