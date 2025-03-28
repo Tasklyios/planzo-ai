@@ -34,27 +34,55 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
+  // Helper function to check if we're in a password reset flow
+  const isPasswordResetFlow = () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(
+      window.location.hash.startsWith('#') ? window.location.hash.substring(1) : window.location.hash
+    );
+    
+    return !!(
+      searchParams.get('type') === 'recovery' || 
+      hashParams.get('type') === 'recovery' ||
+      searchParams.get('type') === 'otp' || 
+      hashParams.get('type') === 'otp'
+    );
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
       
       if (session) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('onboarding_completed')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (!error && profile && !profile.onboarding_completed) {
-          setShowOnboarding(true);
+        // Check if we're in a password reset flow - if so, don't query profile
+        // This prevents redirects during the password reset process
+        if (isPasswordResetFlow()) {
+          console.log("Password reset flow detected, skipping profile check");
+          setLoadingProfile(false);
+          return;
         }
         
-        // Set this to true to prevent pricing dialog from showing unexpectedly
-        localStorage.setItem('has_seen_pricing', 'true');
+        try {
+          const { data: profile } = await supabase.from('profiles')
+            .select('onboarding_completed')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (profile && !profile.onboarding_completed) {
+            setShowOnboarding(true);
+          }
+          
+          // Set this to true to prevent pricing dialog from showing unexpectedly
+          localStorage.setItem('has_seen_pricing', 'true');
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+        } finally {
+          setLoadingProfile(false);
+        }
+      } else {
+        setLoadingProfile(false);
       }
-      
-      setLoadingProfile(false);
     };
 
     checkAuth();
@@ -63,18 +91,27 @@ function App() {
       setIsAuthenticated(!!session);
       
       if (event === 'SIGNED_IN' && session) {
+        // Skip profile check if in password reset flow
+        if (isPasswordResetFlow()) {
+          console.log("Password reset flow detected after sign in, skipping profile check");
+          return;
+        }
+        
         const checkOnboarding = async () => {
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', session.user.id)
-            .single();
-            
-          if (!error && profile && !profile.onboarding_completed) {
-            setShowOnboarding(true);
-          } else {
-            // Set this to true to prevent pricing dialog from showing unexpectedly
-            localStorage.setItem('has_seen_pricing', 'true');
+          try {
+            const { data: profile } = await supabase.from('profiles')
+              .select('onboarding_completed')
+              .eq('id', session.user.id)
+              .single();
+              
+            if (profile && !profile.onboarding_completed) {
+              setShowOnboarding(true);
+            } else {
+              // Set this to true to prevent pricing dialog from showing unexpectedly
+              localStorage.setItem('has_seen_pricing', 'true');
+            }
+          } catch (error) {
+            console.error("Error checking onboarding status:", error);
           }
         };
         
@@ -105,7 +142,7 @@ function App() {
     localStorage.setItem('has_seen_pricing', 'true');
   };
 
-  if (loadingProfile) {
+  if (loadingProfile && !isPasswordResetFlow()) {
     return (
       <div className="h-screen w-full flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -159,7 +196,7 @@ function App() {
           </Routes>
           <Toaster />
           
-          {isAuthenticated && (
+          {isAuthenticated && !isPasswordResetFlow() && (
             <Onboarding 
               open={showOnboarding} 
               onOpenChange={setShowOnboarding}

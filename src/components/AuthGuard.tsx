@@ -86,7 +86,13 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         if (!session) {
           console.log("No session found");
           setIsAuthenticated(false);
-          localStorage.clear(); // Clear all localStorage on session check failure
+          
+          // Clear all localStorage on session check failure
+          // But preserve any ongoing auth flows
+          if (!isAuthFlow()) {
+            localStorage.removeItem('has_seen_pricing');
+            // Do not fully clear localStorage as it might contain auth related data
+          }
           
           // Check if this is a password reset flow with error
           const params = getUrlParams();
@@ -154,6 +160,9 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         if (!isAuthFlow()) {
           const currentPath = location.pathname;
           if (currentPath === "/" || currentPath === "/auth") {
+            // Always set this flag when a user explicitly signs in to prevent 
+            // pricing dialog from showing unexpectedly
+            localStorage.setItem('has_seen_pricing', 'true');
             navigate("/dashboard");
           }
         }
