@@ -41,6 +41,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       error_code: searchParams.get('error_code') || hashParams.get('error_code'),
       error_description: searchParams.get('error_description') || hashParams.get('error_description'),
       expired: searchParams.get('expired') || hashParams.get('expired'),
+      code: searchParams.get('code') || hashParams.get('code'), // Added code parameter detection
     };
     
     return params;
@@ -50,7 +51,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const isAuthFlow = () => {
     const params = getUrlParams();
     
-    // Check for various authentication flow parameters
+    // Check for various authentication flow parameters, including code parameter
     return !!(
       params.type === 'recovery' ||
       params.type === 'otp' ||
@@ -61,7 +62,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       params.error ||
       params.error_description ||
       params.error_code ||
-      params.expired
+      params.expired ||
+      params.code // Added code parameter check
     );
   };
 
@@ -97,6 +99,13 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           // Check if this is a password reset flow with error
           const params = getUrlParams();
           
+          // Check for password reset code parameter
+          if (params.code) {
+            console.log("Password reset code detected, redirecting to auth page");
+            navigate("/auth?type=recovery&code=" + params.code, { replace: true });
+            return;
+          }
+          
           // Handle expired token or error case - redirect to auth page with expired parameter
           if (params.error_code === 'otp_expired' || 
               (params.error && params.error_description)) {
@@ -115,8 +124,12 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           
           // If this is a password reset flow, explicitly navigate to the auth page with recovery type
           const params = getUrlParams();
-          if ((params.type === 'recovery' || params.type === 'otp') && location.pathname !== '/auth') {
-            navigate(`/auth?type=${params.type}`);
+          if ((params.type === 'recovery' || params.type === 'otp' || params.code) && location.pathname !== '/auth') {
+            if (params.code) {
+              navigate(`/auth?type=recovery&code=${params.code}`);
+            } else {
+              navigate(`/auth?type=${params.type}`);
+            }
           }
         }
       } catch (error) {
@@ -150,9 +163,13 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         
         // Check if this is a password reset flow
         const params = getUrlParams();
-        if (params.type === 'recovery' || params.type === 'otp') {
+        if (params.type === 'recovery' || params.type === 'otp' || params.code) {
           console.log("Password reset flow detected after sign in");
-          navigate(`/auth?type=${params.type}`);
+          if (params.code) {
+            navigate(`/auth?type=recovery&code=${params.code}`);
+          } else {
+            navigate(`/auth?type=${params.type}`);
+          }
           return;
         }
         
@@ -169,7 +186,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       } else if (event === "PASSWORD_RECOVERY") {
         console.log("Password recovery event detected");
         // Make sure we show the reset password form
-        navigate("/auth?type=otp");
+        navigate("/auth?type=recovery");
       }
     });
 
@@ -182,6 +199,12 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   // Check for error parameters in the URL - handle both query params and hash params
   useEffect(() => {
     const params = getUrlParams();
+    
+    // Handle code parameter (password reset code)
+    if (params.code && location.pathname !== '/auth') {
+      navigate(`/auth?type=recovery&code=${params.code}`, { replace: true });
+      return;
+    }
     
     // Handle expired tokens or other errors from hash or search params
     if (params.error || params.error_code) {

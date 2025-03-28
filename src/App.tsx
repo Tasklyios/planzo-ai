@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,7 +43,8 @@ function App() {
       searchParams.get('type') === 'recovery' || 
       hashParams.get('type') === 'recovery' ||
       searchParams.get('type') === 'otp' || 
-      hashParams.get('type') === 'otp'
+      hashParams.get('type') === 'otp' ||
+      searchParams.get('code') // Added check for code parameter
     );
   };
 
