@@ -31,8 +31,16 @@ export const supabaseTyped = {
   storage: supabase.storage,
   functions: supabase.functions,
   rpc: supabase.rpc,
-  // Typed select method for easier querying
-  select: <T>(table: string, options?: any) => {
-    return supabase.from(table).select(options) as unknown as Promise<{ data: T | null; error: Error | null }>;
+  // Type-safe alternatives for common queries
+  selectFrom: <T extends keyof Database['public']['Tables']>(
+    table: T,
+    columns?: string
+  ) => {
+    return supabase
+      .from(table)
+      .select(columns || '*') as unknown as Promise<{
+        data: Database['public']['Tables'][T]['Row'][] | null;
+        error: Error | null;
+      }>;
   }
 };
