@@ -31,7 +31,7 @@ export const hasAuthParamsInUrl = () => {
     // Check common auth params in both hash and query params
     const authParams = [
       'access_token', 'refresh_token', 'provider_token', 'error_description',
-      'code', 'token_type', 'expires_in', 'type', 'flow'
+      'code', 'token_type', 'expires_in', 'type', 'flow', 'error', 'error_code'
     ];
     
     return authParams.some(param => 
@@ -51,6 +51,16 @@ export const isPasswordResetFlow = () => {
     const hashParams = new URLSearchParams(url.hash.substring(1));
     const queryParams = new URLSearchParams(url.search);
     
+    // First, check for error parameters that might indicate an expired reset link
+    const hasErrorParams = 
+      (hashParams.get('error') === 'access_denied' || queryParams.get('error') === 'access_denied') &&
+      (hashParams.get('error_code') === 'otp_expired' || queryParams.get('error_code') === 'otp_expired');
+    
+    if (hasErrorParams) {
+      console.log("Detected expired password reset token in URL");
+      return true;
+    }
+    
     // Check for recovery-specific parameters
     const isRecoveryType = 
       hashParams.get('type') === 'recovery' || 
@@ -67,12 +77,14 @@ export const isPasswordResetFlow = () => {
     
     // Also check for token in the URL path which indicates reset password flow
     const hasTokenInPath = url.pathname.includes('/auth/reset-password') || 
-                          url.pathname.includes('/reset-password');
+                          url.pathname.includes('/reset-password') ||
+                          url.pathname.includes('/password-reset');
     
     // Check for recovery in any part of the URL (fallback detection)
     const urlHasRecovery = 
       url.toString().includes('recovery') || 
       url.toString().includes('reset-password') || 
+      url.toString().includes('password-reset') ||
       url.toString().includes('type=recovery');
     
     return isRecoveryType || (hasTokens && (url.pathname === '/auth' || url.pathname === '/')) || hasTokenInPath || urlHasRecovery;

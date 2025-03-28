@@ -18,6 +18,35 @@ const NotFound = () => {
       const currentURL = window.location.href;
       const url = new URL(currentURL);
       
+      // Check if the URL contains the duplicate domain issue
+      // (e.g., "https://planzoai.com/https://planzo.netlify.app/")
+      const pathContainsDuplicateURL = url.pathname.includes('http');
+      
+      if (pathContainsDuplicateURL) {
+        // Extract the real path, search, and hash from the malformed URL
+        const extractedUrl = url.pathname.substring(url.pathname.indexOf('http'));
+        try {
+          const parsedExtractedUrl = new URL(extractedUrl);
+          
+          // Get the parts we need from the extracted URL
+          const cleanPath = parsedExtractedUrl.pathname;
+          const cleanSearch = parsedExtractedUrl.search;
+          const cleanHash = parsedExtractedUrl.hash;
+          
+          // Create a new clean URL to redirect to
+          let redirectPath = cleanPath || '/';
+          if (redirectPath === '/' && (isPasswordResetFlow() || cleanPath.includes('password-reset'))) {
+            redirectPath = '/password-reset';
+          }
+          
+          console.log(`Fixing malformed URL, redirecting to: ${redirectPath}${cleanSearch}${cleanHash}`);
+          navigate(`${redirectPath}${cleanSearch}${cleanHash}`, { replace: true });
+          return;
+        } catch (e) {
+          console.error("Error parsing extracted URL:", e);
+        }
+      }
+      
       // If this is a recovery/reset flow, make sure we add that parameter
       if (isPasswordResetFlow() && !url.searchParams.has('type')) {
         url.searchParams.set('type', 'recovery');

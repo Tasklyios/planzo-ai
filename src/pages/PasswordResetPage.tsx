@@ -47,42 +47,46 @@ const PasswordResetPage = () => {
       }
 
       try {
-        // Explicitly attempt to initialize a session from the URL
-        // This needs to happen BEFORE checking the session
+        // Explicitly extract the hash and access token from the URL
         const url = window.location.href;
-        const { error: setupError } = await supabase.auth.getSessionFromUrl({ 
-          storeSession: true // Important: Store the session
-        });
+        console.log("Processing URL:", url);
         
-        if (setupError) {
-          console.error("Error setting up session from URL:", setupError);
-          setTokenError("Your password reset link is invalid or has expired. Please request a new one.");
-          setIsValidToken(false);
-          setLoading(false);
-          return;
-        }
+        // Parse the hash for the access token
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const queryParams = new URLSearchParams(window.location.search);
         
-        // Now check if we have a valid session
-        const { data, error } = await supabase.auth.getSession();
+        // Check for error parameters that indicate expired token
+        const errorCode = hashParams.get('error_code') || queryParams.get('error_code');
+        const errorDesc = hashParams.get('error_description') || queryParams.get('error_description');
         
-        if (error) {
-          console.error("Error validating reset token:", error);
-          setTokenError(error.message || "Your password reset link is invalid or has expired");
-          setIsValidToken(false);
-          setLoading(false);
-          return;
-        }
-        
-        if (!data.session) {
-          console.log("No session found, token might be expired");
+        if (errorCode === 'otp_expired' || (errorDesc && errorDesc.includes('expired'))) {
+          console.error("Token expired error detected in URL");
           setTokenError("Your password reset link has expired. Please request a new one.");
           setIsValidToken(false);
           setLoading(false);
           return;
         }
         
-        // Token is valid, allow password reset
-        console.log("Valid token found, showing password reset form");
+        // Try to process the URL to extract the session
+        const { data, error } = await supabase.auth.refreshSession();
+        
+        if (error) {
+          console.error("Error refreshing session:", error);
+          
+          // Try to get any existing session
+          const { data: sessionData } = await supabase.auth.getSession();
+          
+          if (!sessionData.session) {
+            console.log("No valid session found, token might be expired");
+            setTokenError("Your password reset link has expired. Please request a new one.");
+            setIsValidToken(false);
+            setLoading(false);
+            return;
+          }
+        }
+        
+        // If we got here, we have a valid session
+        console.log("Valid token/session found, showing password reset form");
         setIsValidToken(true);
         setTokenError(null);
         setLoading(false);
