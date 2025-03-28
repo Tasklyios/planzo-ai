@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase, isPasswordResetFlow, cast } from "@/integrations/supabase/client";
@@ -33,6 +34,11 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // Add the missing handleOnboardingComplete function
+  const handleOnboardingComplete = async () => {
+    setShowOnboarding(false);
+  };
 
   useEffect(() => {
     if (isPasswordResetFlow()) {
