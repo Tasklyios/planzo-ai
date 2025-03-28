@@ -2,7 +2,7 @@
 import { emailStyles, createEmailTemplate } from "../emailTemplates";
 
 export const generateResetPasswordEmail = (resetLink: string, isDark: boolean = false) => {
-  // Make sure the link includes the type=recovery parameter
+  // Ensure the link includes type=recovery and points directly to the auth page
   const formattedLink = resetLink.includes('type=recovery') 
     ? resetLink 
     : `${resetLink}${resetLink.includes('?') ? '&' : '?'}type=recovery`;
