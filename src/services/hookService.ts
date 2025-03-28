@@ -67,7 +67,7 @@ export const saveHook = async (hook: HookType): Promise<void> => {
     const { data, error } = await supabase
       .from('saved_hooks')
       .insert({
-        hook: hook.hook_text,
+        hook_text: hook.hook_text,
         category: hook.category,
         user_id: cast(session.session.user.id)
       })
@@ -92,8 +92,10 @@ export const getSavedHooks = async (): Promise<SavedHook[]> => {
       throw new Error("You must be logged in to view saved hooks");
     }
 
-    const { data, error } = await supabaseTyped.filter('saved_hooks', 'user_id', cast(session.session.user.id))
+    const { data, error } = await supabase
+      .from('saved_hooks')
       .select('*')
+      .eq('user_id', cast(session.session.user.id))
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -107,7 +109,7 @@ export const getSavedHooks = async (): Promise<SavedHook[]> => {
     
     return data.map(hook => ({
       id: hook.id,
-      hook: hook.hook,
+      hook: hook.hook_text,
       category: hook.category,
       user_id: hook.user_id,
       created_at: hook.created_at,
