@@ -21,7 +21,8 @@ const Auth = () => {
   const searchParams = new URLSearchParams(location.search);
   const shouldSignUp = searchParams.get('signup') === 'true';
   const tokenExpired = searchParams.get('expired') === 'true';
-  
+  const isRecoveryType = searchParams.get('type') === 'recovery';
+
   useEffect(() => {
     const currentDomain = window.location.hostname;
     if (currentDomain === 'planzo.netlify.app') {
@@ -80,7 +81,7 @@ const Auth = () => {
       }
       
       if (isRecovery || (hasToken && !isEmailVerificationRedirect())) {
-        console.log("Password reset flow detected");
+        console.log("Password reset flow detected via URL parameter");
         setIsResetPassword(true);
         
         if (hasToken) {
@@ -309,12 +310,13 @@ const Auth = () => {
 
       toast({
         title: "Password Reset Successful",
-        description: "Your password has been updated successfully.",
+        description: "Your password has been updated. You'll be redirected to sign in.",
       });
       
       await supabase.auth.signOut();
       
       setTimeout(() => {
+        setIsResetPassword(false);
         navigate("/auth");
       }, 2000);
     } catch (error: any) {
@@ -373,7 +375,7 @@ const Auth = () => {
         <div className="max-w-md w-full bg-white rounded-2xl p-8 shadow-xl fade-up">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-[#333333] mb-2">
-              Reset Your Password
+              Set Your New Password
             </h1>
             <p className="text-[#555555]">
               Please enter your new password below

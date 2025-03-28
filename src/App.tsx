@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,15 +33,8 @@ function App() {
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   const isPasswordResetFlow = () => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(
-      window.location.hash.startsWith('#') ? window.location.hash.substring(1) : window.location.hash
-    );
-    
-    return !!(
-      searchParams.get('type') === 'recovery' || 
-      hashParams.get('type') === 'recovery'
-    );
+    const url = new URL(window.location.href);
+    return url.hash.includes('type=recovery') || url.search.includes('type=recovery');
   };
 
   useEffect(() => {
@@ -111,6 +103,11 @@ function App() {
       
       if (event === 'SIGNED_OUT') {
         setShowOnboarding(false);
+      }
+      
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log("Password recovery event detected");
+        window.location.href = "/auth?type=recovery";
       }
     });
 
