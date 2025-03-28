@@ -23,8 +23,13 @@ const NotFound = () => {
         url.searchParams.set('type', 'recovery');
       }
       
-      // Navigate to auth page with all parameters preserved
-      navigate(`/auth${url.search}${url.hash}`);
+      // For password reset flows, go directly to the password-reset page
+      if (isPasswordResetFlow()) {
+        navigate(`/password-reset${url.search}${url.hash}`);
+      } else {
+        // For other auth flows, go to the regular auth page
+        navigate(`/auth${url.search}${url.hash}`);
+      }
     }
   }, [navigate, location]);
 

@@ -21,13 +21,13 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     if (isPasswordResetFlow()) {
       console.log("Password reset flow detected in AuthGuard, skipping auth check");
       setIsLoading(false);
-      // Make sure user lands on the auth page for password reset
-      if (location.pathname !== '/auth') {
+      // Make sure user lands on the password reset page for password reset
+      if (location.pathname !== '/password-reset') {
         const url = new URL(window.location.href);
         if (!url.searchParams.has('type')) {
           url.searchParams.set('type', 'recovery');
         }
-        navigate(`/auth${url.search}${url.hash}`);
+        navigate(`/password-reset${url.search}${url.hash}`);
       }
       return;
     }
@@ -127,8 +127,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     </div>;
   }
 
-  // Always allow auth page access regardless of authentication status
-  if (location.pathname === '/auth') {
+  // Always allow auth page and password reset page access regardless of authentication status
+  if (location.pathname === '/auth' || location.pathname === '/password-reset') {
     return <>{children}</>;
   }
 

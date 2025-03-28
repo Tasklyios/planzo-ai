@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase, isPasswordResetFlow, cast } from "@/integrations/supabase/client";
@@ -18,6 +17,7 @@ import Hooks from "@/pages/Hooks";
 import SavedHooks from "@/pages/SavedHooks";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
+import PasswordResetPage from "@/pages/PasswordResetPage";
 import { Toaster } from "@/components/ui/toaster";
 import AuthGuard from "@/components/AuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
@@ -34,24 +34,19 @@ function App() {
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
-    // Handle password recovery token in URL immediately
     if (isPasswordResetFlow()) {
       console.log("Password reset flow detected in App component");
       
-      // Get the current URL to preserve query params and hash
       const url = new URL(window.location.href);
       
-      // If the URL doesn't already have the type parameter set to recovery, add it
       if (!url.searchParams.has('type')) {
         url.searchParams.set('type', 'recovery');
       }
       
-      // Navigate to auth page with all parameters preserved
-      window.location.href = `/auth${url.search}${url.hash}`;
+      window.location.href = `/password-reset${url.search}${url.hash}`;
       return;
     }
 
-    // Domain redirect for netlify to custom domain
     const currentDomain = window.location.hostname;
     if (currentDomain === 'planzo.netlify.app') {
       const currentPath = window.location.pathname;
@@ -134,7 +129,6 @@ function App() {
     localStorage.setItem('has_seen_pricing', 'true');
   };
 
-  // Show loading state unless this is a password reset flow
   if (loadingProfile && !isPasswordResetFlow()) {
     return (
       <div className="h-screen w-full flex items-center justify-center">
@@ -152,19 +146,10 @@ function App() {
               path="/" 
               element={isAuthenticated ? <Navigate to="/dashboard" /> : <Index />} 
             />
-            {/* Make auth route accessible without guards */}
-            <Route 
-              path="/auth" 
-              element={<Auth />} 
-            />
-            <Route 
-              path="/privacy-policy" 
-              element={<PrivacyPolicy />} 
-            />
-            <Route 
-              path="/terms-of-service" 
-              element={<TermsOfService />} 
-            />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/password-reset" element={<PasswordResetPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route element={<AuthGuard><Outlet /></AuthGuard>}>
               <Route element={<AppLayout><Outlet /></AppLayout>}>
                 <Route path="/dashboard" element={<Dashboard />} />
