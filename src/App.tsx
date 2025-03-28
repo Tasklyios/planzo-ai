@@ -18,6 +18,7 @@ import SavedHooks from "@/pages/SavedHooks";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import PasswordResetPage from "@/pages/PasswordResetPage";
+import ResetPassword from "@/pages/ResetPassword";
 import { Toaster } from "@/components/ui/toaster";
 import AuthGuard from "@/components/AuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
@@ -147,9 +148,11 @@ function App() {
               element={isAuthenticated ? <Navigate to="/dashboard" /> : <Index />} 
             />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/password-reset" element={<PasswordResetPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
+            
             <Route element={<AuthGuard><Outlet /></AuthGuard>}>
               <Route element={<AppLayout><Outlet /></AppLayout>}>
                 <Route path="/dashboard" element={<Dashboard />} />

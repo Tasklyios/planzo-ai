@@ -47,11 +47,18 @@ const PasswordResetPage = () => {
       }
 
       try {
-        // Explicitly extract the hash and access token from the URL
-        const url = window.location.href;
-        console.log("Processing URL:", url);
+        // Get any existing session
+        const { data: sessionData } = await supabase.auth.getSession();
         
-        // Parse the hash for the access token
+        if (sessionData.session) {
+          console.log("Valid session found for password reset");
+          setIsValidToken(true);
+          setTokenError(null);
+          setLoading(false);
+          return;
+        }
+        
+        // No session yet, try to process the URL parameters
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const queryParams = new URLSearchParams(window.location.search);
         
@@ -67,33 +74,33 @@ const PasswordResetPage = () => {
           return;
         }
         
-        // Try to process the URL to extract the session
-        const { data, error } = await supabase.auth.refreshSession();
-        
-        if (error) {
-          console.error("Error refreshing session:", error);
+        // If the URL contains a token but we don't have a session, try to establish one
+        if (window.location.hash || window.location.search.includes('type=recovery')) {
+          console.log("Attempting to establish session from URL parameters");
           
-          // Try to get any existing session
-          const { data: sessionData } = await supabase.auth.getSession();
+          // This should establish a session from the recovery token
+          await supabase.auth.refreshSession();
+          const { data: refreshedSession } = await supabase.auth.getSession();
           
-          if (!sessionData.session) {
-            console.log("No valid session found, token might be expired");
-            setTokenError("Your password reset link has expired. Please request a new one.");
+          if (refreshedSession.session) {
+            console.log("Successfully established session from recovery token");
+            setIsValidToken(true);
+            setTokenError(null);
+          } else {
+            console.error("Failed to establish session from recovery token");
+            setTokenError("Your password reset link is invalid. Please request a new one.");
             setIsValidToken(false);
-            setLoading(false);
-            return;
           }
+        } else {
+          console.error("No recovery parameters found in URL");
+          setTokenError("Invalid password reset link. Please request a new one.");
+          setIsValidToken(false);
         }
-        
-        // If we got here, we have a valid session
-        console.log("Valid token/session found, showing password reset form");
-        setIsValidToken(true);
-        setTokenError(null);
-        setLoading(false);
       } catch (error: any) {
         console.error("Error in password reset flow:", error);
         setTokenError(error?.message || "An error occurred. Please try again or request a new reset link.");
         setIsValidToken(false);
+      } finally {
         setLoading(false);
       }
     };
@@ -130,6 +137,7 @@ const PasswordResetPage = () => {
     }
 
     try {
+      // This should work as long as we have a valid session from the recovery token
       const { error } = await supabase.auth.updateUser({
         password: password,
       });

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -263,33 +262,7 @@ const Auth = () => {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      const redirectDomain = window.location.hostname === 'localhost' 
-        ? 'http://localhost:8080/'
-        : 'https://planzoai.com/';
-
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${redirectDomain}password-reset`,
-      });
-      
-      if (error) throw error;
-      
-      setResetSent(true);
-      toast({
-        title: "Password Reset Email Sent",
-        description: "Check your email for the password reset link.",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    } finally {
-      setLoading(false);
-    }
+    navigate("/reset-password");
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -575,7 +548,7 @@ const Auth = () => {
                   {loading ? (
                     <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                   ) : (
-                    "Send Reset Link"
+                    "Go to Reset Password Page"
                   )}
                 </button>
 
