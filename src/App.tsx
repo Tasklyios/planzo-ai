@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +15,6 @@ import Script from "@/pages/Script";
 import ContentPlanner from "@/pages/ContentPlanner";
 import Hooks from "@/pages/Hooks";
 import SavedHooks from "@/pages/SavedHooks";
-import EmailTemplates from "@/pages/EmailTemplates";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import { Toaster } from "@/components/ui/toaster";
@@ -34,7 +32,6 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // Helper function to check if we're in a password reset flow
   const isPasswordResetFlow = () => {
     const searchParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(
@@ -55,8 +52,6 @@ function App() {
       setIsAuthenticated(!!session);
       
       if (session) {
-        // Check if we're in a password reset flow - if so, don't query profile
-        // This prevents redirects during the password reset process
         if (isPasswordResetFlow()) {
           console.log("Password reset flow detected, skipping profile check");
           setLoadingProfile(false);
@@ -73,7 +68,6 @@ function App() {
             setShowOnboarding(true);
           }
           
-          // Set this to true to prevent pricing dialog from showing unexpectedly
           localStorage.setItem('has_seen_pricing', 'true');
         } catch (error) {
           console.error("Error fetching profile:", error);
@@ -91,7 +85,6 @@ function App() {
       setIsAuthenticated(!!session);
       
       if (event === 'SIGNED_IN' && session) {
-        // Skip profile check if in password reset flow
         if (isPasswordResetFlow()) {
           console.log("Password reset flow detected after sign in, skipping profile check");
           return;
@@ -107,7 +100,6 @@ function App() {
             if (profile && !profile.onboarding_completed) {
               setShowOnboarding(true);
             } else {
-              // Set this to true to prevent pricing dialog from showing unexpectedly
               localStorage.setItem('has_seen_pricing', 'true');
             }
           } catch (error) {
@@ -138,7 +130,6 @@ function App() {
   const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
     
-    // Set this to true to prevent pricing dialog from showing unexpectedly
     localStorage.setItem('has_seen_pricing', 'true');
   };
 
@@ -159,7 +150,6 @@ function App() {
               path="/" 
               element={isAuthenticated ? <Navigate to="/dashboard" /> : <Index />} 
             />
-            {/* Auth route doesn't need AuthGuard to prevent circular dependencies */}
             <Route 
               path="/auth" 
               element={<Auth />} 
