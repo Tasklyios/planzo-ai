@@ -117,6 +117,10 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       
       console.log("Fetched idea data:", data);
       
+      if (!data) {
+        throw new Error("No idea found with that ID");
+      }
+      
       if (!data.emoji) {
         data.emoji = getEmojiForIdea(data.title, data.category);
       }
@@ -125,7 +129,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         data.user_id = userId;
       }
       
-      setIdea(data);
+      setIdea(data as IdeaData);
     } catch (error: any) {
       console.error("Error fetching idea:", error);
       toast({
@@ -171,7 +175,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             scheduled_for: null,
             is_saved: true,
             user_id: userId
-          })
+          } as any)
           .eq("id", idea.id);
 
         if (error) {
@@ -186,7 +190,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             status: 'ideas',
             is_saved: true,
             user_id: userId
-          })
+          } as any)
           .eq("id", idea.id);
 
         if (error) {
@@ -200,7 +204,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           .update({ 
             is_saved: false,
             user_id: userId
-          })
+          } as any)
           .eq("id", idea.id);
 
         if (error) {
@@ -266,11 +270,11 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         throw sessionError;
       }
       
-      if (!sessionData.session) {
+      if (!sessionData.session?.user.id) {
         toast({
-          variant: "destructive",
-          title: "Authentication error",
-          description: "You must be logged in to save ideas",
+          title: "Authentication required",
+          description: "Please log in to save ideas",
+          variant: "destructive"
         });
         navigate("/auth");
         return;
@@ -320,7 +324,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           status: newStatus,
           user_id: userId,
           emoji: idea.emoji
-        })
+        } as any)
         .eq("id", idea.id);
 
       if (error) {
@@ -399,6 +403,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           <DialogTitle>Edit Idea</DialogTitle>
           <DialogDescription>Edit your content idea</DialogDescription>
         </DialogHeader>
+        
         <div className="flex flex-col h-full">
           <div className="flex items-start gap-4 p-6 bg-card border-b">
             <div className="flex-1">
