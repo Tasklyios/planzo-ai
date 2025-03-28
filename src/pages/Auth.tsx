@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -266,11 +267,11 @@ const Auth = () => {
 
     try {
       const redirectDomain = window.location.hostname === 'localhost' 
-        ? 'http://localhost:8080'
-        : 'https://planzoai.com';
+        ? 'http://localhost:8080/'
+        : 'https://planzoai.com/';
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${redirectDomain}/password-reset`,
+        redirectTo: `${redirectDomain}password-reset`,
       });
       
       if (error) throw error;
