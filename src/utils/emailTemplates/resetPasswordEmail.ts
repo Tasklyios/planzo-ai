@@ -1,44 +1,29 @@
 
 import { emailStyles, createEmailTemplate } from "../emailTemplates";
 
+// Note: This utility is maintained for legacy purposes, but the actual template
+// used will be configured in Supabase's email template settings
+
 export const generateResetPasswordEmail = (resetLink: string, isDark: boolean = false) => {
   // Extract any token information from the provided link
   const url = new URL(resetLink.startsWith('http') ? resetLink : `https://planzoai.com${resetLink}`);
   
-  // Build a clean, reliable reset link that points directly to the auth page with recovery type
-  const authUrl = new URL('https://planzoai.com/auth');
-  authUrl.searchParams.set('type', 'recovery');
-  
-  // Preserve any tokens from the original link
-  if (url.searchParams.has('token')) {
-    authUrl.searchParams.set('token', url.searchParams.get('token')!);
-  }
-  if (url.searchParams.has('token_hash')) {
-    authUrl.searchParams.set('token_hash', url.searchParams.get('token_hash')!);
-  }
-  if (url.hash) {
-    // Copy the hash tokens to query parameters for easier processing
-    const hashParams = new URLSearchParams(url.hash.substring(1));
-    if (hashParams.has('access_token')) {
-      authUrl.searchParams.set('access_token', hashParams.get('access_token')!);
-    }
-    if (hashParams.has('refresh_token')) {
-      authUrl.searchParams.set('refresh_token', hashParams.get('refresh_token')!);
-    }
-  }
-  
-  const finalLink = authUrl.toString();
+  // For OTP-based flow, we would typically display the token/code here
+  // but since Supabase handles template rendering with {{ .Token }}, 
+  // we'll use a placeholder for preview purposes
+  const sampleOtpCode = "123456"; // This is just for preview, actual code will be inserted by Supabase
   
   const content = `
     <h1 style="${isDark ? emailStyles.darkHeading : emailStyles.heading}">Reset Your Password</h1>
-    <p style="${isDark ? emailStyles.darkParagraph : emailStyles.paragraph}">A password reset has been requested for your PlanzoAI account. Click the button below to set a new password.</p>
-    <div style="text-align: center;">
-      <a href="${finalLink}" style="${emailStyles.button}">Reset Password</a>
+    <p style="${isDark ? emailStyles.darkParagraph : emailStyles.paragraph}">A password reset has been requested for your PlanzoAI account. Use the 6-digit code below to reset your password:</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <div style="background-color: ${isDark ? '#2a2a2a' : '#f4f4f4'}; padding: 20px; border-radius: 8px; font-family: monospace; font-size: 32px; font-weight: bold; letter-spacing: 8px; display: inline-block; color: ${isDark ? '#ffffff' : '#333333'};">
+        ${sampleOtpCode}
+      </div>
     </div>
-    <p style="${isDark ? emailStyles.darkParagraph : emailStyles.paragraph}">Or copy and paste this URL into your browser:</p>
-    <div style="${isDark ? emailStyles.darkCode : emailStyles.code}">${finalLink}</div>
+    <p style="${isDark ? emailStyles.darkParagraph : emailStyles.paragraph}">Enter this code on the password reset page to create a new password.</p>
     <p style="${isDark ? emailStyles.darkParagraph : emailStyles.paragraph}">If you didn't request a password reset, you can safely ignore this email.</p>
-    <p style="${isDark ? emailStyles.darkParagraph : emailStyles.paragraph}">This password reset link will expire in 24 hours.</p>
+    <p style="${isDark ? emailStyles.darkParagraph : emailStyles.paragraph}">This code will expire in 24 hours.</p>
   `;
   
   return createEmailTemplate(content, isDark);

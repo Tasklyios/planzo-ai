@@ -14,6 +14,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false, // Disable automatic URL parsing to handle it manually
-    storage: localStorage
+    storage: localStorage,
+    flowType: 'pkce', // Enable PKCE flow for enhanced security
+    tokenName: 'planzo_auth_token'
   }
 });

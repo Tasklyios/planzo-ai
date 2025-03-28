@@ -53,6 +53,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     // Check for various authentication flow parameters
     return !!(
       params.type === 'recovery' ||
+      params.type === 'otp' ||
       params.token ||
       params.token_hash ||
       params.refresh_token ||
@@ -108,8 +109,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           
           // If this is a password reset flow, explicitly navigate to the auth page with recovery type
           const params = getUrlParams();
-          if (params.type === 'recovery' && location.pathname !== '/auth') {
-            navigate("/auth?type=recovery");
+          if ((params.type === 'recovery' || params.type === 'otp') && location.pathname !== '/auth') {
+            navigate(`/auth?type=${params.type}`);
           }
         }
       } catch (error) {
@@ -143,9 +144,9 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         
         // Check if this is a password reset flow
         const params = getUrlParams();
-        if (params.type === 'recovery') {
+        if (params.type === 'recovery' || params.type === 'otp') {
           console.log("Password reset flow detected after sign in");
-          navigate("/auth?type=recovery");
+          navigate(`/auth?type=${params.type}`);
           return;
         }
         
@@ -159,7 +160,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       } else if (event === "PASSWORD_RECOVERY") {
         console.log("Password recovery event detected");
         // Make sure we show the reset password form
-        navigate("/auth?type=recovery");
+        navigate("/auth?type=otp");
       }
     });
 
@@ -181,15 +182,15 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         navigate("/auth?expired=true", { replace: true });
         toast({
           variant: "destructive",
-          title: "Password Reset Link Expired",
-          description: "Your password reset link has expired. Please request a new one."
+          title: "Password Reset Code Expired",
+          description: "Your password reset code has expired. Please request a new one."
         });
       }
     }
     
     // If we have a recovery token in the URL but we're not on the auth page, redirect
-    if (params.type === 'recovery' && location.pathname !== '/auth') {
-      navigate(`/auth?type=recovery`, { replace: true });
+    if ((params.type === 'recovery' || params.type === 'otp') && location.pathname !== '/auth') {
+      navigate(`/auth?type=${params.type}`, { replace: true });
     }
   }, [location, navigate, toast]);
 
