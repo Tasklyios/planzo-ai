@@ -23,6 +23,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       setIsLoading(false);
       // Make sure user lands on the password reset page for password reset
       if (location.pathname !== '/password-reset') {
+        console.log("Redirecting to password reset page");
         const url = new URL(window.location.href);
         if (!url.searchParams.has('type')) {
           url.searchParams.set('type', 'recovery');

@@ -41,8 +41,9 @@ function App() {
   };
 
   useEffect(() => {
+    // Check first if this is a password reset flow before any other logic
     if (isPasswordResetFlow()) {
-      console.log("Password reset flow detected, no need to redirect");
+      console.log("Password reset flow detected in App.tsx, no need to redirect");
       setLoadingProfile(false);
       return;
     }
@@ -123,6 +124,8 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // If we're in a password reset flow, don't show the loading spinner
+  // This ensures the PasswordResetPage can render immediately
   if (loadingProfile && !isPasswordResetFlow()) {
     return (
       <div className="h-screen w-full flex items-center justify-center">
@@ -136,12 +139,14 @@ function App() {
       <ThemeProvider>
         <Router>
           <Routes>
+            {/* Public routes - accessible without authentication */}
             <Route 
               path="/" 
               element={isAuthenticated ? <Navigate to="/dashboard" /> : <Index />} 
             />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Put PasswordResetPage outside AuthGuard to avoid redirection */}
             <Route path="/password-reset" element={<PasswordResetPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
