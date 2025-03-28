@@ -12,7 +12,7 @@ const NotFound = () => {
     // If there are auth parameters but we hit the 404 page,
     // it's likely a misrouted password reset or auth flow
     if (hasAuthParamsInUrl() || isPasswordResetFlow()) {
-      console.log("Auth parameters detected on 404 page, redirecting to auth page");
+      console.log("Auth parameters detected on 404 page, redirecting to appropriate page");
       
       // Get the current URL to preserve query params and hash
       const currentURL = window.location.href;
@@ -25,6 +25,7 @@ const NotFound = () => {
       
       // For password reset flows, go directly to the password-reset page
       if (isPasswordResetFlow()) {
+        // Direct the user straight to the password reset page, bypassing auth
         navigate(`/password-reset${url.search}${url.hash}`);
       } else {
         // For other auth flows, go to the regular auth page
