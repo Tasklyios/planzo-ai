@@ -67,6 +67,12 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         } else {
           console.log("Session found, user is authenticated", session.user.id);
           setIsAuthenticated(true);
+          
+          // If this is a password reset flow, explicitly navigate to the auth page with recovery type
+          const searchParams = new URLSearchParams(location.search);
+          if (searchParams.has('type') && searchParams.get('type') === 'recovery' && location.pathname !== '/auth') {
+            navigate("/auth?type=recovery");
+          }
         }
       } catch (error) {
         console.error("Error checking authentication:", error);
@@ -97,7 +103,15 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         console.log("User signed in or token refreshed", session?.user.id);
         setIsAuthenticated(true);
         
-        // Skip redirect for verification and password reset flows, otherwise redirect to dashboard
+        // Check if this is a password reset flow
+        const searchParams = new URLSearchParams(location.search);
+        if (searchParams.has('type') && searchParams.get('type') === 'recovery') {
+          console.log("Password reset flow detected after sign in");
+          navigate("/auth?type=recovery");
+          return;
+        }
+        
+        // Skip redirect for verification flows, otherwise redirect to dashboard
         if (!isAuthFlow()) {
           const currentPath = location.pathname;
           if (currentPath === "/" || currentPath === "/auth") {
