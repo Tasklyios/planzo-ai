@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, cast } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { GeneratedIdea } from '@/types/idea';
 import { HookType } from '@/types/hooks';
 import { Button } from "@/components/ui/button";
@@ -25,16 +25,13 @@ const ApplyHookToIdea = ({ idea, hook }: ApplyHookToIdeaProps) => {
       // Get the hook text from the correct property
       const hookText = hook.hook_text;
       
-      // Prepare the update data matching the table structure
-      const updateData = { 
-        hook_text: hookText,
-        hook_category: hook.category 
-      };
-      
       const { data, error } = await supabase
         .from('video_ideas')
-        .update(updateData)
-        .eq('id', cast(idea.id))
+        .update({ 
+          hook_text: hookText,
+          hook_category: hook.category 
+        })
+        .eq('id', idea.id)
         .select();
         
       if (error) throw error;

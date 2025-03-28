@@ -9,19 +9,6 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-// Get the proper site URL to avoid URL doubling in redirects
-const getSiteUrl = () => {
-  if (typeof window === 'undefined') return 'https://planzoai.com';
-  
-  // Check if we're on the original netlify domain 
-  if (window.location.hostname.includes('netlify')) {
-    return 'https://planzo.netlify.app';
-  }
-  
-  // Otherwise use the current domain (likely planzoai.com)
-  return `${window.location.protocol}//${window.location.host}`;
-};
-
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     persistSession: true,
@@ -30,9 +17,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     flowType: 'pkce',
     // Storage options directly in the auth config
-    storageKey: 'planzo-auth',
-    // Set the redirect URL to the password-reset page specifically for recovery flows
-    redirectTo: `${getSiteUrl()}/password-reset` as string
+    storageKey: 'planzo-auth'
   }
 });
 
@@ -109,21 +94,9 @@ export const isPasswordResetFlow = () => {
   }
 };
 
-// Helper function to handle type casting for IDs and values in Supabase queries
-export function cast<T extends string>(value: T | string): T {
+// Helper function to handle type casting for IDs in Supabase queries
+export function cast<T>(value: T): T {
   return value as T;
-}
-
-// Type guard to check if a response is an error
-export function isQueryError(data: any): boolean {
-  return data && typeof data === 'object' && 'error' in data;
-}
-
-// Helper to safely access properties from Supabase query results
-export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K): T[K] | undefined {
-  if (!obj) return undefined;
-  if (isQueryError(obj)) return undefined;
-  return (obj as T)[key];
 }
 
 // Create typed versions of common Supabase methods to avoid TS errors

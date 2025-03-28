@@ -35,7 +35,7 @@ const NotFound = () => {
           
           // Create a new clean URL to redirect to
           let redirectPath = cleanPath || '/';
-          if (redirectPath === '/' && (isPasswordResetFlow() || currentURL.includes('recovery'))) {
+          if (redirectPath === '/' && (isPasswordResetFlow() || cleanPath.includes('password-reset'))) {
             redirectPath = '/password-reset';
           }
           
@@ -54,8 +54,8 @@ const NotFound = () => {
       
       // For password reset flows, go directly to the password-reset page
       if (isPasswordResetFlow()) {
-        // Direct the user straight to the password reset page, preserving parameters
-        console.log("Redirecting to password reset page:", `/password-reset${url.search}${url.hash}`);
+        // Direct the user straight to the password reset page, bypassing auth
+        // Make sure to preserve the hash which contains the token
         navigate(`/password-reset${url.search}${url.hash}`, { replace: true });
       } else {
         // For other auth flows, go to the regular auth page

@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { supabase, cast, isQueryError } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -108,7 +107,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       const { data, error } = await supabase
         .from("video_ideas")
         .select("*")
-        .eq("id", cast(ideaId))
+        .eq("id", ideaId)
         .single();
 
       if (error) {
@@ -118,21 +117,15 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       
       console.log("Fetched idea data:", data);
       
-      if (!data) {
-        throw new Error("No idea found with that ID");
+      if (!data.emoji) {
+        data.emoji = getEmojiForIdea(data.title, data.category);
       }
       
-      const ideaData = data as IdeaData;
-      
-      if (!ideaData.emoji) {
-        ideaData.emoji = getEmojiForIdea(ideaData.title, ideaData.category);
+      if (!data.user_id) {
+        data.user_id = userId;
       }
       
-      if (!ideaData.user_id) {
-        ideaData.user_id = userId;
-      }
-      
-      setIdea(ideaData);
+      setIdea(data);
     } catch (error: any) {
       console.error("Error fetching idea:", error);
       toast({
@@ -179,7 +172,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             is_saved: true,
             user_id: userId
           })
-          .eq("id", cast(idea.id));
+          .eq("id", idea.id);
 
         if (error) {
           console.error("Update error:", error);
@@ -194,7 +187,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             is_saved: true,
             user_id: userId
           })
-          .eq("id", cast(idea.id));
+          .eq("id", idea.id);
 
         if (error) {
           console.error("Update error:", error);
@@ -208,7 +201,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             is_saved: false,
             user_id: userId
           })
-          .eq("id", cast(idea.id));
+          .eq("id", idea.id);
 
         if (error) {
           console.error("Delete error:", error);
@@ -273,11 +266,11 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         throw sessionError;
       }
       
-      if (!sessionData.session?.user.id) {
+      if (!sessionData.session) {
         toast({
-          title: "Authentication required",
-          description: "Please log in to save ideas",
-          variant: "destructive"
+          variant: "destructive",
+          title: "Authentication error",
+          description: "You must be logged in to save ideas",
         });
         navigate("/auth");
         return;
@@ -328,7 +321,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           user_id: userId,
           emoji: idea.emoji
         })
-        .eq("id", cast(idea.id));
+        .eq("id", idea.id);
 
       if (error) {
         console.error("Error saving idea:", error);
@@ -406,7 +399,6 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           <DialogTitle>Edit Idea</DialogTitle>
           <DialogDescription>Edit your content idea</DialogDescription>
         </DialogHeader>
-        
         <div className="flex flex-col h-full">
           <div className="flex items-start gap-4 p-6 bg-card border-b">
             <div className="flex-1">
