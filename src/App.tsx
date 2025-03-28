@@ -37,7 +37,17 @@ function App() {
     // Handle password recovery token in URL immediately
     if (isPasswordResetFlow()) {
       console.log("Password reset flow detected in App component");
-      window.location.href = "/auth?type=recovery";
+      
+      // Get the current URL to preserve query params and hash
+      const url = new URL(window.location.href);
+      
+      // If the URL doesn't already have the type parameter set to recovery, add it
+      if (!url.searchParams.has('type')) {
+        url.searchParams.set('type', 'recovery');
+      }
+      
+      // Navigate to auth page with all parameters preserved
+      window.location.href = `/auth${url.search}${url.hash}`;
       return;
     }
 
@@ -50,7 +60,7 @@ function App() {
     }
 
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
       
       if (session) {

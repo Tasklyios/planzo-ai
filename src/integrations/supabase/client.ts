@@ -23,47 +23,63 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Helper function to check for auth-related parameters in URL
 export const hasAuthParamsInUrl = () => {
-  const url = new URL(window.location.href);
-  const hashParams = new URLSearchParams(url.hash.substring(1));
-  const queryParams = new URLSearchParams(url.search);
-  
-  // Check common auth params in both hash and query params
-  const authParams = [
-    'access_token', 'refresh_token', 'provider_token', 'error_description',
-    'code', 'token_type', 'expires_in', 'type', 'flow'
-  ];
-  
-  return authParams.some(param => 
-    hashParams.has(param) || queryParams.has(param) ||
-    url.hash.includes(`${param}=`) || url.search.includes(`${param}=`)
-  );
+  try {
+    const url = new URL(window.location.href);
+    const hashParams = new URLSearchParams(url.hash.substring(1));
+    const queryParams = new URLSearchParams(url.search);
+    
+    // Check common auth params in both hash and query params
+    const authParams = [
+      'access_token', 'refresh_token', 'provider_token', 'error_description',
+      'code', 'token_type', 'expires_in', 'type', 'flow'
+    ];
+    
+    return authParams.some(param => 
+      hashParams.has(param) || queryParams.has(param) ||
+      url.hash.includes(`${param}=`) || url.search.includes(`${param}=`)
+    );
+  } catch (error) {
+    console.error("Error checking for auth params:", error);
+    return false;
+  }
 };
 
 // Helper function specifically to detect password recovery flows
 export const isPasswordResetFlow = () => {
-  const url = new URL(window.location.href);
-  const hashParams = new URLSearchParams(url.hash.substring(1));
-  const queryParams = new URLSearchParams(url.search);
-  
-  // Check for recovery-specific parameters
-  const isRecoveryType = 
-    hashParams.get('type') === 'recovery' || 
-    queryParams.get('type') === 'recovery' ||
-    hashParams.get('flow') === 'recovery' || 
-    queryParams.get('flow') === 'recovery';
+  try {
+    const url = new URL(window.location.href);
+    const hashParams = new URLSearchParams(url.hash.substring(1));
+    const queryParams = new URLSearchParams(url.search);
     
-  // Check for access tokens which might be part of recovery process
-  const hasTokens = 
-    hashParams.has('access_token') || 
-    queryParams.has('access_token') ||
-    hashParams.has('refresh_token') || 
-    queryParams.has('refresh_token');
-  
-  // Also check for token in the URL path which indicates reset password flow
-  const hasTokenInPath = url.pathname.includes('/auth/reset-password') || 
-                        url.pathname.includes('/reset-password');
-  
-  return isRecoveryType || (hasTokens && (url.pathname === '/auth' || url.pathname === '/')) || hasTokenInPath;
+    // Check for recovery-specific parameters
+    const isRecoveryType = 
+      hashParams.get('type') === 'recovery' || 
+      queryParams.get('type') === 'recovery' ||
+      hashParams.get('flow') === 'recovery' || 
+      queryParams.get('flow') === 'recovery';
+      
+    // Check for access tokens which might be part of recovery process
+    const hasTokens = 
+      hashParams.has('access_token') || 
+      queryParams.has('access_token') ||
+      hashParams.has('refresh_token') || 
+      queryParams.has('refresh_token');
+    
+    // Also check for token in the URL path which indicates reset password flow
+    const hasTokenInPath = url.pathname.includes('/auth/reset-password') || 
+                          url.pathname.includes('/reset-password');
+    
+    // Check for recovery in any part of the URL (fallback detection)
+    const urlHasRecovery = 
+      url.toString().includes('recovery') || 
+      url.toString().includes('reset-password') || 
+      url.toString().includes('type=recovery');
+    
+    return isRecoveryType || (hasTokens && (url.pathname === '/auth' || url.pathname === '/')) || hasTokenInPath || urlHasRecovery;
+  } catch (error) {
+    console.error("Error checking for password reset flow:", error);
+    return false;
+  }
 };
 
 // Helper function to handle type casting for IDs in Supabase queries

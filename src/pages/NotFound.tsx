@@ -13,7 +13,18 @@ const NotFound = () => {
     // it's likely a misrouted password reset or auth flow
     if (hasAuthParamsInUrl() || isPasswordResetFlow()) {
       console.log("Auth parameters detected on 404 page, redirecting to auth page");
-      navigate("/auth?type=recovery");
+      
+      // Get the current URL to preserve query params and hash
+      const currentURL = window.location.href;
+      const url = new URL(currentURL);
+      
+      // If this is a recovery/reset flow, make sure we add that parameter
+      if (isPasswordResetFlow() && !url.searchParams.has('type')) {
+        url.searchParams.set('type', 'recovery');
+      }
+      
+      // Navigate to auth page with all parameters preserved
+      navigate(`/auth${url.search}${url.hash}`);
     }
   }, [navigate, location]);
 

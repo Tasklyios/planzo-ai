@@ -23,7 +23,11 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       setIsLoading(false);
       // Make sure user lands on the auth page for password reset
       if (location.pathname !== '/auth') {
-        navigate("/auth?type=recovery");
+        const url = new URL(window.location.href);
+        if (!url.searchParams.has('type')) {
+          url.searchParams.set('type', 'recovery');
+        }
+        navigate(`/auth${url.search}${url.hash}`);
       }
       return;
     }
@@ -32,7 +36,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     // Let Supabase handle the token extraction
     if (hasAuthParamsInUrl() && location.pathname !== '/auth') {
       console.log("Auth params detected in URL, redirecting to auth page");
-      navigate("/auth");
+      navigate("/auth" + location.search + location.hash);
       setIsLoading(false);
       return;
     }
