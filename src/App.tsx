@@ -1,7 +1,7 @@
 
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { supabase, isPasswordResetFlow } from "@/integrations/supabase/client";
+import { supabase, isPasswordResetFlow, cast } from "@/integrations/supabase/client";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
@@ -55,13 +55,15 @@ function App() {
       
       if (session) {
         try {
-          // Use filter method instead of .eq
-          const { data: profile } = await supabase.from('profiles')
+          const { data: profile } = await supabase
+            .from('profiles')
             .select('onboarding_completed')
-            .filter('id', 'eq', session.user.id)
+            .eq('id', cast(session.user.id))
             .single();
             
-          if (profile && !profile.onboarding_completed) {
+          if (profile?.onboarding_completed) {
+            setShowOnboarding(false);
+          } else {
             setShowOnboarding(true);
           }
           
@@ -84,17 +86,18 @@ function App() {
       if (event === 'SIGNED_IN' && session) {
         const checkOnboarding = async () => {
           try {
-            // Use filter method instead of .eq
-            const { data: profile } = await supabase.from('profiles')
+            const { data: profile } = await supabase
+              .from('profiles')
               .select('onboarding_completed')
-              .filter('id', 'eq', session.user.id)
+              .eq('id', cast(session.user.id))
               .single();
               
-            if (profile && !profile.onboarding_completed) {
-              setShowOnboarding(true);
+            if (profile?.onboarding_completed) {
+              setShowOnboarding(false);
             } else {
-              localStorage.setItem('has_seen_pricing', 'true');
+              setShowOnboarding(true);
             }
+            localStorage.setItem('has_seen_pricing', 'true');
           } catch (error) {
             console.error("Error checking onboarding status:", error);
           }

@@ -16,15 +16,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true,
     storage: localStorage,
     flowType: 'pkce',
-    // Set these cookie options directly in the auth config object
-    storageKey: 'planzo-auth',
-    cookieName: 'planzo-auth',
-    cookieOptions: {
-      lifetime: 60 * 60 * 24 * 7, // 1 week
-      domain: window.location.hostname,
-      sameSite: 'Lax',
-      secure: window.location.protocol === 'https:'
-    }
+    // Storage options directly in the auth config
+    storageKey: 'planzo-auth'
   }
 });
 
@@ -66,7 +59,11 @@ export const isPasswordResetFlow = () => {
     hashParams.has('refresh_token') || 
     queryParams.has('refresh_token');
   
-  return isRecoveryType || (hasTokens && (url.pathname === '/auth' || url.pathname === '/'));
+  // Also check for token in the URL path which indicates reset password flow
+  const hasTokenInPath = url.pathname.includes('/auth/reset-password') || 
+                        url.pathname.includes('/reset-password');
+  
+  return isRecoveryType || (hasTokens && (url.pathname === '/auth' || url.pathname === '/')) || hasTokenInPath;
 };
 
 // Helper function to handle type casting for IDs in Supabase queries
@@ -89,15 +86,6 @@ export const supabaseTyped = {
     return supabase
       .from(table)
       .select(columns || '*');
-  },
-  // Helper for type-safe filters without using .eq directly
-  filter: <T extends keyof Database['public']['Tables'], K extends string>(
-    table: T,
-    column: K,
-    value: any
-  ) => {
-    return supabase
-      .from(table)
-      .filter(column, 'eq', value);
   }
 };
+
