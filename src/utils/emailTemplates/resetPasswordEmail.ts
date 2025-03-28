@@ -2,10 +2,12 @@
 import { emailStyles, createEmailTemplate } from "../emailTemplates";
 
 export const generateResetPasswordEmail = (resetLink: string, isDark: boolean = false) => {
-  // Ensure the link includes type=recovery and points directly to the auth page
-  const formattedLink = resetLink.includes('type=recovery') 
-    ? resetLink 
-    : `${resetLink}${resetLink.includes('?') ? '&' : '?'}type=recovery`;
+  // Make sure we're using the full URL with the domain for the reset link
+  // Also ensure the link includes type=recovery parameter
+  const fullLink = resetLink.startsWith('http') ? resetLink : `https://planzoai.com${resetLink}`;
+  const formattedLink = fullLink.includes('type=recovery') 
+    ? fullLink 
+    : `${fullLink}${fullLink.includes('?') ? '&' : '?'}type=recovery`;
   
   const content = `
     <h1 style="${isDark ? emailStyles.darkHeading : emailStyles.heading}">Reset Your Password</h1>

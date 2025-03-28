@@ -19,12 +19,14 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const isAuthFlow = () => {
     const searchParams = new URLSearchParams(location.search);
     
-    // Check for password recovery flow - must check both type and token parameters 
+    // Check for various authentication flow parameters
     if (
       (searchParams.has('type') && searchParams.get('type') === 'recovery') ||
       searchParams.has('token_hash') ||
       searchParams.has('refresh_token') ||
-      searchParams.has('access_token')
+      searchParams.has('access_token') ||
+      searchParams.has('error') || // Check for error parameters too
+      searchParams.has('error_description')
     ) {
       return true;
     }
@@ -126,16 +128,33 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     };
   }, [navigate, location]);
 
-  // Special handling for password recovery flows - must bypass auth check for these URLs
-  if (location.pathname === '/auth') {
+  // Special handling for auth flows - must handle both auth page and error redirects
+  if (location.pathname === '/auth' || isAuthFlow()) {
     const searchParams = new URLSearchParams(location.search);
     
-    // Always allow password recovery flows or URLs with auth tokens to bypass auth check
+    // Handle expired token errors by redirecting to auth page with appropriate parameters
+    if (searchParams.has('error') && 
+        (searchParams.get('error_code') === 'otp_expired' || 
+         searchParams.get('error_description')?.includes('expired'))) {
+      
+      console.log("Expired token detected, redirecting to auth with reset password notice");
+      // If we're not already on the auth page, redirect there
+      if (location.pathname !== '/auth') {
+        navigate("/auth?expired=true");
+      } else if (!searchParams.has('expired')) {
+        // If we're on auth page but don't have the expired flag, add it
+        navigate("/auth?expired=true");
+      }
+    }
+    
+    // Always allow auth flows to bypass authentication checks
     if (
       (searchParams.has('type') && searchParams.get('type') === 'recovery') ||
       searchParams.has('token_hash') ||
       searchParams.has('access_token') ||
-      searchParams.has('refresh_token')
+      searchParams.has('refresh_token') ||
+      searchParams.has('expired') ||
+      searchParams.has('error')
     ) {
       console.log("Auth flow detected, bypassing authentication check");
       return <>{children}</>;

@@ -20,6 +20,7 @@ const Auth = () => {
   
   const searchParams = new URLSearchParams(location.search);
   const shouldSignUp = searchParams.get('signup') === 'true';
+  const tokenExpired = searchParams.get('expired') === 'true';
   
   useEffect(() => {
     const currentDomain = window.location.hostname;
@@ -46,7 +47,7 @@ const Auth = () => {
   }, []);
 
   const [isSignUp, setIsSignUp] = useState(shouldSignUp);
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(tokenExpired);
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -59,26 +60,31 @@ const Auth = () => {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [emailExistsError, setEmailExistsError] = useState<string | null>(null);
 
-  // Check for password reset flow
   useEffect(() => {
     const checkForPasswordReset = async () => {
       const query = new URLSearchParams(location.search);
-      // Check if we have a token in the URL (used by Supabase for password reset)
       const hasToken = query.has('token') || 
                       query.has('access_token') ||
                       query.has('refresh_token');
       
-      // Check if we're in a recovery flow
       const isRecovery = query.get("type") === "recovery";
+      
+      if (query.has('error') && query.get('error_code') === 'otp_expired') {
+        setIsForgotPassword(true);
+        toast({
+          variant: "destructive",
+          title: "Password Reset Link Expired",
+          description: "Your password reset link has expired. Please request a new one.",
+        });
+        return;
+      }
       
       if (isRecovery || (hasToken && !isEmailVerificationRedirect())) {
         console.log("Password reset flow detected");
         setIsResetPassword(true);
         
-        // If we have a token but aren't already authenticated, attempt to extract and use it
         if (hasToken) {
           try {
-            // This will set the auth session using the recovery token
             const { data, error } = await supabase.auth.getSession();
             if (error) {
               console.error("Error getting session from reset token:", error);
@@ -102,7 +108,6 @@ const Auth = () => {
 
   const isEmailVerificationRedirect = () => {
     const searchParams = new URLSearchParams(location.search);
-    // These parameters indicate email verification, not password reset
     return searchParams.has('error_description') || 
            (searchParams.has('access_token') && !searchParams.get('type')); 
   };
@@ -307,7 +312,6 @@ const Auth = () => {
         description: "Your password has been updated successfully.",
       });
       
-      // Sign out to ensure clean state after password reset
       await supabase.auth.signOut();
       
       setTimeout(() => {
