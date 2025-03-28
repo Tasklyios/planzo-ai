@@ -19,18 +19,13 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const isAuthFlow = () => {
     const searchParams = new URLSearchParams(location.search);
     
-    // Check for password recovery flow
-    if (searchParams.has('type') && searchParams.get('type') === 'recovery') {
-      return true;
-    }
-    
-    // Check for email verification flow (has token_hash or error_description)
-    if (searchParams.has('token_hash') || searchParams.has('error_description')) {
-      return true;
-    }
-    
-    // Check for other auth flows that might have access_token
-    if (searchParams.has('access_token') || searchParams.has('token')) {
+    // Check for password recovery flow - must check both type and token parameters 
+    if (
+      (searchParams.has('type') && searchParams.get('type') === 'recovery') ||
+      searchParams.has('token_hash') ||
+      searchParams.has('refresh_token') ||
+      searchParams.has('access_token')
+    ) {
       return true;
     }
     
@@ -131,10 +126,20 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     };
   }, [navigate, location]);
 
-  // For auth flows (password reset, verification), we need to return children without authentication
-  if (isAuthFlow() && location.pathname === "/auth") {
-    console.log("Auth flow detected, bypassing authentication check");
-    return <>{children}</>;
+  // Special handling for password recovery flows - must bypass auth check for these URLs
+  if (location.pathname === '/auth') {
+    const searchParams = new URLSearchParams(location.search);
+    
+    // Always allow password recovery flows or URLs with auth tokens to bypass auth check
+    if (
+      (searchParams.has('type') && searchParams.get('type') === 'recovery') ||
+      searchParams.has('token_hash') ||
+      searchParams.has('access_token') ||
+      searchParams.has('refresh_token')
+    ) {
+      console.log("Auth flow detected, bypassing authentication check");
+      return <>{children}</>;
+    }
   }
 
   if (isLoading) {
@@ -143,7 +148,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     </div>;
   }
 
-  // Only render children if the user is authenticated or it's a special case
+  // Only render children if the user is authenticated
   return isAuthenticated ? <>{children}</> : null;
 };
 
