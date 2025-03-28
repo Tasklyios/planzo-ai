@@ -18,12 +18,16 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      const redirectDomain = window.location.hostname === 'localhost' 
-        ? 'http://localhost:8080/'
-        : 'https://planzoai.com/';
+      // Get the base URL for the redirect
+      const baseUrl = window.location.origin;
+      
+      // Create the exact redirect URL - this is critical for proper token handling
+      const redirectTo = `${baseUrl}/password-reset`;
+      
+      console.log("Sending reset email with redirect to:", redirectTo);
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${redirectDomain}password-reset`,
+        redirectTo: redirectTo,
       });
       
       if (error) throw error;

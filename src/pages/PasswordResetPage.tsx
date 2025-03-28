@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase, isPasswordResetFlow } from "@/integrations/supabase/client";
@@ -19,6 +18,7 @@ const PasswordResetPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>("");
 
   useEffect(() => {
     // Force light mode on reset page
@@ -39,77 +39,85 @@ const PasswordResetPage = () => {
   useEffect(() => {
     const verifyResetToken = async () => {
       setLoading(true);
+      const hash = window.location.hash;
+      const query = window.location.search;
       
-      if (!isPasswordResetFlow()) {
-        console.log("Not a password reset flow, redirecting to auth page");
-        navigate("/auth");
-        return;
-      }
-
+      // Debug logging
+      let info = `URL: ${window.location.href}\n`;
+      info += `Hash: ${hash}\n`;
+      info += `Query: ${query}\n`;
+      
       try {
+        // Check if this is a recovery flow
+        if (!isPasswordResetFlow()) {
+          info += "Not detected as password reset flow\n";
+          setTokenError("Invalid password reset link. Please request a new one.");
+          setIsValidToken(false);
+          setDebugInfo(info);
+          setLoading(false);
+          return;
+        }
+        
+        info += "Detected as password reset flow\n";
+        
         // Get any existing session
         const { data: sessionData } = await supabase.auth.getSession();
         
         if (sessionData.session) {
-          console.log("Valid session found for password reset");
+          info += "Valid session found\n";
           setIsValidToken(true);
           setTokenError(null);
-          setLoading(false);
-          return;
-        }
-        
-        // No session yet, try to process the URL parameters
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const queryParams = new URLSearchParams(window.location.search);
-        
-        // Check for error parameters that indicate expired token
-        const errorCode = hashParams.get('error_code') || queryParams.get('error_code');
-        const errorDesc = hashParams.get('error_description') || queryParams.get('error_description');
-        
-        if (errorCode === 'otp_expired' || (errorDesc && errorDesc.includes('expired'))) {
-          console.error("Token expired error detected in URL");
-          setTokenError("Your password reset link has expired. Please request a new one.");
-          setIsValidToken(false);
-          setLoading(false);
-          return;
-        }
-        
-        // If the URL contains a token but we don't have a session, try to establish one
-        if (window.location.hash || window.location.search.includes('type=recovery')) {
-          console.log("Attempting to establish session from URL parameters");
+        } else {
+          info += "No session found, attempting to establish from URL\n";
           
-          // This should establish a session from the recovery token
-          await supabase.auth.refreshSession();
-          const { data: refreshedSession } = await supabase.auth.getSession();
+          // Look for error parameters
+          const hashParams = new URLSearchParams(hash.substring(1));
+          const queryParams = new URLSearchParams(query);
           
-          if (refreshedSession.session) {
-            console.log("Successfully established session from recovery token");
+          const errorCode = hashParams.get('error_code') || queryParams.get('error_code');
+          const errorDesc = hashParams.get('error_description') || queryParams.get('error_description');
+          
+          if (errorCode || errorDesc) {
+            info += `Error detected: ${errorCode} - ${errorDesc}\n`;
+            setTokenError(errorDesc || "Your password reset link is invalid. Please request a new one.");
+            setIsValidToken(false);
+            setDebugInfo(info);
+            setLoading(false);
+            return;
+          }
+          
+          // This will attempt to use the recovery token to establish a session
+          const { data, error } = await supabase.auth.refreshSession();
+          
+          if (error) {
+            info += `Error refreshing session: ${error.message}\n`;
+            setTokenError("Your password reset link has expired or is invalid. Please request a new one.");
+            setIsValidToken(false);
+          } else if (data.session) {
+            info += "Successfully established session\n";
             setIsValidToken(true);
             setTokenError(null);
           } else {
-            console.error("Failed to establish session from recovery token");
-            setTokenError("Your password reset link is invalid. Please request a new one.");
+            info += "Failed to establish session, no error returned\n";
+            setTokenError("Unable to verify your password reset link. Please request a new one.");
             setIsValidToken(false);
           }
-        } else {
-          console.error("No recovery parameters found in URL");
-          setTokenError("Invalid password reset link. Please request a new one.");
-          setIsValidToken(false);
         }
       } catch (error: any) {
-        console.error("Error in password reset flow:", error);
-        setTokenError(error?.message || "An error occurred. Please try again or request a new reset link.");
+        info += `Exception: ${error.message}\n`;
+        setTokenError("An error occurred. Please try again or request a new reset link.");
         setIsValidToken(false);
       } finally {
+        setDebugInfo(info);
         setLoading(false);
       }
     };
     
     verifyResetToken();
-  }, [navigate, location, toast]);
+  }, [navigate, location]);
 
   const handleRequestNewLink = () => {
-    navigate("/auth?expired=true");
+    navigate("/reset-password");
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -137,7 +145,6 @@ const PasswordResetPage = () => {
     }
 
     try {
-      // This should work as long as we have a valid session from the recovery token
       const { error } = await supabase.auth.updateUser({
         password: password,
       });
@@ -161,7 +168,7 @@ const PasswordResetPage = () => {
       toast({
         variant: "destructive",
         title: "Error resetting password",
-        description: error.message || "An error occurred. Please try again.",
+        description: error.message,
       });
     } finally {
       setResetLoading(false);
@@ -187,6 +194,11 @@ const PasswordResetPage = () => {
             <p className="text-[#555555] mb-6">
               {tokenError || "Your password reset link has expired. Please request a new one."}
             </p>
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mb-4 p-2 bg-gray-100 text-xs text-left overflow-auto max-h-40 rounded">
+                <pre>{debugInfo}</pre>
+              </div>
+            )}
             <button
               onClick={handleRequestNewLink}
               className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"

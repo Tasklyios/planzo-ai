@@ -36,15 +36,8 @@ function App() {
 
   useEffect(() => {
     if (isPasswordResetFlow()) {
-      console.log("Password reset flow detected in App component");
-      
-      const url = new URL(window.location.href);
-      
-      if (!url.searchParams.has('type')) {
-        url.searchParams.set('type', 'recovery');
-      }
-      
-      window.location.href = `/password-reset${url.search}${url.hash}`;
+      console.log("Password reset flow detected, no need to redirect");
+      setLoadingProfile(false);
       return;
     }
 
@@ -118,17 +111,11 @@ function App() {
       
       if (event === 'PASSWORD_RECOVERY') {
         console.log("Password recovery event detected");
-        window.location.href = "/auth?type=recovery";
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const handleOnboardingComplete = async () => {
-    setShowOnboarding(false);
-    localStorage.setItem('has_seen_pricing', 'true');
-  };
 
   if (loadingProfile && !isPasswordResetFlow()) {
     return (
