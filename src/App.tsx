@@ -177,7 +177,6 @@ function App() {
                 <Route path="/account" element={<Account />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/billing" element={<Billing />} />
-                <Route path="/email-templates" element={<EmailTemplates />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Route>
