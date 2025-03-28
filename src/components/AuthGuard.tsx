@@ -20,12 +20,19 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     const url = new URL(window.location.href);
     
     // Check for various authentication flow parameters
+    // Note: We need to check both hash and search parameters as Supabase may use either format
     return url.hash.includes('type=recovery') || 
            url.search.includes('type=recovery') ||
            url.hash.includes('access_token=') || 
            url.search.includes('access_token=') ||
            url.hash.includes('error=') ||
-           url.search.includes('error=');
+           url.search.includes('error=') ||
+           // Add more robust token detection
+           url.hash.includes('refresh_token=') ||
+           url.search.includes('refresh_token=') ||
+           // Explicitly check for password reset flow
+           url.hash.includes('flow=recovery') ||
+           url.search.includes('flow=recovery');
   };
 
   useEffect(() => {
@@ -70,6 +77,33 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         setIsLoading(false);
       }
     };
+
+    // Check if we have a recovery token in the URL
+    const checkForRecoveryToken = () => {
+      const url = new URL(window.location.href);
+      const hashParams = new URLSearchParams(url.hash.replace('#', ''));
+      const searchParams = new URLSearchParams(url.search);
+      
+      // Check both hash and search params for Supabase token formats
+      const hasRecoveryToken = 
+        (hashParams.get('type') === 'recovery') || 
+        (searchParams.get('type') === 'recovery') ||
+        url.href.includes('type=recovery');
+      
+      if (hasRecoveryToken) {
+        console.log("Password recovery token detected, redirecting to auth page");
+        navigate("/auth?type=recovery");
+        return true;
+      }
+      
+      return false;
+    };
+
+    // If we have a recovery token, redirect immediately without auth check
+    if (checkForRecoveryToken()) {
+      setIsLoading(false);
+      return;
+    }
 
     checkAuth();
 
@@ -116,7 +150,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     </div>;
   }
 
-  // Special handling for auth flows - must handle both auth page and error redirects
+  // Always allow auth flows regardless of authentication status
+  // This is critical for password reset to work properly
   if (location.pathname === '/auth' || isAuthFlow()) {
     return <>{children}</>;
   }

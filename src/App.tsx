@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,12 +33,50 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
+  // Enhanced function to detect password recovery flows
   const isPasswordResetFlow = () => {
     const url = new URL(window.location.href);
-    return url.hash.includes('type=recovery') || url.search.includes('type=recovery');
+    const hashParams = new URLSearchParams(url.hash.replace('#', ''));
+    const searchParams = new URLSearchParams(url.search);
+    
+    return (hashParams.get('type') === 'recovery') || 
+           (searchParams.get('type') === 'recovery') ||
+           url.hash.includes('type=recovery') || 
+           url.search.includes('type=recovery') ||
+           url.hash.includes('flow=recovery') || 
+           url.search.includes('flow=recovery');
   };
 
   useEffect(() => {
+    // Handle password recovery token in URL
+    const handlePasswordRecoveryToken = () => {
+      if (isPasswordResetFlow()) {
+        console.log("Password reset flow detected in URL");
+        
+        // Extract token from URL if available
+        const url = new URL(window.location.href);
+        const hashParams = new URLSearchParams(url.hash.replace('#', ''));
+        const searchParams = new URLSearchParams(url.search);
+        
+        const accessToken = 
+          hashParams.get('access_token') || 
+          searchParams.get('access_token');
+          
+        if (accessToken) {
+          console.log("Access token found in URL, preparing recovery flow");
+          // Let the Auth page handle the password reset UI
+          window.location.href = "/auth?type=recovery";
+          return true;
+        }
+      }
+      return false;
+    };
+    
+    // If we detect a password reset flow, handle it immediately
+    if (handlePasswordRecoveryToken()) {
+      return;
+    }
+
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
@@ -129,6 +168,7 @@ function App() {
     localStorage.setItem('has_seen_pricing', 'true');
   };
 
+  // Don't render loading state for password reset flow
   if (loadingProfile && !isPasswordResetFlow()) {
     return (
       <div className="h-screen w-full flex items-center justify-center">

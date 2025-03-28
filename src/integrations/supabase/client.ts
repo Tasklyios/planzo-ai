@@ -15,7 +15,14 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
     detectSessionInUrl: true, // Enable automatic URL parsing for standard flows
     storage: localStorage,
-    flowType: 'pkce' // Enable PKCE flow for enhanced security
+    flowType: 'pkce', // Enable PKCE flow for enhanced security
+    // Set this to ensure proper handling of auth flows
+    cookieOptions: {
+      name: 'planzo-auth',
+      lifetime: 60 * 60 * 24 * 7, // 1 week
+      domain: window.location.hostname,
+      sameSite: 'Lax'
+    }
   }
 });
 
