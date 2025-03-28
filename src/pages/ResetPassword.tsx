@@ -21,7 +21,7 @@ const ResetPassword = () => {
       // Get the base URL for the redirect
       const baseUrl = window.location.origin;
       
-      // Create the exact redirect URL - this is critical for proper token handling
+      // Create the exact redirect URL that Supabase expects - using password-reset path
       const redirectTo = `${baseUrl}/password-reset`;
       
       console.log("Sending reset email with redirect to:", redirectTo);

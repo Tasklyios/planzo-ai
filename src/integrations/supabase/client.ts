@@ -38,7 +38,8 @@ export const hasAuthParamsInUrl = () => {
     // Check common auth params in both hash and query params
     const authParams = [
       'access_token', 'refresh_token', 'provider_token', 'error_description',
-      'code', 'token_type', 'expires_in', 'type', 'flow', 'error', 'error_code'
+      'code', 'token_type', 'expires_in', 'type', 'flow', 'error', 'error_code',
+      'token' // Added token parameter from Supabase docs
     ];
     
     return authParams.some(param => 
@@ -65,8 +66,20 @@ export const isPasswordResetFlow = () => {
     const hashParams = new URLSearchParams(url.hash.substring(1));
     const queryParams = new URLSearchParams(url.search);
     
-    // Check for recovery-specific parameters
-    const isRecoveryType = 
+    // Check for standard Supabase password reset parameters
+    // Per Supabase docs: ?token=[TOKEN]&type=recovery&redirect_to=[URL]
+    const hasToken = queryParams.has('token');
+    const isRecoveryType = queryParams.get('type') === 'recovery';
+    const hasRedirectTo = queryParams.has('redirect_to');
+    
+    // Check explicitly for the Supabase recovery URL pattern
+    if (hasToken && isRecoveryType) {
+      console.log("Supabase recovery flow detected via token and type parameters");
+      return true;
+    }
+    
+    // Legacy checks
+    const isRecoveryTypeFromHash = 
       hashParams.get('type') === 'recovery' || 
       queryParams.get('type') === 'recovery';
       
@@ -84,7 +97,7 @@ export const isPasswordResetFlow = () => {
       (hashParams.get('error') === 'access_denied' || queryParams.get('error') === 'access_denied') &&
       (hashParams.get('error_code') === 'otp_expired' || queryParams.get('error_code') === 'otp_expired');
     
-    if (isRecoveryType || hasTokens || hasErrorParams) {
+    if (isRecoveryTypeFromHash || hasTokens || hasErrorParams) {
       console.log("Detected password reset flow in URL parameters");
       return true;
     }

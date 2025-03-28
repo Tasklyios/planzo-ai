@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase, isPasswordResetFlow } from "@/integrations/supabase/client";
@@ -39,17 +40,53 @@ const PasswordResetPage = () => {
   useEffect(() => {
     const verifyResetToken = async () => {
       setLoading(true);
-      const hash = window.location.hash;
-      const query = window.location.search;
       
       // Debug logging
-      let info = `URL: ${window.location.href}\n`;
+      const fullUrl = window.location.href;
+      const hash = window.location.hash;
+      const query = window.location.search;
+      const pathname = window.location.pathname;
+      
+      // Detailed logging
+      let info = `Full URL: ${fullUrl}\n`;
+      info += `Pathname: ${pathname}\n`;
       info += `Hash: ${hash}\n`;
       info += `Query: ${query}\n`;
       
+      // Check for Supabase's token parameter
+      const searchParams = new URLSearchParams(query);
+      const token = searchParams.get('token');
+      const type = searchParams.get('type');
+      const redirectTo = searchParams.get('redirect_to');
+      
+      info += `Token param: ${token || 'none'}\n`;
+      info += `Type param: ${type || 'none'}\n`;
+      info += `Redirect_to param: ${redirectTo || 'none'}\n`;
+      
       try {
-        // Check if this is a recovery flow
-        if (!isPasswordResetFlow()) {
+        // Check if this matches Supabase's recovery flow
+        if (token && type === 'recovery') {
+          info += "Detected standard Supabase recovery flow with token\n";
+          
+          // Supabase expects the token in the fragment, let's try to use it
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: 'recovery',
+          });
+          
+          if (error) {
+            info += `OTP verification error: ${error.message}\n`;
+            setTokenError(error.message || "Your password reset link is invalid or has expired.");
+            setIsValidToken(false);
+          } else if (data.session) {
+            info += "Successfully verified OTP and got session\n";
+            setIsValidToken(true);
+            setTokenError(null);
+          } else {
+            info += "No session returned from verifyOtp\n";
+            // Fall back to regular check
+          }
+        } else if (!isPasswordResetFlow()) {
           info += "Not detected as password reset flow\n";
           setTokenError("Invalid password reset link. Please request a new one.");
           setIsValidToken(false);
@@ -58,9 +95,9 @@ const PasswordResetPage = () => {
           return;
         }
         
-        info += "Detected as password reset flow\n";
+        info += "Detected as password reset flow, checking session\n";
         
-        // Get any existing session
+        // Get any existing session as a fallback
         const { data: sessionData } = await supabase.auth.getSession();
         
         if (sessionData.session) {
@@ -68,7 +105,7 @@ const PasswordResetPage = () => {
           setIsValidToken(true);
           setTokenError(null);
         } else {
-          info += "No session found, attempting to establish from URL\n";
+          info += "No session found, checking error parameters\n";
           
           // Look for error parameters
           const hashParams = new URLSearchParams(hash.substring(1));
@@ -81,26 +118,25 @@ const PasswordResetPage = () => {
             info += `Error detected: ${errorCode} - ${errorDesc}\n`;
             setTokenError(errorDesc || "Your password reset link is invalid. Please request a new one.");
             setIsValidToken(false);
-            setDebugInfo(info);
-            setLoading(false);
-            return;
-          }
-          
-          // This will attempt to use the recovery token to establish a session
-          const { data, error } = await supabase.auth.refreshSession();
-          
-          if (error) {
-            info += `Error refreshing session: ${error.message}\n`;
-            setTokenError("Your password reset link has expired or is invalid. Please request a new one.");
-            setIsValidToken(false);
-          } else if (data.session) {
-            info += "Successfully established session\n";
-            setIsValidToken(true);
-            setTokenError(null);
           } else {
-            info += "Failed to establish session, no error returned\n";
-            setTokenError("Unable to verify your password reset link. Please request a new one.");
-            setIsValidToken(false);
+            info += "No error parameters found, trying to use auth flow to establish session\n";
+            
+            // This will attempt to use the URL parameters to establish a session
+            const { data, error } = await supabase.auth.refreshSession();
+            
+            if (error) {
+              info += `Error refreshing session: ${error.message}\n`;
+              setTokenError("Your password reset link has expired or is invalid. Please request a new one.");
+              setIsValidToken(false);
+            } else if (data.session) {
+              info += "Successfully established session\n";
+              setIsValidToken(true);
+              setTokenError(null);
+            } else {
+              info += "Failed to establish session, no error returned\n";
+              setTokenError("Unable to verify your password reset link. Please request a new one.");
+              setIsValidToken(false);
+            }
           }
         }
       } catch (error: any) {

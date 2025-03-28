@@ -24,11 +24,12 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       // Make sure user lands on the password reset page for password reset
       if (location.pathname !== '/password-reset') {
         console.log("Redirecting to password reset page");
-        const url = new URL(window.location.href);
-        if (!url.searchParams.has('type')) {
-          url.searchParams.set('type', 'recovery');
-        }
-        navigate(`/password-reset${url.search}${url.hash}`);
+        // Preserve any query parameters and hash from the current URL
+        const currentUrl = new URL(window.location.href);
+        const queryParams = currentUrl.search || '';
+        const hashFragment = currentUrl.hash || '';
+        
+        navigate(`/password-reset${queryParams}${hashFragment}`);
       }
       return;
     }
@@ -112,7 +113,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       } else if (event === "PASSWORD_RECOVERY") {
         console.log("Password recovery event detected");
         // Direct the user to the password reset form
-        navigate("/auth?type=recovery");
+        navigate("/password-reset");
       }
     });
 
@@ -129,7 +130,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   }
 
   // Always allow auth page and password reset page access regardless of authentication status
-  if (location.pathname === '/auth' || location.pathname === '/password-reset') {
+  if (location.pathname === '/auth' || location.pathname === '/password-reset' || location.pathname === '/reset-password') {
     return <>{children}</>;
   }
 
