@@ -64,13 +64,16 @@ export const saveHook = async (hook: HookType): Promise<void> => {
       throw new Error("You must be logged in to save hooks");
     }
     
+    // Explicitly define the payload to match the table structure
+    const hookData = {
+      hook_text: hook.hook_text,
+      category: hook.category,
+      user_id: session.session.user.id
+    };
+    
     const { data, error } = await supabase
       .from('saved_hooks')
-      .insert({
-        hook_text: hook.hook_text,
-        category: hook.category,
-        user_id: cast(session.session.user.id)
-      })
+      .insert(hookData)
       .select('id');
     
     if (error) {
@@ -95,7 +98,7 @@ export const getSavedHooks = async (): Promise<SavedHook[]> => {
     const { data, error } = await supabase
       .from('saved_hooks')
       .select('*')
-      .eq('user_id', cast(session.session.user.id))
+      .eq('user_id', session.session.user.id)
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -107,12 +110,13 @@ export const getSavedHooks = async (): Promise<SavedHook[]> => {
       return [];
     }
     
+    // Safely map the data to avoid type errors
     return data.map(hook => ({
-      id: hook.id,
-      hook: hook.hook_text,
-      category: hook.category,
-      user_id: hook.user_id,
-      created_at: hook.created_at,
+      id: hook.id as string,
+      hook: hook.hook_text as string,
+      category: hook.category as string,
+      user_id: hook.user_id as string,
+      created_at: hook.created_at as string,
       is_saved: true,
     }));
   } catch (error: any) {
@@ -132,8 +136,8 @@ export const deleteHook = async (hookId: string): Promise<void> => {
       .from('saved_hooks')
       .delete()
       .match({ 
-        id: cast(hookId), 
-        user_id: cast(session.session.user.id) 
+        id: hookId,
+        user_id: session.session.user.id 
       });
     
     if (error) {

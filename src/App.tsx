@@ -1,7 +1,7 @@
 
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { supabase, isPasswordResetFlow, cast } from "@/integrations/supabase/client";
+import { supabase, isPasswordResetFlow, cast, safeGet } from "@/integrations/supabase/client";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
@@ -64,13 +64,13 @@ function App() {
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('onboarding_completed')
-            .eq('id', session.user.id)
+            .eq('id', cast(session.user.id))
             .single();
             
           if (profileError) {
             console.error("Error fetching profile:", profileError);
             setShowOnboarding(true);
-          } else if (profile?.onboarding_completed) {
+          } else if (profile && profile.onboarding_completed) {
             setShowOnboarding(false);
           } else {
             setShowOnboarding(true);
@@ -98,13 +98,13 @@ function App() {
             const { data: profile, error: profileError } = await supabase
               .from('profiles')
               .select('onboarding_completed')
-              .eq('id', session.user.id)
+              .eq('id', cast(session.user.id))
               .single();
               
             if (profileError) {
               console.error("Error checking onboarding status:", profileError);
               setShowOnboarding(true);
-            } else if (profile?.onboarding_completed) {
+            } else if (profile && profile.onboarding_completed) {
               setShowOnboarding(false);
             } else {
               setShowOnboarding(true);

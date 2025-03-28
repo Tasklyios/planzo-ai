@@ -109,9 +109,21 @@ export const isPasswordResetFlow = () => {
   }
 };
 
-// Helper function to handle type casting for IDs in Supabase queries
-export function cast<T extends string>(value: T): T {
+// Helper function to handle type casting for IDs and values in Supabase queries
+export function cast<T extends string>(value: T | string): T {
   return value as T;
+}
+
+// Type guard to check if a response is an error
+export function isQueryError(data: any): boolean {
+  return data && typeof data === 'object' && 'error' in data;
+}
+
+// Helper to safely access properties from Supabase query results
+export function safeGet<T, K extends keyof T>(obj: T | null | undefined, key: K): T[K] | undefined {
+  if (!obj) return undefined;
+  if (isQueryError(obj)) return undefined;
+  return (obj as T)[key];
 }
 
 // Create typed versions of common Supabase methods to avoid TS errors

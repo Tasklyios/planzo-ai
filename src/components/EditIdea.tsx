@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, cast, isQueryError } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -107,7 +108,7 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
       const { data, error } = await supabase
         .from("video_ideas")
         .select("*")
-        .eq("id", ideaId)
+        .eq("id", cast(ideaId))
         .single();
 
       if (error) {
@@ -121,15 +122,17 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
         throw new Error("No idea found with that ID");
       }
       
-      if (!data.emoji) {
-        data.emoji = getEmojiForIdea(data.title, data.category);
+      const ideaData = data as IdeaData;
+      
+      if (!ideaData.emoji) {
+        ideaData.emoji = getEmojiForIdea(ideaData.title, ideaData.category);
       }
       
-      if (!data.user_id) {
-        data.user_id = userId;
+      if (!ideaData.user_id) {
+        ideaData.user_id = userId;
       }
       
-      setIdea(data as IdeaData);
+      setIdea(ideaData);
     } catch (error: any) {
       console.error("Error fetching idea:", error);
       toast({
@@ -175,8 +178,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             scheduled_for: null,
             is_saved: true,
             user_id: userId
-          } as any)
-          .eq("id", idea.id);
+          })
+          .eq("id", cast(idea.id));
 
         if (error) {
           console.error("Update error:", error);
@@ -190,8 +193,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
             status: 'ideas',
             is_saved: true,
             user_id: userId
-          } as any)
-          .eq("id", idea.id);
+          })
+          .eq("id", cast(idea.id));
 
         if (error) {
           console.error("Update error:", error);
@@ -204,8 +207,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           .update({ 
             is_saved: false,
             user_id: userId
-          } as any)
-          .eq("id", idea.id);
+          })
+          .eq("id", cast(idea.id));
 
         if (error) {
           console.error("Delete error:", error);
@@ -324,8 +327,8 @@ const EditIdea = ({ ideaId, onClose }: EditIdeaProps) => {
           status: newStatus,
           user_id: userId,
           emoji: idea.emoji
-        } as any)
-        .eq("id", idea.id);
+        })
+        .eq("id", cast(idea.id));
 
       if (error) {
         console.error("Error saving idea:", error);
