@@ -15,7 +15,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Function to detect auth flows in URL
+  // Enhanced function to detect auth flows in URL
   const isAuthFlow = () => {
     const url = new URL(window.location.href);
     
@@ -40,7 +40,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       setIsLoading(true);
       try {
         console.log("Checking authentication status...");
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Authentication check error:", error);
@@ -53,7 +53,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           return;
         }
         
-        if (!session) {
+        if (!data.session) {
           console.log("No session found");
           setIsAuthenticated(false);
           
@@ -62,7 +62,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
             navigate("/auth", { state: { from: location.pathname } });
           }
         } else {
-          console.log("Session found, user is authenticated", session.user.id);
+          console.log("Session found, user is authenticated", data.session.user.id);
           setIsAuthenticated(true);
         }
       } catch (error) {

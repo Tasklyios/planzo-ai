@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedIdea } from '@/types/idea';
@@ -28,14 +28,34 @@ const SavedIdeaSelector = ({ onIdeaSelect }: SavedIdeaSelectorProps) => {
   const { data: savedIdeas, isLoading } = useQuery({
     queryKey: ['savedIdeas'],
     queryFn: async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+      
+      if (!userId) {
+        return [] as GeneratedIdea[];
+      }
+      
       const { data, error } = await supabase
         .from('video_ideas')
         .select('*')
-        .eq('is_saved', true)
+        .match({ is_saved: true, user_id: userId })
         .order('created_at', { ascending: false });
         
       if (error) throw error;
-      return data as GeneratedIdea[];
+      if (!data) return [] as GeneratedIdea[];
+      
+      return data.map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        category: item.category || '',
+        tags: item.tags || [],
+        is_saved: true,
+        status: item.status || 'generated',
+        emoji: item.emoji || '🍎',
+        hook_text: item.hook_text || '',
+        hook_category: item.hook_category || ''
+      })) as GeneratedIdea[];
     },
   });
   

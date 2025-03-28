@@ -103,14 +103,18 @@ export const getSavedHooks = async (): Promise<SavedHook[]> => {
       throw new Error(`Failed to retrieve hooks: ${error.message}`);
     }
     
-    return data?.map(hook => ({
+    if (!data) {
+      return [];
+    }
+    
+    return data.map(hook => ({
       id: hook.id,
       hook: hook.hook_text,
       category: hook.category,
       user_id: hook.user_id,
       created_at: hook.created_at,
       is_saved: true,
-    })) || [];
+    }));
   } catch (error: any) {
     console.error('Error in getSavedHooks:', error);
     throw new Error(error.message || "Failed to retrieve saved hooks");
@@ -127,8 +131,7 @@ export const deleteHook = async (hookId: string): Promise<void> => {
     const { error } = await supabase
       .from('saved_hooks')
       .delete()
-      .eq('id', hookId)
-      .eq('user_id', session.session.user.id);
+      .match({ id: hookId, user_id: session.session.user.id });
     
     if (error) {
       console.error('Error deleting hook:', error);

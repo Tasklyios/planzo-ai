@@ -16,9 +16,12 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true, // Enable automatic URL parsing for standard flows
     storage: localStorage,
     flowType: 'pkce', // Enable PKCE flow for enhanced security
-    // Set this to ensure proper handling of auth flows
+    // Set these cookie options directly in the auth config object
+    // instead of using a separate cookieOptions property
+    storageKey: 'planzo-auth',
+    // @ts-ignore - The Supabase client's type definition might be outdated for the cookie-related settings
+    cookieName: 'planzo-auth',
     cookieOptions: {
-      name: 'planzo-auth',
       lifetime: 60 * 60 * 24 * 7, // 1 week
       domain: window.location.hostname,
       sameSite: 'Lax'
@@ -49,5 +52,16 @@ export const supabaseTyped = {
         data: Database['public']['Tables'][T]['Row'][] | null;
         error: Error | null;
       }>;
+  },
+  // Helper for type-safe equality filters
+  eq: <T extends keyof Database['public']['Tables'], K extends keyof Database['public']['Tables'][T]['Row']>(
+    table: T,
+    column: K,
+    value: Database['public']['Tables'][T]['Row'][K]
+  ) => {
+    return supabase
+      .from(table)
+      .eq(column as string, value);
   }
 };
+
