@@ -2,17 +2,32 @@
 import { emailStyles, createEmailTemplate } from "../emailTemplates";
 
 export const generateResetPasswordEmail = (resetLink: string, isDark: boolean = false) => {
-  // Make sure we're using the full URL with the domain for the reset link
-  const fullLink = resetLink.startsWith('http') ? resetLink : `https://planzoai.com${resetLink}`;
+  // Extract any token information from the provided link
+  const url = new URL(resetLink.startsWith('http') ? resetLink : `https://planzoai.com${resetLink}`);
   
-  // Extract the base URL without any parameters
-  const baseUrl = fullLink.split('?')[0].split('#')[0];
+  // Build a clean, reliable reset link that points directly to the auth page with recovery type
+  const authUrl = new URL('https://planzoai.com/auth');
+  authUrl.searchParams.set('type', 'recovery');
   
-  // Check if baseUrl ends with '/auth', if not, we need to add it
-  const authBaseUrl = baseUrl.endsWith('/auth') ? baseUrl : `${baseUrl.replace(/\/$/, '')}/auth`;
+  // Preserve any tokens from the original link
+  if (url.searchParams.has('token')) {
+    authUrl.searchParams.set('token', url.searchParams.get('token')!);
+  }
+  if (url.searchParams.has('token_hash')) {
+    authUrl.searchParams.set('token_hash', url.searchParams.get('token_hash')!);
+  }
+  if (url.hash) {
+    // Copy the hash tokens to query parameters for easier processing
+    const hashParams = new URLSearchParams(url.hash.substring(1));
+    if (hashParams.has('access_token')) {
+      authUrl.searchParams.set('access_token', hashParams.get('access_token')!);
+    }
+    if (hashParams.has('refresh_token')) {
+      authUrl.searchParams.set('refresh_token', hashParams.get('refresh_token')!);
+    }
+  }
   
-  // Add the recovery type parameter
-  const finalLink = `${authBaseUrl}?type=recovery`;
+  const finalLink = authUrl.toString();
   
   const content = `
     <h1 style="${isDark ? emailStyles.darkHeading : emailStyles.heading}">Reset Your Password</h1>

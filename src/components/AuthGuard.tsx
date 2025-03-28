@@ -15,26 +15,32 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Function to check URL parameters in both search and hash parts
+  // Function to extract parameters from both URL search and hash
   const getUrlParams = () => {
+    // Parse search params (query string)
     const searchParams = new URLSearchParams(location.search);
     
-    // Check if we have hash params (like #error=access_denied)
-    const hashParams = new URLSearchParams(
-      location.hash.startsWith('#') 
+    // Parse hash params (fragment)
+    let hashParams = new URLSearchParams();
+    if (location.hash) {
+      // Remove the leading '#' if present
+      const hashString = location.hash.startsWith('#') 
         ? location.hash.substring(1) 
-        : location.hash
-    );
+        : location.hash;
+      hashParams = new URLSearchParams(hashString);
+    }
     
-    // Combine both parameter sources
+    // Combined parameters object with hash taking precedence
     const params = {
       type: searchParams.get('type') || hashParams.get('type'),
+      token: searchParams.get('token') || hashParams.get('token'),
       token_hash: searchParams.get('token_hash') || hashParams.get('token_hash'),
       refresh_token: searchParams.get('refresh_token') || hashParams.get('refresh_token'),
       access_token: searchParams.get('access_token') || hashParams.get('access_token'),
       error: searchParams.get('error') || hashParams.get('error'),
       error_code: searchParams.get('error_code') || hashParams.get('error_code'),
       error_description: searchParams.get('error_description') || hashParams.get('error_description'),
+      expired: searchParams.get('expired') || hashParams.get('expired'),
     };
     
     return params;
@@ -45,18 +51,17 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     const params = getUrlParams();
     
     // Check for various authentication flow parameters
-    if (
-      (params.type === 'recovery') ||
+    return !!(
+      params.type === 'recovery' ||
+      params.token ||
       params.token_hash ||
       params.refresh_token ||
       params.access_token ||
-      params.error || // Check for error parameters too
-      params.error_description
-    ) {
-      return true;
-    }
-    
-    return false;
+      params.error ||
+      params.error_description ||
+      params.error_code ||
+      params.expired
+    );
   };
 
   useEffect(() => {
@@ -78,11 +83,22 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         }
         
         if (!session) {
-          console.log("No session found, redirecting to auth");
+          console.log("No session found");
           setIsAuthenticated(false);
           localStorage.clear(); // Clear all localStorage on session check failure
           
-          // Don't redirect if this is an auth flow or already on auth page
+          // Check if this is a password reset flow with error
+          const params = getUrlParams();
+          
+          // Handle expired token or error case - redirect to auth page with expired parameter
+          if (params.error_code === 'otp_expired' || 
+              (params.error && params.error_description)) {
+            console.log("Password reset token expired or error detected");
+            navigate("/auth?expired=true", { replace: true });
+            return;
+          }
+          
+          // Don't redirect if this is another type of auth flow or already on auth page
           if (!isAuthFlow() && location.pathname !== '/auth') {
             navigate("/auth", { state: { from: location.pathname } });
           }
@@ -157,23 +173,11 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   useEffect(() => {
     const params = getUrlParams();
     
-    // Handle hash or search params indicating expired tokens or other errors
+    // Handle expired tokens or other errors from hash or search params
     if (params.error || params.error_code) {
-      // If we're already on the auth page, just update the URL parameters
-      if (location.pathname === '/auth') {
-        if (params.error_code === 'otp_expired' || 
-            (params.error_description && params.error_description.toLowerCase().includes('expired'))) {
-          navigate("/auth?expired=true", { replace: true });
-          toast({
-            variant: "destructive",
-            title: "Password Reset Link Expired",
-            description: "Your password reset link has expired. Please request a new one."
-          });
-        }
-      } 
-      // If we're not on the auth page, redirect there with the expired parameter
-      else if (params.error_code === 'otp_expired' || 
-               (params.error_description && params.error_description.toLowerCase().includes('expired'))) {
+      if (params.error_code === 'otp_expired' || 
+          (params.error_description && params.error_description.toLowerCase().includes('expired'))) {
+        // Redirect to auth page with expired parameter
         navigate("/auth?expired=true", { replace: true });
         toast({
           variant: "destructive",
