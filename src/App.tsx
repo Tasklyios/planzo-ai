@@ -1,7 +1,7 @@
 
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isPasswordResetFlow } from "@/integrations/supabase/client";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
@@ -33,48 +33,20 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // Enhanced function to detect password recovery flows
-  const isPasswordResetFlow = () => {
-    const url = new URL(window.location.href);
-    const hashParams = new URLSearchParams(url.hash.replace('#', ''));
-    const searchParams = new URLSearchParams(url.search);
-    
-    return (hashParams.get('type') === 'recovery') || 
-           (searchParams.get('type') === 'recovery') ||
-           url.hash.includes('type=recovery') || 
-           url.search.includes('type=recovery') ||
-           url.hash.includes('flow=recovery') || 
-           url.search.includes('flow=recovery');
-  };
-
   useEffect(() => {
-    // Handle password recovery token in URL
-    const handlePasswordRecoveryToken = () => {
-      if (isPasswordResetFlow()) {
-        console.log("Password reset flow detected in URL");
-        
-        // Extract token from URL if available
-        const url = new URL(window.location.href);
-        const hashParams = new URLSearchParams(url.hash.replace('#', ''));
-        const searchParams = new URLSearchParams(url.search);
-        
-        const accessToken = 
-          hashParams.get('access_token') || 
-          searchParams.get('access_token');
-          
-        if (accessToken) {
-          console.log("Access token found in URL, preparing recovery flow");
-          // Let the Auth page handle the password reset UI
-          window.location.href = "/auth?type=recovery";
-          return true;
-        }
-      }
-      return false;
-    };
-    
-    // If we detect a password reset flow, handle it immediately
-    if (handlePasswordRecoveryToken()) {
+    // Handle password recovery token in URL immediately
+    if (isPasswordResetFlow()) {
+      console.log("Password reset flow detected in App component");
+      window.location.href = "/auth?type=recovery";
       return;
+    }
+
+    // Domain redirect for netlify to custom domain
+    const currentDomain = window.location.hostname;
+    if (currentDomain === 'planzo.netlify.app') {
+      const currentPath = window.location.pathname;
+      const currentSearch = window.location.search;
+      window.location.href = `https://planzoai.com${currentPath}${currentSearch}`;
     }
 
     const checkAuth = async () => {
@@ -82,16 +54,11 @@ function App() {
       setIsAuthenticated(!!session);
       
       if (session) {
-        if (isPasswordResetFlow()) {
-          console.log("Password reset flow detected, skipping profile check");
-          setLoadingProfile(false);
-          return;
-        }
-        
         try {
+          // Use filter method instead of .eq
           const { data: profile } = await supabase.from('profiles')
             .select('onboarding_completed')
-            .eq('id', session.user.id)
+            .filter('id', 'eq', session.user.id)
             .single();
             
           if (profile && !profile.onboarding_completed) {
@@ -115,16 +82,12 @@ function App() {
       setIsAuthenticated(!!session);
       
       if (event === 'SIGNED_IN' && session) {
-        if (isPasswordResetFlow()) {
-          console.log("Password reset flow detected after sign in, skipping profile check");
-          return;
-        }
-        
         const checkOnboarding = async () => {
           try {
+            // Use filter method instead of .eq
             const { data: profile } = await supabase.from('profiles')
               .select('onboarding_completed')
-              .eq('id', session.user.id)
+              .filter('id', 'eq', session.user.id)
               .single();
               
             if (profile && !profile.onboarding_completed) {
@@ -153,22 +116,12 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const currentDomain = window.location.hostname;
-    if (currentDomain === 'planzo.netlify.app') {
-      const currentPath = window.location.pathname;
-      const currentSearch = window.location.search;
-      window.location.href = `https://planzoai.com${currentPath}${currentSearch}`;
-    }
-  }, []);
-
   const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
-    
     localStorage.setItem('has_seen_pricing', 'true');
   };
 
-  // Don't render loading state for password reset flow
+  // Show loading state unless this is a password reset flow
   if (loadingProfile && !isPasswordResetFlow()) {
     return (
       <div className="h-screen w-full flex items-center justify-center">
@@ -186,6 +139,7 @@ function App() {
               path="/" 
               element={isAuthenticated ? <Navigate to="/dashboard" /> : <Index />} 
             />
+            {/* Make auth route accessible without guards */}
             <Route 
               path="/auth" 
               element={<Auth />} 

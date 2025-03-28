@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isPasswordResetFlow, hasAuthParamsInUrl } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
 interface AuthGuardProps {
@@ -15,27 +15,28 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Enhanced function to detect auth flows in URL
-  const isAuthFlow = () => {
-    const url = new URL(window.location.href);
-    
-    // Check for various authentication flow parameters
-    // Note: We need to check both hash and search parameters as Supabase may use either format
-    return url.hash.includes('type=recovery') || 
-           url.search.includes('type=recovery') ||
-           url.hash.includes('access_token=') || 
-           url.search.includes('access_token=') ||
-           url.hash.includes('error=') ||
-           url.search.includes('error=') ||
-           // Add more robust token detection
-           url.hash.includes('refresh_token=') ||
-           url.search.includes('refresh_token=') ||
-           // Explicitly check for password reset flow
-           url.hash.includes('flow=recovery') ||
-           url.search.includes('flow=recovery');
-  };
-
   useEffect(() => {
+    // If this is a password reset flow, don't do auth checks
+    // This ensures the user can access the reset password form
+    if (isPasswordResetFlow()) {
+      console.log("Password reset flow detected in AuthGuard, skipping auth check");
+      setIsLoading(false);
+      // Make sure user lands on the auth page for password reset
+      if (location.pathname !== '/auth') {
+        navigate("/auth?type=recovery");
+      }
+      return;
+    }
+
+    // For other auth-related URLs that aren't password reset
+    // Let Supabase handle the token extraction
+    if (hasAuthParamsInUrl() && location.pathname !== '/auth') {
+      console.log("Auth params detected in URL, redirecting to auth page");
+      navigate("/auth");
+      setIsLoading(false);
+      return;
+    }
+
     const checkAuth = async () => {
       setIsLoading(true);
       try {
@@ -46,8 +47,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           console.error("Authentication check error:", error);
           setIsAuthenticated(false);
           
-          // Don't redirect if this is an auth flow
-          if (!isAuthFlow() && location.pathname !== '/auth') {
+          // Don't redirect if already on auth page
+          if (location.pathname !== '/auth') {
             navigate("/auth", { state: { from: location.pathname } });
           }
           return;
@@ -57,8 +58,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           console.log("No session found");
           setIsAuthenticated(false);
           
-          // Don't redirect if this is an auth flow or already on auth page
-          if (!isAuthFlow() && location.pathname !== '/auth') {
+          // Don't redirect if already on auth page
+          if (location.pathname !== '/auth') {
             navigate("/auth", { state: { from: location.pathname } });
           }
         } else {
@@ -69,41 +70,14 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         console.error("Error checking authentication:", error);
         setIsAuthenticated(false);
         
-        // Don't redirect if this is an auth flow
-        if (!isAuthFlow() && location.pathname !== '/auth') {
+        // Don't redirect if already on auth page
+        if (location.pathname !== '/auth') {
           navigate("/auth", { state: { from: location.pathname } });
         }
       } finally {
         setIsLoading(false);
       }
     };
-
-    // Check if we have a recovery token in the URL
-    const checkForRecoveryToken = () => {
-      const url = new URL(window.location.href);
-      const hashParams = new URLSearchParams(url.hash.replace('#', ''));
-      const searchParams = new URLSearchParams(url.search);
-      
-      // Check both hash and search params for Supabase token formats
-      const hasRecoveryToken = 
-        (hashParams.get('type') === 'recovery') || 
-        (searchParams.get('type') === 'recovery') ||
-        url.href.includes('type=recovery');
-      
-      if (hasRecoveryToken) {
-        console.log("Password recovery token detected, redirecting to auth page");
-        navigate("/auth?type=recovery");
-        return true;
-      }
-      
-      return false;
-    };
-
-    // If we have a recovery token, redirect immediately without auth check
-    if (checkForRecoveryToken()) {
-      setIsLoading(false);
-      return;
-    }
 
     checkAuth();
 
@@ -122,18 +96,17 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         setIsAuthenticated(true);
         
         // Skip redirect for verification flows, otherwise redirect to dashboard
-        if (!isAuthFlow()) {
+        if (!hasAuthParamsInUrl()) {
           const currentPath = location.pathname;
           if (currentPath === "/" || currentPath === "/auth") {
-            // Always set this flag when a user explicitly signs in to prevent 
-            // pricing dialog from showing unexpectedly
+            // Set this flag when a user explicitly signs in
             localStorage.setItem('has_seen_pricing', 'true');
             navigate("/dashboard");
           }
         }
       } else if (event === "PASSWORD_RECOVERY") {
         console.log("Password recovery event detected");
-        // Make sure we show the reset password form
+        // Direct the user to the password reset form
         navigate("/auth?type=recovery");
       }
     });
@@ -150,9 +123,13 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     </div>;
   }
 
-  // Always allow auth flows regardless of authentication status
-  // This is critical for password reset to work properly
-  if (location.pathname === '/auth' || isAuthFlow()) {
+  // Always allow auth page access regardless of authentication status
+  if (location.pathname === '/auth') {
+    return <>{children}</>;
+  }
+
+  // Always allow password reset flows
+  if (isPasswordResetFlow()) {
     return <>{children}</>;
   }
 

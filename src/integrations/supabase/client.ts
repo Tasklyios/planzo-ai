@@ -13,21 +13,61 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true, // Enable automatic URL parsing for standard flows
+    detectSessionInUrl: true,
     storage: localStorage,
-    flowType: 'pkce', // Enable PKCE flow for enhanced security
+    flowType: 'pkce',
     // Set these cookie options directly in the auth config object
-    // instead of using a separate cookieOptions property
     storageKey: 'planzo-auth',
-    // @ts-ignore - The Supabase client's type definition might be outdated for the cookie-related settings
     cookieName: 'planzo-auth',
     cookieOptions: {
       lifetime: 60 * 60 * 24 * 7, // 1 week
       domain: window.location.hostname,
-      sameSite: 'Lax'
+      sameSite: 'Lax',
+      secure: window.location.protocol === 'https:'
     }
   }
 });
+
+// Helper function to check for auth-related parameters in URL
+export const hasAuthParamsInUrl = () => {
+  const url = new URL(window.location.href);
+  const hashParams = new URLSearchParams(url.hash.substring(1));
+  const queryParams = new URLSearchParams(url.search);
+  
+  // Check common auth params in both hash and query params
+  const authParams = [
+    'access_token', 'refresh_token', 'provider_token', 'error_description',
+    'code', 'token_type', 'expires_in', 'type', 'flow'
+  ];
+  
+  return authParams.some(param => 
+    hashParams.has(param) || queryParams.has(param) ||
+    url.hash.includes(`${param}=`) || url.search.includes(`${param}=`)
+  );
+};
+
+// Helper function specifically to detect password recovery flows
+export const isPasswordResetFlow = () => {
+  const url = new URL(window.location.href);
+  const hashParams = new URLSearchParams(url.hash.substring(1));
+  const queryParams = new URLSearchParams(url.search);
+  
+  // Check for recovery-specific parameters
+  const isRecoveryType = 
+    hashParams.get('type') === 'recovery' || 
+    queryParams.get('type') === 'recovery' ||
+    hashParams.get('flow') === 'recovery' || 
+    queryParams.get('flow') === 'recovery';
+    
+  // Check for access tokens which might be part of recovery process
+  const hasTokens = 
+    hashParams.has('access_token') || 
+    queryParams.has('access_token') ||
+    hashParams.has('refresh_token') || 
+    queryParams.has('refresh_token');
+  
+  return isRecoveryType || (hasTokens && (url.pathname === '/auth' || url.pathname === '/'));
+};
 
 // Helper function to handle type casting for IDs in Supabase queries
 export function cast<T>(value: T): T {
@@ -48,20 +88,16 @@ export const supabaseTyped = {
   ) => {
     return supabase
       .from(table)
-      .select(columns || '*') as unknown as Promise<{
-        data: Database['public']['Tables'][T]['Row'][] | null;
-        error: Error | null;
-      }>;
+      .select(columns || '*');
   },
-  // Helper for type-safe equality filters
-  eq: <T extends keyof Database['public']['Tables'], K extends keyof Database['public']['Tables'][T]['Row']>(
+  // Helper for type-safe filters without using .eq directly
+  filter: <T extends keyof Database['public']['Tables'], K extends string>(
     table: T,
     column: K,
-    value: Database['public']['Tables'][T]['Row'][K]
+    value: any
   ) => {
     return supabase
       .from(table)
-      .eq(column as string, value);
+      .filter(column, 'eq', value);
   }
 };
-

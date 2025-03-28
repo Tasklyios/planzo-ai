@@ -1,5 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { cast, supabase, supabaseTyped } from "@/integrations/supabase/client";
 import { HookType, SavedHook } from "@/types/hooks";
 import { VIRAL_CONTENT_PROMPT } from "@/types/idea";
 
@@ -67,9 +67,9 @@ export const saveHook = async (hook: HookType): Promise<void> => {
     const { data, error } = await supabase
       .from('saved_hooks')
       .insert({
-        hook_text: hook.hook_text,
+        hook: hook.hook_text,
         category: hook.category,
-        user_id: session.session.user.id
+        user_id: cast(session.session.user.id)
       })
       .select('id');
     
@@ -92,10 +92,8 @@ export const getSavedHooks = async (): Promise<SavedHook[]> => {
       throw new Error("You must be logged in to view saved hooks");
     }
 
-    const { data, error } = await supabase
-      .from('saved_hooks')
+    const { data, error } = await supabaseTyped.filter('saved_hooks', 'user_id', cast(session.session.user.id))
       .select('*')
-      .eq('user_id', session.session.user.id)
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -109,7 +107,7 @@ export const getSavedHooks = async (): Promise<SavedHook[]> => {
     
     return data.map(hook => ({
       id: hook.id,
-      hook: hook.hook_text,
+      hook: hook.hook,
       category: hook.category,
       user_id: hook.user_id,
       created_at: hook.created_at,
@@ -131,7 +129,10 @@ export const deleteHook = async (hookId: string): Promise<void> => {
     const { error } = await supabase
       .from('saved_hooks')
       .delete()
-      .match({ id: hookId, user_id: session.session.user.id });
+      .match({ 
+        id: cast(hookId), 
+        user_id: cast(session.session.user.id) 
+      });
     
     if (error) {
       console.error('Error deleting hook:', error);

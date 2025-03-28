@@ -1,89 +1,36 @@
 
-import { useLocation, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, ArrowLeft } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { hasAuthParamsInUrl, isPasswordResetFlow } from "@/integrations/supabase/client";
 
 const NotFound = () => {
   const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isPasswordReset, setIsPasswordReset] = useState(false);
-
+  const navigate = useNavigate();
+  
   useEffect(() => {
-    // Check if this is a password reset link that got lost
-    const checkForPasswordReset = () => {
-      const url = new URL(window.location.href);
-      // Check both hash and search params for recovery tokens
-      const isRecoveryFlow = 
-        url.hash.includes('type=recovery') || 
-        url.search.includes('type=recovery') ||
-        url.hash.includes('access_token=') || 
-        url.search.includes('access_token=');
-      
-      if (isRecoveryFlow) {
-        setIsPasswordReset(true);
-        // Redirect to proper auth recovery page
-        window.location.href = "/auth?type=recovery";
-        return true;
-      }
-      return false;
-    };
-    
-    // First check if this might be a lost password reset flow
-    if (checkForPasswordReset()) {
-      return;
+    // If there are auth parameters but we hit the 404 page,
+    // it's likely a misrouted password reset or auth flow
+    if (hasAuthParamsInUrl() || isPasswordResetFlow()) {
+      console.log("Auth parameters detected on 404 page, redirecting to auth page");
+      navigate("/auth?type=recovery");
     }
-
-    // Log the 404 error
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
-    
-    // Check if there's a session in localStorage to determine authentication status
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      setIsAuthenticated(!!data.session);
-    };
-    
-    checkAuth();
-  }, [location.pathname]);
-
-  // If we detected a password reset flow, show a loading spinner
-  if (isPasswordReset) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
-  }
+  }, [navigate, location]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
-      <div className="text-center max-w-md">
-        <h1 className="text-6xl font-bold text-primary mb-4">404</h1>
-        <p className="text-2xl font-semibold mb-2">Page not found</p>
-        <p className="text-muted-foreground mb-8">
-          The page you're looking for doesn't exist or you don't have access to it.
+    <div className="h-screen w-full flex flex-col items-center justify-center p-4">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold mb-2">404</h1>
+        <h2 className="text-2xl font-medium mb-4">Page Not Found</h2>
+        <p className="text-muted-foreground mb-6">
+          The page you're looking for doesn't exist or has been moved.
         </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild variant="default" size="lg" className="flex items-center gap-2">
-            <Link to={isAuthenticated ? "/dashboard" : "/"}>
-              <Home className="w-4 h-4" />
-              {isAuthenticated ? "Go to Dashboard" : "Return Home"}
-            </Link>
+        <div className="flex gap-4 justify-center">
+          <Button asChild variant="default">
+            <Link to="/">Go Home</Link>
           </Button>
-          
-          <Button 
-            variant="outline" 
-            size="lg" 
-            className="flex items-center gap-2"
-            onClick={() => window.history.back()}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Go Back
+          <Button asChild variant="outline">
+            <Link to="/dashboard">Go to Dashboard</Link>
           </Button>
         </div>
       </div>
