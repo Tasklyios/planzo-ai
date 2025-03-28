@@ -270,7 +270,7 @@ const Auth = () => {
         : 'https://planzoai.com';
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${redirectDomain}/password-reset?type=recovery`,
+        redirectTo: `${redirectDomain}/password-reset`,
       });
       
       if (error) throw error;
