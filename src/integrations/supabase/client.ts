@@ -15,7 +15,24 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
     detectSessionInUrl: false, // Disable automatic URL parsing to handle it manually
     storage: localStorage,
-    flowType: 'pkce', // Enable PKCE flow for enhanced security
-    tokenName: 'planzo_auth_token'
+    flowType: 'pkce' // Enable PKCE flow for enhanced security
   }
 });
+
+// Helper function to handle type casting for IDs in Supabase queries
+export function cast<T>(value: T): T {
+  return value as T;
+}
+
+// Create typed versions of common Supabase methods to avoid TS errors
+export const supabaseTyped = {
+  from: supabase.from,
+  auth: supabase.auth,
+  storage: supabase.storage,
+  functions: supabase.functions,
+  rpc: supabase.rpc,
+  // Typed select method for easier querying
+  select: <T>(table: string, options?: any) => {
+    return supabase.from(table).select(options) as unknown as Promise<{ data: T | null; error: Error | null }>;
+  }
+};

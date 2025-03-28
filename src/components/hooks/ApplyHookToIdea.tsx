@@ -22,7 +22,7 @@ const ApplyHookToIdea = ({ idea, hook }: ApplyHookToIdeaProps) => {
     mutationFn: async () => {
       if (!idea || !hook) return null;
       
-      // Get the hook text from the correct property based on the hook type
+      // Get the hook text from the correct property
       const hookText = hook.hook_text;
       
       const { data, error } = await supabase
