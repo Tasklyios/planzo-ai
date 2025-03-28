@@ -11,6 +11,7 @@ const PasswordResetPage = () => {
   const { toast } = useToast();
   const [isValidToken, setIsValidToken] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [tokenError, setTokenError] = useState<string | null>(null);
 
   useEffect(() => {
     // Force light mode on reset page
@@ -42,29 +43,28 @@ const PasswordResetPage = () => {
         // Check if the token in the URL is valid
         const { data, error } = await supabase.auth.getSession();
         
-        if (error || !data.session) {
+        if (error) {
           console.error("Error validating reset token:", error);
-          toast({
-            variant: "destructive",
-            title: "Invalid or Expired Link",
-            description: "Your password reset link is invalid or has expired. Please request a new one.",
-          });
-          
-          navigate("/auth?expired=true");
+          setTokenError(error.message || "Your password reset link is invalid or has expired");
+          setIsValidToken(false);
+          return;
+        }
+        
+        if (!data.session) {
+          console.log("No session found, token might be expired");
+          setTokenError("Your password reset link has expired. Please request a new one.");
+          setIsValidToken(false);
           return;
         }
         
         // Token is valid, allow password reset
+        console.log("Valid token found, showing password reset form");
         setIsValidToken(true);
-      } catch (error) {
+        setTokenError(null);
+      } catch (error: any) {
         console.error("Error in password reset flow:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "An error occurred. Please try again or request a new reset link.",
-        });
-        
-        navigate("/auth");
+        setTokenError(error?.message || "An error occurred. Please try again or request a new reset link.");
+        setIsValidToken(false);
       } finally {
         setLoading(false);
       }
@@ -72,6 +72,10 @@ const PasswordResetPage = () => {
     
     verifyResetToken();
   }, [navigate, location, toast]);
+
+  const handleRequestNewLink = () => {
+    navigate("/auth?expired=true");
+  };
 
   if (loading) {
     return (
@@ -82,7 +86,26 @@ const PasswordResetPage = () => {
   }
 
   if (!isValidToken) {
-    return null; // Will be redirected by the useEffect
+    return (
+      <div className="min-h-screen bg-[#f3f3f3] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 shadow-xl">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-destructive mb-2">
+              Password Reset Link Expired
+            </h1>
+            <p className="text-[#555555] mb-6">
+              {tokenError || "Your password reset link has expired. Please request a new one."}
+            </p>
+            <button
+              onClick={handleRequestNewLink}
+              className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Request New Link
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return <PasswordReset />;
