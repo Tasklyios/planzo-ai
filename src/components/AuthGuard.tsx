@@ -30,7 +30,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     }
     
     // Check for other auth flows that might have access_token
-    if (searchParams.has('access_token')) {
+    if (searchParams.has('access_token') || searchParams.has('token')) {
       return true;
     }
     
@@ -49,7 +49,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           setIsAuthenticated(false);
           
           // Don't redirect if this is an auth flow (password reset, verification, etc.)
-          if (!isAuthFlow()) {
+          if (!isAuthFlow() && location.pathname !== '/auth') {
             navigate("/auth", { state: { from: location.pathname } });
           }
           return;
@@ -60,8 +60,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
           setIsAuthenticated(false);
           localStorage.clear(); // Clear all localStorage on session check failure
           
-          // Don't redirect if this is an auth flow
-          if (!isAuthFlow()) {
+          // Don't redirect if this is an auth flow or already on auth page
+          if (!isAuthFlow() && location.pathname !== '/auth') {
             navigate("/auth", { state: { from: location.pathname } });
           }
         } else {
@@ -73,7 +73,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         setIsAuthenticated(false);
         
         // Don't redirect if this is an auth flow
-        if (!isAuthFlow()) {
+        if (!isAuthFlow() && location.pathname !== '/auth') {
           navigate("/auth", { state: { from: location.pathname } });
         }
       } finally {

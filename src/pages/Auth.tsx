@@ -59,25 +59,52 @@ const Auth = () => {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [emailExistsError, setEmailExistsError] = useState<string | null>(null);
 
+  // Check for password reset flow
   useEffect(() => {
-    const query = new URLSearchParams(location.search);
-    const type = query.get("type");
+    const checkForPasswordReset = async () => {
+      const query = new URLSearchParams(location.search);
+      // Check if we have a token in the URL (used by Supabase for password reset)
+      const hasToken = query.has('token') || 
+                      query.has('access_token') ||
+                      query.has('refresh_token');
+      
+      // Check if we're in a recovery flow
+      const isRecovery = query.get("type") === "recovery";
+      
+      if (isRecovery || (hasToken && !isEmailVerificationRedirect())) {
+        console.log("Password reset flow detected");
+        setIsResetPassword(true);
+        
+        // If we have a token but aren't already authenticated, attempt to extract and use it
+        if (hasToken) {
+          try {
+            // This will set the auth session using the recovery token
+            const { data, error } = await supabase.auth.getSession();
+            if (error) {
+              console.error("Error getting session from reset token:", error);
+              toast({
+                variant: "destructive",
+                title: "Password Reset Error",
+                description: "There was a problem with your password reset link. Please request a new one.",
+              });
+            } else if (data.session) {
+              console.log("Successfully authenticated with reset token");
+            }
+          } catch (error) {
+            console.error("Error in password reset flow:", error);
+          }
+        }
+      }
+    };
     
-    if (type === "recovery") {
-      setIsResetPassword(true);
-    }
-    
-    if (query.has('access_token') && type === "recovery") {
-      console.log("Password reset flow detected with token");
-      setIsResetPassword(true);
-    }
-  }, [location]);
+    checkForPasswordReset();
+  }, [location.search]);
 
   const isEmailVerificationRedirect = () => {
     const searchParams = new URLSearchParams(location.search);
+    // These parameters indicate email verification, not password reset
     return searchParams.has('error_description') || 
-           (searchParams.has('access_token') && searchParams.has('refresh_token')) || 
-           searchParams.has('token_hash');
+           (searchParams.has('access_token') && !searchParams.get('type')); 
   };
 
   useEffect(() => {
@@ -110,21 +137,6 @@ const Auth = () => {
     
     checkEmailVerification();
   }, [location, toast]);
-
-  useEffect(() => {
-    const handlePasswordReset = async () => {
-      if (isResetPassword) {
-        console.log("Checking for session in password reset flow");
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          console.log("User is authenticated in reset password flow");
-        }
-      }
-    };
-    
-    handlePasswordReset();
-  }, [isResetPassword]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -295,8 +307,11 @@ const Auth = () => {
         description: "Your password has been updated successfully.",
       });
       
+      // Sign out to ensure clean state after password reset
+      await supabase.auth.signOut();
+      
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/auth");
       }, 2000);
     } catch (error: any) {
       toast({
