@@ -26,10 +26,11 @@ const NotFound = () => {
       // For password reset flows, go directly to the password-reset page
       if (isPasswordResetFlow()) {
         // Direct the user straight to the password reset page, bypassing auth
-        navigate(`/password-reset${url.search}${url.hash}`);
+        // Make sure to preserve the hash which contains the token
+        navigate(`/password-reset${url.search}${url.hash}`, { replace: true });
       } else {
         // For other auth flows, go to the regular auth page
-        navigate(`/auth${url.search}${url.hash}`);
+        navigate(`/auth${url.search}${url.hash}`, { replace: true });
       }
     }
   }, [navigate, location]);

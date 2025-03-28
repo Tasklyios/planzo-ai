@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase, isPasswordResetFlow } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import PasswordReset from "@/components/auth/PasswordReset";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,13 +47,29 @@ const PasswordResetPage = () => {
       }
 
       try {
-        // Check if the token in the URL is valid
+        // Explicitly attempt to initialize a session from the URL
+        // This needs to happen BEFORE checking the session
+        const url = window.location.href;
+        const { error: setupError } = await supabase.auth.getSessionFromUrl({ 
+          storeSession: true // Important: Store the session
+        });
+        
+        if (setupError) {
+          console.error("Error setting up session from URL:", setupError);
+          setTokenError("Your password reset link is invalid or has expired. Please request a new one.");
+          setIsValidToken(false);
+          setLoading(false);
+          return;
+        }
+        
+        // Now check if we have a valid session
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error validating reset token:", error);
           setTokenError(error.message || "Your password reset link is invalid or has expired");
           setIsValidToken(false);
+          setLoading(false);
           return;
         }
         
@@ -62,6 +77,7 @@ const PasswordResetPage = () => {
           console.log("No session found, token might be expired");
           setTokenError("Your password reset link has expired. Please request a new one.");
           setIsValidToken(false);
+          setLoading(false);
           return;
         }
         
@@ -69,11 +85,11 @@ const PasswordResetPage = () => {
         console.log("Valid token found, showing password reset form");
         setIsValidToken(true);
         setTokenError(null);
+        setLoading(false);
       } catch (error: any) {
         console.error("Error in password reset flow:", error);
         setTokenError(error?.message || "An error occurred. Please try again or request a new reset link.");
         setIsValidToken(false);
-      } finally {
         setLoading(false);
       }
     };
