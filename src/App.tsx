@@ -41,10 +41,7 @@ function App() {
     
     return !!(
       searchParams.get('type') === 'recovery' || 
-      hashParams.get('type') === 'recovery' ||
-      searchParams.get('type') === 'otp' || 
-      hashParams.get('type') === 'otp' ||
-      searchParams.get('code') // Added check for code parameter
+      hashParams.get('type') === 'recovery'
     );
   };
 

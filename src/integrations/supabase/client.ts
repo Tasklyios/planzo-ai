@@ -13,7 +13,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false, // Disable automatic URL parsing to handle it manually
+    detectSessionInUrl: true, // Enable automatic URL parsing for standard flows
     storage: localStorage,
     flowType: 'pkce' // Enable PKCE flow for enhanced security
   }
