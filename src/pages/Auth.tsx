@@ -265,8 +265,12 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      const redirectDomain = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8080'
+        : 'https://planzoai.com';
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/password-reset?type=recovery`,
+        redirectTo: `${redirectDomain}/password-reset?type=recovery`,
       });
       
       if (error) throw error;

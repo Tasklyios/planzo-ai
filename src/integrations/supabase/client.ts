@@ -6,6 +6,13 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://hhkabxkelgabcsczsljf.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhoa2FieGtlbGdhYmNzY3pzbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAxNTk4NjEsImV4cCI6MjA1NTczNTg2MX0.qs_R_XUTkDcxltdlj7ZABrHMSCaGFYstxTkXUCCKghU";
 
+// Helper function to get site URL depending on environment
+const getSiteUrl = () => {
+  return window.location.hostname === 'localhost' 
+    ? 'http://localhost:8080'
+    : 'https://planzoai.com';
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
