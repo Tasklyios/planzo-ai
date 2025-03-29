@@ -105,11 +105,12 @@ export default function ContentPlanner() {
         await createDefaultColumns(session.user.id);
         return; // fetchColumnsAndIdeas will be called again after creating default columns
       } else {
-        // Format columns data
-        const formattedColumns: Status[] = columnsData.map(col => ({
+        // Format columns data with default colors based on index if no color is present
+        const formattedColumns: Status[] = columnsData.map((col, index) => ({
           id: col.id,
           name: col.title,
-          color: col.color || DEFAULT_COLUMNS[col.order % DEFAULT_COLUMNS.length].color
+          // Use default colors or assign color based on order to ensure consistency
+          color: DEFAULT_COLUMNS[index % DEFAULT_COLUMNS.length].color
         }));
         setColumns(formattedColumns);
       }
@@ -133,6 +134,7 @@ export default function ContentPlanner() {
           // Make sure each idea has a valid status
           const columnId = idea.status || firstColumnId;
           const column = columnsData?.find(col => col.id === columnId);
+          const columnIndex = columnsData?.findIndex(col => col.id === columnId) || 0;
           
           return {
             id: idea.id,
@@ -144,7 +146,8 @@ export default function ContentPlanner() {
             status: {
               id: column?.id || firstColumnId,
               name: column?.title || 'Ideas',
-              color: column?.color || DEFAULT_COLUMNS[0].color
+              // Use the default colors for columns based on their index
+              color: DEFAULT_COLUMNS[columnIndex % DEFAULT_COLUMNS.length].color
             },
             is_on_calendar: idea.scheduled_for !== null,
             scheduled_for: idea.scheduled_for
@@ -176,7 +179,8 @@ export default function ContentPlanner() {
             title: column.title,
             user_id: userId,
             order: column.order,
-            color: column.color
+            // Color is stored in DEFAULT_COLUMNS but not in the DB table
+            // We'll use these default colors when displaying columns
           });
       }
       
@@ -253,13 +257,13 @@ export default function ContentPlanner() {
           id: newColumnId,
           title: data.title,
           user_id: session.user.id,
-          order: newColumnOrder,
-          color: newColumnColor
+          order: newColumnOrder
+          // Note: color isn't stored in DB, we assign it based on the order
         });
 
       if (error) throw error;
 
-      // Add the new column to the state
+      // Add the new column to the state with the color
       const newColumn: Status = {
         id: newColumnId,
         name: data.title,

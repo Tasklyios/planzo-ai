@@ -63,6 +63,7 @@ export type KanbanCardProps = {
   children?: ReactNode;
   className?: string;
   isOnCalendar?: boolean;
+  onClick?: () => void; // Add onClick prop
 };
 
 export const KanbanCard = ({
@@ -75,6 +76,7 @@ export const KanbanCard = ({
   children,
   className,
   isOnCalendar,
+  onClick, // Add onClick to the component props
 }: KanbanCardProps) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
@@ -98,6 +100,7 @@ export const KanbanCard = ({
       {...listeners}
       {...attributes}
       ref={setNodeRef}
+      onClick={onClick} // Add onClick handler
     >
       {children ?? (
         <div className="flex flex-col gap-2">
