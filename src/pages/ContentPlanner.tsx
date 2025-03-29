@@ -1,14 +1,21 @@
 
-import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
 import { Plus, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PlannerColumn } from "@/components/planner/PlannerColumn";
-import { PlannerCard } from "@/components/planner/PlannerCard";
-import { DeleteBin } from "@/components/planner/DeleteBin";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { GeneratedIdea, PlannerColumn as PlannerColumnType } from "@/types/idea";
+import { 
+  KanbanBoard, 
+  KanbanCard, 
+  KanbanCards, 
+  KanbanHeader, 
+  KanbanProvider, 
+  Status,
+  VideoIdea
+} from "@/components/ui/kanban";
+import type { DragEndEvent } from "@dnd-kit/core";
+import { SearchIdeasDialog } from "@/components/search/SearchIdeasDialog";
+import { PlannerColumn as PlannerColumnType } from "@/types/idea";
 import {
   Dialog,
   DialogContent,
@@ -30,41 +37,43 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
-interface PlannerItem extends GeneratedIdea {
-  status: string;
-  is_on_calendar?: boolean;
-}
-
-interface PlannerColumnWithItems extends PlannerColumnType {
-  items: PlannerItem[];
-}
+import EditIdea from "@/components/EditIdea";
 
 const columnFormSchema = z.object({
   title: z.string().min(1, "Column title is required").max(50, "Column title must be less than 50 characters"),
 });
 
 const DEFAULT_COLUMNS = [
-  { title: 'Ideas', order: 0 },
-  { title: 'Planning', order: 1 },
-  { title: 'To Film', order: 2 },
-  { title: 'To Edit', order: 3 },
-  { title: 'To Post', order: 4 },
+  { title: 'Ideas', order: 0, color: '#6B7280' },
+  { title: 'Planning', order: 1, color: '#F59E0B' },
+  { title: 'To Film', order: 2, color: '#3B82F6' },
+  { title: 'To Edit', order: 3, color: '#EC4899' },
+  { title: 'To Post', order: 4, color: '#10B981' },
 ];
+
+const colorMap: Record<string, string> = {
+  red: "#ef4444",
+  orange: "#f97316",
+  yellow: "#eab308",
+  green: "#22c55e",
+  blue: "#3b82f6",
+  indigo: "#6366f1",
+  purple: "#a855f7",
+  pink: "#ec4899",
+};
 
 export default function ContentPlanner() {
   const { toast } = useToast();
-  const [columns, setColumns] = useState<PlannerColumnWithItems[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<{
-    type: 'column' | 'task';
-    id: string;
-    name: string;
-  } | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [columns, setColumns] = useState<Status[]>([]);
+  const [videoIdeas, setVideoIdeas] = useState<VideoIdea[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [addColumnDialogOpen, setAddColumnDialogOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
+  const [searchColumnId, setSearchColumnId] = useState<string | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
+  const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
+  const [columnToDelete, setColumnToDelete] = useState<Status | null>(null);
 
   const form = useForm<z.infer<typeof columnFormSchema>>({
     resolver: zodResolver(columnFormSchema),
@@ -79,6 +88,7 @@ export default function ContentPlanner() {
 
   const fetchColumnsAndIdeas = async () => {
     try {
+      setIsLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
@@ -92,45 +102,16 @@ export default function ContentPlanner() {
 
       // If no columns exist, create the default ones
       if (!columnsData || columnsData.length === 0) {
-        const defaultColumns = DEFAULT_COLUMNS.map(col => ({
-          id: crypto.randomUUID(),
-          ...col
-        }));
-
-        // Create default columns in the database
-        for (const column of defaultColumns) {
-          await supabase
-            .from('planner_columns')
-            .insert({
-              id: column.id,
-              title: column.title,
-              user_id: session.user.id,
-              order: column.order
-            });
-        }
-
-        // Fetch the newly created columns
-        const { data: newColumnsData, error: newColumnsError } = await supabase
-          .from('planner_columns')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .order('order', { ascending: true });
-
-        if (newColumnsError) throw newColumnsError;
-        
-        if (newColumnsData) {
-          const columnsWithItems = newColumnsData.map(col => ({
-            ...col,
-            items: []
-          }));
-          setColumns(columnsWithItems);
-        }
+        await createDefaultColumns(session.user.id);
+        return; // fetchColumnsAndIdeas will be called again after creating default columns
       } else {
-        const columnsWithItems = columnsData.map(col => ({
-          ...col,
-          items: []
+        // Format columns data
+        const formattedColumns: Status[] = columnsData.map(col => ({
+          id: col.id,
+          name: col.title,
+          color: col.color || DEFAULT_COLUMNS[col.order % DEFAULT_COLUMNS.length].color
         }));
-        setColumns(columnsWithItems);
+        setColumns(formattedColumns);
       }
 
       // Fetch all saved ideas
@@ -143,44 +124,34 @@ export default function ContentPlanner() {
       if (ideasError) throw ideasError;
 
       if (ideas && ideas.length > 0) {
-        console.log("Fetched saved ideas:", ideas);
-        
-        // Get the first column's ID
+        // Get the first column's ID for ideas without a status
         const firstColumnId = columnsData && columnsData.length > 0 ? 
-          columnsData[0].id : 
-          (columns.length > 0 ? columns[0].id : null);
+          columnsData[0].id : null;
         
-        // Group ideas by their status column
-        const groupedIdeas = ideas.reduce((acc: { [key: string]: PlannerItem[] }, idea) => {
-          // If idea.status is null or does not match any column, assign to first column
-          const status = idea.status || firstColumnId;
+        // Format video ideas
+        const formattedIdeas: VideoIdea[] = ideas.map(idea => {
+          // Make sure each idea has a valid status
+          const columnId = idea.status || firstColumnId;
+          const column = columnsData?.find(col => col.id === columnId);
           
-          const columnExists = columnsData?.some(col => col.id === status);
-          
-          // If the status doesn't match any column, use first column as default
-          const targetStatus = columnExists ? status : firstColumnId;
-          
-          if (!acc[targetStatus]) acc[targetStatus] = [];
-          acc[targetStatus].push({
-            ...idea,
-            status: targetStatus,
-            is_on_calendar: idea.scheduled_for !== null
-          } as PlannerItem);
-          
-          return acc;
-        }, {});
-
-        console.log("Grouped ideas:", groupedIdeas);
-
-        // Update the columns with their respective ideas
-        setColumns(prevColumns => 
-          prevColumns.map(col => ({
-            ...col,
-            items: groupedIdeas[col.id] || []
-          }))
-        );
-      } else {
-        console.log("No saved ideas found");
+          return {
+            id: idea.id,
+            title: idea.title,
+            description: idea.description,
+            category: idea.category,
+            tags: idea.tags,
+            color: idea.color,
+            status: {
+              id: column?.id || firstColumnId,
+              name: column?.title || 'Ideas',
+              color: column?.color || DEFAULT_COLUMNS[0].color
+            },
+            is_on_calendar: idea.scheduled_for !== null,
+            scheduled_for: idea.scheduled_for
+          };
+        });
+        
+        setVideoIdeas(formattedIdeas);
       }
     } catch (error: any) {
       console.error('Error fetching data:', error);
@@ -189,273 +160,82 @@ export default function ContentPlanner() {
         title: "Error",
         description: "Failed to load data. Please try again."
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const onDragStart = () => {
-    setIsDragging(true);
-    document.body.classList.add('dragging');
-  };
-
-  const onDragEnd = async (result: DropResult) => {
-    setIsDragging(false);
-    document.body.classList.remove('dragging');
-    
-    const { source, destination, type, draggableId } = result;
-    
-    if (!destination) return;
-
-    if (destination.droppableId === 'delete-bin') {
-      if (type === 'column') {
-        const columnId = draggableId;
-        // No longer check if it's the first column - all columns can be deleted
-        const column = columns.find(col => col.id === columnId);
-        
-        if (column) {
-          setPendingDelete({
-            type: 'column',
-            id: columnId,
-            name: column.title
-          });
-          setDeleteDialogOpen(true);
-        }
-        return;
-      } else if (type === 'task') {
-        const ideaId = draggableId;
-        const sourceColumn = columns.find(col => col.id === source.droppableId);
-        const item = sourceColumn?.items.find(item => item.id === ideaId);
-        
-        if (item) {
-          setPendingDelete({
-            type: 'task',
-            id: ideaId,
-            name: item.title
-          });
-          setDeleteDialogOpen(true);
-        }
-        return;
-      }
-    }
-    
-    if (type === 'column') {
-      if (source.index === destination.index) return;
-
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return;
-
-        // Prevent first column from being moved
-        if (source.index === 0) {
-          toast({
-            title: "Cannot Reorder",
-            description: "The first column must remain first.",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        const newColumns = [...columns];
-        const [removed] = newColumns.splice(source.index, 1);
-        newColumns.splice(destination.index, 0, removed);
-
-        const updatedColumns = newColumns.map((col, index) => ({
-          ...col,
-          order: index
-        }));
-
-        setColumns(updatedColumns);
-
-        for (const column of updatedColumns) {
-          await supabase
-            .from('planner_columns')
-            .update({ order: column.order })
-            .eq('id', column.id)
-            .eq('user_id', session.user.id);
-        }
-      } catch (error: any) {
-        console.error('Error reordering columns:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to reorder columns. Please try again."
-        });
-      }
-      return;
-    }
-    
-    if (type === 'task') {
-      try {
-        const ideaId = result.draggableId;
-        const sourceColumn = columns.find(col => col.id === source.droppableId);
-        const sourceItem = sourceColumn?.items.find(item => item.id === ideaId);
-        
-        if (!sourceItem) return;
-        
-        const isOnCalendar = sourceItem.scheduled_for !== null;
-        
-        const { error } = await supabase
-          .from('video_ideas')
-          .update({ 
-            status: destination.droppableId,
-            is_saved: true
-          })
-          .eq('id', ideaId);
-
-        if (error) throw error;
-
-        if (source.droppableId !== destination.droppableId) {
-          const sourceColumn = columns.find(col => col.id === source.droppableId);
-          const destColumn = columns.find(col => col.id === destination.droppableId);
-          
-          if (!sourceColumn || !destColumn) return;
-
-          const sourceItems = [...sourceColumn.items];
-          const destItems = [...destColumn.items];
-          const [removed] = sourceItems.splice(source.index, 1);
-          removed.is_saved = true;
-          removed.status = destination.droppableId;
-          removed.is_on_calendar = isOnCalendar;
-          destItems.splice(destination.index, 0, removed);
-
-          setColumns(columns.map(col => {
-            if (col.id === source.droppableId) {
-              return { ...col, items: sourceItems };
-            }
-            if (col.id === destination.droppableId) {
-              return { ...col, items: destItems };
-            }
-            return col;
-          }));
-        } else {
-          const column = columns.find(col => col.id === source.droppableId);
-          if (!column) return;
-
-          const copiedItems = [...column.items];
-          const [removed] = copiedItems.splice(source.index, 1);
-          copiedItems.splice(destination.index, 0, removed);
-
-          setColumns(columns.map(col => {
-            if (col.id === source.droppableId) {
-              return { ...col, items: copiedItems };
-            }
-            return col;
-          }));
-        }
-      } catch (error: any) {
-        console.error('Error updating idea status:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to update idea status. Please try again."
-        });
-      }
-    }
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!pendingDelete) return;
-    
+  const createDefaultColumns = async (userId: string) => {
     try {
-      setIsDeleting(true);
-      
-      if (pendingDelete.type === 'column') {
-        const columnId = pendingDelete.id;
-        const columnItems = columns.find(col => col.id === columnId)?.items || [];
-        
-        // Find the first column to move items to if this column is deleted
-        const remainingColumns = columns.filter(col => col.id !== columnId);
-        const firstColumnId = remainingColumns.length > 0 ? 
-          remainingColumns.sort((a, b) => a.order - b.order)[0].id : null;
-        
-        if (firstColumnId) {
-          for (const item of columnItems) {
-            const { error: updateError } = await supabase
-              .from('video_ideas')
-              .update({ status: firstColumnId })
-              .eq('id', item.id);
-            
-            if (updateError) {
-              console.error('Error moving items from deleted column:', updateError);
-              throw updateError;
-            }
-          }
-        }
-        
-        const { error: deleteError } = await supabase
+      for (const column of DEFAULT_COLUMNS) {
+        const columnId = crypto.randomUUID();
+        await supabase
           .from('planner_columns')
-          .delete()
-          .eq('id', columnId);
-          
-        if (deleteError) {
-          console.error('Error deleting column from database:', deleteError);
-          throw deleteError;
-        }
-        
-        // Remove the column from state
-        const newColumns = columns.filter(col => col.id !== columnId);
-        
-        // Reorder remaining columns
-        const reorderedColumns = newColumns.map((col, idx) => ({
-          ...col,
-          order: idx
-        }));
-        
-        // Update order in database
-        for (const col of reorderedColumns) {
-          await supabase
-            .from('planner_columns')
-            .update({ order: col.order })
-            .eq('id', col.id);
-        }
-        
-        setColumns(reorderedColumns);
-        
-        toast({
-          title: "Column Deleted",
-          description: `Column "${pendingDelete.name}" has been deleted and items moved to the first column.`,
-        });
-      } else if (pendingDelete.type === 'task') {
-        const ideaId = pendingDelete.id;
-        
-        const { error } = await supabase
-          .from('video_ideas')
-          .update({ is_saved: false })
-          .eq('id', ideaId);
-
-        if (error) {
-          console.error('Error deleting idea from database:', error);
-          throw error;
-        }
-        
-        const newColumns = columns.map(col => ({
-          ...col,
-          items: col.items.filter(item => item.id !== ideaId)
-        }));
-        
-        setColumns(newColumns);
-        
-        toast({
-          title: "Idea Deleted",
-          description: "The idea has been removed from your planner."
-        });
+          .insert({
+            id: columnId,
+            title: column.title,
+            user_id: userId,
+            order: column.order,
+            color: column.color
+          });
       }
+      
+      // Fetch the newly created columns
+      fetchColumnsAndIdeas();
     } catch (error: any) {
-      console.error('Error deleting item:', error);
+      console.error('Error creating default columns:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete item. Please try again."
+        description: "Failed to create default columns."
       });
-    } finally {
-      setIsDeleting(false);
-      setDeleteDialogOpen(false);
-      setPendingDelete(null);
     }
   };
 
-  const handleDeleteCancel = () => {
-    setDeleteDialogOpen(false);
-    setPendingDelete(null);
+  const getColorValue = (color: string): string => {
+    return color.startsWith('#') ? color : colorMap[color] || '#3b82f6';
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
+    
+    const ideaId = active.id as string;
+    const newStatusName = over.id as string;
+    
+    // Find the column by name
+    const newStatus = columns.find(col => col.name === newStatusName);
+    if (!newStatus) return;
+    
+    try {
+      // Update the status in the database
+      const { error } = await supabase
+        .from('video_ideas')
+        .update({ 
+          status: newStatus.id,
+          is_saved: true 
+        })
+        .eq('id', ideaId);
+
+      if (error) throw error;
+      
+      // Update the videoIdeas state to reflect the change
+      setVideoIdeas(videoIdeas.map(idea => {
+        if (idea.id === ideaId) {
+          return { ...idea, status: newStatus };
+        }
+        return idea;
+      }));
+      
+    } catch (error: any) {
+      console.error('Error updating idea status:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update idea status."
+      });
+    }
   };
 
   const handleAddColumn = async (data: z.infer<typeof columnFormSchema>) => {
@@ -465,6 +245,7 @@ export default function ContentPlanner() {
 
       const newColumnId = crypto.randomUUID();
       const newColumnOrder = columns.length;
+      const newColumnColor = DEFAULT_COLUMNS[newColumnOrder % DEFAULT_COLUMNS.length].color;
 
       const { error } = await supabase
         .from('planner_columns')
@@ -472,17 +253,17 @@ export default function ContentPlanner() {
           id: newColumnId,
           title: data.title,
           user_id: session.user.id,
-          order: newColumnOrder
+          order: newColumnOrder,
+          color: newColumnColor
         });
 
       if (error) throw error;
 
-      const newColumn: PlannerColumnWithItems = {
+      // Add the new column to the state
+      const newColumn: Status = {
         id: newColumnId,
-        title: data.title,
-        user_id: session.user.id,
-        order: newColumnOrder,
-        items: []
+        name: data.title,
+        color: newColumnColor
       };
 
       setColumns([...columns, newColumn]);
@@ -504,6 +285,92 @@ export default function ContentPlanner() {
     }
   };
 
+  const handleDeleteColumn = async (column: Status) => {
+    setColumnToDelete(column);
+    setConfirmDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteColumn = async () => {
+    if (!columnToDelete) return;
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      // Find ideas in this column
+      const ideasInColumn = videoIdeas.filter(idea => idea.status.id === columnToDelete.id);
+      
+      // Find the first column (default column)
+      const firstColumn = columns.find((_, index) => index === 0);
+      
+      if (firstColumn && ideasInColumn.length > 0) {
+        // Move all ideas to the first column
+        for (const idea of ideasInColumn) {
+          await supabase
+            .from('video_ideas')
+            .update({ status: firstColumn.id })
+            .eq('id', idea.id);
+          
+          // Update in state
+          setVideoIdeas(videoIdeas.map(i => {
+            if (i.id === idea.id) {
+              return { ...i, status: firstColumn };
+            }
+            return i;
+          }));
+        }
+      }
+      
+      // Delete the column
+      const { error } = await supabase
+        .from('planner_columns')
+        .delete()
+        .eq('id', columnToDelete.id);
+        
+      if (error) throw error;
+      
+      // Remove the column from state
+      setColumns(columns.filter(col => col.id !== columnToDelete.id));
+      
+      // Reorder remaining columns
+      const remainingColumns = columns.filter(col => col.id !== columnToDelete.id);
+      for (let i = 0; i < remainingColumns.length; i++) {
+        await supabase
+          .from('planner_columns')
+          .update({ order: i })
+          .eq('id', remainingColumns[i].id);
+      }
+      
+      toast({
+        title: "Column Deleted",
+        description: `Column "${columnToDelete.name}" has been deleted.`
+      });
+    } catch (error: any) {
+      console.error('Error deleting column:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete column. Please try again."
+      });
+    } finally {
+      setConfirmDeleteDialogOpen(false);
+      setColumnToDelete(null);
+    }
+  };
+
+  const handleOpenSearch = (columnId: string) => {
+    setSearchColumnId(columnId);
+    setIsSearchOpen(true);
+  };
+
+  const handleIdeaAdded = () => {
+    fetchColumnsAndIdeas();
+  };
+
+  const handleEditIdea = (ideaId: string) => {
+    setEditingIdeaId(ideaId);
+  };
+
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(prev + 10, 150));
   };
@@ -511,6 +378,14 @@ export default function ContentPlanner() {
   const handleZoomOut = () => {
     setZoomLevel(prev => Math.max(prev - 10, 50));
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -541,7 +416,7 @@ export default function ContentPlanner() {
           <Dialog open={addColumnDialogOpen} onOpenChange={setAddColumnDialogOpen}>
             <DialogTrigger asChild>
               <Button>
-                <Plus className="mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 Add Column
               </Button>
             </DialogTrigger>
@@ -580,112 +455,91 @@ export default function ContentPlanner() {
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        .dragging {
-          cursor: grabbing !important;
-        }
-        
-        [data-rbd-draggable-id] {
-          transition: transform 0.001s !important;
-        }
-        
-        .react-beautiful-dnd-dragging {
-          z-index: 9999 !important;
-        }
-        
-        [data-rbd-draggable-context-id] [data-rbd-draggable-id] {
-          transform-origin: 50% 50% !important;
-        }
-        
-        .planner-column-content {
-          min-height: 5px;
-          padding-bottom: 5px;
-        }
-        
-        [data-rbd-droppable-id] {
-          min-height: 50px;
-        }
-        
-        [data-rbd-placeholder-context-id] {
-          transition: height 0.2s ease !important;
-        }
-      `}} />
-
-      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <Droppable droppableId="columns" direction="horizontal" type="column">
-          {(provided) => (
-            <div 
-              className="flex gap-4 overflow-x-auto pb-4 transition-transform duration-200" 
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              style={{
-                transform: `scale(${zoomLevel / 100})`,
-                transformOrigin: 'top left',
-                width: `${100 * (100 / zoomLevel)}%`,
-                minWidth: '100%'
-              }}
+      <div 
+        className="overflow-x-auto pb-4"
+        style={{
+          transform: `scale(${zoomLevel / 100})`,
+          transformOrigin: 'top left',
+          width: `${100 * (100 / zoomLevel)}%`,
+          minWidth: '100%'
+        }}
+      >
+        <KanbanProvider 
+          onDragEnd={handleDragEnd}
+          className="min-w-max"
+        >
+          {columns.map((column, index) => (
+            <KanbanBoard 
+              key={column.id} 
+              id={column.name}
             >
-              {columns.map((column, index) => (
-                <PlannerColumn 
-                  key={column.id} 
-                  title={column.title} 
-                  id={column.id}
-                  index={index}
-                  isFirstColumn={index === 0}
-                  onIdeaAdded={fetchColumnsAndIdeas}
-                  onColumnDeleted={fetchColumnsAndIdeas}
-                >
-                  {column.items.map((item, itemIndex) => (
-                    <PlannerCard 
-                      key={item.id} 
-                      id={item.id}
-                      index={itemIndex}
-                      title={item.title}
-                      description={item.description}
-                      color={item.color}
-                      onEdit={fetchColumnsAndIdeas}
-                      onDelete={fetchColumnsAndIdeas}
-                      isOnCalendar={item.is_on_calendar}
+              <KanbanHeader 
+                name={column.name} 
+                color={column.color}
+                isFirstColumn={index === 0}
+                onAddIdea={() => handleOpenSearch(column.id)}
+                onDeleteColumn={() => handleDeleteColumn(column)}
+              />
+              <KanbanCards>
+                {videoIdeas
+                  .filter(idea => idea.status.id === column.id)
+                  .map((idea, index) => (
+                    <KanbanCard
+                      key={idea.id}
+                      id={idea.id}
+                      title={idea.title}
+                      description={idea.description}
+                      color={getColorValue(idea.color || 'blue')}
+                      index={index}
+                      parent={column.name}
+                      isOnCalendar={idea.is_on_calendar}
+                      className="hover:shadow-md transition-shadow cursor-grab"
+                      onClick={() => handleEditIdea(idea.id)}
                     />
                   ))}
-                </PlannerColumn>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-        
-        <DeleteBin isDragging={isDragging} />
-      </DragDropContext>
+              </KanbanCards>
+            </KanbanBoard>
+          ))}
+        </KanbanProvider>
+      </div>
 
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      {searchColumnId && (
+        <SearchIdeasDialog 
+          open={isSearchOpen} 
+          onOpenChange={setIsSearchOpen}
+          columnId={searchColumnId}
+          columnTitle={columns.find(col => col.id === searchColumnId)?.name || ''}
+          onIdeaAdded={handleIdeaAdded}
+        />
+      )}
+
+      {editingIdeaId && (
+        <EditIdea
+          ideaId={editingIdeaId}
+          onClose={() => {
+            setEditingIdeaId(null);
+            fetchColumnsAndIdeas();
+          }}
+        />
+      )}
+
+      <Dialog open={confirmDeleteDialogOpen} onOpenChange={setConfirmDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              {pendingDelete?.type === 'column'
-                ? `Are you sure you want to delete the "${pendingDelete.name}" column? All ideas will be moved to the first column.`
-                : `Are you sure you want to delete the idea "${pendingDelete?.name}"? This action cannot be undone.`}
+              Are you sure you want to delete the "{columnToDelete?.name}" column? All ideas will be moved to the first column.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 sm:justify-end">
-            <Button variant="outline" onClick={handleDeleteCancel} disabled={isDeleting}>
+            <Button variant="outline" onClick={() => setConfirmDeleteDialogOpen(false)}>
               Cancel
             </Button>
             <Button 
               variant="destructive" 
-              onClick={handleDeleteConfirm} 
-              disabled={isDeleting}
-              className={isDeleting ? "opacity-70 cursor-not-allowed" : ""}
+              onClick={confirmDeleteColumn}
             >
-              {isDeleting ? (
-                <>
-                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete"
-              )}
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

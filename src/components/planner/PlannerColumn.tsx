@@ -18,6 +18,8 @@ interface PlannerColumnProps {
   isFirstColumn?: boolean;
 }
 
+// This component is maintained for compatibility but is no longer used in the main content planner
+// It has been replaced by the KanbanBoard component
 export function PlannerColumn({ 
   title, 
   id, 

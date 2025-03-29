@@ -1,0 +1,205 @@
+
+'use client';
+
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import {
+  DndContext,
+  rectIntersection,
+  useDraggable,
+  useDroppable,
+} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import type { ReactNode } from 'react';
+
+export type Status = {
+  id: string;
+  name: string;
+  color: string;
+};
+
+export type VideoIdea = {
+  id: string;
+  title: string;
+  description?: string;
+  category?: string;
+  tags?: string[];
+  color?: string;
+  status: Status;
+  is_on_calendar?: boolean;
+  scheduled_for?: string | null;
+};
+
+export type KanbanBoardProps = {
+  id: Status['id'];
+  children: ReactNode;
+  className?: string;
+};
+
+export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
+  const { isOver, setNodeRef } = useDroppable({ id });
+
+  return (
+    <div
+      className={cn(
+        'flex h-full min-h-40 flex-col gap-2 rounded-lg border bg-muted/50 p-4 text-xs shadow-sm outline outline-2 transition-all',
+        isOver ? 'outline-primary' : 'outline-transparent',
+        className
+      )}
+      ref={setNodeRef}
+    >
+      {children}
+    </div>
+  );
+};
+
+export type KanbanCardProps = {
+  id: string;
+  title: string;
+  description?: string;
+  color?: string;
+  index: number;
+  parent: string;
+  children?: ReactNode;
+  className?: string;
+  isOnCalendar?: boolean;
+};
+
+export const KanbanCard = ({
+  id,
+  title,
+  description,
+  color,
+  index,
+  parent,
+  children,
+  className,
+  isOnCalendar,
+}: KanbanCardProps) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id,
+      data: { index, parent },
+    });
+
+  return (
+    <Card
+      className={cn(
+        'rounded-md p-3 shadow-sm',
+        isDragging && 'cursor-grabbing',
+        className
+      )}
+      style={{
+        transform: transform
+          ? `translateX(${transform.x}px) translateY(${transform.y}px)`
+          : 'none',
+        borderLeft: color ? `4px solid ${color}` : undefined,
+      }}
+      {...listeners}
+      {...attributes}
+      ref={setNodeRef}
+    >
+      {children ?? (
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between items-start">
+            <p className="m-0 font-medium text-sm">{title}</p>
+            {isOnCalendar && (
+              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-100">
+                Scheduled
+              </span>
+            )}
+          </div>
+          {description && (
+            <p className="m-0 text-xs text-muted-foreground line-clamp-2">
+              {description}
+            </p>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+};
+
+export type KanbanCardsProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+export const KanbanCards = ({ children, className }: KanbanCardsProps) => (
+  <div className={cn('flex flex-1 flex-col gap-2 mt-2', className)}>{children}</div>
+);
+
+export type KanbanHeaderProps =
+  | {
+      children: ReactNode;
+    }
+  | {
+      name: Status['name'];
+      color: Status['color'];
+      isFirstColumn?: boolean;
+      onAddIdea?: () => void;
+      onDeleteColumn?: () => void;
+      className?: string;
+    };
+
+export const KanbanHeader = (props: KanbanHeaderProps) =>
+  'children' in props ? (
+    props.children
+  ) : (
+    <div className={cn('flex shrink-0 items-center justify-between', props.className)}>
+      <div className="flex items-center gap-2">
+        <div
+          className="h-3 w-3 rounded-full"
+          style={{ backgroundColor: props.color }}
+        />
+        <p className="m-0 font-semibold text-sm">
+          {props.name}
+          {props.isFirstColumn && <span className="text-xs text-muted-foreground ml-2">(Default)</span>}
+        </p>
+      </div>
+      <div className="flex items-center">
+        {props.onDeleteColumn && (
+          <button 
+            onClick={props.onDeleteColumn}
+            className="p-1 hover:bg-muted rounded-full transition-colors"
+            title={`Delete ${props.name} Column`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        )}
+        {props.onAddIdea && (
+          <button 
+            onClick={props.onAddIdea}
+            className="p-1 hover:bg-muted rounded-full transition-colors ml-1"
+            title={`Add idea to ${props.name}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+export type KanbanProviderProps = {
+  children: ReactNode;
+  onDragEnd: (event: DragEndEvent) => void;
+  className?: string;
+};
+
+export const KanbanProvider = ({
+  children,
+  onDragEnd,
+  className,
+}: KanbanProviderProps) => (
+  <DndContext collisionDetection={rectIntersection} onDragEnd={onDragEnd}>
+    <div
+      className={cn('grid w-full auto-cols-[320px] grid-flow-col gap-4', className)}
+    >
+      {children}
+    </div>
+  </DndContext>
+);
