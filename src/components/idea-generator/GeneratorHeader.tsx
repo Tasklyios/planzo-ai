@@ -22,14 +22,14 @@ const GeneratorHeader: React.FC<GeneratorHeaderProps> = ({
   showForm
 }) => {
   return (
-    <div className="text-center mb-8">
-      <h1 className="text-4xl md:text-4xl font-bold text-primary dark:text-white mb-4">Video Idea Generator</h1>
-      <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base">
+    <div className="text-left mb-8">
+      <h1 className="text-4xl md:text-4xl font-bold text-black dark:text-white mb-4">Video Idea Generator</h1>
+      <p className="text-black/70 dark:text-white/70 max-w-2xl text-sm md:text-base">
         Generate trending video ideas tailored to your niche and audience.
       </p>
       
       {hasIdeas && setActiveTab && (
-        <div className="flex justify-center mt-6 space-x-2">
+        <div className="flex justify-start mt-6 space-x-2">
           <Button
             variant={activeTab === 'input' ? 'default' : 'outline'}
             onClick={() => setActiveTab('input')}
