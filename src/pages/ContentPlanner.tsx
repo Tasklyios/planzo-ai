@@ -115,10 +115,10 @@ export default function ContentPlanner() {
         await createDefaultColumns(session.user.id);
         return; // fetchColumnsAndIdeas will be called again after creating default columns
       } else {
-        const formattedColumns: Status[] = columnsData.map((col, index) => ({
+        const formattedColumns: Status[] = columnsData.map((col) => ({
           id: col.id,
           name: col.title,
-          color: DEFAULT_COLORS[index % DEFAULT_COLORS.length]
+          color: col.color || DEFAULT_COLORS[col.order % DEFAULT_COLORS.length] // Use color from DB or default
         }));
         setColumns(formattedColumns);
       }
@@ -181,7 +181,8 @@ export default function ContentPlanner() {
             id: columnId,
             title: column.title,
             user_id: userId,
-            order: column.order
+            order: column.order,
+            color: column.color // Make sure to save color when creating
           });
       }
       

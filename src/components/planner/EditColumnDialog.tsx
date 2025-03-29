@@ -102,15 +102,13 @@ export function EditColumnDialog({
       const { error } = await supabase
         .from('planner_columns')
         .update({ 
-          title: data.title
+          title: data.title,
+          color: data.color // Save the color to the database
         })
         .eq('id', column.id)
         .eq('user_id', session.user.id);
 
       if (error) throw error;
-      
-      // Store the color preference in the client-side state
-      // We're not storing the color in the database as it's a UI preference
       
       toast({
         title: "Column Updated",
