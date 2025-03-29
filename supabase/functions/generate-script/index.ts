@@ -78,9 +78,14 @@ serve(async (req) => {
     if (userId) {
       try {
         // Check usage limits using the database function
-        const { data: usageLimitCheck, error: usageCheckError } = await supabase.rpc(
-          'check_and_increment_usage',
-          { p_user_id: userId, p_action: 'scripts' }
+        const { data: usageLimitCheck, error: usageCheckError } = await supabase.functions.invoke(
+          'check-usage-limits',
+          { 
+            body: { 
+              action: 'scripts',
+              isImprovement: isImprovement 
+            }
+          }
         );
 
         if (usageCheckError) {
@@ -91,7 +96,7 @@ serve(async (req) => {
           );
         }
 
-        if (usageLimitCheck === false) {
+        if (usageLimitCheck && !usageLimitCheck.canProceed) {
           console.error("Usage limit reached");
           return new Response(
             JSON.stringify({ error: "Daily script generation limit reached" }),
@@ -182,24 +187,24 @@ serve(async (req) => {
     // Detect if this is an ecommerce product-focused content or not
     const isProductFocused = !isImprovement && detectProductFocus(scriptTitle, scriptDescription, scriptCategory);
     
-    // Expert prompt for viral content creation
-    const expertPrompt = `You are an expert in viral social media content creation, specializing in YouTube, TikTok, and Instagram Reels. Your goal is to generate highly engaging video scripts that maximize views, shares, and watch time. You understand trends, audience psychology, and platform algorithms to craft compelling content. Always provide structured video scripts with strong hooks, engaging storytelling, and clear calls to action. Adapt scripts for different niches when needed.`;
+    // Expert prompt for viral content creation - less cringy version
+    const expertPrompt = `You are an expert scriptwriter who creates authentic, engaging content for social media. Your goal is to write scripts that connect with viewers through genuine value and storytelling, avoiding excessive hype or clickbait. Prioritize authentic communication that builds trust with the audience while still capturing attention in a competitive social media environment.`;
     
     let systemPrompt = "";
     let userPrompt = "";
 
     if (isImprovement) {
-      // System prompt for improving an existing script
+      // System prompt for improving an existing script - less cringy
       systemPrompt = `${expertPrompt}
 
-Your task is to transform the user's script into a more viral and engaging version while preserving the core message.
+Your task is to refine the user's script into a more effective and authentic version while preserving the core message.
 
 Guidelines:
 - Maintain the original intent and key message
-- Make the script more conversational and engaging
-- Add hooks and techniques that work well on social media
+- Make the script conversational and genuine
+- Create natural hooks that intrigue viewers without sounding forced
 - Include [action notes] in brackets when appropriate
-- Use techniques that will boost engagement (e.g., pattern interrupts, curiosity gaps)
+- Focus on value and storytelling rather than hype
 - Keep the same approximate length as the original
 - Format for the specified content style: ${contentStyle || "engaging"}`;
 
@@ -208,29 +213,29 @@ Guidelines:
 
 ${userScript}
 
-Please rewrite this script to make it more engaging and viral-worthy while keeping the core message intact.`;
+Please refine this script to be more engaging and effective while maintaining an authentic tone and keeping the core message intact.`;
 
     } else {
-      // Simplified system prompt to reduce token usage
+      // Simplified system prompt to reduce token usage - less cringy
       systemPrompt = `${expertPrompt}
 
 Create a ${timeRangeDescription} script for "${scriptTitle}" that:
-- Starts with a hook${hook ? " (provided below)" : ""}
-- Uses natural speech
+- Starts with a natural introduction${hook ? " (provided below)" : ""}
+- Uses conversational language
 - Includes [action notes] in brackets when needed
 - Is concise for social media
-- Uses psychology triggers like curiosity, emotion, or authority`;
+- Focuses on providing value and building genuine connection with viewers`;
 
       // Add specific word count target instruction if we have calculated one
       if (targetWordCount) {
-        systemPrompt += `\n- IMPORTANT: The script MUST be approximately ${targetWordCount} words (${timeRangeDescription})`;
+        systemPrompt += `\n- The script should be approximately ${targetWordCount} words (${timeRangeDescription})`;
       }
 
       // Condense account-specific instructions
       if (accountType === 'ecommerce') {
         systemPrompt += `\n${isProductFocused ? "- Balance education with subtle product references" : "- Focus entirely on providing valuable, educational content"}`;
       } else if (accountType === 'personal') {
-        systemPrompt += "\n- Be personal and relatable";
+        systemPrompt += "\n- Be personable and authentic";
         
         if (contentType === 'talking_head') {
           systemPrompt += "\n- Write for direct camera speech with [action notes]";
@@ -267,7 +272,7 @@ Please build upon this script to make it more professional and engaging while ke
         userPrompt += `\n\nHere's a basic script I've drafted that you should improve and expand upon:
 ${userScript}
 
-Please rewrite this script to make it more professional and engaging while keeping the core message intact.`;
+Please refine this script while keeping the core message intact.`;
       }
     }
 

@@ -79,7 +79,7 @@ serve(async (req) => {
     }
 
     // Parse the request body
-    const { action, count = 1 } = await req.json();
+    const { action, count = 1, isImprovement = false } = await req.json();
     
     if (!action) {
       return new Response(
@@ -90,6 +90,13 @@ serve(async (req) => {
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
+    }
+
+    // Count script improvements as script generations
+    let actualAction = action;
+    if (action === 'scripts' && isImprovement) {
+      console.log('Script improvement detected, counting as script generation');
+      actualAction = 'scripts';
     }
 
     // Check user's tier in subscriptions table
@@ -115,40 +122,40 @@ serve(async (req) => {
     // Get the current usage count
     let currentUsage = 0;
     if (usageData) {
-      if (action === 'ideas') currentUsage = usageData.ideas_generated || 0;
-      else if (action === 'scripts') currentUsage = usageData.scripts_generated || 0;
-      else if (action === 'hooks') currentUsage = usageData.hooks_generated || 0;
+      if (actualAction === 'ideas') currentUsage = usageData.ideas_generated || 0;
+      else if (actualAction === 'scripts') currentUsage = usageData.scripts_generated || 0;
+      else if (actualAction === 'hooks') currentUsage = usageData.hooks_generated || 0;
     }
 
     // Determine max limit based on tier and action
     let maxLimit = 5; // Default limit updated to 5 for ideas
     
-    if (action === 'ideas') {
+    if (actualAction === 'ideas') {
       if (tier === 'free') maxLimit = 5;
       else if (tier === 'pro') maxLimit = 50;
       else if (tier === 'plus') maxLimit = 50;
-      else if (tier === 'business') maxLimit = 100; // Updated from unlimited
-    } else if (action === 'scripts') {
+      else if (tier === 'business') maxLimit = 100; 
+    } else if (actualAction === 'scripts') {
       if (tier === 'free') maxLimit = 1;
       else if (tier === 'pro') maxLimit = 10;
       else if (tier === 'plus') maxLimit = 10;
-      else if (tier === 'business') maxLimit = 20; // Updated from unlimited
-    } else if (action === 'hooks') {
+      else if (tier === 'business') maxLimit = 20;
+    } else if (actualAction === 'hooks') {
       if (tier === 'free') maxLimit = 4;
       else if (tier === 'pro') maxLimit = 20;
       else if (tier === 'plus') maxLimit = 20;
-      else if (tier === 'business') maxLimit = 40; // Updated from unlimited
+      else if (tier === 'business') maxLimit = 40;
     }
 
     // For ideas specifically, use the number 5 instead of 1 for increment
-    const incrementCount = (action === 'ideas') ? 5 : 1;
+    const incrementCount = (actualAction === 'ideas') ? 5 : 1;
     
     // Check if user would exceed their limit
     if (currentUsage + incrementCount > maxLimit) {
       return new Response(
         JSON.stringify({
           canProceed: false,
-          message: `You've reached your daily limit for ${action}. Upgrade your plan for more.`,
+          message: `You've reached your daily limit for ${actualAction}. Upgrade your plan for more.`,
           currentUsage,
           maxLimit
         }),
@@ -160,9 +167,9 @@ serve(async (req) => {
     const usage = {
       user_id: user.id,
       date: new Date().toISOString().split('T')[0],
-      ideas_generated: action === 'ideas' ? incrementCount : 0,
-      scripts_generated: action === 'scripts' ? incrementCount : 0,
-      hooks_generated: action === 'hooks' ? incrementCount : 0
+      ideas_generated: actualAction === 'ideas' ? incrementCount : 0,
+      scripts_generated: actualAction === 'scripts' ? incrementCount : 0,
+      hooks_generated: actualAction === 'hooks' ? incrementCount : 0
     };
 
     if (usageData) {
@@ -170,9 +177,9 @@ serve(async (req) => {
       const { error: updateError } = await supabase
         .from('user_daily_usage')
         .update({
-          ideas_generated: action === 'ideas' ? (usageData.ideas_generated || 0) + incrementCount : (usageData.ideas_generated || 0),
-          scripts_generated: action === 'scripts' ? (usageData.scripts_generated || 0) + incrementCount : (usageData.scripts_generated || 0),
-          hooks_generated: action === 'hooks' ? (usageData.hooks_generated || 0) + incrementCount : (usageData.hooks_generated || 0)
+          ideas_generated: actualAction === 'ideas' ? (usageData.ideas_generated || 0) + incrementCount : (usageData.ideas_generated || 0),
+          scripts_generated: actualAction === 'scripts' ? (usageData.scripts_generated || 0) + incrementCount : (usageData.scripts_generated || 0),
+          hooks_generated: actualAction === 'hooks' ? (usageData.hooks_generated || 0) + incrementCount : (usageData.hooks_generated || 0)
         })
         .eq('user_id', user.id)
         .eq('date', new Date().toISOString().split('T')[0]);
@@ -216,7 +223,8 @@ serve(async (req) => {
           currentUsage,
           maxLimit,
           userId: user.id,
-          incrementBy: incrementCount
+          incrementBy: incrementCount,
+          isImprovement: isImprovement
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
