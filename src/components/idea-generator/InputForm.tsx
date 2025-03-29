@@ -449,8 +449,8 @@ const InputForm = ({
       
       <div className="mb-8">
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <CollapsibleTrigger className="mx-auto flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
-            <div className="flex items-center justify-center w-full gap-2">
+          <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors justify-start">
+            <div className="flex items-center w-full gap-2 justify-start">
               {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               Already have some ideas for your videos? Add them here!
             </div>
@@ -469,7 +469,7 @@ const InputForm = ({
       </div>
       
       {onGenerate && (
-        <div className="flex justify-center">
+        <div className="flex justify-start">
           <button 
             onClick={onGenerate} 
             disabled={isGenerating} 

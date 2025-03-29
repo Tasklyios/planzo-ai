@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -331,7 +332,7 @@ const Generator = () => {
             </Alert>
           )}
 
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-start mb-8">
             <button 
               onClick={handleGenerateIdeas} 
               disabled={loading} 
