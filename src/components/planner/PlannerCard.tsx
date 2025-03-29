@@ -91,6 +91,9 @@ export function PlannerCard({
               ...provided.draggableProps.style,
               borderLeftWidth: '4px',
               borderLeftColor: getColorValue(color),
+              // Fix drag positioning:
+              transform: provided.draggableProps.style?.transform,
+              transition: provided.draggableProps.style?.transition,
             }}
           >
             <div className="flex justify-between">

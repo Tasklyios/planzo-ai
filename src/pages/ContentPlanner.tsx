@@ -1,4 +1,3 @@
-
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
 import { Plus, ZoomIn, ZoomOut } from "lucide-react";
@@ -609,9 +608,18 @@ export default function ContentPlanner() {
         [data-dragging="true"] * {
           cursor: grabbing !important;
         }
-        /* Fix for dragging offset */
+        /* Fix for dragging offset - ensure item is positioned at cursor */
         .react-beautiful-dnd-draggable {
           transform: translate(0, 0) !important;
+        }
+        /* Additional fix for proper drag positioning */
+        [data-rbd-draggable-id] {
+          position: relative;
+          z-index: 1;
+        }
+        [data-rbd-draggable-dragging] {
+          position: fixed !important;
+          pointer-events: none;
         }
       `}} />
 
