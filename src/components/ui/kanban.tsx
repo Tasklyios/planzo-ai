@@ -161,7 +161,7 @@ export const KanbanHeader = (props: KanbanHeaderProps) =>
         </p>
       </div>
       <div className="flex items-center">
-        {props.onDeleteColumn && (
+        {props.onDeleteColumn && !props.isFirstColumn && (
           <button 
             onClick={props.onDeleteColumn}
             className="p-1 hover:bg-muted rounded-full transition-colors"

@@ -125,7 +125,7 @@ export default function ContentPlanner() {
       if (ideasError) throw ideasError;
 
       if (ideas && ideas.length > 0) {
-        // Get the first column's ID for ideas without a status
+        // Get the first column's ID for ideas without a status (Ideas column)
         const firstColumnId = columnsData && columnsData.length > 0 ? 
           columnsData[0].id : null;
         
@@ -178,7 +178,7 @@ export default function ContentPlanner() {
             id: columnId,
             title: column.title,
             user_id: userId,
-            order: column.order,
+            order: column.order
             // Color is stored in DEFAULT_COLUMNS but not in the DB table
             // We'll use these default colors when displaying columns
           });
@@ -482,7 +482,7 @@ export default function ContentPlanner() {
                 color={column.color}
                 isFirstColumn={index === 0}
                 onAddIdea={() => handleOpenSearch(column.id)}
-                onDeleteColumn={() => handleDeleteColumn(column)}
+                onDeleteColumn={index === 0 ? undefined : () => handleDeleteColumn(column)}
               />
               <KanbanCards>
                 {videoIdeas
