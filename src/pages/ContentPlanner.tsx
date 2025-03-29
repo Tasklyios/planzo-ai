@@ -180,13 +180,11 @@ export default function ContentPlanner() {
   const onDragStart = () => {
     setIsDragging(true);
     document.body.classList.add('dragging');
-    document.body.setAttribute('data-dragging', 'true');
   };
 
   const onDragEnd = async (result: DropResult) => {
     setIsDragging(false);
     document.body.classList.remove('dragging');
-    document.body.removeAttribute('data-dragging');
     
     const { source, destination, type, draggableId } = result;
     
@@ -590,32 +588,13 @@ export default function ContentPlanner() {
         .dragging {
           cursor: grabbing !important;
         }
-        [data-dragging="true"] * {
-          cursor: grabbing !important;
+        
+        [data-rbd-draggable-id] {
+          transition: none !important;
         }
         
-        [data-rbd-draggable-context-id] {
-          position: relative !important;
-        }
-        
-        [data-rbd-draggable-dragging] {
-          position: fixed !important;
-          margin: 0 !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: auto !important;
-          height: auto !important;
-          pointer-events: none !important;
-          transform: none !important;
-          
-          margin-left: -160px !important;
-          margin-top: -10px !important;
-          
+        .react-beautiful-dnd-dragging {
           z-index: 9999 !important;
-        }
-        
-        .react-beautiful-dnd-draggable {
-          transform: none !important;
         }
       `}} />
 

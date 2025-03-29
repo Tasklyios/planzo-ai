@@ -85,18 +85,12 @@ export function PlannerCard({
             {...provided.draggableProps}
             {...provided.dragHandleProps}
             className={`bg-card border rounded-md p-3 mb-2 hover:shadow-md transition-shadow ${
-              snapshot.isDragging ? "shadow-lg opacity-90" : ""
+              snapshot.isDragging ? "shadow-lg" : ""
             }`}
             style={{
               ...provided.draggableProps.style,
               borderLeftWidth: '4px',
               borderLeftColor: getColorValue(color),
-              // Move origin to the center of the card's top edge for improved positioning
-              transformOrigin: 'center top',
-              // Only use the position from draggableProps.style, not transform
-              left: snapshot.isDragging ? provided.draggableProps.style?.left : undefined,
-              top: snapshot.isDragging ? provided.draggableProps.style?.top : undefined,
-              transform: 'none', // Reset transform to prevent default behavior
             }}
           >
             <div className="flex justify-between">
