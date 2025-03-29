@@ -47,79 +47,20 @@ export const KanbanBoard = ({ id, children, className, index }: KanbanBoardProps
     data: { type: 'column', index }
   });
   
-  const { attributes, listeners, setNodeRef: setDraggableRef, transform, isDragging } = useDraggable({
-    id: `column-${id}`,
-    data: { type: 'column', id, index },
-  });
-
-  // Create refs for the left and right drop zones
+  // Column dragging is now disabled, so we don't need these functions anymore
   const boardRef = useRef<HTMLDivElement>(null);
-  const [showLeftDropIndicator, setShowLeftDropIndicator] = useState(false);
-  const [showRightDropIndicator, setShowRightDropIndicator] = useState(false);
-
-  // Create dropzone IDs
-  const leftDropzoneId = `${id}-left`;
-  const rightDropzoneId = `${id}-right`;
-
-  // Use separate dropzones for left and right sides
-  const { isOver: isOverLeft, setNodeRef: setLeftDroppableRef } = useDroppable({
-    id: leftDropzoneId,
-    data: { type: 'column-gap', targetIndex: index, position: 'left' }
-  });
-
-  const { isOver: isOverRight, setNodeRef: setRightDroppableRef } = useDroppable({
-    id: rightDropzoneId,
-    data: { type: 'column-gap', targetIndex: index, position: 'right' }
-  });
-
-  useEffect(() => {
-    setShowLeftDropIndicator(isOverLeft);
-    setShowRightDropIndicator(isOverRight);
-  }, [isOverLeft, isOverRight]);
-
+  
   return (
     <div className="relative flex h-full" ref={boardRef}>
-      {/* Left drop zone - 20px width strip */}
-      <div 
-        ref={setLeftDroppableRef}
-        className="absolute left-0 top-0 w-5 h-full z-10"
-        style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
-      />
-      
-      {/* Right drop zone - 20px width strip */}
-      <div 
-        ref={setRightDroppableRef}
-        className="absolute right-0 top-0 w-5 h-full z-10"
-        style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
-      />
-      
-      {/* Left indicator line */}
-      {showLeftDropIndicator && (
-        <div className="absolute left-0 top-0 w-1 h-full bg-blue-500 rounded z-20" />
-      )}
-      
-      {/* Right indicator line */}
-      {showRightDropIndicator && (
-        <div className="absolute right-0 top-0 w-1 h-full bg-blue-500 rounded z-20" />
-      )}
-      
       <div
         className={cn(
           'flex h-full min-h-40 flex-col gap-2 rounded-lg border bg-muted/50 p-4 text-xs shadow-sm outline outline-2 transition-all',
           isOver ? 'outline-primary' : 'outline-transparent',
-          isDragging ? 'opacity-50' : '',
           className
         )}
         ref={setDroppableRef}
       >
-        <div
-          ref={setDraggableRef}
-          {...attributes}
-          {...listeners}
-          className="cursor-move"
-        >
-          {children}
-        </div>
+        {children}
       </div>
     </div>
   );
@@ -285,12 +226,18 @@ export const KanbanProvider = ({
   const [activeId, setActiveId] = useState<string | null>(null);
   
   const handleDragStart = (event: any) => {
-    setActiveId(event.active.id);
+    // Only handle card drag events, not columns
+    if (event.active.data.current?.type === 'card') {
+      setActiveId(event.active.id);
+    }
   };
   
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveId(null);
-    onDragEnd(event);
+    // Only process if it's a card being dragged, not a column
+    if (event.active.data.current?.type === 'card') {
+      onDragEnd(event);
+    }
   };
 
   return (

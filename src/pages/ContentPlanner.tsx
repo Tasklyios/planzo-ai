@@ -43,7 +43,6 @@ const columnFormSchema = z.object({
   title: z.string().min(1, "Column title is required").max(50, "Column title must be less than 50 characters"),
 });
 
-// Fixed colors for each default column
 const DEFAULT_COLORS = [
   '#6B7280', // gray for Ideas
   '#F59E0B', // amber for Planning
@@ -52,7 +51,6 @@ const DEFAULT_COLORS = [
   '#10B981', // emerald for To Post
 ];
 
-// Default columns definition (only used when creating initial columns)
 const DEFAULT_COLUMNS = [
   { title: 'Ideas', order: 0, color: DEFAULT_COLORS[0] },
   { title: 'Planning', order: 1, color: DEFAULT_COLORS[1] },
@@ -112,22 +110,18 @@ export default function ContentPlanner() {
 
       if (columnsError) throw columnsError;
 
-      // If no columns exist, create the default ones
       if (!columnsData || columnsData.length === 0) {
         await createDefaultColumns(session.user.id);
         return; // fetchColumnsAndIdeas will be called again after creating default columns
       } else {
-        // Format columns data with colors based on index
         const formattedColumns: Status[] = columnsData.map((col, index) => ({
           id: col.id,
           name: col.title,
-          // Assign colors based on index in a deterministic way
           color: DEFAULT_COLORS[index % DEFAULT_COLORS.length]
         }));
         setColumns(formattedColumns);
       }
 
-      // Fetch all saved ideas
       const { data: ideas, error: ideasError } = await supabase
         .from('video_ideas')
         .select('*')
@@ -137,13 +131,10 @@ export default function ContentPlanner() {
       if (ideasError) throw ideasError;
 
       if (ideas && ideas.length > 0) {
-        // Get the first column's ID for ideas without a status (Ideas column)
         const firstColumnId = columnsData && columnsData.length > 0 ? 
           columnsData[0].id : null;
         
-        // Format video ideas
         const formattedIdeas: VideoIdea[] = ideas.map(idea => {
-          // Make sure each idea has a valid status
           const columnId = idea.status || firstColumnId;
           const column = columnsData?.find(col => col.id === columnId);
           const columnIndex = columnsData?.findIndex(col => col.id === columnId) ?? 0;
@@ -158,7 +149,6 @@ export default function ContentPlanner() {
             status: {
               id: column?.id || firstColumnId,
               name: column?.title || 'Ideas',
-              // Use the color based on column index
               color: DEFAULT_COLORS[columnIndex % DEFAULT_COLORS.length]
             },
             is_on_calendar: idea.scheduled_for !== null,
@@ -191,12 +181,9 @@ export default function ContentPlanner() {
             title: column.title,
             user_id: userId,
             order: column.order
-            // Color is stored in DEFAULT_COLUMNS but not in the DB table
-            // We'll use these default colors when displaying columns
           });
       }
       
-      // Fetch the newly created columns
       fetchColumnsAndIdeas();
     } catch (error: any) {
       console.error('Error creating default columns:', error);
@@ -217,188 +204,37 @@ export default function ContentPlanner() {
     
     if (!over) return;
     
-    // Check if we're dealing with a column drag or an idea drag
-    const activeData = active.data.current;
-    const overId = over.id as string;
-    const overData = over.data.current;
+    const ideaId = active.id as string;
+    const newStatusName = over.id as string;
     
-    if (activeData?.type === 'column') {
-      // Handle column reordering
-      let columnId = active.id.toString().replace('column-', '');
-      
-      // Check if we're dropping on a gap (between columns)
-      if (overData?.type === 'column-gap') {
-        const targetIndex = overData.targetIndex;
-        const position = overData.position;
-        let newIndex: number;
-        
-        if (position === 'left') {
-          newIndex = targetIndex;
-        } else { // position === 'right'
-          newIndex = targetIndex + 1;
-        }
-        
-        // Find the index of the column we're moving
-        const oldIndex = columns.findIndex(col => col.id === columnId);
-        
-        // Adjust for the fact that we remove the column first
-        if (oldIndex < newIndex) {
-          newIndex--;
-        }
-        
-        if (oldIndex === newIndex) return;
-        
-        // Optimistically update the UI
-        const newColumns = [...columns];
-        const [movedColumn] = newColumns.splice(oldIndex, 1);
-        newColumns.splice(newIndex, 0, movedColumn);
-        
-        // Update the colors based on the new order
-        const coloredColumns = newColumns.map((col, index) => ({
-          ...col,
-          color: DEFAULT_COLORS[index % DEFAULT_COLORS.length]
-        }));
-        
-        setColumns(coloredColumns);
-        
-        // Update the order in the database
-        try {
-          // Update order for all columns
-          for (let i = 0; i < newColumns.length; i++) {
-            await supabase
-              .from('planner_columns')
-              .update({ order: i })
-              .eq('id', newColumns[i].id);
-          }
-          
-          // Update video ideas with new column colors
-          setVideoIdeas(videoIdeas.map(idea => {
-            const columnIndex = newColumns.findIndex(col => col.id === idea.status.id);
-            if (columnIndex !== -1) {
-              return {
-                ...idea,
-                status: {
-                  ...idea.status,
-                  color: DEFAULT_COLORS[columnIndex % DEFAULT_COLORS.length]
-                }
-              };
-            }
-            return idea;
-          }));
-          
-        } catch (error: any) {
-          console.error('Error updating column order:', error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to update column order."
-          });
-          // Revert to the original order
-          fetchColumnsAndIdeas();
-        }
-      } else {
-        // Original behavior for dropping on columns directly
-        columnId = columnId.replace('column-', '');
-        let targetId = overId.toString();
-        
-        // Handle if the over ID is a column ID with the 'column-' prefix
-        if (targetId.startsWith('column-')) {
-          targetId = targetId.replace('column-', '');
-        }
-        
-        if (columnId === targetId) return;
-        
-        const oldIndex = columns.findIndex(col => col.id === columnId);
-        const newIndex = columns.findIndex(col => col.id === targetId);
-        
-        if (oldIndex === -1 || newIndex === -1) return;
-        
-        // Optimistically update the UI
-        const newColumns = [...columns];
-        const [movedColumn] = newColumns.splice(oldIndex, 1);
-        newColumns.splice(newIndex, 0, movedColumn);
-        
-        // Update the colors based on the new order
-        const coloredColumns = newColumns.map((col, index) => ({
-          ...col,
-          color: DEFAULT_COLORS[index % DEFAULT_COLORS.length]
-        }));
-        
-        setColumns(coloredColumns);
-        
-        // Update the order in the database
-        try {
-          // Update order for all columns
-          for (let i = 0; i < newColumns.length; i++) {
-            await supabase
-              .from('planner_columns')
-              .update({ order: i })
-              .eq('id', newColumns[i].id);
-          }
-          
-          // Update video ideas with new column colors
-          setVideoIdeas(videoIdeas.map(idea => {
-            const columnIndex = newColumns.findIndex(col => col.id === idea.status.id);
-            if (columnIndex !== -1) {
-              return {
-                ...idea,
-                status: {
-                  ...idea.status,
-                  color: DEFAULT_COLORS[columnIndex % DEFAULT_COLORS.length]
-                }
-              };
-            }
-            return idea;
-          }));
-          
-        } catch (error: any) {
-          console.error('Error updating column order:', error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to update column order."
-          });
-          // Revert to the original order
-          fetchColumnsAndIdeas();
-        }
-      }
-    } else {
-      // Handle idea drag (existing logic)
-      const ideaId = active.id as string;
-      const newStatusName = overId as string;
-      
-      // Find the column by name
-      const newStatus = columns.find(col => col.name === newStatusName);
-      if (!newStatus) return;
-      
-      try {
-        // Update the status in the database
-        const { error } = await supabase
-          .from('video_ideas')
-          .update({ 
-            status: newStatus.id,
-            is_saved: true 
-          })
-          .eq('id', ideaId);
+    const newStatus = columns.find(col => col.name === newStatusName);
+    if (!newStatus) return;
+    
+    try {
+      const { error } = await supabase
+        .from('video_ideas')
+        .update({ 
+          status: newStatus.id,
+          is_saved: true 
+        })
+        .eq('id', ideaId);
 
-        if (error) throw error;
-        
-        // Update the videoIdeas state to reflect the change
-        setVideoIdeas(videoIdeas.map(idea => {
-          if (idea.id === ideaId) {
-            return { ...idea, status: newStatus };
-          }
-          return idea;
-        }));
-        
-      } catch (error: any) {
-        console.error('Error updating idea status:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to update idea status."
-        });
-      }
+      if (error) throw error;
+      
+      setVideoIdeas(videoIdeas.map(idea => {
+        if (idea.id === ideaId) {
+          return { ...idea, status: newStatus };
+        }
+        return idea;
+      }));
+      
+    } catch (error: any) {
+      console.error('Error updating idea status:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update idea status."
+      });
     }
   };
 
@@ -418,12 +254,10 @@ export default function ContentPlanner() {
           title: data.title,
           user_id: session.user.id,
           order: newColumnOrder
-          // Note: color isn't stored in DB, we assign it based on the order
         });
 
       if (error) throw error;
 
-      // Add the new column to the state with the color
       const newColumn: Status = {
         id: newColumnId,
         name: data.title,
@@ -461,21 +295,17 @@ export default function ContentPlanner() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
-      // Find ideas in this column
       const ideasInColumn = videoIdeas.filter(idea => idea.status.id === columnToDelete.id);
       
-      // Find the first column (default column)
       const firstColumn = columns.find((_, index) => index === 0);
       
       if (firstColumn && ideasInColumn.length > 0) {
-        // Move all ideas to the first column
         for (const idea of ideasInColumn) {
           await supabase
             .from('video_ideas')
             .update({ status: firstColumn.id })
             .eq('id', idea.id);
           
-          // Update in state
           setVideoIdeas(videoIdeas.map(i => {
             if (i.id === idea.id) {
               return { ...i, status: firstColumn };
@@ -485,7 +315,6 @@ export default function ContentPlanner() {
         }
       }
       
-      // Delete the column
       const { error } = await supabase
         .from('planner_columns')
         .delete()
@@ -493,10 +322,8 @@ export default function ContentPlanner() {
         
       if (error) throw error;
       
-      // Remove the column from state
       setColumns(columns.filter(col => col.id !== columnToDelete.id));
       
-      // Reorder remaining columns
       const remainingColumns = columns.filter(col => col.id !== columnToDelete.id);
       for (let i = 0; i < remainingColumns.length; i++) {
         await supabase
