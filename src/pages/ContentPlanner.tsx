@@ -590,11 +590,28 @@ export default function ContentPlanner() {
         }
         
         [data-rbd-draggable-id] {
-          transition: none !important;
+          transition: transform 0.001s !important;
         }
         
         .react-beautiful-dnd-dragging {
           z-index: 9999 !important;
+        }
+        
+        [data-rbd-draggable-context-id] [data-rbd-draggable-id] {
+          transform-origin: 50% 50% !important;
+        }
+        
+        .planner-column-content {
+          min-height: 5px;
+          padding-bottom: 5px;
+        }
+        
+        [data-rbd-droppable-id] {
+          min-height: 50px;
+        }
+        
+        [data-rbd-placeholder-context-id] {
+          transition: height 0.2s ease !important;
         }
       `}} />
 

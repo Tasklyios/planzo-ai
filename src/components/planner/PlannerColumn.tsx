@@ -93,8 +93,6 @@ export function PlannerColumn({
           style={{
             ...provided.draggableProps.style,
             width: snapshot.isDragging ? "320px" : undefined,
-            transform: provided.draggableProps.style?.transform,
-            transition: provided.draggableProps.style?.transition,
           }}
         >
           <div 
@@ -136,7 +134,7 @@ export function PlannerColumn({
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className="space-y-2 min-h-[calc(100vh-16rem)]"
+                className="space-y-2 min-h-[calc(100vh-16rem)] planner-column-content"
               >
                 {children}
                 {provided.placeholder}
