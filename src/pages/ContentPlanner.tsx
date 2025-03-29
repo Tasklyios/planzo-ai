@@ -43,12 +43,22 @@ const columnFormSchema = z.object({
   title: z.string().min(1, "Column title is required").max(50, "Column title must be less than 50 characters"),
 });
 
+// Fixed colors for each default column
+const DEFAULT_COLORS = [
+  '#6B7280', // gray for Ideas
+  '#F59E0B', // amber for Planning
+  '#3B82F6', // blue for To Film
+  '#EC4899', // pink for To Edit
+  '#10B981', // emerald for To Post
+];
+
+// Default columns definition (only used when creating initial columns)
 const DEFAULT_COLUMNS = [
-  { title: 'Ideas', order: 0, color: '#6B7280' },
-  { title: 'Planning', order: 1, color: '#F59E0B' },
-  { title: 'To Film', order: 2, color: '#3B82F6' },
-  { title: 'To Edit', order: 3, color: '#EC4899' },
-  { title: 'To Post', order: 4, color: '#10B981' },
+  { title: 'Ideas', order: 0, color: DEFAULT_COLORS[0] },
+  { title: 'Planning', order: 1, color: DEFAULT_COLORS[1] },
+  { title: 'To Film', order: 2, color: DEFAULT_COLORS[2] },
+  { title: 'To Edit', order: 3, color: DEFAULT_COLORS[3] },
+  { title: 'To Post', order: 4, color: DEFAULT_COLORS[4] },
 ];
 
 const colorMap: Record<string, string> = {
@@ -105,12 +115,12 @@ export default function ContentPlanner() {
         await createDefaultColumns(session.user.id);
         return; // fetchColumnsAndIdeas will be called again after creating default columns
       } else {
-        // Format columns data with default colors based on index if no color is present
+        // Format columns data with colors based on index
         const formattedColumns: Status[] = columnsData.map((col, index) => ({
           id: col.id,
           name: col.title,
-          // Use default colors or assign color based on order to ensure consistency
-          color: DEFAULT_COLUMNS[index % DEFAULT_COLUMNS.length].color
+          // Assign colors based on index in a deterministic way
+          color: DEFAULT_COLORS[index % DEFAULT_COLORS.length]
         }));
         setColumns(formattedColumns);
       }
@@ -134,7 +144,7 @@ export default function ContentPlanner() {
           // Make sure each idea has a valid status
           const columnId = idea.status || firstColumnId;
           const column = columnsData?.find(col => col.id === columnId);
-          const columnIndex = columnsData?.findIndex(col => col.id === columnId) || 0;
+          const columnIndex = columnsData?.findIndex(col => col.id === columnId) ?? 0;
           
           return {
             id: idea.id,
@@ -146,8 +156,8 @@ export default function ContentPlanner() {
             status: {
               id: column?.id || firstColumnId,
               name: column?.title || 'Ideas',
-              // Use the default colors for columns based on their index
-              color: DEFAULT_COLUMNS[columnIndex % DEFAULT_COLUMNS.length].color
+              // Use the color based on column index
+              color: DEFAULT_COLORS[columnIndex % DEFAULT_COLORS.length]
             },
             is_on_calendar: idea.scheduled_for !== null,
             scheduled_for: idea.scheduled_for
@@ -249,7 +259,7 @@ export default function ContentPlanner() {
 
       const newColumnId = crypto.randomUUID();
       const newColumnOrder = columns.length;
-      const newColumnColor = DEFAULT_COLUMNS[newColumnOrder % DEFAULT_COLUMNS.length].color;
+      const newColumnColor = DEFAULT_COLORS[newColumnOrder % DEFAULT_COLORS.length];
 
       const { error } = await supabase
         .from('planner_columns')
