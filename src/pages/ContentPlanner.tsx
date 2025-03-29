@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Plus, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -221,66 +220,147 @@ export default function ContentPlanner() {
     // Check if we're dealing with a column drag or an idea drag
     const activeData = active.data.current;
     const overId = over.id as string;
+    const overData = over.data.current;
     
     if (activeData?.type === 'column') {
       // Handle column reordering
-      const columnId = active.id.toString().replace('column-', '');
-      const targetId = overId.toString().replace('column-', '');
+      let columnId = active.id.toString().replace('column-', '');
       
-      if (columnId === targetId) return;
-      
-      const oldIndex = columns.findIndex(col => col.id === columnId);
-      const newIndex = columns.findIndex(col => col.id === targetId);
-      
-      if (oldIndex === -1 || newIndex === -1) return;
-      
-      // Optimistically update the UI
-      const newColumns = [...columns];
-      const [movedColumn] = newColumns.splice(oldIndex, 1);
-      newColumns.splice(newIndex, 0, movedColumn);
-      
-      // Update the colors based on the new order
-      const coloredColumns = newColumns.map((col, index) => ({
-        ...col,
-        color: DEFAULT_COLORS[index % DEFAULT_COLORS.length]
-      }));
-      
-      setColumns(coloredColumns);
-      
-      // Update the order in the database
-      try {
-        // Update order for all columns
-        for (let i = 0; i < newColumns.length; i++) {
-          await supabase
-            .from('planner_columns')
-            .update({ order: i })
-            .eq('id', newColumns[i].id);
+      // Check if we're dropping on a gap (between columns)
+      if (overData?.type === 'column-gap') {
+        const targetIndex = overData.targetIndex;
+        const position = overData.position;
+        let newIndex: number;
+        
+        if (position === 'left') {
+          newIndex = targetIndex;
+        } else { // position === 'right'
+          newIndex = targetIndex + 1;
         }
         
-        // Update video ideas with new column colors
-        setVideoIdeas(videoIdeas.map(idea => {
-          const columnIndex = newColumns.findIndex(col => col.id === idea.status.id);
-          if (columnIndex !== -1) {
-            return {
-              ...idea,
-              status: {
-                ...idea.status,
-                color: DEFAULT_COLORS[columnIndex % DEFAULT_COLORS.length]
-              }
-            };
-          }
-          return idea;
+        // Find the index of the column we're moving
+        const oldIndex = columns.findIndex(col => col.id === columnId);
+        
+        // Adjust for the fact that we remove the column first
+        if (oldIndex < newIndex) {
+          newIndex--;
+        }
+        
+        if (oldIndex === newIndex) return;
+        
+        // Optimistically update the UI
+        const newColumns = [...columns];
+        const [movedColumn] = newColumns.splice(oldIndex, 1);
+        newColumns.splice(newIndex, 0, movedColumn);
+        
+        // Update the colors based on the new order
+        const coloredColumns = newColumns.map((col, index) => ({
+          ...col,
+          color: DEFAULT_COLORS[index % DEFAULT_COLORS.length]
         }));
         
-      } catch (error: any) {
-        console.error('Error updating column order:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to update column order."
-        });
-        // Revert to the original order
-        fetchColumnsAndIdeas();
+        setColumns(coloredColumns);
+        
+        // Update the order in the database
+        try {
+          // Update order for all columns
+          for (let i = 0; i < newColumns.length; i++) {
+            await supabase
+              .from('planner_columns')
+              .update({ order: i })
+              .eq('id', newColumns[i].id);
+          }
+          
+          // Update video ideas with new column colors
+          setVideoIdeas(videoIdeas.map(idea => {
+            const columnIndex = newColumns.findIndex(col => col.id === idea.status.id);
+            if (columnIndex !== -1) {
+              return {
+                ...idea,
+                status: {
+                  ...idea.status,
+                  color: DEFAULT_COLORS[columnIndex % DEFAULT_COLORS.length]
+                }
+              };
+            }
+            return idea;
+          }));
+          
+        } catch (error: any) {
+          console.error('Error updating column order:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to update column order."
+          });
+          // Revert to the original order
+          fetchColumnsAndIdeas();
+        }
+      } else {
+        // Original behavior for dropping on columns directly
+        columnId = columnId.replace('column-', '');
+        let targetId = overId.toString();
+        
+        // Handle if the over ID is a column ID with the 'column-' prefix
+        if (targetId.startsWith('column-')) {
+          targetId = targetId.replace('column-', '');
+        }
+        
+        if (columnId === targetId) return;
+        
+        const oldIndex = columns.findIndex(col => col.id === columnId);
+        const newIndex = columns.findIndex(col => col.id === targetId);
+        
+        if (oldIndex === -1 || newIndex === -1) return;
+        
+        // Optimistically update the UI
+        const newColumns = [...columns];
+        const [movedColumn] = newColumns.splice(oldIndex, 1);
+        newColumns.splice(newIndex, 0, movedColumn);
+        
+        // Update the colors based on the new order
+        const coloredColumns = newColumns.map((col, index) => ({
+          ...col,
+          color: DEFAULT_COLORS[index % DEFAULT_COLORS.length]
+        }));
+        
+        setColumns(coloredColumns);
+        
+        // Update the order in the database
+        try {
+          // Update order for all columns
+          for (let i = 0; i < newColumns.length; i++) {
+            await supabase
+              .from('planner_columns')
+              .update({ order: i })
+              .eq('id', newColumns[i].id);
+          }
+          
+          // Update video ideas with new column colors
+          setVideoIdeas(videoIdeas.map(idea => {
+            const columnIndex = newColumns.findIndex(col => col.id === idea.status.id);
+            if (columnIndex !== -1) {
+              return {
+                ...idea,
+                status: {
+                  ...idea.status,
+                  color: DEFAULT_COLORS[columnIndex % DEFAULT_COLORS.length]
+                }
+              };
+            }
+            return idea;
+          }));
+          
+        } catch (error: any) {
+          console.error('Error updating column order:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to update column order."
+          });
+          // Revert to the original order
+          fetchColumnsAndIdeas();
+        }
       }
     } else {
       // Handle idea drag (existing logic)
