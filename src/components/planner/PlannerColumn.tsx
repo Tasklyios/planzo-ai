@@ -13,9 +13,9 @@ interface PlannerColumnProps {
   id: string;
   index: number;
   children: React.ReactNode;
-  isDeletable?: boolean;
   onIdeaAdded?: () => void; 
   onColumnDeleted?: () => void;
+  isFirstColumn?: boolean;
 }
 
 export function PlannerColumn({ 
@@ -23,9 +23,9 @@ export function PlannerColumn({
   id, 
   index, 
   children, 
-  isDeletable = true,
   onIdeaAdded,
-  onColumnDeleted
+  onColumnDeleted,
+  isFirstColumn = false
 }: PlannerColumnProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { toast } = useToast();
@@ -82,7 +82,7 @@ export function PlannerColumn({
   };
 
   return (
-    <Draggable draggableId={id} index={index} isDragDisabled={!isDeletable}>
+    <Draggable draggableId={id} index={index} isDragDisabled={isFirstColumn}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
@@ -101,23 +101,21 @@ export function PlannerColumn({
             <div className="flex items-center gap-2">
               <div 
                 {...provided.dragHandleProps}
-                className={`cursor-grab hover:text-primary ${!isDeletable ? 'opacity-50 cursor-not-allowed' : ''} ${
+                className={`cursor-grab hover:text-primary ${isFirstColumn ? 'opacity-50 cursor-not-allowed' : ''} ${
                   snapshot.isDragging ? "cursor-grabbing" : ""
                 }`}
               >
                 <GripVertical className="h-5 w-5" />
               </div>
               <h3 className="font-semibold text-lg">{title}</h3>
-              {!isDeletable && <span className="text-xs text-muted-foreground ml-2">(Default)</span>}
+              {isFirstColumn && <span className="text-xs text-muted-foreground ml-2">(Default)</span>}
             </div>
             <div className="flex items-center">
-              {isDeletable && (
-                <DeleteIcon 
-                  onDelete={handleDeleteColumn}
-                  title={`Delete ${title} Column`}
-                  description={`Are you sure you want to delete the "${title}" column? All ideas will be moved to the first column.`}
-                />
-              )}
+              <DeleteIcon 
+                onDelete={handleDeleteColumn}
+                title={`Delete ${title} Column`}
+                description={`Are you sure you want to delete the "${title}" column? All ideas will be moved to the first column.`}
+              />
               <Button 
                 variant="ghost" 
                 size="icon" 
