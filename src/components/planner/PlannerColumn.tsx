@@ -37,11 +37,20 @@ export function PlannerColumn({
         .select('id')
         .eq('status', id);
       
-      if (columnItems && columnItems.length > 0) {
+      // Get the first column id to move items to
+      const { data: columns } = await supabase
+        .from('planner_columns')
+        .select('id')
+        .order('order', { ascending: true })
+        .limit(1);
+        
+      const firstColumnId = columns && columns.length > 0 ? columns[0].id : null;
+      
+      if (columnItems && columnItems.length > 0 && firstColumnId) {
         for (const item of columnItems) {
           await supabase
             .from('video_ideas')
-            .update({ status: 'ideas' })
+            .update({ status: firstColumnId })
             .eq('id', item.id);
         }
       }
@@ -57,14 +66,23 @@ export function PlannerColumn({
         onColumnDeleted();
       }
       
+      toast({
+        title: "Success",
+        description: "Column deleted successfully."
+      });
+      
     } catch (error) {
       console.error('Error deleting column:', error);
-      throw error;
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete column."
+      });
     }
   };
 
   return (
-    <Draggable draggableId={`column-${id}`} index={index} isDragDisabled={!isDeletable}>
+    <Draggable draggableId={id} index={index} isDragDisabled={!isDeletable}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
@@ -75,9 +93,6 @@ export function PlannerColumn({
           style={{
             ...provided.draggableProps.style,
             width: snapshot.isDragging ? "320px" : undefined,
-            transformOrigin: "top left",
-            left: snapshot.isDragging ? 0 : undefined,
-            top: snapshot.isDragging ? 0 : undefined
           }}
         >
           <div 
@@ -100,7 +115,7 @@ export function PlannerColumn({
                 <DeleteIcon 
                   onDelete={handleDeleteColumn}
                   title={`Delete ${title} Column`}
-                  description={`Are you sure you want to delete the "${title}" column? All ideas will be moved to the Ideas column.`}
+                  description={`Are you sure you want to delete the "${title}" column? All ideas will be moved to the first column.`}
                 />
               )}
               <Button 

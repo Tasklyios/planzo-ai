@@ -44,8 +44,6 @@ const columnFormSchema = z.object({
   title: z.string().min(1, "Column title is required").max(50, "Column title must be less than 50 characters"),
 });
 
-const IDEAS_COLUMN_ID = "ideas";
-
 export default function ContentPlanner() {
   const { toast } = useToast();
   const [columns, setColumns] = useState<PlannerColumnWithItems[]>([]);
@@ -83,37 +81,25 @@ export default function ContentPlanner() {
 
       if (columnsError) throw columnsError;
 
-      let hasIdeasColumn = false;
+      // Check if we have an 'ideas' column - use the first column as the ideas column by default
+      let ideasColumnId = columnsData && columnsData.length > 0 ? columnsData[0].id : null;
+      let hasIdeasColumn = ideasColumnId !== null;
       
-      if (columnsData && columnsData.length > 0) {
-        hasIdeasColumn = columnsData.some(col => col.id === IDEAS_COLUMN_ID);
-      }
+      // If we don't have any columns, create default columns
+      if (!columnsData || columnsData.length === 0) {
+        // Create default columns with generated UUIDs
+        const defaultColumns = [
+          { id: crypto.randomUUID(), title: 'Ideas', order: 0 },
+          { id: crypto.randomUUID(), title: 'Planning', order: 1 },
+          { id: crypto.randomUUID(), title: 'Ready to Film', order: 2 },
+          { id: crypto.randomUUID(), title: 'To Edit', order: 3 },
+          { id: crypto.randomUUID(), title: 'Ready to Post', order: 4 },
+        ];
 
-      if (!columnsData || columnsData.length === 0 || !hasIdeasColumn) {
-        let defaultColumns = [];
-        
-        if (!columnsData || columnsData.length === 0) {
-          defaultColumns = [
-            { id: IDEAS_COLUMN_ID, title: 'Ideas', order: 0 },
-            { id: 'planning', title: 'Planning', order: 1 },
-            { id: 'filming', title: 'Ready to Film', order: 2 },
-            { id: 'editing', title: 'To Edit', order: 3 },
-            { id: 'ready', title: 'Ready to Post', order: 4 },
-          ];
-        } else if (!hasIdeasColumn) {
-          defaultColumns = [
-            { id: IDEAS_COLUMN_ID, title: 'Ideas', order: 0 }
-          ];
-          
-          for (let i = 0; i < columnsData.length; i++) {
-            await supabase
-              .from('planner_columns')
-              .update({ order: i + 1 })
-              .eq('id', columnsData[i].id)
-              .eq('user_id', session.user.id);
-          }
-        }
+        // Set the first column as our ideas column
+        ideasColumnId = defaultColumns[0].id;
 
+        // Insert all default columns
         for (const column of defaultColumns) {
           await supabase
             .from('planner_columns')
@@ -148,6 +134,7 @@ export default function ContentPlanner() {
         setColumns(columnsWithItems);
       }
 
+      // Fetch all saved ideas
       const { data: ideas, error: ideasError } = await supabase
         .from('video_ideas')
         .select('*')
@@ -160,10 +147,13 @@ export default function ContentPlanner() {
         console.log("Fetched saved ideas:", ideas);
         
         const groupedIdeas = ideas.reduce((acc: { [key: string]: PlannerItem[] }, idea) => {
-          const status = idea.status || IDEAS_COLUMN_ID;
-          const columnExists = columnsData?.some(col => col.id === status) || status === IDEAS_COLUMN_ID;
+          // Use the set status, or use the first column (ideasColumnId) as default
+          const status = idea.status || ideasColumnId;
           
-          const targetStatus = columnExists ? status : IDEAS_COLUMN_ID;
+          // Check if the column exists (extra safety)
+          const columnExists = columnsData?.some(col => col.id === status);
+          
+          const targetStatus = columnExists ? status : ideasColumnId;
           
           if (!acc[targetStatus]) acc[targetStatus] = [];
           acc[targetStatus].push({
@@ -213,11 +203,12 @@ export default function ContentPlanner() {
 
     if (destination.droppableId === 'delete-bin') {
       if (type === 'column') {
-        const columnId = draggableId.replace('column-', '');
-        if (columnId === IDEAS_COLUMN_ID) {
+        const columnId = draggableId;
+        // Don't allow deletion of the first column
+        if (columns.length > 0 && columnId === columns[0].id) {
           toast({
             title: "Cannot Delete",
-            description: "The Ideas column cannot be deleted as it's required.",
+            description: "The first column cannot be deleted as it's required.",
             variant: "destructive"
           });
           return;
@@ -258,26 +249,27 @@ export default function ContentPlanner() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
 
-        if (destination.index === 0 && columns[source.index].id !== IDEAS_COLUMN_ID) {
+        // Don't allow moving the first column out of first position
+        if (destination.index === 0 && source.index !== 0) {
           toast({
             title: "Cannot Reorder",
-            description: "The Ideas column must remain first.",
+            description: "The first column must remain first.",
             variant: "destructive"
           });
           return;
         }
 
-        const newColumns = [...columns];
-        
-        if (newColumns[source.index].id === IDEAS_COLUMN_ID && destination.index !== 0) {
+        // Don't allow moving any column to the first position
+        if (source.index === 0 && destination.index !== 0) {
           toast({
             title: "Cannot Reorder",
-            description: "The Ideas column must remain first.",
+            description: "The first column must remain first.",
             variant: "destructive"
           });
           return;
         }
         
+        const newColumns = [...columns];
         const [removed] = newColumns.splice(source.index, 1);
         newColumns.splice(destination.index, 0, removed);
 
@@ -387,10 +379,11 @@ export default function ContentPlanner() {
       if (pendingDelete.type === 'column') {
         const columnId = pendingDelete.id;
         
-        if (columnId === IDEAS_COLUMN_ID) {
+        // Don't allow deletion of the first column
+        if (columns.length > 0 && columnId === columns[0].id) {
           toast({
             title: "Cannot Delete",
-            description: "The Ideas column cannot be deleted as it's required.",
+            description: "The first column cannot be deleted as it's required.",
             variant: "destructive"
           });
           setIsDeleting(false);
@@ -400,16 +393,19 @@ export default function ContentPlanner() {
         }
         
         const columnItems = columns.find(col => col.id === columnId)?.items || [];
+        const firstColumnId = columns.length > 0 ? columns[0].id : null;
         
-        for (const item of columnItems) {
-          const { error: updateError } = await supabase
-            .from('video_ideas')
-            .update({ status: IDEAS_COLUMN_ID })
-            .eq('id', item.id);
-          
-          if (updateError) {
-            console.error('Error moving items from deleted column:', updateError);
-            throw updateError;
+        if (firstColumnId) {
+          for (const item of columnItems) {
+            const { error: updateError } = await supabase
+              .from('video_ideas')
+              .update({ status: firstColumnId })
+              .eq('id', item.id);
+            
+            if (updateError) {
+              console.error('Error moving items from deleted column:', updateError);
+              throw updateError;
+            }
           }
         }
         
@@ -428,7 +424,7 @@ export default function ContentPlanner() {
         
         toast({
           title: "Column Deleted",
-          description: `Column "${pendingDelete.name}" has been deleted and items moved to Ideas.`,
+          description: `Column "${pendingDelete.name}" has been deleted and items moved to the first column.`,
         });
       } else if (pendingDelete.type === 'task') {
         const ideaId = pendingDelete.id;
@@ -613,8 +609,9 @@ export default function ContentPlanner() {
         [data-dragging="true"] * {
           cursor: grabbing !important;
         }
+        /* Fix for dragging offset */
         .react-beautiful-dnd-draggable {
-          transition: transform 0.2s;
+          transform: translate(0, 0) !important;
         }
       `}} />
 
@@ -638,7 +635,7 @@ export default function ContentPlanner() {
                   title={column.title} 
                   id={column.id}
                   index={index}
-                  isDeletable={column.id !== IDEAS_COLUMN_ID}
+                  isDeletable={index !== 0} // First column is not deletable
                   onIdeaAdded={fetchColumnsAndIdeas}
                   onColumnDeleted={handleColumnDeleted}
                 >
@@ -671,7 +668,7 @@ export default function ContentPlanner() {
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
               {pendingDelete?.type === 'column'
-                ? `Are you sure you want to delete the "${pendingDelete.name}" column? All ideas will be moved to the Ideas column.`
+                ? `Are you sure you want to delete the "${pendingDelete.name}" column? All ideas will be moved to the first column.`
                 : `Are you sure you want to delete the idea "${pendingDelete?.name}"? This action cannot be undone.`}
             </DialogDescription>
           </DialogHeader>
