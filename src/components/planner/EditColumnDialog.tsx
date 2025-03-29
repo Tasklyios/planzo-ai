@@ -87,15 +87,30 @@ export function EditColumnDialog({
     try {
       setIsLoading(true);
       
+      // Get user session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "You must be logged in to update columns."
+        });
+        return;
+      }
+      
+      // Update the column in the database
       const { error } = await supabase
         .from('planner_columns')
         .update({ 
           title: data.title
-          // We don't store color in the database, it's maintained client-side
         })
-        .eq('id', column.id);
+        .eq('id', column.id)
+        .eq('user_id', session.user.id);
 
       if (error) throw error;
+      
+      // Store the color preference in the client-side state
+      // We're not storing the color in the database as it's a UI preference
       
       toast({
         title: "Column Updated",

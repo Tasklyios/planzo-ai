@@ -8,12 +8,10 @@ import {
   rectIntersection,
   useDraggable,
   useDroppable,
-  DragOverlay,
-  Active,
   pointerWithin,
 } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import type { ReactNode } from 'react';
 
 export type Status = {
@@ -38,7 +36,7 @@ export type KanbanBoardProps = {
   id: Status['id'];
   children: ReactNode;
   className?: string;
-  index?: number; // Added index for columns
+  index?: number; // We'll keep this prop for ordering, but not for dragging
 };
 
 export const KanbanBoard = ({ id, children, className, index }: KanbanBoardProps) => {
@@ -47,11 +45,8 @@ export const KanbanBoard = ({ id, children, className, index }: KanbanBoardProps
     data: { type: 'column', index }
   });
   
-  // Column dragging is now disabled, so we don't need these functions anymore
-  const boardRef = useRef<HTMLDivElement>(null);
-  
   return (
-    <div className="relative flex h-full" ref={boardRef}>
+    <div className="relative flex h-full">
       <div
         className={cn(
           'flex h-full min-h-40 flex-col gap-2 rounded-lg border bg-muted/50 p-4 text-xs shadow-sm outline outline-2 transition-all',
@@ -155,7 +150,7 @@ export type KanbanHeaderProps =
       isFirstColumn?: boolean;
       onAddIdea?: () => void;
       onDeleteColumn?: () => void;
-      onEditColumn?: () => void; // Added edit column callback
+      onEditColumn?: () => void; // Keep this prop for editing columns
       className?: string;
     };
 
