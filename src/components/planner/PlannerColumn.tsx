@@ -93,6 +93,8 @@ export function PlannerColumn({
           style={{
             ...provided.draggableProps.style,
             width: snapshot.isDragging ? "320px" : undefined,
+            transform: provided.draggableProps.style?.transform,
+            transition: provided.draggableProps.style?.transition,
           }}
         >
           <div 

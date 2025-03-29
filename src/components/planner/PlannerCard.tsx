@@ -32,7 +32,9 @@ export function PlannerCard({
   const { toast } = useToast();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  const getColorValue = (color: string): string => {
+  const getColorValue = (color: string | null | undefined): string => {
+    if (!color) return "#3b82f6"; // Default to blue if color is null or undefined
+    
     const colorMap: Record<string, string> = {
       red: "#ef4444",
       orange: "#f97316",
