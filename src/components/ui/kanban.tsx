@@ -8,8 +8,12 @@ import {
   rectIntersection,
   useDraggable,
   useDroppable,
+  DragOverlay,
+  Active,
+  pointerWithin,
 } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 
 export type Status = {
@@ -34,21 +38,38 @@ export type KanbanBoardProps = {
   id: Status['id'];
   children: ReactNode;
   className?: string;
+  index?: number; // Added index for columns
 };
 
-export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
-  const { isOver, setNodeRef } = useDroppable({ id });
+export const KanbanBoard = ({ id, children, className, index }: KanbanBoardProps) => {
+  const { isOver, setNodeRef: setDroppableRef } = useDroppable({ 
+    id,
+    data: { type: 'column', index }
+  });
+  
+  const { attributes, listeners, setNodeRef: setDraggableRef, transform, isDragging } = useDraggable({
+    id: `column-${id}`,
+    data: { type: 'column', id, index },
+  });
 
   return (
     <div
       className={cn(
         'flex h-full min-h-40 flex-col gap-2 rounded-lg border bg-muted/50 p-4 text-xs shadow-sm outline outline-2 transition-all',
         isOver ? 'outline-primary' : 'outline-transparent',
+        isDragging ? 'opacity-50' : '',
         className
       )}
-      ref={setNodeRef}
+      ref={setDroppableRef}
     >
-      {children}
+      <div
+        ref={setDraggableRef}
+        {...attributes}
+        {...listeners}
+        className="cursor-move"
+      >
+        {children}
+      </div>
     </div>
   );
 };
@@ -81,7 +102,7 @@ export const KanbanCard = ({
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id,
-      data: { index, parent },
+      data: { type: 'card', index, parent },
     });
 
   return (
@@ -142,6 +163,7 @@ export type KanbanHeaderProps =
       isFirstColumn?: boolean;
       onAddIdea?: () => void;
       onDeleteColumn?: () => void;
+      onEditColumn?: () => void; // Added edit column callback
       className?: string;
     };
 
@@ -161,10 +183,21 @@ export const KanbanHeader = (props: KanbanHeaderProps) =>
         </p>
       </div>
       <div className="flex items-center">
+        {props.onEditColumn && (
+          <button 
+            onClick={props.onEditColumn}
+            className="p-1 hover:bg-muted rounded-full transition-colors"
+            title={`Edit ${props.name} Column`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        )}
         {props.onDeleteColumn && !props.isFirstColumn && (
           <button 
             onClick={props.onDeleteColumn}
-            className="p-1 hover:bg-muted rounded-full transition-colors"
+            className="p-1 hover:bg-muted rounded-full transition-colors ml-1"
             title={`Delete ${props.name} Column`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -197,12 +230,29 @@ export const KanbanProvider = ({
   children,
   onDragEnd,
   className,
-}: KanbanProviderProps) => (
-  <DndContext collisionDetection={rectIntersection} onDragEnd={onDragEnd}>
-    <div
-      className={cn('grid w-full auto-cols-[320px] grid-flow-col gap-4', className)}
+}: KanbanProviderProps) => {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  
+  const handleDragStart = (event: any) => {
+    setActiveId(event.active.id);
+  };
+  
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+    onDragEnd(event);
+  };
+
+  return (
+    <DndContext 
+      collisionDetection={pointerWithin} 
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
     >
-      {children}
-    </div>
-  </DndContext>
-);
+      <div
+        className={cn('grid w-full auto-cols-[320px] grid-flow-col gap-4', className)}
+      >
+        {children}
+      </div>
+    </DndContext>
+  );
+};

@@ -38,6 +38,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import EditIdea from "@/components/EditIdea";
+import { EditColumnDialog } from "@/components/planner/EditColumnDialog";
 
 const columnFormSchema = z.object({
   title: z.string().min(1, "Column title is required").max(50, "Column title must be less than 50 characters"),
@@ -84,6 +85,8 @@ export default function ContentPlanner() {
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
   const [columnToDelete, setColumnToDelete] = useState<Status | null>(null);
+  const [editColumnDialogOpen, setEditColumnDialogOpen] = useState(false);
+  const [columnToEdit, setColumnToEdit] = useState<Status | null>(null);
 
   const form = useForm<z.infer<typeof columnFormSchema>>({
     resolver: zodResolver(columnFormSchema),
@@ -215,40 +218,107 @@ export default function ContentPlanner() {
     
     if (!over) return;
     
-    const ideaId = active.id as string;
-    const newStatusName = over.id as string;
+    // Check if we're dealing with a column drag or an idea drag
+    const activeData = active.data.current;
+    const overId = over.id as string;
     
-    // Find the column by name
-    const newStatus = columns.find(col => col.name === newStatusName);
-    if (!newStatus) return;
-    
-    try {
-      // Update the status in the database
-      const { error } = await supabase
-        .from('video_ideas')
-        .update({ 
-          status: newStatus.id,
-          is_saved: true 
-        })
-        .eq('id', ideaId);
-
-      if (error) throw error;
+    if (activeData?.type === 'column') {
+      // Handle column reordering
+      const columnId = active.id.toString().replace('column-', '');
+      const targetId = overId.toString().replace('column-', '');
       
-      // Update the videoIdeas state to reflect the change
-      setVideoIdeas(videoIdeas.map(idea => {
-        if (idea.id === ideaId) {
-          return { ...idea, status: newStatus };
-        }
-        return idea;
+      if (columnId === targetId) return;
+      
+      const oldIndex = columns.findIndex(col => col.id === columnId);
+      const newIndex = columns.findIndex(col => col.id === targetId);
+      
+      if (oldIndex === -1 || newIndex === -1) return;
+      
+      // Optimistically update the UI
+      const newColumns = [...columns];
+      const [movedColumn] = newColumns.splice(oldIndex, 1);
+      newColumns.splice(newIndex, 0, movedColumn);
+      
+      // Update the colors based on the new order
+      const coloredColumns = newColumns.map((col, index) => ({
+        ...col,
+        color: DEFAULT_COLORS[index % DEFAULT_COLORS.length]
       }));
       
-    } catch (error: any) {
-      console.error('Error updating idea status:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update idea status."
-      });
+      setColumns(coloredColumns);
+      
+      // Update the order in the database
+      try {
+        // Update order for all columns
+        for (let i = 0; i < newColumns.length; i++) {
+          await supabase
+            .from('planner_columns')
+            .update({ order: i })
+            .eq('id', newColumns[i].id);
+        }
+        
+        // Update video ideas with new column colors
+        setVideoIdeas(videoIdeas.map(idea => {
+          const columnIndex = newColumns.findIndex(col => col.id === idea.status.id);
+          if (columnIndex !== -1) {
+            return {
+              ...idea,
+              status: {
+                ...idea.status,
+                color: DEFAULT_COLORS[columnIndex % DEFAULT_COLORS.length]
+              }
+            };
+          }
+          return idea;
+        }));
+        
+      } catch (error: any) {
+        console.error('Error updating column order:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to update column order."
+        });
+        // Revert to the original order
+        fetchColumnsAndIdeas();
+      }
+    } else {
+      // Handle idea drag (existing logic)
+      const ideaId = active.id as string;
+      const newStatusName = overId as string;
+      
+      // Find the column by name
+      const newStatus = columns.find(col => col.name === newStatusName);
+      if (!newStatus) return;
+      
+      try {
+        // Update the status in the database
+        const { error } = await supabase
+          .from('video_ideas')
+          .update({ 
+            status: newStatus.id,
+            is_saved: true 
+          })
+          .eq('id', ideaId);
+
+        if (error) throw error;
+        
+        // Update the videoIdeas state to reflect the change
+        setVideoIdeas(videoIdeas.map(idea => {
+          if (idea.id === ideaId) {
+            return { ...idea, status: newStatus };
+          }
+          return idea;
+        }));
+        
+      } catch (error: any) {
+        console.error('Error updating idea status:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to update idea status."
+        });
+      }
     }
   };
 
@@ -393,6 +463,11 @@ export default function ContentPlanner() {
     setZoomLevel(prev => Math.max(prev - 10, 50));
   };
 
+  const handleEditColumn = (column: Status) => {
+    setColumnToEdit(column);
+    setEditColumnDialogOpen(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -486,6 +561,7 @@ export default function ContentPlanner() {
             <KanbanBoard 
               key={column.id} 
               id={column.name}
+              index={index}
             >
               <KanbanHeader 
                 name={column.name} 
@@ -493,6 +569,7 @@ export default function ContentPlanner() {
                 isFirstColumn={index === 0}
                 onAddIdea={() => handleOpenSearch(column.id)}
                 onDeleteColumn={index === 0 ? undefined : () => handleDeleteColumn(column)}
+                onEditColumn={() => handleEditColumn(column)}
               />
               <KanbanCards>
                 {videoIdeas
@@ -558,6 +635,13 @@ export default function ContentPlanner() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <EditColumnDialog
+        column={columnToEdit}
+        open={editColumnDialogOpen}
+        onOpenChange={setEditColumnDialogOpen}
+        onColumnUpdated={fetchColumnsAndIdeas}
+      />
     </div>
   );
 }
